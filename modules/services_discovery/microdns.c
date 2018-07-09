@@ -86,6 +86,7 @@ static const struct
     { "webdavs", "_webdavs._tcp.local", false, 0 },
     { "rtsp", "_rtsp._tcp.local", false, 0 },
     { "chromecast", "_googlecast._tcp.local", true, VLC_RENDERER_CAN_AUDIO },
+    { "raop", "_raop._tcp.local", true, VLC_RENDERER_CAN_AUDIO },
 };
 
 struct discovery_sys
