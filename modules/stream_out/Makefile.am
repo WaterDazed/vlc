@@ -132,6 +132,14 @@ libstream_out_chromaprint_plugin_la_LIBADD = $(CHROMAPRINT_LIBS)
 EXTRA_LTLIBRARIES += libstream_out_chromaprint_plugin.la
 sout_PLUGINS += $(LTLIBstream_out_chromaprint)
 
+# RAOP plugin
+libstream_out_raop_plugin_la_SOURCES = stream_out/raop.c
+libstream_out_raop_plugin_la_CFLAGS = $(AM_CFLAGS) $(GCRYPT_CFLAGS)
+libstream_out_raop_plugin_la_LIBADD = $(GCRYPT_LIBS) $(SOCKET_LIBS)
+if HAVE_GCRYPT
+sout_PLUGINS += libstream_out_raop_plugin.la
+endif
+
 # Chromecast plugin
 SUFFIXES += .proto .pb.cc
 
