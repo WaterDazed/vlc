@@ -1384,10 +1384,16 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     const unsigned frame_rate = todisplay->format.i_frame_rate;
     const unsigned frame_rate_base = todisplay->format.i_frame_rate_base;
 
-    if (vd->ops->prepare != NULL)
-        vd->ops->prepare(vd, todisplay, subpic, system_pts);
+    bool rendering_enabled = sys->rendering_enabled &&
+        sys->window_width != 0 && sys->window_height != 0;
 
-    vout_chrono_Stop(&sys->chrono.render);
+    if (rendering_enabled)
+    {
+        if (vd->ops->prepare != NULL)
+            vd->ops->prepare(vd, todisplay, subpic, system_pts);
+
+        vout_chrono_Stop(&sys->chrono.render);
+    }
 
     struct vlc_tracer *tracer = GetTracer(sys);
     system_now = vlc_tick_now();
@@ -1451,7 +1457,8 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     }
 
     /* Display the direct buffer returned by vout_RenderPicture */
-    vout_display_Display(vd, todisplay);
+    if (rendering_enabled)
+        vout_display_Display(vd, todisplay);
     vlc_clock_Lock(sys->clock);
     vlc_tick_t drift = vlc_clock_UpdateVideo(sys->clock,
                                              vlc_tick_now(),
