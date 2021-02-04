@@ -63,7 +63,6 @@
     BOOL        _gl_attached;
 
     BOOL _bufferNeedReset;
-    BOOL _appActive;
     BOOL _eaglEnabled;
 
     GLuint _renderBuffer;
@@ -78,6 +77,7 @@
 - (void)presentRenderbuffer;
 - (void)didMoveToWindow;
 - (void)detachFromWindow;
+- (void)resize:(CGSize)size;
 @end
 
 static void vlc_dispatch_sync(void (^block_function)())
@@ -144,6 +144,8 @@ static void Resize(vlc_gl_t *gl, unsigned width, unsigned height)
     VLC_UNUSED(gl); VLC_UNUSED(width); VLC_UNUSED(height);
     /* Use the parent frame size for now, resize is smoother and called
      * automatically from the main thread queue. */
+    VLCOpenGLES2VideoView *view = (__bridge VLCOpenGLES2VideoView *)gl->sys;
+    [view resize:CGSizeMake(width, height)];
 }
 
 static void Close(vlc_gl_t *gl)
@@ -169,10 +171,6 @@ static void Close(vlc_gl_t *gl)
 {
     _gl = gl;
 
-    _appActive = ([UIApplication sharedApplication].applicationState != UIApplicationStateBackground);
-    if (unlikely(!_appActive))
-        return nil;
-
     self = [super initWithFrame:frame];
     if (!self)
         return nil;
@@ -195,8 +193,6 @@ static void Close(vlc_gl_t *gl)
     _layer.opaque = YES;
 
     /* Resize is done accordingly to the parent frame directly. */
-    self.autoresizingMask = UIViewAutoresizingFlexibleWidth
-                          | UIViewAutoresizingFlexibleHeight;
     self.contentMode = UIViewContentModeScaleToFill;
 
     /* Connect to the parent UIView which will contain this surface.
@@ -206,27 +202,14 @@ static void Close(vlc_gl_t *gl)
     if (![self attachToWindow: _gl->surface])
         return nil;
 
-    /* Listen application state change because we cannot use OpenGL in the
-     * background. This should probably move to the vout_window reports in
-     * the future, which could even signal that we need to disable the whole
-     * display and potentially adapt playback for that. */
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(applicationStateChanged:)
-                                                 name:UIApplicationWillEnterForegroundNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(applicationStateChanged:)
-                                                 name:UIApplicationDidEnterBackgroundNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(applicationStateChanged:)
-                                                 name:UIApplicationWillResignActiveNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(applicationStateChanged:)
-                                                 name:UIApplicationDidBecomeActiveNotification
-                                               object:nil];
+    /* If size is NULL, rendering must be disabled */
+    if ((int)self.bounds.size.width > 0 && (int)self.bounds.size.height > 0)
+    {
+        EAGLContext *previousContext = [EAGLContext currentContext];
+        [EAGLContext setCurrentContext:_eaglContext];
+        [self doResetBuffers];
+        [EAGLContext setCurrentContext:previousContext];
+    }
 
     /* Setup the usual vlc_gl_t callbacks before loading the API since we need
      * the get_proc_address symbol and a current context. */
@@ -292,25 +275,6 @@ static void Close(vlc_gl_t *gl)
      * in the main thread and block the main thread unless we accept our fate
      * and exit here. */
     dispatch_async(dispatch_get_main_queue(), ^{
-         /* Remove the external references to the view so that
-          * dealloc can be called by ARC. */
-
-         [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                         name:UIApplicationWillResignActiveNotification
-                                                       object:nil];
-
-         [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                         name:UIApplicationDidBecomeActiveNotification
-                                                       object:nil];
-
-         [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                         name:UIApplicationWillEnterForegroundNotification
-                                                       object:nil];
-
-         [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                         name:UIApplicationDidEnterBackgroundNotification
-                                                       object:nil];
-        assert(!_gl_attached);
         [self removeFromSuperview];
     });
 }
@@ -324,7 +288,7 @@ static void Close(vlc_gl_t *gl)
     vlc_mutex_unlock(&_mutex);
 }
 
-- (BOOL)doResetBuffers:(vlc_gl_t *)gl
+- (BOOL)doResetBuffers
 {
     if (_frameBuffer != 0)
     {
@@ -359,49 +323,26 @@ static void Close(vlc_gl_t *gl)
 
 - (BOOL)makeCurrent
 {
+    assert(![NSThread isMainThread]);
+
     vlc_mutex_lock(&_mutex);
     assert(!_gl_attached);
-
-    if (unlikely(!_appActive))
-    {
-        vlc_mutex_unlock(&_mutex);
-        return NO;
-    }
 
     assert(_eaglEnabled);
     _previousEaglContext = [EAGLContext currentContext];
 
     assert(_eaglContext);
-    if (![EAGLContext setCurrentContext:_eaglContext])
-    {
-        vlc_mutex_unlock(&_mutex);
-        return NO;
-    }
-
-    BOOL resetBuffers = NO;
-
-
-    if (unlikely(_bufferNeedReset))
-    {
-        _bufferNeedReset = NO;
-        resetBuffers = YES;
-    }
+    BOOL result = [EAGLContext setCurrentContext:_eaglContext];
+    assert(result == YES);
 
     _gl_attached = YES;
-
-    vlc_mutex_unlock(&_mutex);
-
-    if (resetBuffers && ![self doResetBuffers:_gl])
-    {
-        [self releaseCurrent];
-        return NO;
-    }
     return YES;
 }
 
 - (void)releaseCurrent
 {
-    vlc_mutex_lock(&_mutex);
+    vlc_mutex_assert(&_mutex);
+
     assert(_gl_attached);
     _gl_attached = NO;
     [EAGLContext setCurrentContext:_previousEaglContext];
@@ -415,11 +356,34 @@ static void Close(vlc_gl_t *gl)
     [_eaglContext presentRenderbuffer:GL_RENDERBUFFER];
 }
 
-- (void)layoutSubviews
+- (void)resize:(CGSize)size
 {
-    vlc_mutex_lock(&_mutex);
-    _bufferNeedReset = YES;
-    vlc_mutex_unlock(&_mutex);
+    vlc_dispatch_sync(^{
+        vlc_mutex_lock(&_mutex);
+        [self resizeLocked:size];
+        vlc_mutex_unlock(&_mutex);
+    });
+}
+
+- (void)resizeLocked:(CGSize)size
+{
+    CGRect rect = self.frame;
+    rect.size = size;
+    /* Bitmap size = view size * contentScaleFactor, so we need to divide the
+     * scale factor to get the real view size. */
+    rect.size.width /= self.contentScaleFactor;
+    rect.size.height /= self.contentScaleFactor;
+
+    self.frame = rect;
+
+    /* If size is NULL, rendering must be disabled */
+    if ((int)size.width > 0 && (int)size.height > 0)
+    {
+        EAGLContext *previousContext = [EAGLContext currentContext];
+        [EAGLContext setCurrentContext:_eaglContext];
+        [self doResetBuffers];
+        [EAGLContext setCurrentContext:previousContext];
+    }
 }
 
 - (void)flushEAGLLocked
@@ -439,11 +403,8 @@ static void Close(vlc_gl_t *gl)
 {
     vlc_mutex_lock(&_mutex);
 
-    if ([[notification name] isEqualToString:UIApplicationWillResignActiveNotification])
-        _appActive = NO;
-    else if ([[notification name] isEqualToString:UIApplicationDidEnterBackgroundNotification])
+    if ([[notification name] isEqualToString:UIApplicationDidEnterBackgroundNotification])
     {
-        _appActive = NO;
 
         /* Wait for the vout to unlock the eagl context before releasing
          * it. */
@@ -459,11 +420,9 @@ static void Close(vlc_gl_t *gl)
         }
     }
     else if ([[notification name] isEqualToString:UIApplicationWillEnterForegroundNotification])
-        _eaglEnabled = YES;
-    else
     {
-        assert([[notification name] isEqualToString:UIApplicationDidBecomeActiveNotification]);
-        _appActive = YES;
+        _eaglEnabled = YES;
+        [self resizeLocked:self.frame.size];
     }
 
     vlc_mutex_unlock(&_mutex);
