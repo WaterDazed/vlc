@@ -87,8 +87,8 @@
     dispatch_queue_t _eventq;
 }
 
-- (id)initWithWindow:(vlc_window_t *)wnd;
-- (BOOL)fetchViewContainer;
+- (id)initWithWindow:(vout_window_t *)wnd;
+- (id)fetchViewContainer;
 - (void)detachFromParent;
 - (void)tapRecognized:(UITapGestureRecognizer *)tapRecognizer;
 - (void)enable;
@@ -106,7 +106,11 @@
     _wnd = wnd;
     _enabled = NO;
 
-    self = [super initWithFrame:CGRectMake(0., 0., 320., 240.)];
+    _viewContainer = [self fetchViewContainer];
+    if (_viewContainer == nil)
+        return nil;
+
+    self = [super initWithFrame:(CGRect)[_viewContainer frame]];
     if (!self)
         return nil;
 
@@ -117,8 +121,6 @@
      * sizing mechanisms. */
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
-    if (![self fetchViewContainer])
-        return nil;
 
     /* add tap gesture recognizer for DVD menus and stuff */
     if (var_InheritBool( wnd, "mouse-events" ) == true) {
@@ -135,7 +137,7 @@
                                              selector:@selector(applicationStateChanged:)
                                                  name:UIApplicationDidEnterBackgroundNotification
                                                object:nil];
-    CGSize size = self.viewContainerBounds.size;
+    CGSize size = self.frame.size;
     [self reportEvent:^{
         vlc_window_ReportSize(_wnd, size.width, size.height);
     }];
@@ -143,45 +145,40 @@
     return self;
 }
 
-- (CGRect)viewContainerBounds {
-    if ([_viewContainer respondsToSelector:@selector(bounds)])
-        return (CGRect)[_viewContainer bounds];
-    return CGRectZero;
-}
-
-- (BOOL)fetchViewContainer
+- (id)fetchViewContainer
 {
     @try {
         /* get the object we will draw into */
         id viewContainer = (__bridge id)var_InheritAddress (_wnd, "drawable-nsobject");
         if (unlikely(viewContainer == nil)) {
             msg_Err(_wnd, "provided view container is nil");
-            return NO;
+            return nil;
         }
 
         if (unlikely(![viewContainer respondsToSelector:@selector(isKindOfClass:)])) {
             msg_Err(_wnd, "void pointer not an ObjC object");
-            return NO;
+            return nil;
         }
 
         if (unlikely(![viewContainer respondsToSelector:@selector(addSubview:)])) {
             msg_Err(_wnd, "view container doesn't responds to addSubview:");
-            return NO;
+            return nil;
         }
 
         if (unlikely(![viewContainer respondsToSelector:@selector(bounds)])) {
             msg_Err(_wnd, "view container doesn't responds to bounds");
-            return NO;
+            return nil;
+        }
+        
+        if (unlikely(![viewContainer respondsToSelector:@selector(frame)])) {
+            msg_Err(_wnd, "view container doesn't responds to frame");
+            return nil;
         }
 
-        _viewContainer = viewContainer;
-
-        self.frame = self.viewContainerBounds;
-
-        return YES;
+        return viewContainer;
     } @catch (NSException *exception) {
         msg_Err(_wnd, "Handling the view container failed due to an Obj-C exception (%s, %s", [exception.name UTF8String], [exception.reason UTF8String]);
-        return NO;
+        return nil;
     }
 }
 
