@@ -673,6 +673,7 @@ fi
 cd "$VLC_SRC_DIR/extras/tools" || abort_err "Failed cd to tools dir"
 ./bootstrap $TOOLS_BOOTSTRAP || abort_err "Bootstrapping tools failed"
 $MAKE || abort_err "Building tools failed"
+$MAKE .buildlibtool
 echo ""
 
 ##########################################################
