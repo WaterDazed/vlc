@@ -35,6 +35,9 @@
 #include <vlc_common.h>
 #include <vlc_variables.h>
 #include <vlc_plugin.h>
+#include <vlc_interface.h>
+#include <vlc_player.h>
+#include <vlc_playlist.h>
 
 #include <TargetConditionals.h>
 
@@ -48,11 +51,15 @@
 
 #if !TARGET_OS_TV
     UIPinchGestureRecognizer *_pinchRecognizer;
+    UITapGestureRecognizer *_tapRecognizer;
 #endif
 
     CGRect _pinchRect;
     CGPoint _pinchOrigin;
     CGPoint _pinchPreviousCenter;
+
+    @public
+    intf_thread_t *intf;
 }
 @end
 
@@ -89,6 +96,30 @@
     subview.center = CGPointMake(
             _pinchPreviousCenter.x + newPosition.x - _pinchOrigin.x,
             _pinchPreviousCenter.y + newPosition.y - _pinchOrigin.y);
+}
+- (void)tapRecognized:(UITapGestureRecognizer *)tapRecognizer
+{
+    if (tapRecognizer.state != UIGestureRecognizerStateEnded)
+        return;
+
+    // TODO locking
+    vlc_playlist_t *playlist = vlc_intf_GetMainPlaylist(intf);
+    vlc_player_t *player = vlc_playlist_GetPlayer(playlist);
+
+    vlc_player_Lock(player);
+    switch (vlc_player_GetState(player))
+    {
+        case VLC_PLAYER_STATE_PLAYING:
+            vlc_player_Stop(player);
+            break;
+
+        case VLC_PLAYER_STATE_STOPPED:
+            vlc_player_Start(player);
+            break;
+        default:
+            break;
+    }
+    vlc_player_Unlock(player);
 }
 #endif
 
@@ -131,6 +162,11 @@
     _pinchRecognizer = [[UIPinchGestureRecognizer alloc]
         initWithTarget:self action:@selector(pinchRecognized:)];
     [window addGestureRecognizer:_pinchRecognizer];
+
+    _tapRecognizer = [[UITapGestureRecognizer alloc]
+        initWithTarget:self action:@selector(tapRecognized:)];
+    _tapRecognizer.numberOfTapsRequired = 2;
+    [window addGestureRecognizer:_tapRecognizer];
 #endif
 
     /* Start glue interface, see code below */
@@ -158,6 +194,7 @@ static int Open(vlc_object_t *obj)
     var_SetAddress(vlc_object_instance(obj), "drawable-nsobject",
                    (__bridge void *)d->subview);
 
+    d->intf = obj;
     return VLC_SUCCESS;
 }
 
