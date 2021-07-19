@@ -1003,6 +1003,13 @@ static vlc_tick_t CountTimeToDisplay(vout_thread_sys_t *vout, vlc_tick_t pic_pts
     return paused ? VLC_TICK_MAX : (pic_pts - system_pts);
 }
 
+static bool IsPictureLateToRender(vout_thread_sys_t *vout, const video_format_t *fmt,
+                                  vlc_tick_t time_until_display)
+{
+    vout_thread_sys_t *sys = vout;
+    return IsPictureLateToProcess(vout, fmt, time_until_display, GetRenderDelay(sys));
+}
+
 /* */
 VLC_USED
 static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
@@ -1013,8 +1020,25 @@ static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
 
     vlc_mutex_lock(&sys->filter.lock);
 
-    picture_t *picture = filter_chain_VideoFilter(sys->filter.chain_static, NULL);
-    assert(!reuse_decoded || !picture);
+    picture_t *picture = NULL;
+
+    while (!picture) {
+        picture = filter_chain_VideoFilter(sys->filter.chain_static, NULL);
+        assert(!reuse_decoded || !picture);
+
+        if (!picture)
+            break;
+
+        vlc_tick_t time_left_to_display =
+            CountTimeToDisplay(vout, picture->date);
+        if (is_late_dropped && !picture->b_force
+         && IsPictureLateToRender(vout, &picture->format, time_left_to_display))
+        {
+            picture_Release(picture);
+            vout_statistic_AddLost(&sys->statistic, 1);
+            picture = NULL; // continue looping
+        }
+    }
 
     while (!picture) {
         picture_t *decoded;
