@@ -73,13 +73,6 @@
     vlc_window_t *_wnd;
     vlc_mutex_t _mutex;
 
-    vlc_mutex_t _size_mutex;
-    unsigned _requested_width;
-    unsigned _requested_height;
-    unsigned _width;
-    unsigned _height;
-    BOOL _resizing;
-
     /* Parent view defined by libvlc_media_player_set_nsobject. */
     id _viewContainer;
 
@@ -111,10 +104,6 @@
     _wnd = wnd;
     _enabled = NO;
     _subviews = 0;
-    vlc_mutex_init(&_size_mutex);
-    _requested_height = 0;
-    _requested_width = 0;
-    _resizing = NO;
 
     self = [super initWithFrame:CGRectMake(0., 0., 320., 240.)];
     if (!self)
@@ -137,8 +126,6 @@
     }
 
     CGSize size = self.viewContainerBounds.size;
-    _width = size.width;
-    _height = size.height;
     [self reportEvent:^{
         vlc_window_ReportSize(_wnd, size.width, size.height);
     }];
@@ -213,12 +200,17 @@
          * want to block the main CFRunLoop since the vout
          * display module typically needs it to Open(). */
         dispatch_async(_eventq, ^{
-            (eventBlock)();
+            vlc_mutex_lock(&_mutex);
+            /* We need to lock to ensure _wnd is still valid,
+             * see detachFromParent. */
+            if (_wnd != NULL)
+                (eventBlock)();
             CFRunLoopPerformBlock(runloop, mode, ^{
                 /* Signal that we can end the ReportEvent call */
                 CFRunLoopStop(runloop);
             });
             CFRunLoopWakeUp(runloop);
+            vlc_mutex_unlock(&_mutex);
         });
     });
     /* Above and here, the CFRunLoopWakeUp call is necessary to
@@ -353,35 +345,11 @@
     CGSize viewSize = [self bounds].size;
     CGFloat scaleFactor = self.contentScaleFactor;
 
-    /* We need to lock to ensure _wnd is still valid, see detachFromParent. */
-    vlc_mutex_lock(&_size_mutex);
-    _requested_width = viewSize.width * scaleFactor;
-    _requested_height = viewSize.height * scaleFactor;
-    if (_resizing == NO) {
-        _resizing = YES;
-        [self reportEventAsync:^{
-            unsigned w, h;
-            vlc_mutex_lock(&_size_mutex);
-            while (_requested_width != _width ||
-                   _requested_height != _height) {
-                w = _requested_width;
-                h = _requested_height;
-                vlc_mutex_unlock(&_size_mutex);
-
-                vlc_mutex_lock(&_mutex);
-                if (_wnd != NULL)
-                    vlc_window_ReportSize(_wnd, w, h);
-                vlc_mutex_unlock(&_mutex);
-
-                vlc_mutex_lock(&_size_mutex);
-                _width = w;
-                _height = h;
-            }
-            _resizing = NO;
-            vlc_mutex_unlock(&_size_mutex);
-        }];
-    }
-    vlc_mutex_unlock(&_size_mutex);
+    [self reportEvent:^{
+        vlc_window_ReportSize(_wnd,
+                viewSize.width * scaleFactor,
+                viewSize.height * scaleFactor);
+    }];
 }
 
 - (void)tapRecognized:(UITapGestureRecognizer *)tapRecognizer
@@ -390,19 +358,12 @@
     CGPoint touchPoint = [tapRecognizer locationInView:self];
     CGFloat scaleFactor = self.contentScaleFactor;
 
-    /* We need to lock to ensure _wnd is still valid, see detachFromParent. */
-    vlc_mutex_lock(&_mutex);
-    if (_wnd == NULL)
-    {
-        vlc_mutex_unlock(&_mutex);
-        return;
-    }
-
-    vlc_window_ReportMouseMoved(_wnd,
-    (int)touchPoint.x * scaleFactor, (int)touchPoint.y * scaleFactor);
-    vlc_window_ReportMousePressed(_wnd, MOUSE_BUTTON_LEFT);
-    vlc_window_ReportMouseReleased(_wnd, MOUSE_BUTTON_LEFT);
-    vlc_mutex_unlock(&_mutex);
+    [self reportEvent:^{
+        vlc_window_ReportMouseMoved(_wnd,
+                (int)touchPoint.x * scaleFactor, (int)touchPoint.y * scaleFactor);
+        vlc_window_ReportMousePressed(_wnd, MOUSE_BUTTON_LEFT);
+        vlc_window_ReportMouseReleased(_wnd, MOUSE_BUTTON_LEFT);
+    }];
 }
 
 - (void)updateConstraints
