@@ -242,6 +242,8 @@ VLC_API int vlc_gl_RequestInit(vlc_gl_t *gl);
 typedef int (*vlc_gl_change_request)(vlc_gl_t *gl, void *opaque);
 VLC_API int vlc_gl_RequestChanges(vlc_gl_t *gl, vlc_gl_change_request change_cb, void *opaque);
 
+VLC_API void vlc_gl_ApplyChanges(vlc_gl_t *gl);
+
 /**
  * Fetch a symbol or pointer function from the OpenGL implementation.
  *
@@ -293,6 +295,8 @@ static inline bool vlc_gl_StrHasToken(const char *apis, const char *api)
  * and wait for the frame to be rendered.
  */
 VLC_API void vlc_gl_RequestRender(vlc_gl_t *gl);
+VLC_API void vlc_gl_ReportRender(vlc_gl_t *gl, unsigned width, unsigned height);
+VLC_API int vlc_gl_ReportInit(vlc_gl_t *gl);
 
 #ifdef __cplusplus
 }
