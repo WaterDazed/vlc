@@ -40,7 +40,22 @@ static const struct vlc_gl_cfg gl_cfg_default = {
 struct vlc_gl_priv_t
 {
     vlc_gl_t gl;
+
+    /* Only for synchronous implementations */
+    struct {
+        unsigned width;
+        unsigned height;
+    } sync_mode;
 };
+
+void vlc_gl_Resize(vlc_gl_t *gl, unsigned w, unsigned h)
+{
+    struct vlc_gl_priv_t *glpriv = container_of(gl, struct vlc_gl_priv_t, gl);
+    if (gl->ops->resize != NULL)
+        gl->ops->resize(gl, w, h);
+    glpriv->sync_mode.width = w;
+    glpriv->sync_mode.height = h;
+}
 
 static int vlc_gl_start(void *func, bool forced, va_list ap)
 {
