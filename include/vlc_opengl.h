@@ -230,31 +230,14 @@ static inline void vlc_gl_ReleaseCurrent(vlc_gl_t *gl)
 
 VLC_API void vlc_gl_Resize(vlc_gl_t *gl, unsigned w, unsigned h);
 
-static inline void vlc_gl_Swap(vlc_gl_t *gl)
-{
-    gl->ops->swap(gl);
-}
+VLC_API void vlc_gl_Swap(vlc_gl_t *gl);
 
 static inline picture_t *vlc_gl_SwapOffscreen(vlc_gl_t *gl)
 {
     return gl->ops->swap_offscreen(gl);
 }
 
-static inline int vlc_gl_RequestInit(vlc_gl_t *gl)
-{
-    assert(gl->api_mode == VLC_GL_SYNC_MODE);
-    if (gl->owner.cbs != NULL && gl->owner.cbs->init != NULL)
-    {
-        int ret = vlc_gl_MakeCurrent(gl);
-        if (ret != VLC_SUCCESS)
-            return ret;
-        ret = gl->owner.cbs->init(gl);
-        vlc_gl_ReleaseCurrent(gl);
-        return ret;
-    }
-
-    return VLC_SUCCESS;
-}
+VLC_API int vlc_gl_RequestInit(vlc_gl_t *gl);
 
 typedef int (*vlc_gl_change_request)(vlc_gl_t *gl, void *opaque);
 VLC_API int vlc_gl_RequestChanges(vlc_gl_t *gl, vlc_gl_change_request change_cb, void *opaque);
