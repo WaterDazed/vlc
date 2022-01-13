@@ -238,6 +238,22 @@ static inline picture_t *vlc_gl_SwapOffscreen(vlc_gl_t *gl)
     return gl->ops->swap_offscreen(gl);
 }
 
+static inline int vlc_gl_RequestInit(vlc_gl_t *gl)
+{
+    assert(gl->api_mode == VLC_GL_SYNC_MODE);
+    if (gl->owner.cbs != NULL && gl->owner.cbs->init != NULL)
+    {
+        int ret = vlc_gl_MakeCurrent(gl);
+        if (ret != VLC_SUCCESS)
+            return ret;
+        ret = gl->owner.cbs->init(gl);
+        vlc_gl_ReleaseCurrent(gl);
+        return ret;
+    }
+
+    return VLC_SUCCESS;
+}
+
 /**
  * Fetch a symbol or pointer function from the OpenGL implementation.
  *
