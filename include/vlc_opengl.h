@@ -256,6 +256,9 @@ static inline int vlc_gl_RequestInit(vlc_gl_t *gl)
     return VLC_SUCCESS;
 }
 
+typedef int (*vlc_gl_change_request)(vlc_gl_t *gl, void *opaque);
+VLC_API int vlc_gl_RequestChanges(vlc_gl_t *gl, vlc_gl_change_request change_cb, void *opaque);
+
 /**
  * Fetch a symbol or pointer function from the OpenGL implementation.
  *

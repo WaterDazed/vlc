@@ -57,6 +57,17 @@ void vlc_gl_Resize(vlc_gl_t *gl, unsigned w, unsigned h)
     glpriv->sync_mode.height = h;
 }
 
+int vlc_gl_RequestChanges(vlc_gl_t *gl, vlc_gl_change_request change_cb, void *opaque)
+{
+    assert(gl->api_mode == VLC_GL_SYNC_MODE);
+    int ret = vlc_gl_MakeCurrent(gl);
+    if (ret != VLC_SUCCESS)
+        return ret;
+    ret = change_cb(gl, opaque);
+    vlc_gl_ReleaseCurrent(gl);
+    return ret;
+}
+
 static int vlc_gl_start(void *func, bool forced, va_list ap)
 {
     vlc_gl_activate activate = func;
