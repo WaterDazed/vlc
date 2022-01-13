@@ -88,6 +88,12 @@ typedef int (*vlc_gl_activate)(vlc_gl_t *, unsigned width, unsigned height,
     set_callback_opengl_common(activate) \
     set_capability("opengl es2 offscreen", priority)
 
+struct vlc_gl_callbacks {
+    int (*init)(struct vlc_gl_t *gl);
+    void (*render)(struct vlc_gl_t *gl, unsigned width, unsigned height);
+    void (*destroy)(struct vlc_gl_t *gl);
+};
+
 /**
  * OpenGL provider implementation callbacks.
  *
@@ -116,6 +122,12 @@ struct vlc_gl_operations
             int  (*make_current)(vlc_gl_t *gl);
             void (*release_current)(vlc_gl_t *gl);
         } sync_mode;
+
+        struct {
+            int (*request_init)(vlc_gl_t *gl);
+            void (*request_render)(vlc_gl_t *gl);
+            void (*request_change)(vlc_gl_t *gl);
+        } async_mode;
     };
 
     /**
@@ -171,6 +183,11 @@ struct vlc_gl_t
     enum vlc_gl_api_mode api_mode;
 
     const struct vlc_gl_operations *ops;
+
+    struct {
+        const struct vlc_gl_callbacks *cbs;
+        void *sys;
+    } owner;
 };
 
 /**
