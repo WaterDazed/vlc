@@ -70,7 +70,8 @@ static void test_opengl_offscreen(
     struct vlc_decoder_device *device =
         vlc_decoder_device_Create(root, NULL);
     vlc_gl_t *gl = vlc_gl_CreateOffscreen(
-            root, device, 3, 3, VLC_TEST_OPENGL_API, NULL, NULL);
+            root, device, 3, 3, VLC_TEST_OPENGL_API,
+            NULL, NULL, NULL, NULL);
     assert(gl != NULL);
     if (device != NULL)
         vlc_decoder_device_Release(device);
@@ -255,7 +256,8 @@ int main( int argc, char **argv )
     struct vlc_decoder_device *device =
         vlc_decoder_device_Create(root, NULL);
     vlc_gl_t *gl = vlc_gl_CreateOffscreen(
-            root, device, 3, 3, VLC_TEST_OPENGL_API, NULL, NULL);
+            root, device, 3, 3, VLC_TEST_OPENGL_API,
+            NULL, NULL, NULL, NULL);
     if (device != NULL)
         vlc_decoder_device_Release(device);
 
