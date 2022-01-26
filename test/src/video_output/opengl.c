@@ -236,7 +236,7 @@ static void test_opengl(vlc_object_t *root, enum vlc_gl_api_type api_type)
         .display.width = wnd_cfg.width,
         .display.height = wnd_cfg.height,
     };
-    vlc_gl_t *gl = vlc_gl_Create(&cfg, api_type, MODULE_STRING, NULL);
+    vlc_gl_t *gl = vlc_gl_Create(&cfg, api_type, MODULE_STRING, NULL, NULL, NULL);
     assert(gl != NULL);
 
     assert(vlc_gl_MakeCurrent(gl) == VLC_SUCCESS);

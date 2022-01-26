@@ -297,7 +297,7 @@ static int subpicture_OpenDisplay(vout_display_t *vd)
     vd_cfg.window = sub->window;
 
     struct vlc_gl_cfg gl_cfg = { .need_alpha = true };
-    sub->gl = vlc_gl_Create(&vd_cfg, VLC_OPENGL_ES2, NULL, &gl_cfg);
+    sub->gl = vlc_gl_Create(&vd_cfg, VLC_OPENGL_ES2, NULL, &gl_cfg, NULL, NULL);
     if (sub->gl == NULL)
         goto disable_win;
 
