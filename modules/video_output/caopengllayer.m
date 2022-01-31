@@ -313,8 +313,8 @@ static int OpenOpenGL(vlc_gl_t *gl, unsigned width, unsigned height,
 
     static const struct vlc_gl_operations gl_ops =
     {
-        .make_current = gl_cb_MakeCurrent,
-        .release_current = gl_cb_ReleaseCurrent,
+        .sync_mode.make_current = gl_cb_MakeCurrent,
+        .sync_mode.release_current = gl_cb_ReleaseCurrent,
         .swap = gl_cb_Swap,
         .get_proc_address = gl_cb_GetProcAddress,
     };

@@ -129,8 +129,8 @@ OpenOpenGLCommon(
 
     static const struct vlc_gl_operations onscreen_ops =
     {
-        .make_current = OpenGLMakeCurrent,
-        .release_current = OpenGLReleaseCurrent,
+        .sync_mode.make_current = OpenGLMakeCurrent,
+        .sync_mode.release_current = OpenGLReleaseCurrent,
         .resize = NULL,
         .get_proc_address = OpenGLGetSymbol,
         .swap = OpenGLSwap,
@@ -139,8 +139,8 @@ OpenOpenGLCommon(
 
     static const struct vlc_gl_operations offscreen_ops =
     {
-        .make_current = OpenGLMakeCurrent,
-        .release_current = OpenGLReleaseCurrent,
+        .sync_mode.make_current = OpenGLMakeCurrent,
+        .sync_mode.release_current = OpenGLReleaseCurrent,
         .resize = NULL,
         .get_proc_address = OpenGLGetSymbol,
         .swap_offscreen = OpenGLSwapOffscreen,

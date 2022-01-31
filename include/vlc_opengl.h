@@ -25,6 +25,7 @@
 #define VLC_GL_H 1
 
 #include <vlc_es.h>
+#include <assert.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -49,6 +50,11 @@ struct vlc_video_context;
 enum vlc_gl_api_type {
     VLC_OPENGL,
     VLC_OPENGL_ES2,
+};
+
+enum vlc_gl_api_mode {
+    VLC_GL_SYNC_MODE,
+    VLC_GL_ASYNC_MODE,
 };
 
 struct vlc_gl_cfg
@@ -105,8 +111,12 @@ struct vlc_gl_operations
         picture_t *(*swap_offscreen)(vlc_gl_t *);
     };
 
-    int  (*make_current)(vlc_gl_t *gl);
-    void (*release_current)(vlc_gl_t *gl);
+    union {
+        struct {
+            int  (*make_current)(vlc_gl_t *gl);
+            void (*release_current)(vlc_gl_t *gl);
+        } sync_mode;
+    };
 
     /**
      * Resize the OpenGL buffers from the provider.
@@ -158,6 +168,7 @@ struct vlc_gl_t
 
     /* Defined by the core for libvlc_opengl API loading. */
     enum vlc_gl_api_type api_type;
+    enum vlc_gl_api_mode api_mode;
 
     const struct vlc_gl_operations *ops;
 };
@@ -186,12 +197,14 @@ VLC_API void vlc_gl_Delete(vlc_gl_t *);
 
 static inline int vlc_gl_MakeCurrent(vlc_gl_t *gl)
 {
-    return gl->ops->make_current(gl);
+    vlc_assert(gl->api_mode == VLC_GL_SYNC_MODE);
+    return gl->ops->sync_mode.make_current(gl);
 }
 
 static inline void vlc_gl_ReleaseCurrent(vlc_gl_t *gl)
 {
-    gl->ops->release_current(gl);
+    vlc_assert(gl->api_mode == VLC_GL_SYNC_MODE);
+    gl->ops->sync_mode.release_current(gl);
 }
 
 static inline void vlc_gl_Resize(vlc_gl_t *gl, unsigned w, unsigned h)

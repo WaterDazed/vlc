@@ -103,8 +103,8 @@ vlc_gl_t *vlc_gl_Create(const struct vout_display_cfg *restrict cfg,
     }
 
     assert(gl->ops);
-    assert(gl->ops->make_current);
-    assert(gl->ops->release_current);
+    assert(gl->ops->sync_mode.make_current);
+    assert(gl->ops->sync_mode.release_current);
     assert(gl->ops->swap);
     assert(gl->ops->get_proc_address);
 
@@ -164,8 +164,8 @@ vlc_gl_t *vlc_gl_CreateOffscreen(vlc_object_t *parent,
     assert(gl->offscreen_chroma_out != VLC_CODEC_UNKNOWN);
 
     assert(gl->ops);
-    assert(gl->ops->make_current);
-    assert(gl->ops->release_current);
+    assert(gl->ops->sync_mode.make_current);
+    assert(gl->ops->sync_mode.release_current);
     assert(gl->ops->swap_offscreen);
     assert(gl->ops->get_proc_address);
 
