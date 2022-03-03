@@ -52,6 +52,7 @@
 #include <vlc_codec.h>
 #include <vlc_tracer.h>
 #include <vlc_atomic.h>
+#include <vlc_gyroscope.h>
 
 #include "../libvlc.h"
 #include "vout_private.h"
@@ -175,6 +176,7 @@ typedef struct vout_thread_sys_t
     vlc_atomic_rc_t rc;
 
     picture_pool_t  *private_pool; // interactive + static filters & blending
+    struct vlc_gyroscope *gyro;
 } vout_thread_sys_t;
 
 #define VOUT_THREAD_TO_SYS(vout) \
@@ -1432,6 +1434,21 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     const unsigned frame_rate = todisplay->format.i_frame_rate;
     const unsigned frame_rate_base = todisplay->format.i_frame_rate_base;
 
+    if (sys->gyro != NULL && vd->ops->set_viewpoint != NULL)
+    {
+        // TODO: FOV
+        vlc_viewpoint_t vp;
+        vlc_viewpoint_init(&vp);
+        vlc_gyroscope_ReadViewpoint(sys->gyro, &vp);
+
+        /* We currently don't have a separate mechanism to define the FOV, so
+         * use any FOV previously defined. On application that were supporting
+         * setting the FOV, it allows re-using the current control. */
+        vp.fov = sys->display_cfg.viewpoint.fov;
+
+        vd->ops->set_viewpoint(vd, &vp);
+    }
+
     if (vd->ops->prepare != NULL)
         vd->ops->prepare(vd, todisplay, subpic, system_pts);
 
@@ -2257,6 +2274,8 @@ vout_thread_t *vout_Create(vlc_object_t *object)
     else if (var_InheritBool(vout, "video-on-top"))
         vlc_window_SetState(sys->display_cfg.window, VLC_WINDOW_STATE_ABOVE);
 
+    sys->gyro = NULL;
+
     return vout;
 }
 
@@ -2450,4 +2469,13 @@ vlc_decoder_device *vout_GetDevice(vout_thread_t *vout)
     dec_device = sys->dec_device ? vlc_decoder_device_Hold( sys->dec_device ) : NULL;
     vlc_mutex_unlock(&sys->window_lock);
     return dec_device;
+}
+
+void vout_SetViewpointDevice(vout_thread_t *vout, struct vlc_gyroscope *device)
+{
+    vout_thread_sys_t *sys = VOUT_THREAD_TO_SYS(vout);
+
+    vlc_queuedmutex_lock(&sys->display_lock);
+    sys->gyro = device;
+    vlc_queuedmutex_unlock(&sys->display_lock);
 }

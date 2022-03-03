@@ -98,6 +98,16 @@ void vout_StopDisplay(vout_thread_t *);
 int vout_ChangeSource( vout_thread_t *p_vout, const video_format_t *fmt,
                        const vlc_video_context * );
 
+struct vlc_gyroscope;
+
+/**
+ * Set the viewpoint provider from a gyroscope device.
+ *
+ * \param vout the vout using the gyroscope device
+ * \param device the gyroscope device instance, or NULL to remove the previous one
+ */
+void vout_SetViewpointDevice(vout_thread_t *vout, struct vlc_gyroscope *device);
+
 enum vout_crop_mode {
     VOUT_CROP_NONE, VOUT_CROP_RATIO, VOUT_CROP_WINDOW, VOUT_CROP_BORDER,
 };
