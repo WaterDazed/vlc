@@ -3135,15 +3135,7 @@ PKG_ENABLE_MODULES_VLC([DAVS2], [davs2], [davs2], [AVS2 video decoder with libda
 dnl
 dnl  AVS3 decoder module (uavs3d)
 dnl
-AC_ARG_ENABLE([uavs3d],
-  AS_HELP_STRING([--enable-uavs3d], [AVS3 video decoder with libuavs3d (default disabled)]))
-AS_IF([test "${enable_uavs3d}" = "yes"], [
-  PKG_CHECK_MODULES([UAVS3D], [uavs3d], [
-    VLC_ADD_PLUGIN([uavs3d])
-  ],[
-    AC_MSG_ERROR([${UAVS3D_PKG_ERRORS}])
-  ])
-])
+PKG_ENABLE_MODULES_VLC([UAVS3D], [uavs3d], [uavs3d], [AVS3 video decoder with libuavs3d], [auto])
 
 
 dnl
