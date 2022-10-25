@@ -1,0 +1,8 @@
+[package]
+name = "vlcrs-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vlcrs-core-sys = { path = "sys/" }
+libc = "0.2"
