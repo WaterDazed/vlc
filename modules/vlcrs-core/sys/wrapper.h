@@ -23,5 +23,8 @@
 #include <vlc_url.h>
 #include <vlc_sout.h>
 
+#ifndef WITHOUT_CONSTS
 // HACK: Rust bindgen cannot generate bindings for complex #define but
 // if we "force" the evaluation of the complex #define, now it can.
+const int VLC_RUST_EGENERIC = VLC_EGENERIC;
+#endif
