@@ -1,0 +1,1 @@
+//! vlcrs-core macros
