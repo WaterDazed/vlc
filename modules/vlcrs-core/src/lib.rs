@@ -10,6 +10,7 @@
 
 pub mod error;
 pub mod input_item;
+pub mod module;
 pub mod object;
 pub mod tick;
 pub mod url;
