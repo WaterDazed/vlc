@@ -22,3 +22,6 @@
 #include <vlc_xml.h>
 #include <vlc_url.h>
 #include <vlc_sout.h>
+
+// HACK: Rust bindgen cannot generate bindings for complex #define but
+// if we "force" the evaluation of the complex #define, now it can.
