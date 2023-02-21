@@ -546,12 +546,14 @@ if host_system == 'darwin'
             'videotoolbox/dpb.h',
             'videotoolbox/pacer.c',
             'videotoolbox/pacer.h',
+            'videotoolbox/vp9_repack.h',
             'hxxx_helper.c',
             '../packetizer/hxxx_nal.c',
             '../packetizer/hxxx_sei.c',
             '../packetizer/h264_slice.c',
             '../packetizer/h264_nal.c',
-            '../packetizer/hevc_nal.c'
+            '../packetizer/hevc_nal.c',
+            '../packetizer/vp9_frame.h'
         ),
         'dependencies' : [
             frameworks['VideoToolbox'],
