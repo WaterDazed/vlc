@@ -1,5 +1,5 @@
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 fn main() {
     // // Tell cargo to tell rustc to link the system vlccore
@@ -11,6 +11,9 @@ fn main() {
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=wrapper.h");
+
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let extern_path = out_path.join("externs.c");
 
     // Create the bindings builder.
     let bindings = bindgen::Builder::default()
@@ -53,6 +56,11 @@ fn main() {
         .allowlist_function("vout_.*")
         .allowlist_function("xml_.*")
         .allowlist_function("VLC_.*")
+        // Theses functions are blocklisted as they caused some problems for
+        // bindgen wrapped static inline feature.
+        .blocklist_function("demux_UpdateTitleFromStream")
+        .blocklist_function("vlc_thread_name_too_big")
+        .blocklist_function(".*[^v][^a]Control$")
         // This seems to be required otherwise most (all ?) of the type
         // under the vlc_ namespace are not present. It's probably due
         // to the untyped API in vlc.
@@ -73,6 +81,10 @@ fn main() {
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h")
+        // Enable the generation of wrapper function for static and
+        // static inline functions
+        .wrap_static_fns(true)
+        .wrap_static_fns_path(&extern_path)
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
@@ -82,8 +94,16 @@ fn main() {
         .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+    
+    cc::Build::new()
+         .include(Path::new("../../../include/"))
+         .flag("-include")
+         .flag("wrapper.h")
+         .file(extern_path)
+         .warnings(false)
+         .flag_if_supported("-Wno-deprecated-declarations")
+         .compile("externs");
 }

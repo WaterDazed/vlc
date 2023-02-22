@@ -7,6 +7,9 @@ license = "LGPL-2.1-or-later"
 [dependencies]
 libc = "0.2"
 
+[build-dependencies]
+cc = "1.0"
+
 [build-dependencies.bindgen]
 git = "https://github.com/rust-lang/rust-bindgen.git"
 rev = "62d91c5dcbf84bb9cda59996d60ab33df321e9f2"
