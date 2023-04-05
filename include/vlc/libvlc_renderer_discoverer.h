@@ -205,18 +205,18 @@ libvlc_renderer_discoverer_new( libvlc_instance_t *p_inst,
 /**
  * Release a renderer discoverer object
  *
- * \version LibVLC 3.0.0 or later
+ * \version LibVLC 4.0.0 or later
  *
  * \param p_rd renderer discoverer object
  */
 LIBVLC_API void
-libvlc_renderer_discoverer_release( libvlc_renderer_discoverer_t *p_rd );
+libvlc_renderer_discoverer_destroy( libvlc_renderer_discoverer_t *p_rd );
 
 /**
  * Start renderer discovery
  *
  * To stop it, call libvlc_renderer_discoverer_stop() or
- * libvlc_renderer_discoverer_release() directly.
+ * libvlc_renderer_discoverer_destroy() directly.
  *
  * \see libvlc_renderer_discoverer_stop()
  *
