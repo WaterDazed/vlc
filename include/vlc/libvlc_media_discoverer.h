@@ -165,9 +165,10 @@ libvlc_media_discoverer_stop( libvlc_media_discoverer_t * p_mdis );
  * the object will be released.
  *
  * \param p_mdis media service discover object
+ * \version LibVLC 4.0.0 or later
  */
 LIBVLC_API void
-libvlc_media_discoverer_release( libvlc_media_discoverer_t * p_mdis );
+libvlc_media_discoverer_destroy( libvlc_media_discoverer_t * p_mdis );
 
 /**
  * Query if media service discover object is running.
