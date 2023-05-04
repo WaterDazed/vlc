@@ -546,16 +546,6 @@ LIBVLC_API VLC_FORWARD_DECLARE_OBJECT(libvlc_media_list_t *)
 libvlc_media_subitems( libvlc_media_t *p_md );
 
 /**
- * Get event manager from media descriptor object.
- * NOTE: this function doesn't increment reference counting.
- *
- * \param p_md a media descriptor object
- * \return event manager object
- */
-LIBVLC_API libvlc_event_manager_t *
-    libvlc_media_event_manager( libvlc_media_t *p_md );
-
-/**
  * Get duration (in ms) of media descriptor object item.
  *
  * Note, you need to call libvlc_media_parse_request() or play the media
