@@ -29,9 +29,9 @@ static inline void SetPixelColor( plane_t *p, unsigned line, unsigned x, const u
 }
 
 static inline void
-spuregion_CreateVGradientPalette( video_palette_t *p_palette, uint8_t i_splits,
-                                  uint32_t argb1, uint32_t argb2 )
+spuregion_CreateVGradientFill( plane_t *p, uint8_t i_splits, uint32_t argb1, uint32_t argb2 )
 {
+    uint8_t palette[i_splits][4];
     for( uint8_t i = 0; i<i_splits; i++ )
     {
         uint32_t rgb1 = argb1 & 0x00FFFFFF;
@@ -40,26 +40,21 @@ spuregion_CreateVGradientPalette( video_palette_t *p_palette, uint8_t i_splits,
         uint32_t r = ((((rgb1 >> 16) * (i_splits - i)) + (rgb2 >> 16) * i)) / i_splits;
         uint32_t g = (((((rgb1 >> 8) & 0xFF) * (i_splits - i)) + ((rgb2 >> 8) & 0xFF) * i)) / i_splits;
         uint32_t b = ((((rgb1 & 0xFF) * (i_splits - i)) + (rgb2 & 0xFF) * i)) / i_splits;
-        uint8_t entry[4] = { r,g,b, argb1 >> 24 };
-        memcpy( p_palette->palette[i], entry, 4 );
+        palette[i][0] = r;
+        palette[i][1] = g;
+        palette[i][2] = b;
+        palette[i][3] = argb1 >> 24;
     }
-    p_palette->i_entries = i_splits;
-}
 
-static inline void
-spuregion_CreateVGradientFill( plane_t *p, uint8_t i_splits )
-{
     const int i_split = p->i_visible_lines / i_splits;
     const int i_left = p->i_visible_lines % i_splits + p->i_lines - p->i_visible_lines;
     for( int i = 0; i<i_splits; i++ )
     {
-        memset( &p->p_pixels[p->i_pitch * (i * i_split)],
-                i,
-                p->i_pitch * i_split );
+        for ( int x=0; x<p->i_pitch * i_split; x++)
+            SetPixelColor( p, i * i_split, x, palette[i] );
     }
-    memset( &p->p_pixels[p->i_pitch * (i_splits - 1) * i_split],
-            i_splits - 1,
-            p->i_pitch * i_left );
+    for ( int x=0; x<p->i_pitch * i_left; x++)
+        SetPixelColor( p, (i_splits - 1) * i_split, x, palette[i_splits - 1] );
 }
 
 

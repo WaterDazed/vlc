@@ -94,16 +94,12 @@ static subpicture_region_t * vout_OSDBackground(int x, int y,
                                                 uint32_t i_argb)
 {
     /* Create a new subpicture region */
-    video_palette_t palette;
-    spuregion_CreateVGradientPalette( &palette, GRADIENT_COLORS, i_argb, 0xFF000000 );
-
     video_format_t fmt;
-    video_format_Init(&fmt, VLC_CODEC_RGBP);
+    video_format_Init(&fmt, VLC_CODEC_RGBA);
     fmt.i_width  = fmt.i_visible_width  = width;
     fmt.i_height = fmt.i_visible_height = height;
     fmt.i_sar_num = 1;
     fmt.i_sar_den = 1;
-    fmt.p_palette = &palette;
 
     subpicture_region_t *region = subpicture_region_New(&fmt);
     if (!region)
@@ -114,7 +110,7 @@ static subpicture_region_t * vout_OSDBackground(int x, int y,
     region->i_x = x;
     region->i_y = y;
 
-    spuregion_CreateVGradientFill( region->p_picture->p, palette.i_entries );
+    spuregion_CreateVGradientFill( region->p_picture->p, GRADIENT_COLORS, i_argb, 0xFF000000 );
 
     return region;
 }
