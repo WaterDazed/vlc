@@ -98,4 +98,11 @@ fn main() {
                 non_exhaustive: true,
             })
     });
+    bindings_gen.generate_bindings_for("vlcrs-tick", &["vlc_tick.h"], |builder| {
+        builder
+            .allowlist_function("date_Increment")
+            .allowlist_function("date_Decrement")
+            .allowlist_type("date_t")
+            .allowlist_type("vlc_tick_t")
+    });
 }
