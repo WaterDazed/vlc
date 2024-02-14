@@ -29,7 +29,7 @@
 extern "C" {
 # endif
 
-typedef struct libvlc_media_list_t libvlc_media_list_t;
+typedef struct libvlc_media_t libvlc_media_t;
 
 /**
  * Category of a media discoverer
@@ -71,26 +71,70 @@ typedef struct libvlc_media_discoverer_description_t {
 typedef struct libvlc_media_discoverer_t libvlc_media_discoverer_t;
 
 /**
+ * Initial version of the struct defining callbacks for
+ * libvlc_media_player_watch_time()
+ */
+#define LIBVLC_MEDIA_DISCOVERER_CBS_VER_0 0
+
+/**
+ * Last version of the struct defining callbacks for
+ * libvlc_media_player_watch_time()
+ */
+#define LIBVLC_MEDIA_DISCOVERER_CBS_VER_LATEST \
+    LIBVLC_MEDIA_DISCOVERER_CBS_VER_0
+
+/**
+ * struct defining callbacks for libvlc_media_discoverer_new()
+ */
+struct libvlc_media_discoverer_cbs {
+    /**
+     * Callback prototype that notify when the discoverer added a media
+     *
+     * \note Optional (can be NULL).
+     *
+     * \param opaque opaque pointer set by libvlc_media_discoverer_new()
+     * \param parent parent of the new added media or NULL if there is no
+     * parents (more likely)
+     * \param media the new added media
+     */
+    void (*on_media_added)(void *opaque, libvlc_media_t *parent,
+                           libvlc_media_t *media);
+
+    /**
+     * Callback prototype that notify when the discoverer removed a media
+     *
+     * \note Optional (can be NULL).
+     *
+     * \param opaque opaque pointer set by libvlc_media_discoverer_new()
+     * \param media the removed media
+     */
+    void (*on_media_removed)(void *opaque, libvlc_media_t *media);
+};
+
+/**
  * Create a media discoverer object by name.
- *
- * After this object is created, you should attach to media_list events in
- * order to be notified of new items discovered.
  *
  * You need to call libvlc_media_discoverer_start() in order to start the
  * discovery.
  *
- * \see libvlc_media_discoverer_media_list
  * \see libvlc_media_discoverer_start
  *
  * \param p_inst libvlc instance
  * \param psz_name service name; use libvlc_media_discoverer_list_get() to get
  * a list of the discoverer names available in this libVLC instance
+ * \param cbs_version version of the struct defining callbacks, should be
+ * \ref LIBVLC_MEDIA_DISCOVERER_CBS_VER_LATEST
+ * \param cbs callback to listen to events (can be NULL)
+ * \param cbs_opaque opaque pointer used by the callbacks
  * \return media discover object or NULL in case of error
  * \version LibVLC 3.0.0 or later
  */
 LIBVLC_API libvlc_media_discoverer_t *
 libvlc_media_discoverer_new( libvlc_instance_t * p_inst,
-                             const char * psz_name );
+                             const char * psz_name,
+                             unsigned cbs_version,
+                             const struct libvlc_media_discoverer_cbs *cbs,
+                             void *cbs_opaque );
 
 /**
  * Start media discovery.
@@ -123,18 +167,10 @@ libvlc_media_discoverer_stop( libvlc_media_discoverer_t * p_mdis );
  * the object will be released.
  *
  * \param p_mdis media service discover object
+ * \version LibVLC 4.0.0 or later
  */
 LIBVLC_API void
-libvlc_media_discoverer_release( libvlc_media_discoverer_t * p_mdis );
-
-/**
- * Get media service discover media list.
- *
- * \param p_mdis media service discover object
- * \return list of media items
- */
-LIBVLC_API libvlc_media_list_t *
-libvlc_media_discoverer_media_list( libvlc_media_discoverer_t * p_mdis );
+libvlc_media_discoverer_destroy( libvlc_media_discoverer_t * p_mdis );
 
 /**
  * Query if media service discover object is running.

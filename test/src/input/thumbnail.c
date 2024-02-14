@@ -155,7 +155,7 @@ static void test_thumbnails( libvlc_instance_t* p_vlc )
         while ( ctx.b_done == false )
             vlc_cond_wait( &ctx.cond, &ctx.lock );
 
-        vlc_thumbnailer_DestroyRequest( p_thumbnailer, p_req );
+        vlc_thumbnailer_request_Destroy( p_req );
         vlc_mutex_unlock( &ctx.lock );
 
         input_item_Release( p_item );
@@ -188,7 +188,7 @@ static void test_cancel_thumbnail( libvlc_instance_t* p_vlc )
         VLC_TICK_INVALID, VLC_THUMBNAILER_SEEK_PRECISE, p_item,
         VLC_TICK_INVALID, thumbnailer_callback_cancel, NULL );
 
-    vlc_thumbnailer_DestroyRequest( p_thumbnailer, p_req );
+    vlc_thumbnailer_CancelRequest( p_thumbnailer, p_req );
 
     /* Check that thumbnailer_callback_cancel is not called, even after the
      * normal termination of the parsing. */
@@ -196,6 +196,7 @@ static void test_cancel_thumbnail( libvlc_instance_t* p_vlc )
 
     input_item_Release( p_item );
 
+    vlc_thumbnailer_request_Destroy( p_req );
     vlc_thumbnailer_Release( p_thumbnailer );
 }
 

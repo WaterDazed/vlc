@@ -119,7 +119,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
     p_media = libvlc_media_new_path( file_path );
     free( file_path );
     Context.p_mediaplayer = libvlc_media_player_new_from_media(
-                                                   Context.p_libvlc, p_media );
+                                                   Context.p_libvlc, p_media,
+                                                   0, NULL, NULL );
 
     ZeroMemory(&wc, sizeof(WNDCLASSEX));
 

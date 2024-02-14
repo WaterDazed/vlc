@@ -24,7 +24,7 @@
 #define LIBVLC_MEDIA_LIST_PLAYER_H 1
 
 #include <vlc/libvlc.h>
-#include <vlc/libvlc_media.h>
+#include <vlc/libvlc_media_player.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -63,11 +63,18 @@ typedef enum libvlc_playback_mode_t
  * Create new media_list_player.
  *
  * \param p_instance libvlc instance
+ * \param cbs_version version of the struct defining callbacks, should be
+ * \ref LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST
+ * \param cbs callback to listen to events (can be NULL)
+ * \param cbs_opaque opaque pointer used by the callbacks
  * \return media list player instance or NULL on error
  *         (it must be released by libvlc_media_list_player_release())
  */
 LIBVLC_API libvlc_media_list_player_t *
-    libvlc_media_list_player_new( libvlc_instance_t * p_instance );
+    libvlc_media_list_player_new( libvlc_instance_t * p_instance,
+                                  unsigned cbs_version,
+                                  const struct libvlc_media_player_cbs *cbs,
+                                  void *cbs_opaque );
 
 /**
  * Release a media_list_player after use
@@ -92,32 +99,12 @@ LIBVLC_API libvlc_media_list_player_t *
     libvlc_media_list_player_retain( libvlc_media_list_player_t *p_mlp );
 
 /**
- * Return the event manager of this media_list_player.
- *
- * \param p_mlp media list player instance
- * \return the event manager
- */
-LIBVLC_API libvlc_event_manager_t *
-    libvlc_media_list_player_event_manager(libvlc_media_list_player_t * p_mlp);
-
-/**
- * Replace media player in media_list_player with this instance.
- *
- * \param p_mlp media list player instance
- * \param p_mi media player instance
- */
-LIBVLC_API void
-    libvlc_media_list_player_set_media_player(
-                                     libvlc_media_list_player_t * p_mlp,
-                                     libvlc_media_player_t * p_mi );
-
-/**
  * Get media player of the media_list_player instance.
  *
  * \param p_mlp media list player instance
  * \return media player instance
  * \note the caller is responsible for releasing the returned instance
-         with libvlc_media_list_player_set_media_player().
+         with libvlc_media_player_release().
  */
 LIBVLC_API libvlc_media_player_t *
     libvlc_media_list_player_get_media_player(libvlc_media_list_player_t * p_mlp);

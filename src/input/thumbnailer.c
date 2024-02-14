@@ -281,7 +281,7 @@ vlc_thumbnailer_RequestByPos( vlc_thumbnailer_t *thumbnailer,
                          userdata);
 }
 
-void vlc_thumbnailer_DestroyRequest( vlc_thumbnailer_t* thumbnailer, task_t* task )
+void vlc_thumbnailer_CancelRequest( vlc_thumbnailer_t* thumbnailer, task_t* task )
 {
     bool canceled = vlc_executor_Cancel(thumbnailer->executor, &task->runnable);
     if (canceled)
@@ -293,8 +293,11 @@ void vlc_thumbnailer_DestroyRequest( vlc_thumbnailer_t* thumbnailer, task_t* tas
     }
     else
         Interrupt(task);
+}
 
-    TaskRelease(task);
+void vlc_thumbnailer_request_Destroy( vlc_thumbnailer_request_t* request )
+{
+    TaskRelease(request);
 }
 
 vlc_thumbnailer_t *vlc_thumbnailer_Create( vlc_object_t* parent)
