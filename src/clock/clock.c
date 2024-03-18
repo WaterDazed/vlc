@@ -104,7 +104,7 @@ struct vlc_clock_ops
     void (*reset)(vlc_clock_t *clock);
     vlc_tick_t (*set_delay)(vlc_clock_t *clock, vlc_tick_t delay);
     vlc_tick_t (*to_system)(vlc_clock_t *clock, struct vlc_clock_context *ctx,
-                            vlc_tick_t system_now, vlc_tick_t ts, double rate);
+                            vlc_tick_t ts, double rate);
 
     /**
      * Signal the clock bus that this clock is ready to be started.
@@ -305,9 +305,10 @@ context_get_closest(vlc_clock_t *clock, struct vlc_clock_context *ctx,
                     struct vlc_clock_context **closest_ctx,
                     vlc_tick_t *closest_diff)
 {
+    (void)system_now;
     /* Find the context which has the smallest gap with the last conversion. */
     vlc_tick_t converted =
-        clock->ops->to_system(clock, ctx, system_now, ts, 1.0);
+        clock->ops->to_system(clock, ctx, ts, 1.0);
 
     vlc_tick_t diff = converted - clock->last_conversion;
 
@@ -646,11 +647,10 @@ vlc_clock_monotonic_to_system(vlc_clock_t *clock, struct vlc_clock_context *ctx,
 
 static vlc_tick_t vlc_clock_slave_to_system(vlc_clock_t *clock,
                                             struct vlc_clock_context *ctx,
-                                            vlc_tick_t now, vlc_tick_t ts,
+                                            vlc_tick_t ts,
                                             double rate)
 {
     vlc_clock_main_t *main_clock = clock->owner;
-    (void)now;
 
     if (ctx->start_time.system == VLC_TICK_INVALID)
         return VLC_TICK_INVALID;
@@ -668,11 +668,9 @@ static vlc_tick_t vlc_clock_slave_to_system(vlc_clock_t *clock,
 
 static vlc_tick_t vlc_clock_master_to_system(vlc_clock_t *clock,
                                              struct vlc_clock_context *ctx,
-                                             vlc_tick_t now, vlc_tick_t ts,
+                                             vlc_tick_t ts,
                                              double rate)
 {
-    (void)now;
-
     if (ctx->start_time.system == VLC_TICK_INVALID)
         return VLC_TICK_INVALID;
 
@@ -703,7 +701,7 @@ static vlc_tick_t vlc_clock_slave_update(vlc_clock_t *clock,
         return VLC_TICK_MAX;
     }
 
-    vlc_tick_t computed = clock->ops->to_system(clock, ctx, system_now, ts, rate);
+    vlc_tick_t computed = clock->ops->to_system(clock, ctx, ts, rate);
 
     vlc_tick_t drift = computed - system_now;
     vlc_clock_on_update(clock, computed, ts, drift, rate,
@@ -1072,6 +1070,7 @@ vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
                                      vlc_tick_t system_now, vlc_tick_t ts,
                                      double rate, uint32_t *clock_id)
 {
+    (void)system_now;
     AssertLocked(clock);
     struct vlc_clock_context *ctx =
         vlc_clock_get_context(clock, system_now, ts, false);
@@ -1079,7 +1078,7 @@ vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
         *clock_id = ctx->clock_id;
 
     clock->last_conversion =
-        clock->ops->to_system(clock, ctx, system_now, ts, rate);
+        clock->ops->to_system(clock, ctx, ts, rate);
     return clock->last_conversion;
 }
 
