@@ -975,11 +975,9 @@ static int InputThread_GetInputAttachments( decoder_t *p_dec,
     return VLC_SUCCESS;
 }
 
-static vlc_tick_t ModuleThread_GetDisplayDate( decoder_t *p_dec,
-                                       vlc_tick_t system_now, vlc_tick_t i_ts )
+static vlc_tick_t ModuleThread_GetDisplayDate(decoder_t *p_dec, vlc_tick_t i_ts)
 {
     vlc_input_decoder_t *p_owner = dec_get_owner( p_dec );
-    (void)system_now;
 
     vlc_fifo_Lock(p_owner->p_fifo);
     if( p_owner->b_waiting || p_owner->paused )
