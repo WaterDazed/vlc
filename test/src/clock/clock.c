@@ -328,6 +328,9 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
     assert(mainclk != NULL);
 
     vlc_clock_main_Lock(mainclk);
+    vlc_clock_t *input = vlc_clock_main_CreateInputSlave(mainclk);
+    assert(input != NULL);
+
     vlc_clock_t *master = vlc_clock_main_CreateMaster(mainclk, scenario->name,
                                                       NULL, NULL);
     assert(master != NULL);
@@ -352,6 +355,11 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
         system_start = scenario->system_start;
         stream_start = scenario->stream_start;
     }
+
+    vlc_clock_Start(input, system_start, stream_start);
+
+    if (scenario->type == CLOCK_SCENARIO_UPDATE)
+        vlc_clock_Start(master, system_start, stream_start);
     vlc_clock_main_Unlock(mainclk);
 
     const struct clock_ctx ctx = {
@@ -418,6 +426,7 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
     }
 
 end:
+    vlc_clock_Delete(input);
     vlc_clock_Delete(master);
     vlc_clock_Delete(slave);
     free(slave_name);
@@ -678,6 +687,7 @@ static void pause_common(const struct clock_ctx *ctx, vlc_clock_t *updater)
     vlc_tick_t system = system_start;
 
     vlc_clock_Lock(updater);
+    vlc_clock_Start(updater, ctx->system_start, ctx->stream_start);
     vlc_clock_Update(updater, system, ctx->stream_start, 1.0f);
     vlc_clock_Unlock(updater);
 
@@ -723,6 +733,7 @@ static void convert_paused_common(const struct clock_ctx *ctx, vlc_clock_t *upda
     vlc_tick_t system = system_start;
 
     vlc_clock_Lock(updater);
+    vlc_clock_Start(updater, ctx->system_start, ctx->stream_start);
     vlc_clock_Update(updater, ctx->system_start, ctx->stream_start, 1.0f);
     vlc_clock_Unlock(updater);
 
