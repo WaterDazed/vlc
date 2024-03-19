@@ -356,7 +356,7 @@ static int DecodeBlock( decoder_t *p_dec, block_t *p_block )
         p_block->i_buffer = samples * (p_sys->framebits / 8);
     }
 
-    p_block->i_pts = date_Get( &p_sys->end_date );
+    p_block->i_pts = p_block->i_dts = date_Get( &p_sys->end_date );
     p_block->i_length = date_Increment( &p_sys->end_date, samples )
                       - p_block->i_pts;
     decoder_QueueAudio( p_dec, p_block );
