@@ -817,10 +817,7 @@ vlc_clock_output_start(vlc_clock_t *clock,
         pcr_delay = 0;
     }
 
-    const vlc_tick_t input_delay = main_clock->input_dejitter + pcr_delay;
-
-    const vlc_tick_t delay =
-        __MAX(input_delay, main_clock->output_dejitter);
+    const vlc_tick_t delay = __MAX(pcr_delay, main_clock->output_dejitter);
 
     main_clock->wait_sync_ref_priority = clock->priority;
     context->wait_sync_ref = clock_point_Create(start_date + delay, first_ts);
