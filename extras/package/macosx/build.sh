@@ -153,13 +153,19 @@ info "Building in \"$builddir\""
 #
 
 info "Building building tools"
-spushd "${vlcroot}/extras/tools"
-./bootstrap > $out
+TOOLS_BUILDDIR="${TOOLS_BUILDDIR:=./extras/tools}"
+mkdir -p "$TOOLS_BUILDDIR"
+TOOLS_BUILDDIR="$(cd $TOOLS_BUILDDIR && pwd -P)"
+info "Building tools in \"$TOOLS_BUILDDIR\""
+spushd $TOOLS_BUILDDIR
+"${vlcroot}/extras/tools/bootstrap" > $out
 if [ "$REBUILD" = "yes" ]; then
     make clean
-    ./bootstrap > $out
+    "${vlcroot}/extras/tools/bootstrap" > $out
 fi
 make > $out
+export VLC_TOOLS="$TOOLS_BUILDDIR/build/"
+export PATH="$VLC_TOOLS/bin:$PATH"
 spopd
 
 #
