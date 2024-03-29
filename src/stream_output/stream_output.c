@@ -794,7 +794,8 @@ void sout_ClockMainSetFirstPcr( vlc_clock_main_t *main_clock, vlc_tick_t pcr )
 {
     vlc_clock_main_Lock( main_clock );
     vlc_clock_main_Reset( main_clock );
-    vlc_clock_main_SetFirstPcr( main_clock, vlc_tick_now(), pcr );
+    // TODO
+    // vlc_clock_main_SetFirstPcr( main_clock, vlc_tick_now(), pcr );
     vlc_clock_main_Unlock( main_clock );
 }
 
