@@ -82,7 +82,6 @@ static int subpicture_Control(vout_display_t *vd, int query)
         return VLC_SUCCESS;
     }
 
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
     case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
         return VLC_SUCCESS;
     default:
@@ -395,7 +394,6 @@ static int Control(vout_display_t *vd, int query)
 
     switch (query) {
     case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
     {
         msg_Dbg(vd, "change source crop: %ux%u @ %ux%u aspect: %u/%u",
                 vd->source->i_x_offset, vd->source->i_y_offset,

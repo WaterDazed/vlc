@@ -519,7 +519,7 @@ static int vout_SetSourceAspect(vout_display_t *vd,
                                 unsigned sar_num, unsigned sar_den)
 {
     vout_display_priv_t *osys = container_of(vd, vout_display_priv_t, display);
-    int err1, err2 = VLC_SUCCESS;
+    int err1 = VLC_SUCCESS;
 
     if (sar_num > 0 && sar_den > 0) {
         osys->source.i_sar_num = sar_num;
@@ -528,11 +528,9 @@ static int vout_SetSourceAspect(vout_display_t *vd,
 
     bool place_changed = PlaceVideoInDisplay(osys);
 
-    err1 = vout_display_Control(vd, VOUT_DISPLAY_CHANGE_SOURCE_ASPECT);
-
     /* If a crop ratio is requested, recompute the parameters */
     if (osys->crop.mode != VOUT_CROP_NONE)
-        err2 = vout_UpdateSourceCrop(vd);
+        err1 = vout_UpdateSourceCrop(vd);
 
     if (place_changed)
     {
@@ -541,10 +539,7 @@ static int vout_SetSourceAspect(vout_display_t *vd,
             err1 = res2;
     }
 
-    if (err1 != VLC_SUCCESS)
-        return err1;
-
-    return err2;
+    return err1;
 }
 
 void VoutFixFormatAR(video_format_t *fmt)
