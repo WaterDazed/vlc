@@ -1744,6 +1744,14 @@ vlc_player_IsTrackCategoryEnabled(vlc_player_t *player,
     return var_GetBool(player, cat2vars[cat].var);
 }
 
+void vlc_player_SetSpeechToTextEnabled(vlc_player_t *player, bool enabled)
+{
+    struct vlc_player_input *input = vlc_player_get_input_locked(player);
+
+    input_ControlPushHelper(input->thread, INPUT_CONTROL_SET_STT_ENABLED,
+                            &(vlc_value_t){ .b_bool = enabled });
+}
+
 void
 vlc_player_SetSubtitleTextScale(vlc_player_t *player, unsigned scale)
 {

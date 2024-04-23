@@ -1546,7 +1546,6 @@ VLC_API unsigned
 vlc_player_SelectEsId(vlc_player_t *player, vlc_es_id_t *es_id,
                       enum vlc_player_select_policy policy);
 
-
 /**
  * Helper to select a track
  */
@@ -1776,6 +1775,15 @@ vlc_player_SetTrackCategoryEnabled(vlc_player_t *player,
 VLC_API bool
 vlc_player_IsTrackCategoryEnabled(vlc_player_t *player,
                                   enum es_format_category_e cat);
+
+/**
+ * Enable or Disable the Speech To Text capability
+ *
+ * @param player locked player instance
+ * @param enabled the stt status
+ */
+VLC_API void vlc_player_SetSpeechToTextEnabled(vlc_player_t *player,
+                                               bool enabled);
 
 /**
  * Helper to enable or disable video tracks

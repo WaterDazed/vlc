@@ -25,6 +25,7 @@
 
 #include <vlc_common.h>
 #include <vlc_mouse.h>
+#include <vlc_stt.h>
 #include "../video_output/vout_internal.h"
 
 enum input_resource_vout_state
@@ -95,5 +96,24 @@ void input_resource_StopFreeVout( input_resource_t * );
 input_resource_t *input_resource_Hold( input_resource_t * );
 
 void input_resource_ResetAout( input_resource_t * );
+
+/**
+ * Call the vlc_stt_loader_callbacks when the ctx is loaded or set vlc_stt_ctx
+ * if it's already loaded.
+ *
+ * @param       resource    input_resource struture.
+ * @param       events      stt callbacks structure.
+ * @param       events_data owner data.
+ * @param       ctx         struct to fill with ctx and info.
+ * @param [out] out_delay   set to the requested pts delay.
+ *
+ * @return      0 if the ctx is loaded and set ctx, -EBUSY if the ctx is not
+ *              loaded and the callback will be called when it's loaded or 
+ *              return < 0 in case of any other error.
+ */
+int input_resource_GetSttCtx(input_resource_t *resource,
+                             const struct vlc_stt_ctx_callbacks *events,
+                             void *events_data, struct vlc_stt_ctx *ctx,
+                             vlc_tick_t *out_delay);
 
 #endif

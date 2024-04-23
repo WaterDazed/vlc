@@ -36,10 +36,12 @@
 #include <vlc_spu.h>
 #include <vlc_aout.h>
 #include <vlc_sout.h>
+#include <vlc_modules.h>
 #include "../libvlc.h"
 #include "../stream_output/stream_output.h"
 #include "../audio_output/aout_internal.h"
 #include "../video_output/vout_internal.h"
+#include "../misc/stt.h"
 #include "input_interface.h"
 #include "event.h"
 #include "resource.h"
@@ -84,6 +86,17 @@ struct input_resource_t
 
     bool            b_aout_busy;
     audio_output_t *p_aout;
+
+    /* Stt */
+    struct {
+        const struct vlc_stt_ctx_callbacks *events;
+        void *events_data;
+
+        vlc_stt_loader_t *loader;
+        struct vlc_stt_ctx ctx;
+        vlc_tick_t pts_delay;
+        bool waiting;
+    } stt;
 };
 
 #define resource_GetFirstVoutRsc(resource) \
@@ -302,12 +315,35 @@ void input_resource_ResetAout( input_resource_t *p_resource )
         aout_Release( p_aout );
 }
 
+/* Stt callback */
+static int input_resource_GetSttCtxCallback(const struct vlc_stt_ctx *ctx,
+                                            void *data)
+{
+    input_resource_t *resource = data;
+
+    vlc_mutex_lock(&resource->lock);
+
+    resource->stt.ctx = *ctx;
+    resource->stt.waiting = false;
+
+    int ret = resource->stt.events->loaded(&resource->stt.ctx,
+                                           resource->stt.events_data);
+    vlc_mutex_unlock(&resource->lock);
+    return ret;
+}
+
+
 /* Common */
 input_resource_t *input_resource_New( vlc_object_t *p_parent )
 {
     input_resource_t *p_resource = calloc( 1, sizeof(*p_resource) );
     if( !p_resource )
         return NULL;
+
+    p_resource->stt.loader = NULL;
+    p_resource->stt.ctx.name = NULL;
+    p_resource->stt.ctx.data = NULL;
+
 
     p_resource->p_vout_dummy = vout_CreateDummy(p_parent);
     if( !p_resource->p_vout_dummy )
@@ -336,6 +372,11 @@ void input_resource_Release( input_resource_t *p_resource )
         aout_Release( p_resource->p_aout );
 
     vout_Release( p_resource->p_vout_dummy );
+    if (p_resource->stt.loader != NULL) {
+        vlc_stt_loader_FreeCtx(p_resource->stt.loader, p_resource->stt.ctx);
+        vlc_stt_loader_Delete(p_resource->stt.loader);
+    }
+
     free( p_resource );
 }
 
@@ -644,4 +685,44 @@ void input_resource_TerminateSout( input_resource_t *p_resource )
     vlc_mutex_lock( &p_resource->lock );
     DestroySout(p_resource);
     vlc_mutex_unlock( &p_resource->lock );
+}
+
+int input_resource_GetSttCtx(input_resource_t *resource,
+                             const struct vlc_stt_ctx_callbacks *events,
+                             void *events_data, struct vlc_stt_ctx *ctx,
+                             vlc_tick_t *out_delay)
+{
+    vlc_mutex_lock(&resource->lock);
+
+    if (resource->stt.waiting) {
+        vlc_mutex_unlock(&resource->lock);
+        return -EBUSY;
+    }
+
+    if (resource->stt.loader == NULL) {
+        /* the ctx is not loaded */
+        /* set callback and data */
+        resource->stt.events = events;
+        resource->stt.events_data = events_data;
+
+        static const struct vlc_stt_ctx_callbacks cbs = {
+            .loaded = input_resource_GetSttCtxCallback,
+        };
+        resource->stt.loader = vlc_stt_loader_Create(resource->p_parent,
+                                                     &cbs, resource,
+                                                     out_delay);
+        if (resource->stt.loader == NULL) {
+            vlc_mutex_unlock(&resource->lock);
+            return VLC_EGENERIC;
+        }
+        resource->stt.waiting = true;
+        resource->stt.pts_delay = *out_delay;
+        vlc_mutex_unlock(&resource->lock);
+        return -EBUSY;
+    } else {
+        *ctx = resource->stt.ctx;
+        *out_delay = resource->stt.pts_delay;
+        vlc_mutex_unlock(&resource->lock);
+        return 0;
+    }
 }

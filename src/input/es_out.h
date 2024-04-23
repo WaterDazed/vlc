@@ -59,6 +59,8 @@ enum es_out_query_private_e
     /* Start all ES from the context returned by ES_OUT_PRIV_STOP_ALL_ES */
     ES_OUT_PRIV_START_ALL_ES,                       /* arg1=vlc_es_id_t ** */
 
+    ES_OUT_PRIV_SET_STT_ENABLED, /* arg1= vlc_es_id_t* arg2= bool, res=can fail */
+
     /* Get buffering state */
     ES_OUT_PRIV_GET_BUFFERING,                      /* arg1=bool*               res=cannot fail */
 
@@ -240,6 +242,11 @@ static inline int es_out_SetVbiTransparency( es_out_t *p_out, vlc_es_id_t *id,
 {
     return es_out_PrivControl( p_out, ES_OUT_PRIV_SET_VBI_TRANSPARENCY, id,
                                enabled );
+}
+
+static inline int es_out_SetSttEnabled(es_out_t *out, bool enabled)
+{
+    return es_out_PrivControl(out, ES_OUT_PRIV_SET_STT_ENABLED, enabled);
 }
 
 es_out_t  *input_EsOutNew( input_thread_t *, input_source_t *main_source, float rate,

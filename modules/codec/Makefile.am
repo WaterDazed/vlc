@@ -40,6 +40,17 @@ libaraw_plugin_la_SOURCES = codec/araw.c
 libaraw_plugin_la_LIBADD = $(LIBM)
 codec_LTLIBRARIES += libaraw_plugin.la
 
+libwhisper_plugin_la_SOURCES = codec/stt_whisper.c
+libwhisper_plugin_la_LIBADD = $(WHISPER_LIBS) $(LIBM)
+libwhisper_plugin_la_CFLAGS = $(AM_CFLAGS) $(WHISPER_CFLAGS)
+if HAVE_GCRYPT
+libwhisper_plugin_la_LIBADD += $(GCRYPT_LIBS)
+libwhisper_plugin_la_CFLAGS += $(GCRYPT_CFLAGS)
+endif
+if HAVE_WHISPER
+codec_LTLIBRARIES += libwhisper_plugin.la
+endif
+
 libfaad_plugin_la_SOURCES = codec/faad.c packetizer/mpeg4audio.h
 libfaad_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) $(CFLAGS_faad)
 libfaad_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(codecdir)'

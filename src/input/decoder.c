@@ -45,6 +45,7 @@
 #include <vlc_picture_pool.h>
 #include <vlc_tracer.h>
 #include <vlc_list.h>
+#include <vlc_stt.h>
 
 #include "audio_output/aout_internal.h"
 #include "stream_output/stream_output.h"
@@ -1219,6 +1220,13 @@ static void GetCcChannels(vlc_input_decoder_t *owner, size_t *max_channels,
     }
 }
 
+static bool SubDecoderIsStt(vlc_input_decoder_t *subdec)
+{
+    return subdec->dec.fmt_in->i_cat == SPU_ES &&
+           subdec->dec.fmt_in->i_extra == sizeof(vlc_stt_extra_t) &&
+           subdec->dec.fmt_in->i_codec == VLC_CODEC_STT;
+}
+
 static bool SubDecoderIsCc(vlc_input_decoder_t *subdec)
 {
     return subdec->dec.fmt_in->i_cat == SPU_ES &&
@@ -1511,6 +1519,21 @@ static int ModuleThread_PlayAudio( vlc_input_decoder_t *p_owner, vlc_frame_t *p_
         block_Release(p_audio);
         return ret;
     }
+
+    vlc_mutex_lock(&p_owner->subdecs.lock);
+
+    vlc_input_decoder_t *it;
+    vlc_list_foreach(it, &p_owner->subdecs.list, node) {
+        if (!SubDecoderIsStt(it)) {
+            continue;
+        }
+        vlc_frame_t *dup = vlc_frame_Duplicate(p_audio);
+        if (dup != NULL) {
+            vlc_fifo_Put(it->p_fifo, dup);
+        }
+        break;
+    }
+    vlc_mutex_unlock(&p_owner->subdecs.lock);
 
     int status = vlc_aout_stream_Play( p_astream, p_audio );
     if( status == AOUT_DEC_CHANGED )

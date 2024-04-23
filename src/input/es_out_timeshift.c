@@ -781,6 +781,7 @@ static int PrivControlLocked( es_out_t *p_tsout, input_source_t *in, int i_query
     case ES_OUT_PRIV_SET_ES_LIST:
     case ES_OUT_PRIV_STOP_ALL_ES:
     case ES_OUT_PRIV_START_ALL_ES:
+    case ES_OUT_PRIV_SET_STT_ENABLED:
     case ES_OUT_PRIV_SET_ES_DELAY:
     case ES_OUT_PRIV_SET_DELAY:
     case ES_OUT_PRIV_SET_RECORD_STATE:

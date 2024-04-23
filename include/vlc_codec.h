@@ -30,6 +30,7 @@
 #include <vlc_window.h>
 #include <vlc_picture.h>
 #include <vlc_subpicture.h>
+#include <vlc_stt.h>
 
 /**
  * \defgroup decoder Decoder
@@ -207,6 +208,24 @@ struct decoder_cc_desc_t
     uint8_t i_608_channels;  /* 608 channels bitmap */
     uint64_t i_708_channels; /* 708 */
     int i_reorder_depth;     /* reorder depth, -1 for no reorder, 0 for old P/B flag based */
+};
+
+/**
+ * Structure used to transport the audio format, the name of stt module and 
+ * the model loaded through the extra pointer in es_format.
+ */
+typedef struct vlc_stt_extra vlc_stt_extra_t;
+
+struct vlc_stt_extra {
+    /**
+     * Audio format in input.
+     */
+    audio_format_t fmt;
+
+    /**
+     * Struct storing stt context information and data
+     */
+    struct vlc_stt_ctx ctx;
 };
 
 /**
