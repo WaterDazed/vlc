@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = []
+members = ["wasm-rs"]
 
 [workspace.dependencies]
 vlcrs-core = { path = "../src/rust/vlcrs-core" }
