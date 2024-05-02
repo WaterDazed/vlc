@@ -1805,7 +1805,7 @@ error:
  * It is used for direct rendering as well as to get the right PTS for each
  * decoded picture (even in indirect rendering mode).
  */
-static int lavc_GetFrame(struct AVCodecContext *ctx, AVFrame *frame, int flags)
+static int lavc_GetFrame(struct AVCodecContext *ctx, AVFrame *frame, int flagsin)
 {
     decoder_t *dec = ctx->opaque;
     decoder_sys_t *sys = dec->p_sys;
@@ -1817,6 +1817,10 @@ static int lavc_GetFrame(struct AVCodecContext *ctx, AVFrame *frame, int flags)
         frame->buf[i] = NULL;
     }
     frame->opaque = NULL;
+
+    int flags = flagsin;
+    if(flags & AV_GET_BUFFER_FLAG_REF)
+        flags |= AV_BUFFER_FLAG_READONLY;
 
     vlc_mutex_lock(&sys->lock);
     if (sys->p_va == NULL)
