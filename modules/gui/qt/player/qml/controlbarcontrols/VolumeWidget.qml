@@ -279,32 +279,12 @@ T.Pane {
                 }
 
                 onWheel: (wheel) => {
-                    let delta = 0, fineControl = false
-
-                    if ((Math.abs(wheel.pixelDelta.x) % 120 > 0) || (Math.abs(wheel.pixelDelta.y) % 120 > 0)) {
-                        if (Math.abs(wheel.pixelDelta.x) > Math.abs(wheel.pixelDelta.y))
-                            delta = wheel.pixelDelta.x
+                    Helpers.adjustmentFromWheelEvent(wheel, (fine, delta) => {
+                        if (fine)
+                            volControl.value += 0.001 * delta
                         else
-                            delta = wheel.pixelDelta.y
-                        fineControl = true
-                    }
-                    else if (wheel.angleDelta.x)
-                        delta = wheel.angleDelta.x
-                    else if (wheel.angleDelta.y)
-                        delta = wheel.angleDelta.y
-
-                    if (delta === 0)
-                        return
-
-                    if (wheel.inverted)
-                        delta = -delta
-
-                    if (fineControl)
-                        volControl.value += 0.001 * delta
-                    else
-                        Helpers.applyVolume(Player, delta)
-
-                    wheel.accepted = true
+                            Helpers.applyVolume(Player, delta)
+                    }, true)
                 }
 
                 function adjustVolume(mouse) {
