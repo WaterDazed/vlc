@@ -1672,6 +1672,9 @@ SharedAOut PlayerController::getAout()
 void PlayerController::setVolume(float volume)
 {
     Q_D(PlayerController);
+    if (qFuzzyCompare(d->m_volume, volume))
+        return;
+
     vlc_player_locker lock{ d->m_player };
     vlc_player_aout_SetVolume( d->m_player, volume );
 }
