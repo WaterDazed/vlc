@@ -38,6 +38,8 @@
 
 #import "windows/controlsbar/VLCControlsBarCommon.h"
 
+#import "windows/video/VLCMainVideoViewOverlayView.h"
+
 @interface VLCDetachedAudioWindow()
 {
     VLCPlayerController *_playerController;
@@ -49,15 +51,29 @@
 - (void)awakeFromNib
 {
     self.title = @"";
-    self.imageView.cropsImagesToRoundedCorners = NO;
 
     _playerController = VLCMain.sharedInstance.playlistController.playerController;
-    VLCTrackingView *trackingView = self.contentView;
-    trackingView.viewToHide = self.wrapperView;
-    trackingView.animatesTransition = YES;
 
-    NSNotificationCenter *notificationCenter = NSNotificationCenter.defaultCenter;
-    [notificationCenter addObserver:self selector:@selector(inputItemChanged:) name:VLCPlayerCurrentMediaItemChanged object:nil];
+    VLCTrackingView * const trackingView = self.contentView;
+    trackingView.viewToHide = self.overlayView;
+    trackingView.animatesTransition = YES;
+    trackingView.mouseEnteredBlock = ^{
+        self.styleMask |= NSWindowStyleMaskTitled;
+    };
+    trackingView.mouseExitedBlock = ^{
+        self.styleMask &= ~NSWindowStyleMaskTitled;
+    };
+
+    self.overlayView.drawGradientForTopControls = YES;
+    self.overlayView.darkestGradientColor = [NSColor colorWithCalibratedWhite:0.0 alpha:0.8];
+
+    self.bottomBarView.drawBorder = NO;
+
+    NSNotificationCenter * const notificationCenter = NSNotificationCenter.defaultCenter;
+    [notificationCenter addObserver:self
+                           selector:@selector(inputItemChanged:)
+                               name:VLCPlayerCurrentMediaItemChanged
+                             object:nil];
 
     [self inputItemChanged:nil];
 }
@@ -69,7 +85,7 @@
 
 - (void)inputItemChanged:(NSNotification *)aNotification
 {
-    VLCInputItem *currentInput = _playerController.currentMedia;
+    VLCInputItem * const currentInput = _playerController.currentMedia;
     if (currentInput) {
         [self.imageView setImageURL:currentInput.artworkURL placeholderImage:[NSImage imageNamed:@"noart.png"]];
     } else {
