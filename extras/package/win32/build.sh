@@ -31,6 +31,7 @@ OPTIONS:
    -d            Create PDB files during the build
    -D <win_path> Create PDB files during the build, map the VLC sources to <win_path>
                  e.g.: -D c:/sources/vlc
+   -t            Link Time Optimization
    -x            Add extra checks when compiling
    -S <sdkver>   Use maximum Windows API version (0x0601000 by default)
    -u            Use the Universal C Runtime (instead of msvcrt)
@@ -46,7 +47,7 @@ EOF
 }
 
 ARCH="x86_64"
-while getopts "hra:pcli:W:sb:dD:xS:uwzo:mg:" OPTION
+while getopts "hra:pcli:W:sb:dD:txS:uwzo:mg:" OPTION
 do
      case $OPTION in
          r)
@@ -83,6 +84,9 @@ do
          D)
              WITH_PDB="yes"
              PDB_MAP=$OPTARG
+         ;;
+         t)
+             WITH_LTO="yes"
          ;;
          x)
              EXTRA_CHECKS="yes"
@@ -351,6 +355,9 @@ if [ ! -z "$WINSTORE" ]; then
     # we don't use a special toolchain to trigger the detection in contribs so force it manually
     export HAVE_WINSTORE=1
 fi
+if [ -n "$WITH_LTO" ]; then
+    CONTRIBFLAGS="$CONTRIBFLAGS --enable-lto"
+fi
 
 if [ "$COMPILING_WITH_CLANG" -gt 0 ]; then
     # avoid using gcc-ar with the clang toolchain, if both are installed
@@ -423,6 +430,10 @@ if [ ! -z "$WITH_PDB" ]; then
 fi
 if [ ! -z "$EXTRA_CHECKS" ]; then
     CONFIGFLAGS="$CONFIGFLAGS --enable-extra-checks"
+fi
+if [ -n "$WITH_LTO" ]; then
+    CONFIGFLAGS="$CONFIGFLAGS --enable-lto"
+    MCONFIGFLAGS="$MCONFIGFLAGS -Db_lto=true"
 fi
 if [ ! -z "$DISABLEGUI" ]; then
     CONFIGFLAGS="$CONFIGFLAGS --disable-vlc --disable-qt --disable-skins2"
