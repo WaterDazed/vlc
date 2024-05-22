@@ -470,6 +470,14 @@ AS_IF([test "${SYS}" = "mingw32"],[
   AC_SUBST([LIBCOMCXXFLAGS])
   ])
 
+AC_ARG_ENABLE([lto],
+     AS_HELP_STRING([--enable-lto],
+                    [Use Link Time Optimization (default off)]))
+AS_IF([test "${enable_lto}" = "yes"], [
+    AX_APPEND_FLAG([-flto],[CFLAGS])
+    AX_APPEND_FLAG([-flto],[CXXFLAGS])
+],[])
+
 vlc_build_pdb=0
 AC_ARG_ENABLE([pdb],
      AS_HELP_STRING([--enable-pdb],
