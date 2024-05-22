@@ -110,7 +110,7 @@ QTBASE_NATIVE_CONFIG := -DQT_BUILD_EXAMPLES=FALSE -DQT_BUILD_TESTS=FALSE -DFEATU
 	mkdir -p $(BUILD_DIR)
 
 	# Configure qt, build and run cmake
-	+cd $(BUILD_DIR) && ../configure $(QTBASE_PLATFORM) $(QTBASE_CONFIG)
+	+cd $(BUILD_DIR) && $(HOSTVARS_CMAKE) ../configure $(QTBASE_PLATFORM) $(QTBASE_CONFIG)
 
 	# Build
 	+$(CMAKEBUILD)
