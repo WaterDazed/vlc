@@ -157,7 +157,7 @@ win32-llvm:
         name: $VLC_WIN_LLVM_MSVCRT_IMAGE
     variables:
         <<: *variables-win32
-        LIBVLC_EXTRA_BUILD_FLAGS: -x
+        LIBVLC_EXTRA_BUILD_FLAGS: -x -t
 
 win64:
     extends: .win-common
@@ -165,13 +165,15 @@ win64:
         name: $VLC_WIN64_IMAGE
     variables:
         <<: *variables-win64
-        LIBVLC_EXTRA_BUILD_FLAGS: -x
+        LIBVLC_EXTRA_BUILD_FLAGS: -x -t
 
 win64-llvm:
     extends: .win-common
     image:
         name: $VLC_WIN_LLVM_MSVCRT_IMAGE
-    variables: *variables-win64
+    variables:
+        <<: *variables-win64
+        LIBVLC_EXTRA_BUILD_FLAGS: -x -t
 
 win64-arm-llvm:
     extends: .win-common
@@ -180,7 +182,8 @@ win64-arm-llvm:
     variables:
         <<: *variables-win64-arm
         VLCARCH: winarm64-ucrt
-        UWP_EXTRA_BUILD_FLAGS: -u -x -S 0x0A000006
+        LIBVLC_EXTRA_BUILD_FLAGS: -x -t
+        UWP_EXTRA_BUILD_FLAGS: -u -S 0x0A000006
         # Clang <= 15 produces incorrect unwind info for code with
         # branch protection enabled on Windows.
         CONFIGFLAGS: --disable-branch-protection
@@ -192,8 +195,8 @@ uwp64-libvlc-llvm:
     variables:
         <<: *variables-win64
         VLCARCH: win64-uwp
-        LIBVLC_EXTRA_BUILD_FLAGS: -z
-        UWP_EXTRA_BUILD_FLAGS: -u -w -x -S 0x0A000007
+        LIBVLC_EXTRA_BUILD_FLAGS: -z -x -t
+        UWP_EXTRA_BUILD_FLAGS: -u -w -S 0x0A000007
 
 .nightly-win-common:
     extends: .win-common
