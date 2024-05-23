@@ -27,12 +27,13 @@
 # include <vlc_plugin.h>
 
 struct vlc_param;
+struct module_t;
 
 /** VLC plugin */
 typedef struct vlc_plugin_t
 {
     struct vlc_plugin_t *next;
-    module_t *module;
+    struct module_t *module;
     unsigned modules_count;
 
     const char *textdomain; /**< gettext domain (or NULL) */
