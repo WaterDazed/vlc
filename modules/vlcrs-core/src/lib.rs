@@ -9,6 +9,7 @@
 //! then do so first instead of bypassing this crate.
 
 pub mod error;
+pub mod extension;
 pub mod input_item;
 pub mod module;
 pub mod object;
