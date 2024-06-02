@@ -243,6 +243,10 @@ impl InputItem {
         .map(InputItem)
     }
 
+    pub(crate) unsafe fn from_ptr(ptr: NonNull<input_item_t>) -> InputItem {
+        InputItem(ptr)
+    }
+
     /// Add an option
     #[doc(alias = "input_item_AddOption")]
     pub fn add_option(&mut self, option: &str, flag: Flag) -> Result<()> {
