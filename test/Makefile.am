@@ -73,6 +73,7 @@ check_PROGRAMS = \
 	test_modules_packetizer_helpers \
 	test_modules_packetizer_hxxx \
 	test_modules_packetizer_h264 \
+	test_modules_packetizer_h266 \
 	test_modules_packetizer_hevc \
 	test_modules_packetizer_mpegvideo \
 	test_modules_codec_hxxx_helper \
@@ -335,6 +336,9 @@ test_modules_packetizer_hxxx_LDADD = $(LIBVLCCORE) $(LIBVLC)
 test_modules_packetizer_h264_SOURCES = modules/packetizer/h264.c \
 				modules/packetizer/packetizer.h
 test_modules_packetizer_h264_LDADD = $(LIBVLCCORE) $(LIBVLC)
+test_modules_packetizer_h266_SOURCES = modules/packetizer/h266.c \
+				modules/packetizer/packetizer.h
+test_modules_packetizer_h266_LDADD = $(LIBVLCCORE) $(LIBVLC)
 test_modules_packetizer_hevc_SOURCES = modules/packetizer/hevc.c \
 				modules/packetizer/packetizer.h
 test_modules_packetizer_hevc_LDADD = $(LIBVLCCORE) $(LIBVLC)
