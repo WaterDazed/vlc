@@ -985,6 +985,7 @@ static vlc_tick_t CountTimeToDisplay(vout_thread_sys_t *vout, vlc_tick_t pic_pts
     const vlc_tick_t system_pts =
         vlc_clock_ConvertToSystem(sys->clock, system_now,
                                   pic_pts, sys->rate, &clock_id);
+    const bool paused = vlc_clock_IsPaused(sys->clock);
     vlc_clock_Unlock(sys->clock);
     if (clock_id != sys->clock_id)
     {
@@ -999,7 +1000,7 @@ static vlc_tick_t CountTimeToDisplay(vout_thread_sys_t *vout, vlc_tick_t pic_pts
          * deinterlace modules. */
         filter_chain_VideoFlush(sys->filter.chain_static);
     }
-    return pic_pts - system_pts;
+    return paused ? VLC_TICK_MAX : (pic_pts - system_pts);
 }
 
 /* */
