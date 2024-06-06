@@ -1,0 +1,47 @@
+From 102045028ee57967973ea90acac41eb747d3c601 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Martin=20Storsj=C3=B6?= <martin@martin.st>
+Date: Wed, 20 Dec 2023 14:39:50 +0200
+Subject: [PATCH] configure: Disable inline assembly with nonlocal labels with
+ LTO on Clang on Windows
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The file libavcodec/x86/mlpdsp_init.c uses inline assembly with
+nonlocal labels that are referenced outside of the assembly in C.
+This fails to link with LTO when built with Clang when targeting
+Windows.
+
+The root cause has been reported upstream at
+https://github.com/llvm/llvm-project/issues/76046.
+
+Fixes: https://trac.ffmpeg.org/ticket/10548
+Signed-off-by: Martin Storsjö <martin@martin.st>
+---
+ configure | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/configure b/configure
+index b86c1732c0..590d9c751c 100755
+--- a/configure
++++ b/configure
+@@ -7399,6 +7399,16 @@ if [ -n "$lto" ]; then
+     check_cflags  $lto
+     check_ldflags $lto $cpuflags
+     disable inline_asm_direct_symbol_refs
++    if test "$cc_type" = "clang"; then
++        # Clang's LTO fails on Windows, when there are references outside
++        # of inline assembly to nonlocal labels defined within inline assembly,
++        # see https://github.com/llvm/llvm-project/issues/76046.
++        case $target_os in
++        mingw32|win32)
++            disable inline_asm_nonlocal_labels
++            ;;
++        esac
++    fi
+ fi
+ 
+ enabled ftrapv && check_cflags -ftrapv
+-- 
+2.45.0.windows.1
+

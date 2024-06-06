@@ -76,6 +76,10 @@ else
 QTBASE_CONFIG += -release
 endif
 
+ifdef ENABLE_LTO
+QTBASE_CONFIG += -ltcg
+endif
+
 QTBASE_CONFIG += -static -opensource -confirm-license -no-pkg-config -no-openssl \
     -no-gif -no-dbus -no-feature-zstd -no-feature-concurrent -no-feature-androiddeployqt \
 	-no-feature-sql -no-feature-testlib -system-harfbuzz -system-libjpeg \
@@ -114,7 +118,7 @@ endif
 	mkdir -p $(BUILD_DIR)
 
 	# Configure qt, build and run cmake
-	+cd $(BUILD_DIR) && ../configure $(QTBASE_PLATFORM) $(QTBASE_CONFIG)
+	+cd $(BUILD_DIR) && $(HOSTVARS_CMAKE) ../configure $(QTBASE_PLATFORM) $(QTBASE_CONFIG)
 
 	# Build
 	+$(CMAKEBUILD)
