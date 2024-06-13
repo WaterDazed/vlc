@@ -48,13 +48,15 @@
 #include <vlc_dialog.h>
 #include <vlc_interface.h>
 
+#include "update.h"
+#ifndef USE_BCRYPT_CRYPTO
 #include <gcrypt.h>
 #include <vlc_gcrypt.h>
+#endif
 #ifdef _WIN32
 #include <windows.h>
 #include <shellapi.h>
 #endif
-#include "update.h"
 #include "../libvlc.h"
 
 /*****************************************************************************
@@ -113,7 +115,9 @@ update_t *update_New( vlc_object_t *p_this )
     p_update->p_check = NULL;
 
     p_update->p_pkey = NULL;
+#ifndef USE_BCRYPT_CRYPTO
     vlc_gcrypt_init();
+#endif
 
     return p_update;
 }
