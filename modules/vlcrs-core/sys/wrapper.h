@@ -23,6 +23,7 @@
 #include <vlc_url.h>
 #include <vlc_sout.h>
 #include <vlc_extensions.h>
+#include <vlc_configuration.h>
 
 #ifndef WITHOUT_CONSTS
 // HACK: Rust bindgen cannot generate bindings for complex #define but

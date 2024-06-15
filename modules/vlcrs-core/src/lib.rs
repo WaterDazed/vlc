@@ -8,6 +8,7 @@
 //! If you need a vlc core C API that is not ported or wrapped yet here,
 //! then do so first instead of bypassing this crate.
 
+pub mod configuration;
 pub mod error;
 pub mod extension;
 pub mod input_item;
