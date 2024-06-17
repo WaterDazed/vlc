@@ -281,7 +281,7 @@ static bool GetUpdateFile( update_t *p_update )
      * to authenticate it */
     signature_packet_t sign;
     if( download_signature( VLC_OBJECT( p_update->p_libvlc ), &sign,
-            UPDATE_VLC_STATUS_URL ) != VLC_SUCCESS )
+                            url ) != VLC_SUCCESS )
     {
         msg_Err( p_update->p_libvlc, "Couldn't download signature of status file" );
         goto error;
