@@ -45,7 +45,7 @@ struct SubmoduleInfo {
 
 struct ModuleInfo {
     type_: Ident,
-    category: Ident,
+    category: Option<Ident>,
     capability: CapabilityInfo,
     description: LitStr,
     help: Option<LitStr>,
@@ -197,10 +197,6 @@ impl Parse for ModuleInfo {
 
         let Some(capability) = capability else {
             return Err(input.error("missing `capability` key"));
-        };
-
-        let Some(category) = category else {
-            return Err(input.error("missing `category` key"));
         };
 
         let Some(description) = description else {
@@ -586,7 +582,7 @@ fn generate_module_code(module_info: &ModuleInfo) -> TokenStream2 {
         }
     });
 
-    let vlc_entry_config_subcategory = {
+    let vlc_entry_config_subcategory = category.as_ref().map(|category| {
         quote! {
             if unsafe {
                 vlc_set(
@@ -612,7 +608,7 @@ fn generate_module_code(module_info: &ModuleInfo) -> TokenStream2 {
                 return -1;
             }
         }
-    };
+    });
 
     let vlc_entry_config_params = params.as_ref().map(|params| {
         let params = params.params.iter().map(|param| {
