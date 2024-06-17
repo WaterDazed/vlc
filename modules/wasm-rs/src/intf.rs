@@ -6,6 +6,8 @@ use vlcrs_core::module::interface::ThisInterfaceThread;
 
 pub struct Wasm;
 
+pub struct WasmIntf;
+
 impl Module for Wasm {
     fn open<'a> (
         _this_interface: ThisInterfaceThread<'a>,

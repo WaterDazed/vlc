@@ -1,10 +1,10 @@
-mod intf;
 mod extension;
+mod intf;
 
 use vlcrs_core_macros::module;
 
 use crate::intf::Wasm;
-use crate::extension::WasmExtensionManager;
+use crate::extension::WasmExtensionModule;
 
 module! {
     type: Wasm,
@@ -15,9 +15,8 @@ module! {
     shortcuts: ["wasmintf"],
     submodules: [
         {
-            type: WasmExtensionManager,
-            capability: "extension" @ 1,
-            category: SUBCAT_INTERFACE_MAIN,
+            type: WasmExtensionModule,
+            capability: "extension" @ 2,
             description: "Wasm Extension",
             shortcuts: ["wasmextension"],
         }

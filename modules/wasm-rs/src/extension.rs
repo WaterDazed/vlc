@@ -10,9 +10,11 @@ use vlcrs_core::extension::{ExtensionManager, ExtensionManagerControl, Extension
 
 use vlcrs_core::input_item::InputItem;
 
+pub struct WasmExtensionModule;
+
 pub struct WasmExtensionManager;
 
-impl Module for WasmExtensionManager {
+impl Module for WasmExtensionModule {
     fn open<'a> (
         _this_extension_manager: ThisExtensionsManager,
         logger: &'a mut Logger,
