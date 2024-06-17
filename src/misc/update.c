@@ -194,7 +194,7 @@ static bool GetUpdateFile( update_t *p_update )
     if( !p_stream )
     {
         msg_Err( p_update->p_libvlc, "Failed to open %s for reading",
-                 UPDATE_VLC_STATUS_URL );
+                 url );
         goto error;
     }
 
@@ -213,7 +213,7 @@ static bool GetUpdateFile( update_t *p_update )
                          i_read ) != (ssize_t)i_read )
     {
         msg_Err( p_update->p_libvlc, "Couldn't download update file %s",
-                UPDATE_VLC_STATUS_URL );
+                url );
         goto error;
     }
     psz_update_data[i_read] = '\0';
@@ -248,7 +248,7 @@ static bool GetUpdateFile( update_t *p_update )
     if( i_len == 0 )
     {
         msg_Err( p_update->p_libvlc, "Update file %s is corrupted: URL missing",
-                 UPDATE_VLC_STATUS_URL );
+                 url );
 
         goto error;
     }
@@ -268,7 +268,7 @@ static bool GetUpdateFile( update_t *p_update )
     {
         msg_Err( p_update->p_libvlc,
                 "Update file %s is corrupted: description missing",
-                UPDATE_VLC_STATUS_URL );
+                url );
         goto error;
     }
 
