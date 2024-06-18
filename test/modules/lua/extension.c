@@ -49,6 +49,7 @@ const char vlc_module_name[] = MODULE_STRING;
 
 static int exitcode = 0;
 
+
 static int OnLuaEventTriggered(vlc_object_t *obj, const char *name,
         vlc_value_t oldv, vlc_value_t newv, void *opaque)
 {
@@ -58,12 +59,64 @@ static int OnLuaEventTriggered(vlc_object_t *obj, const char *name,
     return VLC_SUCCESS;
 }
 
+typedef struct {
+    vlc_sem_t sem;
+    const char* var_name;
+    void (*exec)(vlc_player_t*,extensions_manager_t*);
+} test_cmd_t;
+
+static void test_activate(vlc_player_t*player,extensions_manager_t* mgr){
+    extension_Activate(mgr, mgr->extensions.p_elems[0]);
+}
+
+static void test_deactivate(vlc_player_t*player, extensions_manager_t* mgr){
+    extension_Deactivate(mgr, mgr->extensions.p_elems[0]);
+}
+
+static void test_input_changed(vlc_player_t*player, extensions_manager_t* mgr){
+    vlc_player_Lock(player);
+    input_item_t *item = input_item_New(
+            "mock://length=100000000000000000", // TODO: make it infinite
+            "lua_test_sample");
+    vlc_player_SetCurrentMedia(player, item);
+    vlc_player_Start(player);
+    vlc_player_Unlock(player);
+    input_item_Release(item);
+}
+
+static void test_playing_changed(vlc_player_t*player, extensions_manager_t* mgr){
+    int state = 1;
+    extension_PlayingChanged(mgr, mgr->extensions.p_elems[0], state);
+}
+
+static void test_meta_changed(vlc_player_t*player, extensions_manager_t* mgr){
+    extension_MetaChanged(mgr, mgr->extensions.p_elems[0]);
+}
+
+static void test_trigger_menu(vlc_player_t*player, extensions_manager_t* mgr){
+    extension_TriggerMenu(mgr, mgr->extensions.p_elems[0], 0);
+}
+
 static int OpenIntf(vlc_object_t *root)
 {
+    
     vlc_object_t *libvlc = (vlc_object_t*)vlc_object_instance(root);
-    var_Create(libvlc, "test-lua-activate", VLC_VAR_STRING | VLC_VAR_ISCOMMAND);
-    var_Create(libvlc, "test-lua-deactivate", VLC_VAR_STRING | VLC_VAR_ISCOMMAND);
-    var_Create(libvlc, "test-lua-input-changed", VLC_VAR_STRING | VLC_VAR_ISCOMMAND);
+
+    /* create tests here */
+    test_cmd_t test_cmds [] = {
+        {.exec=test_activate, .var_name="test-lua-activate"},
+        {.exec=test_input_changed, .var_name="test-lua-input-changed"},
+        {.exec=test_playing_changed, .var_name="test-lua-playing-changed" },
+        {.exec=test_meta_changed, .var_name="test-lua-meta-changed" },
+        {.exec=test_trigger_menu, .var_name="test-lua-trigger-menu"},
+        {.exec=test_deactivate, .var_name="test-lua-deactivate" },
+    };
+
+
+    for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
+        var_Create(libvlc, test_cmds[i].var_name, VLC_VAR_STRING | VLC_VAR_ISCOMMAND);
+    }
+
 
     intf_thread_t *intf = (intf_thread_t*)root;
     extensions_manager_t *mgr =
@@ -83,39 +136,24 @@ static int OpenIntf(vlc_object_t *root)
         goto end;
     }
 
-    vlc_sem_t sem_input, sem_activate, sem_deactivate;
-    vlc_sem_init(&sem_input, 0);
-    vlc_sem_init(&sem_activate, 0);
-    vlc_sem_init(&sem_deactivate, 0);
-
-    var_AddCallback(libvlc, "test-lua-activate", OnLuaEventTriggered, &sem_activate);
-    var_AddCallback(libvlc, "test-lua-deactivate", OnLuaEventTriggered, &sem_deactivate);
-    var_AddCallback(libvlc, "test-lua-input-changed", OnLuaEventTriggered, &sem_input);
+    for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
+        vlc_sem_init(&test_cmds[i].sem,0);  
+        var_AddCallback(libvlc, test_cmds[i].var_name, OnLuaEventTriggered,&test_cmds[i].sem);
+    }
 
     /* Check that the extension from the test is correctly probed. */
     assert(mgr->extensions.i_size == 1);
-    extension_Activate(mgr, mgr->extensions.p_elems[0]);
-    vlc_sem_wait(&sem_activate);
 
-    vlc_player_Lock(player);
-    input_item_t *item = input_item_New(
-            "mock://length=100000000000000000", // TODO: make it infinite
-            "lua_test_sample");
-    vlc_player_SetCurrentMedia(player, item);
-    vlc_player_Start(player);
-    vlc_player_Unlock(player);
+    for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
+        test_cmds[i].exec(player, mgr);
+        vlc_sem_wait(&test_cmds[i].sem);
+    }
 
-    vlc_sem_wait(&sem_input);
-
-    extension_Deactivate(mgr, mgr->extensions.p_elems[0]);
-    vlc_sem_wait(&sem_deactivate);
-
-    var_DelCallback(libvlc, "test-lua-activate", OnLuaEventTriggered, &sem_activate);
-    var_DelCallback(libvlc, "test-lua-deactivate", OnLuaEventTriggered, &sem_deactivate);
-    var_DelCallback(libvlc, "test-lua-input-changed", OnLuaEventTriggered, &sem_input);
+    for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
+        var_DelCallback(libvlc, test_cmds[i].var_name, OnLuaEventTriggered,&test_cmds[i].sem);
+    }
 
     module_unneed(mgr, mgr->p_module);
-    input_item_Release(item);
 end:
     vlc_object_delete(mgr);
     return VLC_SUCCESS;
