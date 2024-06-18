@@ -33,7 +33,6 @@
 # include "config.h"
 #endif
 
-#include <gcrypt.h>
 #include <assert.h>
 #include <limits.h>
 
@@ -43,6 +42,28 @@
 #include <vlc_fs.h>
 
 #include "update.h"
+
+#include <gcrypt.h>
+
+typedef gcry_md_hd_t      vlc_crypto_t;
+typedef gcry_error_t      vlc_crypto_error_t;
+
+#define vlc_crypto_open(ph, a, f)  gcry_md_open((ph), (a), (f))
+#define vlc_crypto_close(h)        gcry_md_close((h))
+#define vlc_crypto_putc(h, c)      gcry_md_putc((h), (c))
+#define vlc_crypto_write(h, b, s)  gcry_md_write((h), (b), (s))
+
+static uint8_t *vlc_crypto_final_hash( vlc_crypto_t hd, int digest_algo )
+{
+    gcry_md_final(hd);
+
+    uint8_t *p_tmp = (uint8_t*) gcry_md_read( hd, digest_algo) ;
+    unsigned int hash_len = gcry_md_get_algo_dlen (digest_algo);
+    uint8_t *p_hash = malloc(hash_len);
+    if( p_hash )
+        memcpy(p_hash, p_tmp, hash_len);
+    return p_hash;
+}
 
 
 /*****************************************************************************
@@ -722,7 +743,7 @@ error:
 
 
 /* hash a binary file */
-static int hash_from_binary_file( const char *psz_file, gcry_md_hd_t hd )
+static int hash_from_binary_file( const char *psz_file, vlc_crypto_t hd )
 {
     uint8_t buffer[4096];
     size_t i_read;
@@ -732,7 +753,7 @@ static int hash_from_binary_file( const char *psz_file, gcry_md_hd_t hd )
         return -1;
 
     while( ( i_read = fread( buffer, 1, sizeof(buffer), f ) ) > 0 )
-        gcry_md_write( hd, buffer, i_read );
+        vlc_crypto_write( hd, buffer, i_read );
 
     fclose( f );
 
@@ -741,46 +762,40 @@ static int hash_from_binary_file( const char *psz_file, gcry_md_hd_t hd )
 
 
 /* final part of the hash */
-static uint8_t *hash_finish( gcry_md_hd_t hd, signature_packet_t *p_sig )
+static uint8_t *hash_finish( vlc_crypto_t hd, signature_packet_t *p_sig )
 {
     if( p_sig->version == 3 )
     {
-        gcry_md_putc( hd, p_sig->type );
-        gcry_md_write( hd, &p_sig->specific.v3.timestamp, 4 );
+        vlc_crypto_putc( hd, p_sig->type );
+        vlc_crypto_write( hd, p_sig->specific.v3.timestamp, 4 );
     }
     else if( p_sig->version == 4 )
     {
-        gcry_md_putc( hd, p_sig->version );
-        gcry_md_putc( hd, p_sig->type );
-        gcry_md_putc( hd, p_sig->public_key_algo );
-        gcry_md_putc( hd, p_sig->digest_algo );
-        gcry_md_write( hd, p_sig->specific.v4.hashed_data_len, 2 );
+        vlc_crypto_putc( hd, p_sig->version );
+        vlc_crypto_putc( hd, p_sig->type );
+        vlc_crypto_putc( hd, p_sig->public_key_algo );
+        vlc_crypto_putc( hd, p_sig->digest_algo );
+        vlc_crypto_write( hd, p_sig->specific.v4.hashed_data_len, 2 );
         size_t i_len = scalar_number( p_sig->specific.v4.hashed_data_len, 2 );
-        gcry_md_write( hd, p_sig->specific.v4.hashed_data, i_len );
+        vlc_crypto_write( hd, p_sig->specific.v4.hashed_data, i_len );
 
-        gcry_md_putc( hd, 0x04 );
-        gcry_md_putc( hd, 0xFF );
+        vlc_crypto_putc( hd, 0x04 );
+        vlc_crypto_putc( hd, 0xFF );
 
         i_len += 6; /* hashed data + 6 bytes header */
 
-        gcry_md_putc( hd, (i_len >> 24) & 0xff );
-        gcry_md_putc( hd, (i_len >> 16) & 0xff );
-        gcry_md_putc( hd, (i_len >> 8) & 0xff );
-        gcry_md_putc( hd, (i_len) & 0xff );
+        vlc_crypto_putc( hd, (i_len >> 24) & 0xff );
+        vlc_crypto_putc( hd, (i_len >> 16) & 0xff );
+        vlc_crypto_putc( hd, (i_len >> 8) & 0xff );
+        vlc_crypto_putc( hd, (i_len) & 0xff );
     }
     else
     {   /* RFC 4880 only tells about versions 3 and 4 */
         return NULL;
     }
 
-    gcry_md_final( hd );
-
-    uint8_t *p_tmp = (uint8_t*) gcry_md_read( hd, p_sig->digest_algo) ;
-    unsigned int hash_len = gcry_md_get_algo_dlen (p_sig->digest_algo);
-    uint8_t *p_hash = malloc(hash_len);
-    if( p_hash )
-        memcpy(p_hash, p_tmp, hash_len);
-    gcry_md_close( hd );
+    uint8_t *p_hash = vlc_crypto_final_hash( hd, p_sig->digest_algo );
+    vlc_crypto_close( hd );
     return p_hash;
 }
 
@@ -791,8 +806,8 @@ static uint8_t *hash_finish( gcry_md_hd_t hd, signature_packet_t *p_sig )
 uint8_t *hash_from_text( const char *psz_string,
         signature_packet_t *p_sig )
 {
-    gcry_md_hd_t hd;
-    if( gcry_md_open( &hd, p_sig->digest_algo, 0 ) )
+    vlc_crypto_t hd;
+    if( vlc_crypto_open( &hd, p_sig->digest_algo, 0 ) )
         return NULL;
 
     if( p_sig->type == TEXT_SIGNATURE )
@@ -802,11 +817,11 @@ uint8_t *hash_from_text( const char *psz_string,
 
         if( i_len )
         {
-            gcry_md_write( hd, psz_string, i_len );
+            vlc_crypto_write( hd, psz_string, i_len );
             psz_string += i_len;
         }
-        gcry_md_putc( hd, '\r' );
-        gcry_md_putc( hd, '\n' );
+        vlc_crypto_putc( hd, '\r' );
+        vlc_crypto_putc( hd, '\n' );
 
         if( *psz_string == '\r' )
             psz_string++;
@@ -814,7 +829,7 @@ uint8_t *hash_from_text( const char *psz_string,
             psz_string++;
     }
     else
-        gcry_md_write( hd, psz_string, strlen( psz_string ) );
+        vlc_crypto_write( hd, psz_string, strlen( psz_string ) );
 
     return hash_finish( hd, p_sig );
 }
@@ -825,13 +840,13 @@ uint8_t *hash_from_text( const char *psz_string,
  */
 uint8_t *hash_from_file( const char *psz_file, signature_packet_t *p_sig )
 {
-    gcry_md_hd_t hd;
-    if( gcry_md_open( &hd, p_sig->digest_algo, 0 ) )
+    vlc_crypto_t hd;
+    if( vlc_crypto_open( &hd, p_sig->digest_algo, 0 ) )
         return NULL;
 
     if( hash_from_binary_file( psz_file, hd ) < 0 )
     {
-        gcry_md_close( hd );
+        vlc_crypto_close( hd );
         return NULL;
     }
 
@@ -860,8 +875,8 @@ uint8_t *hash_from_public_key( public_key_t *p_pkey )
     if( p_pkey->psz_username == NULL )
         return NULL;
 
-    gcry_error_t error = 0;
-    gcry_md_hd_t hd;
+    vlc_crypto_error_t error = 0;
+    vlc_crypto_t hd;
 
     if (pk_algo == GCRY_PK_DSA) {
         i_p_len = mpi_len( p_pkey->key.sig.dsa.p );
@@ -878,39 +893,39 @@ uint8_t *hash_from_public_key( public_key_t *p_pkey )
     } else
         return NULL;
 
-    error = gcry_md_open( &hd, p_pkey->sig.digest_algo, 0 );
+    error = vlc_crypto_open( &hd, p_pkey->sig.digest_algo, 0 );
     if( error )
         return NULL;
 
-    gcry_md_putc( hd, 0x99 );
+    vlc_crypto_putc( hd, 0x99 );
 
-    gcry_md_putc( hd, (i_size >> 8) & 0xff );
-    gcry_md_putc( hd, i_size & 0xff );
+    vlc_crypto_putc( hd, (i_size >> 8) & 0xff );
+    vlc_crypto_putc( hd, i_size & 0xff );
 
-    gcry_md_putc( hd, p_pkey->key.version );
-    gcry_md_write( hd, p_pkey->key.timestamp, 4 );
-    gcry_md_putc( hd, p_pkey->key.algo );
+    vlc_crypto_putc( hd, p_pkey->key.version );
+    vlc_crypto_write( hd, p_pkey->key.timestamp, 4 );
+    vlc_crypto_putc( hd, p_pkey->key.algo );
 
     if (pk_algo == GCRY_PK_DSA) {
-        gcry_md_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.p, 2 + i_p_len );
-        gcry_md_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.q, 2 + i_q_len );
-        gcry_md_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.g, 2 + i_g_len );
-        gcry_md_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.y, 2 + i_y_len );
+        vlc_crypto_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.p, 2 + i_p_len );
+        vlc_crypto_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.q, 2 + i_q_len );
+        vlc_crypto_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.g, 2 + i_g_len );
+        vlc_crypto_write( hd, (uint8_t*)&p_pkey->key.sig.dsa.y, 2 + i_y_len );
     } else if (pk_algo == GCRY_PK_RSA) {
-        gcry_md_write( hd, (uint8_t*)&p_pkey->key.sig.rsa.n, 2 + i_n_len );
-        gcry_md_write( hd, (uint8_t*)&p_pkey->key.sig.rsa.e, 2 + i_e_len );
+        vlc_crypto_write( hd, (uint8_t*)&p_pkey->key.sig.rsa.n, 2 + i_n_len );
+        vlc_crypto_write( hd, (uint8_t*)&p_pkey->key.sig.rsa.e, 2 + i_e_len );
     }
 
-    gcry_md_putc( hd, 0xb4 );
+    vlc_crypto_putc( hd, 0xb4 );
 
     size_t i_len = strlen((char*)p_pkey->psz_username);
 
-    gcry_md_putc( hd, (i_len >> 24) & 0xff );
-    gcry_md_putc( hd, (i_len >> 16) & 0xff );
-    gcry_md_putc( hd, (i_len >> 8) & 0xff );
-    gcry_md_putc( hd, (i_len) & 0xff );
+    vlc_crypto_putc( hd, (i_len >> 24) & 0xff );
+    vlc_crypto_putc( hd, (i_len >> 16) & 0xff );
+    vlc_crypto_putc( hd, (i_len >> 8) & 0xff );
+    vlc_crypto_putc( hd, (i_len) & 0xff );
 
-    gcry_md_write( hd, p_pkey->psz_username, i_len );
+    vlc_crypto_write( hd, p_pkey->psz_username, i_len );
 
     uint8_t *p_hash = hash_finish( hd, &p_pkey->sig );
     if( !p_hash ||
