@@ -1,7 +1,7 @@
 use std::ffi::{c_char, c_ushort, CString};
 use std::{marker::PhantomData, ptr::NonNull};
 
-use vlcrs_core_sys::{vlc_logger, vlc_mutex_init, vlc_object_t};
+use vlcrs_core_sys::{vlc_logger, vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock, vlc_object_t};
 
 use vlcrs_core_sys::{extension_t, extensions_manager_t, input_item_t};
 
@@ -19,6 +19,38 @@ use super::ModuleArgs;
 #[repr(transparent)]
 pub struct ThisExtensionsManager<'a>(*mut extensions_manager_t, PhantomData<&'a mut ()>);
 
+impl<'a> ThisExtensionsManager<'a> {
+
+    pub fn add_extension(&self, extension: Extension<'a>) {
+        let manager = unsafe { &mut *self.0 };
+
+        unsafe {
+            vlc_mutex_lock(&mut manager.lock);
+        }
+
+        let mut elems = if manager.extensions.p_elems.is_null() {
+            Vec::new()
+        } else {
+            let elem = manager.extensions.p_elems;
+            let len = manager.extensions.i_size as usize;
+            let cap = manager.extensions.i_alloc as usize;
+            unsafe { Vec::from_raw_parts(elem, len, cap) }
+        };
+
+        elems.push(extension.leak());
+
+        manager.extensions.i_size = elems.len() as i32;
+        manager.extensions.i_alloc = elems.capacity() as i32;
+        manager.extensions.p_elems = elems.as_mut_ptr();
+
+        unsafe {
+            vlc_mutex_unlock(&mut manager.lock);
+        }
+
+        std::mem::forget(elems);
+    }
+}
+
 /// extensions_manager_t module
 pub trait Module {
     /// Open function for a extensions manager module
@@ -29,9 +61,7 @@ pub trait Module {
     ) -> Result<Box<dyn ExtensionManager + 'a>>;
 }
 
-pub trait ExtensionManager : ExtensionManagerControl {
-
-}
+pub trait ExtensionManager : ExtensionManagerControl {}
 
 /// This trait allows defining some controls methods.
 pub trait ExtensionManagerControl {
@@ -88,11 +118,38 @@ pub unsafe extern "C" fn module_open<T: Module>(object: *mut vlc_object_t) -> i3
 /// # Safety
 ///
 /// The `object` parameter must point to a valid `extensions_manager_t` that has been initiliazed by
-/// `module_close`.
+/// `module_open`.
 
-pub unsafe extern "C" fn module_close(_object: *mut vlc_object_t) -> i32 {
-    // nothing to do, watch `pf_close` for the actual closing of the extension_manager
-    0
+pub unsafe extern "C" fn module_close(object: *mut vlc_object_t) -> i32 {
+
+    let ptr_extension_manager = object as *mut extensions_manager_t;
+    
+    let sys = unsafe { (*ptr_extension_manager).p_sys } as *mut Box<dyn ExtensionManager>;
+    let _ = unsafe { Box::from_raw(sys) };
+
+    unsafe {
+        vlc_mutex_lock(&mut (*ptr_extension_manager).lock);
+    }
+
+    if !unsafe { (*ptr_extension_manager).extensions.p_elems.is_null() } {
+        let elems = unsafe {
+            Vec::from_raw_parts(
+                (*ptr_extension_manager).extensions.p_elems,
+                (*ptr_extension_manager).extensions.i_size as usize,
+                (*ptr_extension_manager).extensions.i_alloc as usize,
+            )
+        };
+
+        for elem in elems {
+            let _ = Extension::from_raw(elem);
+        }
+    }
+
+    unsafe {
+        vlc_mutex_unlock(&mut (*ptr_extension_manager).lock);
+    }
+
+    Errno::SUCCESS.to_vlc_errno()
 }
 
 /// Register the extension manager to the extensions_manager_t

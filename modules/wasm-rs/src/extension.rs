@@ -16,6 +16,7 @@ use crate::ProvidesLogger;
 pub struct WasmExtensionModule;
 
 struct WasmExtensionManager<'a> {
+    extension_manager: ThisExtensionsManager<'a>,
     logger: &'a mut Logger,
 }
 
@@ -27,7 +28,7 @@ impl ProvidesLogger for WasmExtensionManager<'_> {
 
 impl Module for WasmExtensionModule {
     fn open<'a> (
-        _this_extension_manager: ThisExtensionsManager,
+        this_extension_manager: ThisExtensionsManager<'a>,
         logger: &'a mut Logger,
         _args: &mut ModuleArgs,
     ) -> Result<Box<dyn ExtensionManager + 'a>> {
@@ -35,6 +36,7 @@ impl Module for WasmExtensionModule {
         debug!(logger, "Wasm extensions manager module loaded");
 
         let mut wasm_extension_manager = WasmExtensionManager {
+            extension_manager: this_extension_manager,
             logger,
         };
 
@@ -61,7 +63,9 @@ impl<'a> WasmExtensionManager<'a> {
         let mut extension = Extension::new();
         extension.set_name(file_name.to_str().expect("Should be a valid Utf-8"))?;
         extension.set_logger(self.logger)?;
-        
+
+        self.extension_manager.add_extension(extension);
+
         Ok(())
     }
 }
