@@ -66,27 +66,27 @@ pub trait ExtensionManager : ExtensionManagerControl {}
 /// This trait allows defining some controls methods.
 pub trait ExtensionManagerControl {
 
-    fn activate(&self, extension: Extension) -> Result<()>;
+    fn activate(&self, extension: &mut Extension) -> Result<()>;
 
-    fn deactivate(&self, extension: Extension) -> Result<()>;
+    fn deactivate(&self, extension: &mut Extension) -> Result<()>;
 
-    fn is_activated(&self, extension: Extension) -> bool;
+    fn is_activated(&self, extension: &Extension) -> bool;
 
-    fn has_menu(&self, extension: Extension) -> bool;
+    fn has_menu(&self, extension: &Extension) -> bool;
 
-    fn get_menu(&self, extension: Extension) -> (Vec<String>, Vec<u16>);
+    fn get_menu(&self, extension: &mut Extension) -> (Vec<String>, Vec<u16>);
     
-    fn trigger_only(&self, extension: Extension) -> bool;
+    fn trigger_only(&self, extension: &Extension) -> bool;
 
-    fn trigger(&self, extension: Extension) -> Result<()>;
+    fn trigger(&self, extension: &mut Extension) -> Result<()>;
 
-    fn trigger_menu(&self, extension: Extension, i: i32) -> Result<()>;
+    fn trigger_menu(&self, extension: &mut Extension, i: i32) -> Result<()>;
 
-    fn set_input(&self, extension: Extension, input: &mut InputItem) -> Result<()>;
+    fn set_input(&self, extension: &mut Extension, input: &mut InputItem) -> Result<()>;
 
-    fn playing_changed(&self, extension: Extension, state: i32) -> Result<()>;
+    fn playing_changed(&self, extension: &mut Extension, state: i32) -> Result<()>;
 
-    fn meta_changed(&self, extension: Extension) -> Result<()>;
+    fn meta_changed(&self, extension: &mut Extension) -> Result<()>;
 }
 
 /// Generic module open callback for extensions_manager_t
@@ -192,7 +192,9 @@ unsafe extern "C" fn pf_activate<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let res = E::activate(unsafe {&mut *sys}, Extension::from_raw(extension));
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    let res = E::activate(unsafe {&mut *sys}, &mut ext);
 
     match res {
         Ok(_) => Errno::SUCCESS.to_vlc_errno(),
@@ -205,7 +207,9 @@ unsafe extern "C" fn pf_deactivate<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let res = E::deactivate(unsafe {&mut *sys}, Extension::from_raw(extension));
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    let res = E::deactivate(unsafe {&mut *sys}, &mut ext);
 
     match res {
         Ok(_) => Errno::SUCCESS.to_vlc_errno(),
@@ -218,7 +222,9 @@ unsafe extern "C" fn pf_is_activated<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> bool {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    E::is_activated(unsafe {&mut *sys}, Extension::from_raw(extension))
+    let ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    E::is_activated(unsafe {&mut *sys}, &ext)
 }
 
 unsafe extern "C" fn pf_has_menu<E: ExtensionManagerControl + ?Sized>(
@@ -226,7 +232,9 @@ unsafe extern "C" fn pf_has_menu<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> bool {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    E::has_menu(unsafe {&mut *sys}, Extension::from_raw(extension))
+    let ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    E::has_menu(unsafe {&mut *sys}, &ext)
 }
 
 /// @param pppsz Must be freed by the caller.
@@ -238,7 +246,9 @@ unsafe extern "C" fn pf_get_menu<E: ExtensionManagerControl + ?Sized>(
     ppi: *mut *mut c_ushort) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let (titles, indices) = E::get_menu(unsafe {&mut *sys}, Extension::from_raw(extension));
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    let (titles, indices) = E::get_menu(unsafe {&mut *sys}, &mut ext);
 
     let mut ppsz = Vec::with_capacity(titles.len());
     for title in titles {
@@ -260,7 +270,9 @@ unsafe extern "C" fn pf_trigger_only<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> bool {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    E::trigger_only(unsafe {&mut *sys}, Extension::from_raw(extension))
+    let ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    E::trigger_only(unsafe {&mut *sys}, &ext)
 }
 
 unsafe extern "C" fn pf_trigger<E: ExtensionManagerControl + ?Sized>(
@@ -268,7 +280,9 @@ unsafe extern "C" fn pf_trigger<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let res = E::trigger(unsafe {&mut *sys}, Extension::from_raw(extension));
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    let res = E::trigger(unsafe {&mut *sys}, &mut ext);
 
     match res {
         Ok(_) => Errno::SUCCESS.to_vlc_errno(),
@@ -282,7 +296,9 @@ unsafe extern "C" fn pf_trigger_menu<E: ExtensionManagerControl + ?Sized>(
     i: i32) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let res = E::trigger_menu(unsafe {&mut *sys}, Extension::from_raw(extension), i);
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    let res = E::trigger_menu(unsafe {&mut *sys}, &mut ext, i);
 
     match res {
         Ok(_) => Errno::SUCCESS.to_vlc_errno(),
@@ -296,10 +312,12 @@ unsafe extern "C" fn pf_set_input<E: ExtensionManagerControl + ?Sized>(
     input: *mut input_item_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
     let mut input = unsafe {
         ManuallyDrop::new(InputItem::from_ptr(NonNull::new_unchecked(input)))
     };
-    let res = E::set_input(unsafe {&mut *sys}, Extension::from_raw(extension), &mut input);
+    let res = E::set_input(unsafe {&mut *sys}, &mut ext, &mut input);
 
     match res {
         Ok(_) => Errno::SUCCESS.to_vlc_errno(),
@@ -313,7 +331,9 @@ unsafe extern "C" fn pf_playing_changed<E: ExtensionManagerControl + ?Sized>(
     state: i32) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let res = E::playing_changed(unsafe {&mut *sys}, Extension::from_raw(extension), state);
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    let res = E::playing_changed(unsafe {&mut *sys}, &mut ext, state);
 
     match res {
         Ok(_) => Errno::SUCCESS.to_vlc_errno(),
@@ -326,7 +346,9 @@ unsafe extern "C" fn pf_meta_changed<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let res = E::meta_changed(unsafe {&mut *sys}, Extension::from_raw(extension));
+    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+
+    let res = E::meta_changed(unsafe {&mut *sys}, &mut ext);
 
     match res {
         Ok(_) => Errno::SUCCESS.to_vlc_errno(),
