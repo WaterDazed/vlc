@@ -80,6 +80,13 @@ impl Sub for Tick {
 }
 
 impl Display for Tick {
+    ///
+    /// ```
+    /// # use vlcrs_tick::{Tick, Seconds};
+    /// let tick = Tick::from(Seconds::from(7261));
+    /// let output = format!("{}", tick);
+    /// assert!(output == "2:01:01");
+    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let ticks = if self.0.is_negative() {
             f.write_str("-")?;
