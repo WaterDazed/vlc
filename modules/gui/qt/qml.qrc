@@ -19,6 +19,7 @@
         <file alias="MainTableView.qml">maininterface/qml/MainTableView.qml</file>
         <file alias="MainGridView.qml">maininterface/qml/MainGridView.qml</file>
         <file alias="MainViewLoader.qml">maininterface/qml/MainViewLoader.qml</file>
+        <file alias="NavigationPane.qml">maininterface/qml/NavigationPane.qml</file>
     </qresource>
     <qresource prefix="/widgets">
         <file alias="LabelExt.qml">widgets/qml/LabelExt.qml</file>

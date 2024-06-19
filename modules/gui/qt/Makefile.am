@@ -895,6 +895,7 @@ libqt_plugin_la_QML = \
 	maininterface/qml/MainGridView.qml \
 	maininterface/qml/MainTableView.qml \
 	maininterface/qml/NoMedialibHome.qml \
+	maininterface/qml/NavigationPane.qml \
 	medialibrary/qml/ArtistTopBanner.qml \
 	medialibrary/qml/AudioGridItem.qml \
 	medialibrary/qml/MediaGroupDisplay.qml \
