@@ -25,8 +25,8 @@ pub const CLOCK_FREQ: u64 = 1_000_000u64;
 /// ```rust
 /// # use vlcrs_tick::{Tick, Seconds};
 /// let two_seconds = Seconds::from(2.0f32);
-/// let ticks = Tick::from(two_seconds);
-/// assert_eq!(two_seconds, ticks.into());
+/// let ticks = Tick::try_from(two_seconds).unwrap();
+/// assert_eq!(two_seconds, ticks.try_into().unwrap());
 /// ```
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Default)]
 #[doc(alias = "vlc_tick_t")]
@@ -43,21 +43,24 @@ impl Tick {
     ///
     /// ```
     /// # use vlcrs_tick::{Tick, Seconds};
-    /// let fith_two_seconds = Tick::from_samples(520, 10);
-    /// # let secs = Tick::from(Seconds::from(52));
+    /// let fith_two_seconds = Tick::try_from_samples(520, 10).unwrap();
+    /// # let secs = Tick::try_from(Seconds::from(52)).unwrap();
     /// # assert_eq!(fith_two_seconds, secs);
     /// ```
     #[inline]
-    pub fn from_samples(samples: u64, rate: u32) -> Tick {
+    pub fn try_from_samples(samples: u64, rate: u32) -> Result<Tick, OverflowError> {
         let rate = rate as u64;
         let quot = samples.wrapping_div(rate);
         let rem = samples.wrapping_rem(rate);
 
-        let ticks_rem = CLOCK_FREQ.wrapping_mul(rem).wrapping_div(rate);
-        let ticks = CLOCK_FREQ.wrapping_mul(quot);
+        let ticks_rem = CLOCK_FREQ.checked_mul(rem).ok_or(OverflowError(()))?.wrapping_div(rate);
+        let ticks = CLOCK_FREQ.checked_mul(quot)
+            .and_then(|t| t.checked_add(ticks_rem))
+            .ok_or(OverflowError(()))?;
 
-        debug_assert!(ticks < (i64::MAX as u64 - ticks_rem));
-        Tick(ticks.wrapping_add(ticks_rem) as _)
+        <vlc_tick_t>::try_from(ticks)
+            .or(Err(OverflowError(())))
+            .map(Tick)
     }
 }
 
@@ -83,7 +86,7 @@ impl Display for Tick {
     ///
     /// ```
     /// # use vlcrs_tick::{Tick, Seconds};
-    /// let tick = Tick::from(Seconds::from(7261));
+    /// let tick = Tick::try_from(Seconds::from(7261)).unwrap();
     /// let output = format!("{}", tick);
     /// assert!(output == "2:01:01");
     /// ```
@@ -130,6 +133,49 @@ macro_rules! tu_impls {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct OverflowError (pub(crate)());
+
+///
+/// Scoping structure to do multiple failible arithmetic (overflow checking)
+/// while checking the result only at the end.
+///
+/// ```
+/// use vlcrs_tick::Seconds;
+/// let r = Seconds::try_from(10).unwrap() + Seconds::try_from(i64::MAX).unwrap();
+/// assert!(Seconds::try_from(r).is_err());
+/// ```
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct MaybeOverflow<T> {
+    inner: Result<T, OverflowError>
+}
+
+impl<T> std::ops::Add for MaybeOverflow<T>
+    where T : std::ops::Add<T, Output=MaybeOverflow<T>>
+{
+    type Output = MaybeOverflow<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        if self.inner.is_err() || rhs.inner.is_err() {
+            return self;
+        }
+        self.inner.unwrap() + rhs.inner.unwrap()
+    }
+}
+
+impl<T> std::ops::Sub for MaybeOverflow<T>
+    where T : std::ops::Sub<T, Output=MaybeOverflow<T>>
+{
+    type Output = MaybeOverflow<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        if self.inner.is_err() || rhs.inner.is_err() {
+            return self;
+        }
+        self.inner.unwrap() - rhs.inner.unwrap()
+    }
+}
+
 // internal macro to create a unit-of-time and it's impls
 macro_rules! tu {
     ($name:ident, $mul:literal) => {
@@ -137,41 +183,77 @@ macro_rules! tu {
         #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
         pub struct $name(i64);
 
-        impl From<$name> for Tick {
+        impl TryFrom<$name> for Tick {
+            type Error = OverflowError;
             #[inline]
-            fn from(a: $name) -> Tick {
-                Tick(if CLOCK_FREQ >= $mul {
-                    ((CLOCK_FREQ / $mul) as i64 * a.0) as _
+            fn try_from(a: $name) -> std::result::Result<Self, Self::Error> {
+                let ticks : vlc_tick_t = if CLOCK_FREQ >= $mul {
+                    ((CLOCK_FREQ / $mul) as i64)
+                        .checked_mul(a.0)
+                        .ok_or(OverflowError(()))? as _
                 } else {
-                    ((a.0 as i64 * CLOCK_FREQ as i64) / $mul as i64) as _
-                })
+                    let num = (a.0 as i64)
+                        .checked_mul(CLOCK_FREQ as i64)
+                        .ok_or(OverflowError(()))?;
+                    (num / $mul as i64) as _
+                };
+                Ok(Tick(ticks))
             }
         }
 
-        impl From<Tick> for $name {
+        impl TryFrom<Tick> for $name {
+            type Error = OverflowError;
             #[inline]
-            fn from(a: Tick) -> $name {
-                $name(((a.0 as i64 / CLOCK_FREQ as i64) * $mul as i64) as _)
+            fn try_from(a: Tick) -> Result<$name, Self::Error> {
+                (a.0 as i64 / CLOCK_FREQ as i64)
+                    .checked_mul($mul as i64)
+                    .map($name)
+                    .ok_or(OverflowError(()))
+            }
+        }
+
+        impl TryFrom<MaybeOverflow<$name>> for $name {
+            type Error = OverflowError;
+            #[inline]
+            fn try_from(a: MaybeOverflow<$name>) -> Result<$name, Self::Error> {
+                a.inner
             }
         }
 
         impl Add for $name {
-            type Output = $name;
+            type Output = MaybeOverflow<$name>;
 
             #[inline]
             fn add(self, rhs: Self) -> Self::Output {
-                $name(self.0 + rhs.0)
+                self.0.checked_add(rhs.0)
+                    .map(|v| MaybeOverflow::<$name>{ inner: Ok($name(v)) })
+                    .unwrap_or(MaybeOverflow::<$name>{ inner: Err(OverflowError(())) })
             }
         }
 
         impl Sub for $name {
-            type Output = $name;
+            type Output = MaybeOverflow<$name>;
 
             #[inline]
             fn sub(self, rhs: Self) -> Self::Output {
-                $name(self.0 - rhs.0)
+                self.0.checked_sub(rhs.0)
+                    .map(|v| MaybeOverflow::<$name>{ inner: Ok($name(v)) })
+                    .unwrap_or(MaybeOverflow::<$name>{ inner: Err(OverflowError(())) })
             }
         }
+
+        impl Sub<$name> for MaybeOverflow<$name> {
+            type Output = MaybeOverflow<$name>;
+
+            #[inline]
+            fn sub(self, rhs: $name) -> Self::Output {
+                if self.inner.is_err() {
+                    return self;
+                }
+                self.inner.unwrap() - rhs
+            }
+        }
+
 
         tu_impls!(
             $name,
