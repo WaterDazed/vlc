@@ -926,6 +926,7 @@ libqml_module_maininterface_a_QML = \
 	maininterface/qml/MainDisplay.qml \
 	maininterface/qml/MainGridView.qml \
 	maininterface/qml/MainTableView.qml \
+	maininterface/qml/NavigationPane.qml \
 	maininterface/qml/NoMedialibHome.qml
 nodist_libqml_module_maininterface_a_SOURCES = maininterface_qmlassets.cpp
 $(libqml_module_maininterface_a_QML:.qml=.cpp) : $(builddir)/maininterface/res.qrc

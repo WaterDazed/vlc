@@ -142,7 +142,6 @@ FocusScope {
         }
     ]
 
-
     property ListModel tabModel: ListModel {
         id: tabModelid
         Component.onCompleted: {
@@ -164,44 +163,23 @@ FocusScope {
         colorSet: ColorContext.View
     }
 
-    ColumnLayout {
-        id: mainColumn
+    RowLayout {
+        id: mainRow
         anchors.fill: parent
 
-        Layout.minimumWidth: VLCStyle.minWindowWidth
-        spacing: 0
+        NavigationPane {
+            id: sidebar
+            Layout.fillHeight: true
 
-        Navigation.parentItem: g_mainDisplay
+            onItemClicked: (sectionUri, modelUri) => {
+                if (stackView.isDefaulLoadedForPath([modelUri]))
+                    return;
 
-        /* Source selection*/
-        BannerSources {
-            id: sourcesBanner
-            z: 2
-            Layout.preferredHeight: height
-            Layout.minimumHeight: height
-            Layout.maximumHeight: height
-            Layout.fillWidth: true
-
-            model: g_mainDisplay.tabModel
-
-            plListView: playlistLoader.active ? playlistLoader.item
-                                              : (playlistWindowLoader.status === Loader.Ready ? playlistWindowLoader.item.playlistView
-                                                                                              : null)
-
-            onItemClicked: (index) => {
-                const name = g_mainDisplay.tabModel.get(index).name
-
-                //don't add the ["mc"] prefix as we are only testing subviers from MainDisplay
-                if (stackView.isDefaulLoadedForPath([name])) {
-                    return
-                }
-
-                selectedIndex = index
-                History.push(["mc", name])
+                if (sectionUri === "undefined")
+                    History.push(["mc", modelUri])
+                else
+                    History.push(["mc", sectionUri, modelUri])
             }
-
-            Navigation.parentItem: mainColumn
-            Navigation.downItem: stackView
         }
 
         Item {
@@ -446,7 +424,6 @@ FocusScope {
             }
         }
     }
-
 
     Loader {
         id: loaderProgress
