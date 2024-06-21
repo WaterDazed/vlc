@@ -7,3 +7,4 @@ edition = "2021"
 [dependencies]
 vlcrs-core = { workspace = true }
 vlcrs-core-macros = { workspace = true }
+wasmer = "4.3.2"
