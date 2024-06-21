@@ -14,6 +14,7 @@ namespace mkv {
 
 //MatroskaJS
 const char* matroska_js_interpreter_c::CMD_MS_GOTO_AND_PLAY = "GotoAndPlay";
+const char* matroska_js_interpreter_c::CMD_MS_LOG_MSG = "LogMsg";
 
 static matroska_js_interpreter_c* receive_interpreter_object(duk_context *ctx)
 {
@@ -81,12 +82,50 @@ duk_ret_t matroska_js_interpreter_c::js_execute_GotoAndPlay(duk_context *ctx)
 
 }
 
+/**
+ * execute_LogMsg:
+ * Handles Matroska Script LogMsg command by logging the passed
+ * parameter.
+ *
+ * Takes an argument string containing,
+ * LogMsg Command Parameter:
+ *
+ * arg      string: The string to be logged.
+ *
+ */
+bool matroska_js_interpreter_c::execute_LogMsg(const std::string &arg)
+{
+    vlc_debug(l, "%s", arg.c_str());
+    return true;
+}
+
+duk_ret_t matroska_js_interpreter_c::js_execute_LogMsg(duk_context *ctx)
+{
+    auto interpretor = receive_interpreter_object(ctx);
+
+    if (!duk_is_string(ctx, 0))
+    {
+        vlc_debug(interpretor->l, "%s: First argument must be a string", CMD_MS_LOG_MSG);
+        return DUK_RET_TYPE_ERROR;
+    }
+
+    const char* arg = duk_to_string(ctx, 0);
+    interpretor->execute_LogMsg(arg);
+
+    return 0;
+}
+
+
+
 duk_context* matroska_js_interpreter_c::ms_setup()
 {
     duk_context *ctx = duk_create_heap_default();
 
     duk_push_c_function(ctx, js_execute_GotoAndPlay, 1);
     duk_put_global_string(ctx, CMD_MS_GOTO_AND_PLAY);
+
+    duk_push_c_function(ctx, js_execute_LogMsg, 1);
+    duk_put_global_string(ctx, CMD_MS_LOG_MSG);
 
     duk_push_global_object(ctx);
     duk_push_pointer(ctx, this);

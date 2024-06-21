@@ -24,9 +24,11 @@ private:
 
     //JavaScript access functions
     static duk_ret_t js_execute_GotoAndPlay(duk_context *ctx);
+    static duk_ret_t js_execute_LogMsg(duk_context *ctx);
 
     //Command executors
     bool execute_GotoAndPlay(const std::string &arg);
+    bool execute_LogMsg(const std::string &arg);
 
     duk_context *ctx;
 
@@ -41,7 +43,7 @@ public:
 
     // MatroskaJS commands
     static const char* CMD_MS_GOTO_AND_PLAY;
-
+    static const char* CMD_MS_LOG_MSG;
 };
 
 class matroska_js_codec_c : public matroska_script_codec_common_c
