@@ -13,6 +13,7 @@ BUILT_SOURCES = $(nodist_pluginsinclude_HEADERS)
 CLEANFILES = $(BUILT_SOURCES)
 
 SUFFIXES = .pc.in .pc .rc.in .rc
+TEST_EXTENSIONS =
 
 ###############################################################################
 # Headers
@@ -788,6 +789,8 @@ check-local:
 		fi ; \
 	done
 	$(SHELL) $(srcdir)/check_headers $(pluginsinclude_HEADERS)
+
+include rust/Makefile.am
 
 FORCE:
 	@echo "Generated source cannot be phony. Go away." >&2
