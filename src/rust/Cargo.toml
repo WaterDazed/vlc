@@ -1,6 +1,8 @@
 [workspace]
+resolver = "2"
 members = [
     "vlcrs-messages",
+    "vlcrs-tick",
     "vlcrs-sys-generator"
 ]
 resolver = "2"
