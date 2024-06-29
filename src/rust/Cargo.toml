@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "vlcrs-fourcc",
     "vlcrs-messages",
     "vlcrs-sys-generator"
 ]

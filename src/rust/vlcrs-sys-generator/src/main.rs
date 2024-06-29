@@ -62,7 +62,11 @@ impl BindingsGenerator {
             .raw_line("#![allow(non_snake_case)]")
             // Since we are generating the input header content at runtime,
             // specify wrapper.h as a fake name.
-            .header_contents("wrapper.h", &header_contents);
+            .header_contents("wrapper.h", &header_contents)
+            // And since the generated wrappers should be target-independent,
+            // we cannot have layout tests, since they are by definition
+            // target-dependent.
+            .layout_tests(false);
 
         // Apply "user" configurations, ie allowlist_function, allowlist_type, ...
         // So that they can pit-point what they want.
@@ -85,6 +89,13 @@ fn main() {
         include_path: env::var("INCLUDE_PATH").unwrap_or_else(|_| "../../include".to_string()),
     };
 
+    bindings_gen.generate_bindings_for("vlcrs-fourcc", &["vlc_fourcc.h"], |builder| {
+        builder
+            .allowlist_function("vlc_fourcc_.*")
+            .blocklist_function("vlc_fourcc_GetChromaDescription")
+            .blocklist_type("vlc_chroma_.*")
+            .blocklist_type("vlc_rational_.*")
+    });
     bindings_gen.generate_bindings_for("vlcrs-messages", &["vlc_messages.h"], |builder| {
         builder
             .allowlist_function("vlc_Log")
