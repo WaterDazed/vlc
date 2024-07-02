@@ -233,9 +233,9 @@ MainInterface.MainViewLoader {
 
         mlModel: model
 
-        indexes: indexesFlat ? root.selectionModel.selectedIndexesFlat
-                             : root.selectionModel.selectedIndexes
-        indexesFlat: !!root.selectionModel.selectedIndexesFlat
+        indexes: !!root.selectionModel.selectedIndexesFlat
+                 ? root.selectionModel.selectedIndexesFlat
+                 : root.selectionModel.selectedIndexes
 
         coverRole: "thumbnail"
 

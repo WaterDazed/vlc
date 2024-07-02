@@ -78,9 +78,9 @@ MainInterface.MainViewLoader {
         id: albumDragItem
 
         mlModel: albumModelId
-        indexes: indexesFlat ? selectionModel.selectedIndexesFlat
-                             : selectionModel.selectedIndexes
-        indexesFlat: !!selectionModel.selectedIndexesFlat
+        indexes: !!selectionModel.selectedIndexesFlat
+                 ? selectionModel.selectedIndexesFlat
+                 : selectionModel.selectedIndexes
         defaultCover: VLCStyle.noArtAlbumCover
     }
 

@@ -88,9 +88,9 @@ MainInterface.MainViewLoader {
 
         mlModel: genreModel
 
-        indexes: indexesFlat ? selectionModel.selectedIndexesFlat
-                             : selectionModel.selectedIndexes
-        indexesFlat: !!selectionModel.selectedIndexesFlat
+        indexes: !!selectionModel.selectedIndexesFlat
+                 ? selectionModel.selectedIndexesFlat
+                 : selectionModel.selectedIndexes
     }
 
     /*

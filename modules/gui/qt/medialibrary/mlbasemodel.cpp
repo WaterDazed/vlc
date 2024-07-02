@@ -17,7 +17,6 @@
  *****************************************************************************/
 
 #include <cassert>
-#include "medialib.hpp"
 #include <vlc_cxx_helpers.hpp>
 
 #include "util/listcache.hpp"
@@ -139,23 +138,19 @@ quint64 MLBaseModel::loadItems(const QVector<int> &indexes, MLBaseModel::ItemCal
     return m_itemLoader->loadItemsTask(d->m_offset, indexes, cb);
 }
 
-void MLBaseModel::getData(const QModelIndexList &indexes, QJSValue callback)
+void MLBaseModel::getData(const QVariant &indexesVariant, QJSValue callback)
 {
     if (!callback.isCallable()) // invalid argument
         return;
 
-    QVector<int> indx;
-    std::transform(indexes.begin(), indexes.end()
-                   , std::back_inserter(indx)
-                   , std::mem_fn(&QModelIndex::row));
+    QVector<int> indexes;
 
-    getDataFlat(indx, callback);
-}
-
-void MLBaseModel::getDataFlat(const QVector<int> &indexes, QJSValue callback)
-{
-    if (!callback.isCallable()) // invalid argument
-        return;
+    if(indexesVariant.canConvert<QVector<int>>())
+        indexes = indexesVariant.value<QVector<int>>();
+    else // indexesVariant.canConvert<QModelIndexList>()
+        std::transform(indexesVariant.begin(), indexesVariant.end(),
+                       std::back_inserter(indexes),
+                       std::mem_fn(&QModelIndex::row));
 
     std::shared_ptr<quint64> requestId = std::make_shared<quint64>();
 

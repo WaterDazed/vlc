@@ -302,9 +302,9 @@ FocusScope {
         id: albumDragItem
 
         mlModel: albumModel
-        indexes: indexesFlat ? albumSelectionModel.selectedIndexesFlat
-                             : albumSelectionModel.selectedIndexes
-        indexesFlat: !!albumSelectionModel.selectedIndexesFlat
+        indexes: !!albumSelectionModel.selectedIndexesFlat
+                 ? albumSelectionModel.selectedIndexesFlat
+                 : albumSelectionModel.selectedIndexes
         defaultCover: VLCStyle.noArtAlbumCover
     }
 
@@ -513,9 +513,9 @@ FocusScope {
 
                 mlModel: trackModel
 
-                indexes: indexesFlat ? tableView_id.selectionModel.selectedIndexesFlat
-                                     : tableView_id.selectionModel.selectedIndexes
-                indexesFlat: !!tableView_id.selectionModel.selectedIndexesFlat
+                indexes: !!tableView_id.selectionModel.selectedIndexesFlat
+                         ? tableView_id.selectionModel.selectedIndexesFlat
+                         : tableView_id.selectionModel.selectedIndexes
 
                 defaultCover: VLCStyle.noArtArtistCover
             }

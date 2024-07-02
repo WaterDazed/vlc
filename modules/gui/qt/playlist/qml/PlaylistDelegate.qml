@@ -278,7 +278,6 @@ T.ItemDelegate {
                     }
 
                     dragItem.indexes = view.selectionModel.selectedIndexesFlat
-                    dragItem.indexesFlat = true
                     dragItem.Drag.active = true
                 } else {
                     dragItem.Drag.drop()

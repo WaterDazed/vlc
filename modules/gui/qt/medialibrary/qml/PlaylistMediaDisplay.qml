@@ -168,9 +168,9 @@ FocusScope {
 
         mlModel: model
 
-        indexes: indexesFlat ? view.selectionModel.selectedIndexesFlat
-                             : view.selectionModel.selectedIndexes
-        indexesFlat: !!view.selectionModel.selectedIndexesFlat
+        indexes: !!view.selectionModel.selectedIndexesFlat
+                 ? view.selectionModel.selectedIndexesFlat
+                 : view.selectionModel.selectedIndexes
 
         coverRole: "thumbnail"
 

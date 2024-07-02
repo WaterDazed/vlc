@@ -30,7 +30,6 @@
 #include <vlc_media_library.h>
 #include "mlqmltypes.hpp"
 #include "medialib.hpp"
-#include <memory>
 #include "mlevent.hpp"
 #include "mlqueryparams.hpp"
 #include "util/base_model.hpp"
@@ -63,10 +62,8 @@ public:
 
     Q_INVOKABLE void sortByColumn(QByteArray criteria, Qt::SortOrder order);
 
-    Q_INVOKABLE void getData(const QModelIndexList &indexes, QJSValue callback);
-    // FIXME: Qt does not pick the right method overload: (reinvestigate Qt 6)
-    //        Ideally it should be named the same.
-    Q_INVOKABLE void getDataFlat(const QVector<int> &indexList, QJSValue callback);
+    Q_INVOKABLE void getData(const QVariant &indexesVariant, QJSValue callback);
+
     QVariant data(const QModelIndex &index, int role) const override final;
 
 public:

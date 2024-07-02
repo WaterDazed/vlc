@@ -197,9 +197,9 @@ FocusScope {
 
                 mlModel: artistModel
 
-                indexes: indexesFlat ? selectionModel.selectedIndexesFlat
-                                     : selectionModel.selectedIndexes
-                indexesFlat: !!selectionModel.selectedIndexesFlat
+                indexes: !!selectionModel.selectedIndexesFlat
+                         ? selectionModel.selectedIndexesFlat
+                         : selectionModel.selectedIndexes
             }
 
             delegate: MusicArtistDelegate {
