@@ -113,11 +113,6 @@ static int OpenIntf(vlc_object_t *root)
     };
 
 
-    for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
-        var_Create(libvlc, test_cmds[i].var_name, VLC_VAR_STRING | VLC_VAR_ISCOMMAND);
-    }
-
-
     intf_thread_t *intf = (intf_thread_t*)root;
     extensions_manager_t *mgr =
         vlc_object_create(root, sizeof *mgr);
@@ -136,18 +131,66 @@ static int OpenIntf(vlc_object_t *root)
         goto end;
     }
 
+    vlc_sem_t sem_close;
+    vlc_sem_init(&sem_close,0);
+    var_Create(libvlc, "test-lua-close", VLC_VAR_STRING | VLC_VAR_ISCOMMAND);
+    var_AddCallback(libvlc, "test-lua-close", OnLuaEventTriggered,&sem_close);
+
     for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
         vlc_sem_init(&test_cmds[i].sem,0);  
+        var_Create(libvlc, test_cmds[i].var_name, VLC_VAR_STRING | VLC_VAR_ISCOMMAND);
         var_AddCallback(libvlc, test_cmds[i].var_name, OnLuaEventTriggered,&test_cmds[i].sem);
     }
 
     /* Check that the extension from the test is correctly probed. */
     assert(mgr->extensions.i_size == 1);
 
-    for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
+    /* run tests, -1 is temporarily added to not include deactiavte until better testing abstractions been made */
+    for (size_t i = 0; i < ARRAY_SIZE(test_cmds)-1; i++){
         test_cmds[i].exec(player, mgr);
         vlc_sem_wait(&test_cmds[i].sem);
     }
+
+    // create dialog
+    extension_dialog_t *p_dlg = calloc( 1, sizeof( extension_dialog_t ) );
+    if( !p_dlg ){
+        exitcode = 77;
+        goto end;
+    }
+    p_dlg->p_object = (vlc_object_t*)mgr;
+    p_dlg->psz_title = strdup( "test dialog" );
+    p_dlg->b_kill = false;
+    p_dlg->p_sys = mgr->extensions.p_elems[0];
+
+    /*
+     adds widget to dialog
+     NOTE: too much of a hassle to register callback 
+     so warning will trigger from undefined callback */
+    ARRAY_INIT( p_dlg->widgets );
+    extension_widget_t *p_widget = calloc( 1, sizeof( extension_widget_t ) );
+    p_widget->type = EXTENSION_WIDGET_CHECK_BOX;
+    p_widget->psz_text = strdup( "test widget" );
+    p_widget->p_dialog = p_dlg;
+
+    ARRAY_APPEND( p_dlg->widgets, p_widget );
+
+    extension_WidgetClicked(p_dlg, p_widget);
+    extension_DialogClosed(p_dlg);
+    vlc_sem_wait(&sem_close);
+
+
+    //clean up 
+    ARRAY_REMOVE(p_dlg->widgets, 0);
+    free(p_widget->psz_text);
+    free(p_widget);
+    free( p_dlg->psz_title );
+    free( p_dlg );
+
+    // !temporary, deactivates extension
+    test_cmds[ARRAY_SIZE(test_cmds)-1].exec(player, mgr);
+    vlc_sem_wait(&test_cmds[ARRAY_SIZE(test_cmds)-1].sem);
+
+    var_DelCallback(libvlc, "test-lua-close", OnLuaEventTriggered,&sem_close);
 
     for (size_t i = 0; i < ARRAY_SIZE(test_cmds); i++){
         var_DelCallback(libvlc, test_cmds[i].var_name, OnLuaEventTriggered,&test_cmds[i].sem);
