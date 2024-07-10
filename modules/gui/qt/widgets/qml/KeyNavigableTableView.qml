@@ -33,6 +33,9 @@ FocusScope {
 
     // Properties
 
+    implicitHeight: header.implicitHeight + view.implicitHeight
+    implicitWidth: Math.max(header.implicitWidth, view.implicitWidth)
+
     property var sortModel: []
 
     property Component tableHeaderDelegate:  TableHeaderDelegate {
@@ -239,8 +242,8 @@ FocusScope {
 
         property alias loadedHeader: headerLoader.item
 
-        width: view.width
-        height: col.height
+        implicitWidth: view.width
+        implicitHeight: col.height
         z: 3
         color: root.headerColor
 
