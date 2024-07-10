@@ -66,6 +66,9 @@ MainInterface.MainViewLoader {
 
     // Settings
 
+    // Override implicit height to take independent header into account:
+    implicitHeight: (currentItem?.implicitHeight ?? 0) + (headerItem?.implicitHeight ?? 0)
+
     isSearchable: true
     list: list
     grid: grid
