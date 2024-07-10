@@ -35,6 +35,11 @@ FocusScope {
     required property int cellWidth
     required property int cellHeight
 
+    // NOTE: Issue #28023: VideoGridDisplay does not provide
+    //                     correct content size.
+    implicitWidth: contentWidth
+    implicitHeight: contentHeight
+
     //margin to apply
     property int bottomMargin: 0
     property int topMargin: 0
