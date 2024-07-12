@@ -19,7 +19,6 @@ namespace mkv {
 class matroska_js_interpreter_c : public matroska_script_interpreter_common_c
 {
 private:
-    duk_context* ms_setup();
     bool gotoChapter(chapter_uid i_chapter_uid);
 
     //JavaScript access functions
@@ -32,7 +31,13 @@ private:
 
     duk_context *ctx;
 
+    static void execution_timeout_checker(void *data);
+    static void fatal_error_handler(void *udata, const char* msg);
+    duk_context* ms_setup();
+    void on_timeout();
 public:
+    std::atomic_bool timed_out;
+
     matroska_js_interpreter_c( struct vlc_logger *log, chapter_codec_vm & vm_ )
     :matroska_script_interpreter_common_c( log, vm_ )
     {
