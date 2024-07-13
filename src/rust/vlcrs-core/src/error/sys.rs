@@ -6,6 +6,7 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
+pub const VLC_COMMON_H: u32 = 1;
 pub const VLC_SUCCESS: u32 = 0;
 pub const VLC_ENOMEM: i32 = -12;
 pub const VLC_ETIMEOUT: i32 = -110;

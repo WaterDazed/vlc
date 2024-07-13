@@ -7,7 +7,7 @@
 use crate::input_item::sys::input_item_t;
 use crate::object::sys::vlc_object_t;
 use crate::threads::vlc_mutex_t;
-use vlcrs_messages::vlc_logger;
+use vlcrs_messages::sys::vlc_logger;
 
 #[allow(non_camel_case_types)]
 #[allow(unused)]

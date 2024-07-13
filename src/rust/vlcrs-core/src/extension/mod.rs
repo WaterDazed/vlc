@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use std::ptr;
 use crate::error::Result;
 
-use vlcrs_messages::{Logger, vlc_logger};
+use vlcrs_messages::{Logger, sys::vlc_logger};
 
 #[doc(alias = "extension_t")]
 #[repr(transparent)]
