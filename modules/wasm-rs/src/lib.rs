@@ -4,10 +4,13 @@ mod intf;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use vlcrs_core::{error::Result, messages::Logger};
-use vlcrs_core_macros::module;
+use vlcrs_core::error::Result;
+use vlcrs_core::module::extension::ExtensionModuleLoader;
+use vlcrs_core::module::interface::InterfaceModuleLoader;
+use vlcrs_messages::{debug, Logger};
+use vlcrs_macros::module;
 
-use vlcrs_core::{debug, error};
+use vlcrs_core::error;
 
 use vlcrs_core::configuration::{get_user_dir, get_sys_path, UserDir, SysDir};
 
@@ -81,16 +84,17 @@ pub trait ProvidesLogger {
 }
 
 module! {
-    type: Wasm,
+    type: Wasm (InterfaceModuleLoader),
     capability: "interface" @ 0,
-    category: SUBCAT_INTERFACE_MAIN,
+    category: INTERFACE_MAIN,
     description: "Wasm Interpreter",
     shortname: "Wasm",
     shortcuts: ["wasmintf"],
     submodules: [
         {
-            type: WasmExtensionModule,
+            type: WasmExtensionModule (ExtensionModuleLoader),
             capability: "extension" @ 2,
+            category: UNKNOWN,
             description: "Wasm Extension",
             shortcuts: ["wasmextension"],
         }

@@ -1,9 +1,8 @@
 use std::path::Path;
 
-use vlcrs_core::{debug, error};
-use vlcrs_core::error::Result;
-use vlcrs_core::messages::Logger;
-use vlcrs_core::module::extension::{ExtensionManager, ExtensionManagerControl, Module, ThisExtensionsManager};
+use vlcrs_core::error::{self, Result};
+use vlcrs_messages::{debug, error, Logger};
+use vlcrs_core::module::extension::{ExtensionCapability, ExtensionManager, ExtensionManagerControl, ThisExtensionsManager};
 use vlcrs_core::module::ModuleArgs;
 
 use vlcrs_core::extension::Extension;
@@ -42,7 +41,7 @@ impl ProvidesLogger for WasmExtensionManager<'_> {
     }
 }
 
-impl Module for WasmExtensionModule {
+impl ExtensionCapability for WasmExtensionModule {
     fn open<'a> (
         this_extension_manager: ThisExtensionsManager<'a>,
         logger: &'a mut Logger,

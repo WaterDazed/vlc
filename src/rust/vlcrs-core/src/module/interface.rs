@@ -1,27 +1,49 @@
 use std::{marker::PhantomData, ptr::NonNull};
 
-use vlcrs_core_sys::{vlc_logger, vlc_object_t};
-
-use vlcrs_core_sys::intf_thread_t;
+use vlcrs_messages::{Logger, sys::vlc_logger};
+use crate::object::sys::vlc_object_t;
 
 use crate::error::Result;
-use crate::messages::Logger;
 
 use super::ModuleArgs;
+
+use vlcrs_plugin::ModuleProtocol;
+
+#[allow(non_camel_case_types)]
+#[allow(unused)]
+extern {
+    pub type intf_thread_t;
+}
 
 #[doc(alias = "intf_thread_t")]
 #[repr(transparent)]
 pub struct ThisInterfaceThread<'a>(*mut intf_thread_t, PhantomData<&'a mut ()>);
 
-/// Interface module
-pub trait Module {
+#[allow(non_camel_case_types)]
+type vlc_interface_activate = unsafe extern "C" fn(*mut vlc_object_t) -> i32;
+
+/// Interface capability
+pub trait InterfaceCapability {
     /// Open function for a interface module
     fn open<'a>(
-        _this_interface: ThisInterfaceThread<'a>,
+        this_interface: ThisInterfaceThread<'a>,
         logger: &'a mut Logger,
         args: &mut ModuleArgs,
     ) -> Result<()>;
 }
+
+pub struct InterfaceModuleLoader;
+
+impl<T> ModuleProtocol<T> for InterfaceModuleLoader
+    where T: InterfaceCapability
+{
+    type Activate = vlc_interface_activate;
+    fn activate_function() -> Self::Activate
+    {
+        interface_activate::<T>
+    }
+}
+
 
 /// Generic module open callback for intf_thread_t like interface
 ///
@@ -29,7 +51,8 @@ pub trait Module {
 ///
 /// The `object` parameter must point to a valid `intf_thread_t` that has been initiliazed with
 /// all the requirement so a any module can hock up to it.
-pub unsafe extern "C" fn module_open<T: Module>(object: *mut vlc_object_t) -> i32 {
+unsafe extern "C" 
+fn interface_activate<T: InterfaceCapability>(object: *mut vlc_object_t) -> i32 {
     let ptr_interface = object as *mut intf_thread_t;
 
     let this_interface = ThisInterfaceThread(ptr_interface, PhantomData);
@@ -45,16 +68,4 @@ pub unsafe extern "C" fn module_open<T: Module>(object: *mut vlc_object_t) -> i3
         Ok(()) => 0,
         Err(err) => err.to_vlc_errno(),
     }
-}
-
-/// Generic module close callback for intf_thread_t like interface
-/// 
-/// # Safety
-///
-/// The `object` parameter must point to a valid `intf_thread_t` that has been initiliazed by
-/// `module_close`.
-
-pub unsafe extern "C" fn module_close(_object: *mut vlc_object_t) -> i32 {
-    // nothing to do, watch `pf_close` for the actual closing of the interface
-    0
 }

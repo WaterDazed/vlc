@@ -1,12 +1,15 @@
 use std::ffi::{c_char, c_ushort, CString};
 use std::{marker::PhantomData, ptr::NonNull};
 
-use vlcrs_core_sys::{vlc_logger, vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock, vlc_object_t};
-
-use vlcrs_core_sys::{extension_t, extensions_manager_t, input_item_t};
+use crate::threads::{vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock};
+use crate::extension::sys::{extension_t, extensions_manager_t, vlc_extensions_manager_operations};
+use crate::input_item::sys::input_item_t;
+use crate::object::sys::vlc_object_t;
 
 use crate::error::{Errno, Result};
-use crate::messages::Logger;
+
+use vlcrs_messages::{Logger, sys::vlc_logger};
+use vlcrs_plugin::ModuleProtocol;
 
 use crate::extension::Extension;
 
@@ -51,8 +54,12 @@ impl<'a> ThisExtensionsManager<'a> {
     }
 }
 
-/// extensions_manager_t module
-pub trait Module {
+#[allow(non_camel_case_types)]
+type vlc_extensions_manager_activate = unsafe extern "C" fn(*mut vlc_object_t) -> i32;
+type vlc_extensions_manager_deactivate = unsafe extern "C" fn(*mut vlc_object_t) -> i32;
+
+/// Extension capability
+pub trait ExtensionCapability {
     /// Open function for a extensions manager module
     fn open<'a>(
         _this_extension_manager: ThisExtensionsManager<'a>,
@@ -61,12 +68,31 @@ pub trait Module {
     ) -> Result<Box<dyn ExtensionManager + 'a>>;
 }
 
+pub struct ExtensionModuleLoader;
+
+impl<T> ModuleProtocol<T> for ExtensionModuleLoader
+    where T: ExtensionCapability
+{
+    type Activate = vlc_extensions_manager_activate;
+    type Deactivate = vlc_extensions_manager_deactivate;
+
+    fn activate_function() -> Self::Activate
+    {
+        extensions_manager_activate::<T>
+    }
+
+    fn deactivate_function() -> Option<Self::Deactivate>
+    {
+        Some(extensions_manager_deactivate)
+    }
+}
+
 pub trait ExtensionManager : ExtensionManagerControl {}
 
 /// This trait allows defining some controls methods.
 pub trait ExtensionManagerControl {
 
-    fn activate(&self, extension: &mut Extension) -> Result<()>;
+    fn activate(&mut self, extension: &mut Extension) -> Result<()>;
 
     fn deactivate(&self, extension: &mut Extension) -> Result<()>;
 
@@ -95,7 +121,7 @@ pub trait ExtensionManagerControl {
 ///
 /// The `object` parameter must point to a valid `extensions_manager_t` that has been initiliazed with
 /// all the requirement so a any module can hock up to it.
-pub unsafe extern "C" fn module_open<T: Module>(object: *mut vlc_object_t) -> i32 {
+pub unsafe extern "C" fn extensions_manager_activate<T: ExtensionCapability>(object: *mut vlc_object_t) -> i32 {
     let ptr_extension_manager = object as *mut extensions_manager_t;
 
     let this_extension_manager = ThisExtensionsManager(ptr_extension_manager, PhantomData);
@@ -120,7 +146,7 @@ pub unsafe extern "C" fn module_open<T: Module>(object: *mut vlc_object_t) -> i3
 /// The `object` parameter must point to a valid `extensions_manager_t` that has been initiliazed by
 /// `module_open`.
 
-pub unsafe extern "C" fn module_close(object: *mut vlc_object_t) -> i32 {
+pub unsafe extern "C" fn extensions_manager_deactivate(object: *mut vlc_object_t) -> i32 {
 
     let ptr_extension_manager = object as *mut extensions_manager_t;
     
@@ -167,8 +193,8 @@ unsafe fn register(
         vlc_mutex_init(&mut (*ptr_extension_manager).lock);
     }
 
-    static OPS: vlcrs_core_sys::vlc_extensions_manager_operations = 
-        vlcrs_core_sys::vlc_extensions_manager_operations {
+    static OPS: vlc_extensions_manager_operations = 
+        vlc_extensions_manager_operations {
             activate: Some(pf_activate::<dyn ExtensionManager>),
             deactivate: Some(pf_deactivate::<dyn ExtensionManager>),
             is_activated: Some(pf_is_activated::<dyn ExtensionManager>),

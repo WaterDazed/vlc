@@ -1,14 +1,12 @@
-use vlcrs_core::debug;
-use vlcrs_core::{error::Result, messages::Logger, module::ModuleArgs};
+use vlcrs_core::{error::Result, module::{interface::InterfaceCapability, ModuleArgs}};
 
-use vlcrs_core::module::interface::Module;
+use vlcrs_messages::{Logger, debug};
+
 use vlcrs_core::module::interface::ThisInterfaceThread;
 
 pub struct Wasm;
 
-pub struct WasmIntf;
-
-impl Module for Wasm {
+impl InterfaceCapability for Wasm {
     fn open<'a> (
         _this_interface: ThisInterfaceThread<'a>,
         logger: &'a mut Logger,

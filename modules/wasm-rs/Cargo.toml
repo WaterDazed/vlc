@@ -6,5 +6,8 @@ edition = "2021"
 
 [dependencies]
 vlcrs-core = { workspace = true }
-vlcrs-core-macros = { workspace = true }
+vlcrs-macros = { workspace = true }
+vlcrs-messages = { workspace = true }
+vlcrs-utils = { workspace = true }
+vlcrs-plugin = { workspace = true }
 wasmer = "4.3.2"
