@@ -10,6 +10,7 @@
 
 pub mod configuration;
 pub mod error;
+pub mod es;
 pub mod extension;
 pub mod input_item;
 pub mod module;
