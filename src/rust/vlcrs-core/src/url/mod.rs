@@ -1,12 +1,14 @@
 //! Url facilities.
 
+mod sys;
+
 use std::{
     ffi::{CStr, CString},
     mem::MaybeUninit,
 };
 
 use crate::error::{cvt, Result};
-use vlcrs_core_sys::{vlc_UrlClean, vlc_UrlParse, vlc_UrlParseFixup, vlc_url_t};
+use sys::{vlc_UrlClean, vlc_UrlParse, vlc_UrlParseFixup, vlc_url_t};
 
 /// A VLC representation o an URL
 #[doc(alias = "vlc_url_t")]
