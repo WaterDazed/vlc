@@ -2,7 +2,7 @@
 
 use std::{ffi::CStr, ptr::NonNull};
 
-mod sys;
+pub mod sys;
 use sys::{vlc_Log, vlc_logger};
 
 pub use sys::vlc_log_type as LogType;
@@ -42,6 +42,10 @@ impl Logger {
                 msg.as_ptr(),
             )
         }
+    }
+
+    pub fn as_ptr(&self) -> *mut vlc_logger {
+        self.0.as_ptr()
     }
 }
 
