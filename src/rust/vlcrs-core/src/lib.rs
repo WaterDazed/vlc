@@ -15,6 +15,7 @@ pub mod extension;
 pub mod input_item;
 pub mod module;
 pub mod object;
+pub mod threads;
 pub mod tick;
 pub mod url;
 pub mod variables;
