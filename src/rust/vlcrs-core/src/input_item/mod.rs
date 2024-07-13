@@ -1,17 +1,20 @@
+pub mod sys;
+use sys::input_item_t;
+
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::ptr::NonNull;
 
-use vlcrs_core_sys::input_item_AddOption;
-use vlcrs_core_sys::input_item_CopyOptions;
-use vlcrs_core_sys::input_item_GetDuration;
-use vlcrs_core_sys::input_item_IsArtFetched;
-use vlcrs_core_sys::input_item_IsPreparsed;
-use vlcrs_core_sys::input_item_NewExt;
-use vlcrs_core_sys::input_item_SetDuration;
-use vlcrs_core_sys::input_item_node_AppendItem;
-use vlcrs_core_sys::input_item_node_Delete;
-use vlcrs_core_sys::{input_item_Copy, input_item_Release, input_item_node_t, input_item_t};
+use sys::input_item_AddOption;
+use sys::input_item_CopyOptions;
+use sys::input_item_GetDuration;
+use sys::input_item_IsArtFetched;
+use sys::input_item_IsPreparsed;
+use sys::input_item_NewExt;
+use sys::input_item_SetDuration;
+use sys::input_item_node_AppendItem;
+use sys::input_item_node_Delete;
+use sys::{input_item_Copy, input_item_Release, input_item_node_t};
 
 use crate::error::cvt;
 use crate::error::{cvp, Result};
@@ -22,7 +25,7 @@ macro_rules! input_meta {
         #[doc = concat!("Get the *", stringify!($name), "* of this input item")]
         // #[doc(alias = stringify!($get_fn))]
         pub fn $name(&mut self) -> Option<&str> {
-            use vlcrs_core_sys::$get_fn;
+            use sys::$get_fn;
 
             // SAFETY: TODO
             let c_string = unsafe { $get_fn(self.0.as_ptr()) };
@@ -37,7 +40,7 @@ macro_rules! input_meta {
         #[doc = concat!("Set the *", stringify!($name), "* of this input item")]
         // #[doc(alias = stringify!($set_fn))]
         pub fn $set_name(&mut self, $name: Option<&str>) {
-            use vlcrs_core_sys::$set_fn;
+            use sys::$set_fn;
 
             let c_string = if let Some(name) = $name {
                 // TODO: the doc says that it is not okay to call free() on them
@@ -52,9 +55,9 @@ macro_rules! input_meta {
     };
 }
 
-pub use vlcrs_core_sys::input_item_net_type as NetType;
-pub use vlcrs_core_sys::input_item_option_e as Flag;
-pub use vlcrs_core_sys::input_item_type_e as Type;
+pub use sys::input_item_net_type as NetType;
+pub use sys::input_item_option_e as Flag;
+pub use sys::input_item_type_e as Type;
 
 /// An input item
 #[doc(alias = "input_item_t")]
