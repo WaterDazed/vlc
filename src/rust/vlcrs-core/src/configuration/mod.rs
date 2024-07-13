@@ -1,12 +1,14 @@
 //! Configuration facilities
 
+pub mod sys;
+
 use std::path::Path;
 use std::{ffi::CString, path::PathBuf};
 
-use vlcrs_core_sys::{config_GetUserDir, config_GetSysPath};
+use sys::{config_GetUserDir, config_GetSysPath};
 
-pub use vlcrs_core_sys::vlc_user_dir as UserDir;
-pub use vlcrs_core_sys::vlc_sysdir_t as SysDir;
+pub use sys::vlc_user_dir as UserDir;
+pub use sys::vlc_sysdir_t as SysDir;
 
 use crate::error::{CoreError, Result};
 
