@@ -1,5 +1,7 @@
 //! Tick.
 
+pub mod sys;
+
 use std::{
     ffi::CStr,
     fmt::{Debug, Display},
@@ -8,10 +10,12 @@ use std::{
 };
 
 use libc::c_char;
-use vlcrs_core_sys::{
-    date_Change, date_Decrement, date_Increment, date_Init, date_t, vlc_tick_now, vlc_tick_sleep,
-    vlc_tick_t, vlc_tick_to_str, vlc_tick_wait,
+use sys::{
+    date_Change, date_Decrement, date_Increment, date_Init, date_t,
+    vlc_tick_t, vlc_tick_to_str,
 };
+
+use crate::threads::{vlc_tick_now, vlc_tick_sleep, vlc_tick_wait};
 
 /// The VLC clock fequency
 pub const CLOCK_FREQ: u64 = 1_000_000u64;
