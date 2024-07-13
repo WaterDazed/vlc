@@ -1,8 +1,12 @@
+pub mod sys;
+use sys::{extension_t, extensions_manager_t, vlc_extensions_manager_operations};
+
 use std::ffi::{CStr, CString};
 use std::marker::PhantomData;
 use std::ptr;
-use crate::{error::Result, messages::Logger};
-use vlcrs_core_sys::{extension_t, vlc_logger};
+use crate::error::Result;
+
+use vlcrs_messages::{Logger, vlc_logger};
 
 #[doc(alias = "extension_t")]
 #[repr(transparent)]
@@ -39,7 +43,7 @@ impl<'a> Extension<'a> {
 
     pub fn set_logger(&mut self, logger: &mut Logger) -> Result<()> {
         unsafe {
-            (*self.0).logger = logger.0.as_ptr();
+            (*self.0).logger = logger.as_ptr();
         }
         Ok(())
     }
