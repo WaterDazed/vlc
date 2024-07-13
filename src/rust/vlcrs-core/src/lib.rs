@@ -1,3 +1,5 @@
+#![feature(extern_types)]
+
 #![deny(unsafe_op_in_unsafe_fn)]
 
 //! The `vlcrs-core` crate.
