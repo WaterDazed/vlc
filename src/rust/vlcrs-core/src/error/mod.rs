@@ -1,4 +1,5 @@
 //! Error management.
+mod sys;
 
 use std::{fmt::Display, ptr::NonNull, str::Utf8Error};
 
@@ -64,28 +65,28 @@ pub struct Errno(libc::c_int);
 
 impl Errno {
     #[doc(alias = "VLC_SUCCESS")]
-    pub const SUCCESS: Errno = Errno(vlcrs_core_sys::VLC_SUCCESS as libc::c_int);
+    pub const SUCCESS: Errno = Errno(sys::VLC_SUCCESS as libc::c_int);
 
     #[doc(alias = "VLC_EGENERIC")]
-    pub const GENERIC: Errno = Errno(vlcrs_core_sys::VLC_RUST_EGENERIC as libc::c_int);
+    pub const GENERIC: Errno = Errno(sys::VLC_RUST_EGENERIC as libc::c_int);
 
     #[doc(alias = "VLC_ENOMEM")]
-    pub const NO_MEM: Errno = Errno(vlcrs_core_sys::VLC_ENOMEM as libc::c_int);
+    pub const NO_MEM: Errno = Errno(sys::VLC_ENOMEM as libc::c_int);
 
     #[doc(alias = "VLC_ETIMEOUT")]
-    pub const TIME_OUT: Errno = Errno(vlcrs_core_sys::VLC_ETIMEOUT as libc::c_int);
+    pub const TIME_OUT: Errno = Errno(sys::VLC_ETIMEOUT as libc::c_int);
 
     #[doc(alias = "VLC_ENOENT")]
-    pub const NO_ENT: Errno = Errno(vlcrs_core_sys::VLC_ENOENT as libc::c_int);
+    pub const NO_ENT: Errno = Errno(sys::VLC_ENOENT as libc::c_int);
 
     #[doc(alias = "VLC_EINVAL")]
-    pub const IN_VAL: Errno = Errno(vlcrs_core_sys::VLC_EINVAL as libc::c_int);
+    pub const IN_VAL: Errno = Errno(sys::VLC_EINVAL as libc::c_int);
 
     #[doc(alias = "VLC_EACCES")]
-    pub const ACCES: Errno = Errno(vlcrs_core_sys::VLC_EACCES as libc::c_int);
+    pub const ACCES: Errno = Errno(sys::VLC_EACCES as libc::c_int);
 
     #[doc(alias = "VLC_ENOTSUP")]
-    pub const NOT_SUP: Errno = Errno(vlcrs_core_sys::VLC_ENOTSUP as libc::c_int);
+    pub const NOT_SUP: Errno = Errno(sys::VLC_ENOTSUP as libc::c_int);
 
     #[doc(alias = "EAGAIN")]
     pub const AGAIN: Errno = Errno(libc::EAGAIN as libc::c_int);
