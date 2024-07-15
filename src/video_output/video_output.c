@@ -976,6 +976,32 @@ static bool IsPictureLateToStaticFilter(vout_thread_sys_t *vout, const video_for
     return IsPictureLateToProcess(vout, fmt, time_until_display, prepare_decoded_duration);
 }
 
+static vlc_tick_t CountTimeToDisplay(vout_thread_sys_t *vout, vlc_tick_t pic_pts)
+{
+    vout_thread_sys_t *sys = vout;
+    const vlc_tick_t system_now = vlc_tick_now();
+    uint32_t clock_id;
+    vlc_clock_Lock(sys->clock);
+    const vlc_tick_t system_pts =
+        vlc_clock_ConvertToSystem(sys->clock, system_now,
+                                  pic_pts, sys->rate, &clock_id);
+    vlc_clock_Unlock(sys->clock);
+    if (clock_id != sys->clock_id)
+    {
+        sys->clock_id = clock_id;
+        msg_Dbg(&vout->obj, "Using a new clock context (%u), "
+                "flushing static filters", clock_id);
+
+        /* Most deinterlace modules can't handle a PTS
+         * discontinuity, so flush them.
+         *
+         * FIXME: Pass a discontinuity flag and handle it in
+         * deinterlace modules. */
+        filter_chain_VideoFlush(sys->filter.chain_static);
+    }
+    return pic_pts - system_pts;
+}
+
 /* */
 VLC_USED
 static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
@@ -997,29 +1023,11 @@ static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
             decoded = picture_fifo_Pop(sys->decoder_fifo);
 
             if (decoded) {
-                const vlc_tick_t system_now = vlc_tick_now();
-                uint32_t clock_id;
-                vlc_clock_Lock(sys->clock);
-                const vlc_tick_t system_pts =
-                    vlc_clock_ConvertToSystem(sys->clock, system_now,
-                                              decoded->date, sys->rate, &clock_id);
-                vlc_clock_Unlock(sys->clock);
-                if (clock_id != sys->clock_id)
-                {
-                    sys->clock_id = clock_id;
-                    msg_Dbg(&vout->obj, "Using a new clock context (%u), "
-                            "flusing static filters", clock_id);
-
-                    /* Most deinterlace modules can't handle a PTS
-                     * discontinuity, so flush them.
-                     *
-                     * FIXME: Pass a discontinuity flag and handle it in
-                     * deinterlace modules. */
-                    filter_chain_VideoFlush(sys->filter.chain_static);
-                }
+                vlc_tick_t time_left_to_display =
+                    CountTimeToDisplay(vout, decoded->date);
 
                 if (is_late_dropped && !decoded->b_force
-                 && IsPictureLateToStaticFilter(vout, &decoded->format, system_pts - system_now))
+                 && IsPictureLateToStaticFilter(vout, &decoded->format, time_left_to_display))
                 {
                     picture_Release(decoded);
                     vout_statistic_AddLost(&sys->statistic, 1);
