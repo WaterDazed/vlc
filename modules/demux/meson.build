@@ -276,6 +276,7 @@ if libebml_dep.found() and libmatroska_dep.found()
             'mkv/chapter_command_dvd.cpp',
             'mkv/duktape/duktape.cpp',
             'mkv/chapter_command_script.cpp',
+            'mkv/chapter_command_matroska_js.cpp',
             'mkv/chapter_command_script_common.cpp',
             'mkv/stream_io_callback.cpp',
             'mkv/vlc_colors.c',
