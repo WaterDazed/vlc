@@ -202,6 +202,7 @@ libmkv_plugin_la_SOURCES = \
 	demux/mkv/chapter_command.hpp demux/mkv/chapter_command.cpp \
 	demux/mkv/chapter_command_dvd.hpp demux/mkv/chapter_command_dvd.cpp \
 	demux/mkv/chapter_command_script.hpp demux/mkv/chapter_command_script.cpp \
+	demux/mkv/chapter_command_matroska_js.hpp demux/mkv/chapter_command_matroska_js.cpp \
 	demux/mkv/chapter_command_script_common.hpp demux/mkv/chapter_command_script_common.cpp \
 	demux/mkv/duktape/duk_config.h \
 	demux/mkv/duktape/duktape.h demux/mkv/duktape/duktape.cpp \

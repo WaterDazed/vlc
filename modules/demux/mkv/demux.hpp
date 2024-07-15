@@ -29,6 +29,7 @@
 #include "chapter_command.hpp"
 #include "chapter_command_dvd.hpp"
 #include "chapter_command_script.hpp"
+#include "chapter_command_matroska_js.hpp"
 #include "events.hpp"
 
 #include <memory>
@@ -137,6 +138,18 @@ public:
         return ms_interpreter.get();
     }
 
+    matroska_js_interpreter_c * GetMatroskaJSInterpreter()
+    {
+        if (!matroska_js_interpreter)
+        {
+            try {
+                matroska_js_interpreter = std::make_unique<matroska_js_interpreter_c> ( vlc_object_logger( &demuxer ), *this );
+            } catch ( const std::bad_alloc & ) {
+            }
+        }
+        return matroska_js_interpreter.get();
+    }
+
     uint8_t        palette[4][4];
     vlc_mutex_t    lock_demuxer;
 
@@ -147,6 +160,7 @@ private:
     virtual_segment_c                *p_current_vsegment = nullptr;
     std::unique_ptr<dvd_command_interpretor_c> dvd_interpretor; // protected by lock_demuxer
     std::unique_ptr<matroska_script_interpretor_c> ms_interpreter;
+    std::unique_ptr<matroska_js_interpreter_c> matroska_js_interpreter;
 };
 
 } // namespace
