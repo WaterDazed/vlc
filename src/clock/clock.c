@@ -524,7 +524,9 @@ static void vlc_clock_master_reset(vlc_clock_t *clock)
     if (clock->context != NULL && clock->context != ctx)
         vlc_clock_switch_context(clock, ctx);
 
+    clock_point_t start_time = ctx->start_time;
     vlc_clock_main_reset(main_clock);
+    main_clock->context->start_time = start_time;
 
     assert(main_clock->delay <= 0);
     assert(clock->delay >= 0);
@@ -597,14 +599,13 @@ vlc_clock_input_start(vlc_clock_t *clock,
          context->wait_sync_ref.stream != VLC_TICK_INVALID))
     {
         assert(context->start_time.stream != VLC_TICK_INVALID);
-        struct vlc_clock_context *new_context = malloc(sizeof(*new_context));
+        struct vlc_clock_context *new_context = context_new();
         if (new_context != NULL)
         {
-            *new_context = *context;
-            vlc_list_init(&new_context->using_clocks);
-            vlc_list_append(&new_context->node, &main_clock->prev_contexts);
+            new_context->clock_id = context->clock_id + 1;
+            vlc_list_append(&context->node, &main_clock->prev_contexts);
+            main_clock->context = context = new_context;
         }
-        context->clock_id++;
     }
 
     context_reset(context);
@@ -681,6 +682,11 @@ static vlc_tick_t vlc_clock_master_to_system(vlc_clock_t *clock,
                                              vlc_tick_t now, vlc_tick_t ts,
                                              double rate)
 {
+    (void)now;
+
+    if (ctx->start_time.system == VLC_TICK_INVALID)
+        return VLC_TICK_INVALID;
+
     vlc_tick_t system = context_stream_to_system(ctx, ts);
     if (system == VLC_TICK_INVALID)
     {
@@ -754,13 +760,10 @@ vlc_clock_output_start(vlc_clock_t *clock,
 
     struct vlc_clock_context *context = main_clock->context;
 #if 0
-    /* Disabled for now, the handling will be done in later commit. */
     /* vlc_clock_Start must have already been called. */
     assert(context->start_time.system != VLC_TICK_INVALID);
     assert(context->start_time.stream != VLC_TICK_INVALID);
 #endif
-    if (context->start_time.system == VLC_TICK_INVALID)
-        return;
 
     if (clock->priority >= main_clock->wait_sync_ref_priority)
         goto end;
