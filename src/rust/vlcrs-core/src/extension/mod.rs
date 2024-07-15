@@ -193,6 +193,16 @@ impl<'a> Extension<'a> {
         }
     }
 
+    pub fn get_author(&self) -> &str {
+        unsafe {
+            if (*self.0).psz_author.is_null() {
+                ""
+            } else {
+                CStr::from_ptr((*self.0).psz_author).to_str().unwrap_or("")
+            }
+        }
+    }
+
     pub fn get_version(&self) -> &str {
         unsafe {
             if (*self.0).psz_version.is_null() {
