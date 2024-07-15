@@ -494,7 +494,7 @@ static vlc_tick_t vlc_clock_master_update(vlc_clock_t *clock,
 
     /* If system_now is VLC_TICK_MAX, the update is forced, don't modify
      * anything but only notify the new clock point. */
-    if (system_now != VLC_TICK_MAX)
+    if (system_now != VLC_TICK_MAX && ctx->start_time.system != VLC_TICK_INVALID)
     {
         vlc_clock_master_update_coeff(clock, ctx, system_now, ts, rate);
         ctx->last = clock_point_Create(system_now, ts);
@@ -694,6 +694,9 @@ static vlc_tick_t vlc_clock_slave_to_system(vlc_clock_t *clock,
                                             double rate)
 {
     vlc_clock_main_t *main_clock = clock->owner;
+
+    if (ctx->start_time.system == VLC_TICK_INVALID)
+        return VLC_TICK_INVALID;
 
     vlc_tick_t system = context_stream_to_system(ctx, ts);
     if (system == VLC_TICK_INVALID)
