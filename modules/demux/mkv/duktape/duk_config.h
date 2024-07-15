@@ -2906,21 +2906,21 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_AUGMENT_ERROR_THROW
 #define DUK_USE_AVOID_PLATFORM_FUNCPTRS
 #define DUK_USE_BASE64_FASTPATH
-#define DUK_USE_BASE64_SUPPORT
+#undef DUK_USE_BASE64_SUPPORT // matroska-js: disable base 64 support
 #define DUK_USE_BOOLEAN_BUILTIN
 #define DUK_USE_BUFFEROBJECT_SUPPORT
 #undef DUK_USE_BUFLEN16
-#define DUK_USE_BYTECODE_DUMP_SUPPORT
+#undef DUK_USE_BYTECODE_DUMP_SUPPORT // matroska-js: disable bytecode dump
 #define DUK_USE_CACHE_ACTIVATION
 #define DUK_USE_CACHE_CATCHER
 #define DUK_USE_CALLSTACK_LIMIT 10000
 #define DUK_USE_CBOR_BUILTIN
 #define DUK_USE_CBOR_DEC_RECLIMIT 1000
 #define DUK_USE_CBOR_ENC_RECLIMIT 1000
-#define DUK_USE_CBOR_SUPPORT
+#undef DUK_USE_CBOR_SUPPORT // matroska-js: disable cbor
 #define DUK_USE_COMPILER_RECLIMIT 2500
 #define DUK_USE_COROUTINE_SUPPORT
-#undef DUK_USE_CPP_EXCEPTIONS
+#define DUK_USE_CPP_EXCEPTIONS // matroska-js: enable cpp exceptions
 #undef DUK_USE_DATAPTR16
 #undef DUK_USE_DATAPTR_DEC16
 #undef DUK_USE_DATAPTR_ENC16
@@ -2951,10 +2951,10 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_ES6_PROXY
 #define DUK_USE_ES6_REGEXP_SYNTAX
 #define DUK_USE_ES6_UNICODE_ESCAPE
-#define DUK_USE_ES7
-#define DUK_USE_ES7_EXP_OPERATOR
+#undef DUK_USE_ES7 // matroska-js: disable es7
+#undef DUK_USE_ES7_EXP_OPERATOR // matroska-js: disable es7-exp-operator
 #define DUK_USE_ES8
-#define DUK_USE_ES9
+#undef DUK_USE_ES9 // matroska-js: disable es9
 #define DUK_USE_ESBC_LIMITS
 #define DUK_USE_ESBC_MAX_BYTES 2147418112L
 #define DUK_USE_ESBC_MAX_LINENUMBER 2147418112L
@@ -2975,8 +2975,8 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_FUNCPTR16
 #undef DUK_USE_FUNCPTR_DEC16
 #undef DUK_USE_FUNCPTR_ENC16
-#define DUK_USE_FUNCTION_BUILTIN
-#define DUK_USE_FUNC_FILENAME_PROPERTY
+#define DUK_USE_FUNCTION_BUILTIN    // matroska-js: disable filename property
+#undef DUK_USE_FUNC_FILENAME_PROPERTY
 #define DUK_USE_FUNC_NAME_PROPERTY
 #undef DUK_USE_GC_TORTURE
 #undef DUK_USE_GET_MONOTONIC_TIME
@@ -3006,7 +3006,7 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_INJECT_HEAP_ALLOC_ERROR
 #undef DUK_USE_INTERRUPT_COUNTER
 #undef DUK_USE_INTERRUPT_DEBUG_FIXUP
-#define DUK_USE_JC
+#undef DUK_USE_JC // matroska-js: disable JC
 #define DUK_USE_JSON_BUILTIN
 #define DUK_USE_JSON_DECNUMBER_FASTPATH
 #define DUK_USE_JSON_DECSTRING_FASTPATH
@@ -3016,7 +3016,7 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_JSON_QUOTESTRING_FASTPATH
 #undef DUK_USE_JSON_STRINGIFY_FASTPATH
 #define DUK_USE_JSON_SUPPORT
-#define DUK_USE_JX
+#undef DUK_USE_JX // matroska-js: disable jx
 #define DUK_USE_LEXER_SLIDING_WINDOW
 #undef DUK_USE_LIGHTFUNC_BUILTINS
 #define DUK_USE_LITCACHE_SIZE 256
@@ -3035,8 +3035,8 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_NUMBER_BUILTIN
 #define DUK_USE_OBJECT_BUILTIN
 #undef DUK_USE_OBJSIZES16
-#undef DUK_USE_PARANOID_ERRORS
-#define DUK_USE_PC2LINE
+#define DUK_USE_PARANOID_ERRORS // matroska-js: use paranoid errors
+#undef DUK_USE_PC2LINE // matroska-js: disable pc2line
 #define DUK_USE_PERFORMANCE_BUILTIN
 #undef DUK_USE_PREFER_SIZE
 #undef DUK_USE_PROMISE_BUILTIN
@@ -3045,8 +3045,8 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_REFCOUNT32
 #define DUK_USE_REFERENCE_COUNTING
 #define DUK_USE_REFLECT_BUILTIN
-#define DUK_USE_REGEXP_CANON_BITMAP
-#undef DUK_USE_REGEXP_CANON_WORKAROUND
+#undef DUK_USE_REGEXP_CANON_BITMAP // matroska-js: disable regexp canon bitmap
+#undef DUK_USE_REGEXP_CANON_WORKAROUND // matroska-js: disable regexp canon workaround
 #define DUK_USE_REGEXP_COMPILER_RECLIMIT 10000
 #define DUK_USE_REGEXP_EXECUTOR_RECLIMIT 10000
 #define DUK_USE_REGEXP_SUPPORT
@@ -3057,7 +3057,7 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_ROM_STRINGS
 #define DUK_USE_SECTION_B
 #undef DUK_USE_SELF_TESTS
-#define DUK_USE_SHEBANG_COMMENTS
+#undef DUK_USE_SHEBANG_COMMENTS // matroska-js: disable shebang comments
 #undef DUK_USE_SHUFFLE_TORTURE
 #define DUK_USE_SOURCE_NONBMP
 #undef DUK_USE_STRHASH16
@@ -3077,7 +3077,7 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_SYMBOL_BUILTIN
 #define DUK_USE_TAILCALL
 #define DUK_USE_TARGET_INFO "unknown"
-#define DUK_USE_TRACEBACKS
+#undef DUK_USE_TRACEBACKS // matroska-js: disable tracebacks
 #define DUK_USE_TRACEBACK_DEPTH 10
 #define DUK_USE_VALSTACK_GROW_SHIFT 2
 #define DUK_USE_VALSTACK_LIMIT 1000000L
