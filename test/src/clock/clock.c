@@ -350,18 +350,14 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
         vlc_clock_main_SetDejitter(mainclk, 0);
     }
 
-    vlc_tick_t system_start = VLC_TICK_0 + VLC_TICK_FROM_MS(15000);
+    vlc_tick_t system_start = scenario->system_start;
     vlc_tick_t stream_start = VLC_TICK_0 + VLC_TICK_FROM_MS(15000);
     if (scenario->type == CLOCK_SCENARIO_UPDATE)
     {
         system_start = scenario->system_start;
         stream_start = scenario->stream_start;
+        vlc_clock_Start(input, system_start, stream_start);
     }
-
-    vlc_clock_Start(input, system_start, stream_start);
-
-    if (scenario->type == CLOCK_SCENARIO_UPDATE)
-        vlc_clock_Start(master, system_start, stream_start);
     vlc_clock_main_Unlock(mainclk);
 
     const struct clock_ctx ctx = {
@@ -688,8 +684,11 @@ static void pause_common(const struct clock_ctx *ctx, vlc_clock_t *updater)
     const vlc_tick_t pause_duration = VLC_TICK_FROM_MS(20);
     vlc_tick_t system = system_start;
 
+    vlc_clock_Lock(ctx->input);
+    vlc_clock_Start(ctx->input, ctx->system_start, ctx->stream_start);
+    vlc_clock_Unlock(ctx->input);
+
     vlc_clock_Lock(updater);
-    vlc_clock_Start(updater, ctx->system_start, ctx->stream_start);
     vlc_clock_Update(updater, system, ctx->stream_start, 1.0f);
     vlc_clock_Unlock(updater);
 
@@ -733,6 +732,9 @@ static void convert_paused_common(const struct clock_ctx *ctx, vlc_clock_t *upda
 {
     const vlc_tick_t system_start = ctx->system_start;
     vlc_tick_t system = system_start;
+    vlc_clock_Lock(ctx->input);
+    vlc_clock_Start(ctx->input, ctx->system_start, ctx->stream_start);
+    vlc_clock_Unlock(ctx->input);
 
     vlc_clock_Lock(updater);
     vlc_clock_Start(updater, ctx->system_start, ctx->stream_start);
@@ -766,26 +768,27 @@ static void contexts_run(const struct clock_ctx *ctx)
 {
     vlc_tick_t converted;
     vlc_tick_t system = ctx->system_start;
-    vlc_tick_t stream_context0 = 1;
+    vlc_tick_t stream_context0 = ctx->stream_start;
     uint32_t clock_id;
 
     vlc_clock_main_Lock(ctx->mainclk);
 
-    /* Initial SetFirstPcr, that will initialise the default and main context */
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context0);
+    //* Initial start, that will initialise the default and main context */
+    vlc_clock_Start(ctx->input, system, stream_context0);
 
     /* Check that the converted point is valid */
     converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context0,
                                           1.0f, &clock_id);
     assert(clock_id == 0);
     assert(converted == system);
+    vlc_clock_Update(ctx->master, system, stream_context0, 1.0f);
     vlc_clock_Update(ctx->slave, system, stream_context0, 1.0f);
 
     /* Discontinuity from 1us to 30 sec */
     vlc_tick_t system_context0 = system;
     vlc_tick_t stream_context1 = VLC_TICK_FROM_SEC(30);
     system += VLC_TICK_FROM_MS(100);
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context1);
+    vlc_clock_Start(ctx->input, system, stream_context1);
 
     /* Check that we can use the new context (or new origin) */
     converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context1,
@@ -802,12 +805,13 @@ static void contexts_run(const struct clock_ctx *ctx)
     assert(converted == system_context0 + VLC_TICK_FROM_MS(10));
 
     /* Update on the newest context will cause previous contexts to be removed */
+    vlc_clock_Update(ctx->master, system, stream_context1, 1.0f);
     vlc_clock_Update(ctx->slave, system, stream_context1, 1.0f);
 
     /* Discontinuity back to 1us */
     system += VLC_TICK_FROM_MS(100);
     vlc_tick_t stream_context2 = 1;
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context2);
+    vlc_clock_Start(ctx->input, system, stream_context2);
 
     /* Check that we can use the new context (or new origin) */
     converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context2,
@@ -815,6 +819,7 @@ static void contexts_run(const struct clock_ctx *ctx)
     assert(clock_id == 2);
     assert(converted == system);
     /* Update on the newest context will cause previous contexts to be removed */
+    vlc_clock_Update(ctx->master, system, stream_context2, 1.0f);
     vlc_clock_Update(ctx->slave, system, stream_context2, 1.0f);
 
     /* Check that the same conversion will output a different result now that
