@@ -554,8 +554,7 @@ static void normal_check(const struct clock_ctx *ctx, size_t update_count,
         {
             case TRACER_EVENT_TYPE_UPDATE:
                 assert(event.update.coeff == 1.0f);
-                assert(event.update.offset ==
-                       scenario->system_start - scenario->stream_start);
+                assert(event.update.offset == 0);
                 break;
             case TRACER_EVENT_TYPE_RENDER_VIDEO:
                 if (last_video_date != VLC_TICK_INVALID)

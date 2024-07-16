@@ -245,7 +245,10 @@ static vlc_tick_t context_stream_to_system(const struct vlc_clock_context *ctx,
 {
     if (ctx->last.system == VLC_TICK_INVALID)
         return VLC_TICK_INVALID;
-    return ((vlc_tick_t) (ts * ctx->coeff / ctx->rate)) + ctx->offset;
+
+    return ((vlc_tick_t) ((ts - ctx->start_time.stream) * ctx->coeff / ctx->rate))
+            + ctx->offset
+            + ctx->start_time.system;
 }
 
 static void
@@ -365,6 +368,8 @@ static void vlc_clock_main_reset(vlc_clock_main_t *main_clock)
     AvgResetAndFill(&main_clock->coeff_avg, ctx->coeff);
 
     main_clock->wait_sync_ref_priority = UINT_MAX;
+    //main_clock->first_pcr = clock_point_Create(VLC_TICK_INVALID, VLC_TICK_INVALID);
+
     vlc_cond_broadcast(&main_clock->cond);
 }
 
@@ -434,7 +439,11 @@ static void vlc_clock_master_update_coeff(
 
                 /* Reset and continue (calculate the offset from the
                  * current point) */
-                vlc_clock_main_reset(main_clock);
+                ctx->coeff = 1.f;
+                AvgResetAndFill(&main_clock->coeff_avg, 1.);
+                ctx->offset = system_now
+                    - ((vlc_tick_t) ((ts - ctx->start_time.stream) * ctx->coeff / rate))
+                    - ctx->start_time.system;
             }
             else
             {
@@ -452,7 +461,9 @@ static void vlc_clock_master_update_coeff(
         vlc_clock_SendEvent(main_clock, discontinuity);
     }
 
-    ctx->offset = system_now - ((vlc_tick_t) (ts * ctx->coeff / rate));
+    ctx->offset = system_now
+        - ((vlc_tick_t) ((ts - ctx->start_time.stream) * ctx->coeff / rate))
+        - ctx->start_time.system;
 
     if (main_clock->tracer != NULL && clock->track_str_id != NULL)
         vlc_tracer_Trace(main_clock->tracer,
@@ -605,10 +616,13 @@ vlc_clock_monotonic_to_system(vlc_clock_t *clock, struct vlc_clock_context *ctx,
          * ride of the input clock. This code is adapted from input_clock.c and
          * is used to introduce the same delay than the input clock (first PTS
          * - first PCR). */
-        vlc_tick_t pcr_delay =
-            main_clock->first_pcr.system == VLC_TICK_INVALID ? 0 :
-            (ts - main_clock->first_pcr.stream) / rate +
-            main_clock->first_pcr.system - now;
+        vlc_tick_t pcr_delay = 0;
+        if (ctx->start_time.system != VLC_TICK_INVALID)
+            pcr_delay = (ts - ctx->start_time.stream) / rate +
+                ctx->start_time.system - now;
+        else if (main_clock->first_pcr.system != VLC_TICK_INVALID)
+            pcr_delay = (ts - main_clock->first_pcr.stream) / rate +
+                main_clock->first_pcr.system - now;
 
         if (pcr_delay > MAX_PCR_DELAY)
         {
@@ -979,7 +993,8 @@ void vlc_clock_main_ChangePause(vlc_clock_main_t *main_clock, vlc_tick_t now,
     if (ctx->last.system != VLC_TICK_INVALID)
     {
         ctx->last.system += delay;
-        ctx->offset += delay;
+        if (ctx->start_time.system == VLC_TICK_INVALID)
+            ctx->offset += delay;
     }
     if (main_clock->first_pcr.system != VLC_TICK_INVALID)
         main_clock->first_pcr.system += delay;
