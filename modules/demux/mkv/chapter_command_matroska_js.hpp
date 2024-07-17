@@ -7,6 +7,7 @@
 #ifndef VLC_MKV_CHAPTER_COMMAND_MATROSKA_JS_HPP_
 #define VLC_MKV_CHAPTER_COMMAND_MATROSKA_JS_HPP_
 
+#include <optional>
 #include "chapter_command_script_common.hpp"
 
 typedef struct duk_hthread duk_context;
@@ -19,15 +20,24 @@ namespace mkv {
 class matroska_js_interpreter_c : public matroska_script_interpreter_common_c
 {
 private:
+
+    using choice_uid=std::string;
+    chapter_codec_vm::choices choice_map;
+
+
     bool gotoChapter(chapter_uid i_chapter_uid);
 
     //JavaScript access functions
     static duk_ret_t js_execute_GotoAndPlay(duk_context *ctx);
     static duk_ret_t js_execute_LogMsg(duk_context *ctx);
+    static duk_ret_t js_execute_AddChoice(duk_context *ctx);
+    static duk_ret_t js_execute_CommitChoices(duk_context *ctx);
 
     //Command executors
     bool execute_GotoAndPlay(const std::string &arg);
     bool execute_LogMsg(const std::string &arg);
+    bool execute_AddChoice(const std::string &choice_uid, const std::optional <std::string> &choice_group);
+    void execute_CommitChoices();
 
     duk_context *ctx;
 
@@ -49,6 +59,8 @@ public:
     // MatroskaJS commands
     static const char* CMD_MS_GOTO_AND_PLAY;
     static const char* CMD_MS_LOG_MSG;
+    static const char* CMD_MS_ADD_CHOICE;
+    static const char* CMD_MS_COMMIT_CHOICES;
 };
 
 class matroska_js_codec_c : public matroska_script_codec_common_c

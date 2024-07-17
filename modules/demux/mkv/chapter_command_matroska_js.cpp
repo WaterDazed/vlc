@@ -23,6 +23,8 @@ constexpr vlc_tick_t INTERPRETER_TIMEOUT = VLC_TICK_FROM_SEC(3);
 //MatroskaJS
 const char* matroska_js_interpreter_c::CMD_MS_GOTO_AND_PLAY = "GotoAndPlay";
 const char* matroska_js_interpreter_c::CMD_MS_LOG_MSG = "LogMsg";
+const char* matroska_js_interpreter_c::CMD_MS_ADD_CHOICE = "AddChoice";
+const char* matroska_js_interpreter_c::CMD_MS_COMMIT_CHOICES = "CommitChoices";
 
 static matroska_js_interpreter_c* receive_interpreter_object(duk_context *ctx)
 {
@@ -123,6 +125,103 @@ duk_ret_t matroska_js_interpreter_c::js_execute_LogMsg(duk_context *ctx)
     return 0;
 }
 
+
+/**
+ * execute_AddChoice:
+ * Handles Matroska Script AddChoice command. Which is to instruct
+ * the MKV player to add choices to the choises list that will be
+ * shown to the user later.
+ *
+ * Takes an argument string containing,
+ * AddChoice command parameters:
+ *
+ * choice_uid           string: uid of the choice
+ * chapte_group         string: choice group (default: null)
+ */
+bool matroska_js_interpreter_c::execute_AddChoice(const std::string &choice_uid, const std::optional <std::string> &choice_group)
+{
+    chapter_codec_vm::choice_text per_language_text;
+
+    chapter_codec_vm::chapter_choice choice = {
+        per_language_text, choice_group
+    };
+
+    choice_map[choice_uid] = choice;
+
+    return true;
+}
+
+duk_ret_t matroska_js_interpreter_c::js_execute_AddChoice(duk_context *ctx)
+{
+    auto interpretor = receive_interpreter_object(ctx);
+
+    if (!duk_is_string(ctx, 0))
+    {
+        vlc_debug(interpretor->l, "%s: First argument must be a string", CMD_MS_ADD_CHOICE);
+        return DUK_RET_TYPE_ERROR;
+    }
+
+    chapter_codec_vm::choice_group group;
+
+    if (duk_is_undefined(ctx, 1))
+        group = std::nullopt;
+    else if (!duk_is_string(ctx, 1))
+        return DUK_RET_TYPE_ERROR;
+
+    group = duk_to_string(ctx, 1);
+    const char* choice_uid = duk_to_string(ctx, 0);
+    interpretor->execute_AddChoice(choice_uid, group);
+
+    return 0;
+}
+
+/**
+ * execute_CommitChoices():
+ * Handles Matroska Script CommitChoices command. Which is to instruct
+ * the MKV player to display the previously added choices.
+ */
+void matroska_js_interpreter_c::execute_CommitChoices()
+{
+    if (choice_map.empty()){
+        vlc_debug(l, "No choices to process");
+        return;
+    }
+
+    const char* assume_language_from_vlc = "en"; // TODO: Get the chapter codec language from settings
+    vm.AddChoices(choice_map);
+
+// WIP:Just faking a display for now in console
+    for (const auto & chapter_choice_pair : choice_map)
+    {
+        const auto & chapter_choice = chapter_choice_pair.second;
+        const std::string choice_group = chapter_choice.group.value_or("Null");
+        const std::string choice_uid = chapter_choice_pair.first;
+
+        auto find_text = chapter_choice.per_language_text.find(assume_language_from_vlc);
+
+        if (find_text == chapter_choice.per_language_text.end())
+        {
+            vlc_debug(l, "Unspecified choice text for uuid: %s, group: %s", choice_uid.c_str(), choice_group.c_str());
+            continue;
+        }
+
+        const std::string text = find_text->second;
+
+        vlc_debug(l, "Displaying choice with uuid: %s, string: %s, group: %s",
+                 choice_uid.c_str(), text.c_str(), choice_group.c_str());
+    }
+}
+
+duk_ret_t matroska_js_interpreter_c::js_execute_CommitChoices(duk_context *ctx)
+{
+    auto interpretor = receive_interpreter_object(ctx);
+    interpretor->execute_CommitChoices();
+
+    return 0;
+}
+
+
+
 void matroska_js_interpreter_c::on_timeout()
 {
     vlc_error(l,"Script taking too long (%" PRId64 ") to execute, stopping", SEC_FROM_VLC_TICK(INTERPRETER_TIMEOUT));
@@ -146,6 +245,12 @@ duk_context* matroska_js_interpreter_c::ms_setup()
 
     duk_push_c_function(ctx, js_execute_LogMsg, 1);
     duk_put_global_string(ctx, CMD_MS_LOG_MSG);
+
+    duk_push_c_function(ctx, js_execute_AddChoice, 2);
+    duk_put_global_string(ctx, CMD_MS_ADD_CHOICE);
+
+    duk_push_c_function(ctx, js_execute_CommitChoices, 0);
+    duk_put_global_string(ctx, CMD_MS_COMMIT_CHOICES);
 
     duk_push_global_object(ctx);
     duk_push_pointer(ctx, this);
