@@ -92,8 +92,6 @@ typedef struct
 
     vlc_meta_t *p_meta;
     struct vlc_list node;
-
-    vlc_tick_t buffering_duration;
 } es_out_pgrm_t;
 
 
@@ -663,7 +661,7 @@ static vlc_tick_t EsOutGetWakeup(es_out_sys_t *p_sys)
         p_sys->b_buffering )
         return 0;
 
-    return input_clock_GetWakeup(p_sys->p_pgrm->p_input_clock) - p_sys->p_pgrm->buffering_duration;
+    return input_clock_GetWakeup( p_sys->p_pgrm->p_input_clock );
 }
 
 static es_out_id_t es_cat[DATA_ES];
@@ -996,7 +994,6 @@ static void EsOutDecodersStopBuffering(es_out_sys_t *p_sys, bool b_forced)
 
         return;
     }
-    p_sys->p_pgrm->buffering_duration = i_buffering_duration;
     input_SendEventCache( p_sys->p_input, 1.0 );
 
     msg_Dbg( p_sys->p_input, "Stream buffering done (%d ms in %d ms)",
@@ -1028,22 +1025,13 @@ static void EsOutDecodersStopBuffering(es_out_sys_t *p_sys, bool b_forced)
     EsOutStopFreeVout(p_sys);
 
     /* */
-    const vlc_tick_t now = p_sys->b_paused ? p_sys->i_pause_date : vlc_tick_now();
+    const vlc_tick_t i_current_date = p_sys->b_paused ? p_sys->i_pause_date : vlc_tick_now();
+    const vlc_tick_t update = i_current_date;
     const vlc_tick_t media_start = i_stream_start + i_preroll_duration;
 
-    if (input_CanPaceControl(p_sys->p_input))
-    {
-        vlc_clock_Lock(p_sys->p_pgrm->clocks.input);
-        vlc_clock_main_Reset(p_sys->p_pgrm->clocks.main);
-        vlc_clock_Start(p_sys->p_pgrm->clocks.input, now, media_start);
-        vlc_clock_Unlock(p_sys->p_pgrm->clocks.input);
-    }
-    else
-    {
-        vlc_clock_Lock(p_sys->p_pgrm->clocks.input);
-        vlc_clock_Start(p_sys->p_pgrm->clocks.input, now, media_start);
-        vlc_clock_Unlock(p_sys->p_pgrm->clocks.input);
-    }
+    vlc_clock_Lock(p_sys->p_pgrm->clocks.input);
+    vlc_clock_Start(p_sys->p_pgrm->clocks.input, update, media_start);
+    vlc_clock_Unlock(p_sys->p_pgrm->clocks.input);
 
     foreach_es_then_es_slaves(p_es)
     {
