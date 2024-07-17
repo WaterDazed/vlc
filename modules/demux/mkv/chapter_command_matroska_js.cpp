@@ -25,6 +25,7 @@ const char* matroska_js_interpreter_c::CMD_MS_GOTO_AND_PLAY = "GotoAndPlay";
 const char* matroska_js_interpreter_c::CMD_MS_LOG_MSG = "LogMsg";
 const char* matroska_js_interpreter_c::CMD_MS_ADD_CHOICE = "AddChoice";
 const char* matroska_js_interpreter_c::CMD_MS_COMMIT_CHOICES = "CommitChoices";
+const char* matroska_js_interpreter_c::CMD_MS_SET_CHOICE_TEXT = "SetChoiceText";
 
 static matroska_js_interpreter_c* receive_interpreter_object(duk_context *ctx)
 {
@@ -220,6 +221,58 @@ duk_ret_t matroska_js_interpreter_c::js_execute_CommitChoices(duk_context *ctx)
     return 0;
 }
 
+/**
+ * execute_SetChoiceText:
+ *
+ * uid      string: uid of the choice
+ * text     string: text
+ * lang     string: language
+ */
+bool matroska_js_interpreter_c::execute_SetChoiceText(const std::string &uid, const std::string &text, const std::string &lang)
+{
+    auto chapter_choice_pair = choice_map.find(uid);
+
+    if (chapter_choice_pair == choice_map.end()) {
+        vlc_debug(l, "The choice with uid '%s' does not exist", uid.c_str());
+        return false;
+    }
+
+    chapter_choice_pair->second.per_language_text[lang] = text;
+
+    return true;
+}
+
+duk_ret_t matroska_js_interpreter_c::js_execute_SetChoiceText(duk_context *ctx)
+{
+    auto interpretor = receive_interpreter_object(ctx);
+
+    if (!duk_is_string(ctx, 0))
+    {
+        vlc_debug(interpretor->l, "%s: First argument must be a string", CMD_MS_SET_CHOICE_TEXT);
+        return DUK_RET_TYPE_ERROR;
+    }
+
+    if (!duk_is_string(ctx, 1))
+    {
+        vlc_debug(interpretor->l, "%s: second argument must be a string", CMD_MS_SET_CHOICE_TEXT);
+        return DUK_RET_TYPE_ERROR;
+    }
+
+    if (!duk_is_string(ctx, 2))
+    {
+        vlc_debug(interpretor->l, "%s: third argument must be a string", CMD_MS_SET_CHOICE_TEXT);
+        return DUK_RET_TYPE_ERROR;
+    }
+
+    const char* uid = duk_to_string(ctx, 0);
+    const char* text = duk_to_string(ctx, 1);
+    const char* lang = duk_to_string(ctx, 2);
+
+    interpretor->execute_SetChoiceText(uid, text, lang);
+
+    return 0;
+
+}
 
 
 void matroska_js_interpreter_c::on_timeout()
@@ -251,6 +304,9 @@ duk_context* matroska_js_interpreter_c::ms_setup()
 
     duk_push_c_function(ctx, js_execute_CommitChoices, 0);
     duk_put_global_string(ctx, CMD_MS_COMMIT_CHOICES);
+
+    duk_push_c_function(ctx, js_execute_SetChoiceText, 3);
+    duk_put_global_string(ctx, CMD_MS_SET_CHOICE_TEXT);
 
     duk_push_global_object(ctx);
     duk_push_pointer(ctx, this);

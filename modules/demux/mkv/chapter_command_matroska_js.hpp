@@ -31,12 +31,14 @@ private:
     static duk_ret_t js_execute_GotoAndPlay(duk_context *ctx);
     static duk_ret_t js_execute_LogMsg(duk_context *ctx);
     static duk_ret_t js_execute_AddChoice(duk_context *ctx);
+    static duk_ret_t js_execute_SetChoiceText(duk_context *ctx);
     static duk_ret_t js_execute_CommitChoices(duk_context *ctx);
 
     //Command executors
     bool execute_GotoAndPlay(const std::string &arg);
     bool execute_LogMsg(const std::string &arg);
     bool execute_AddChoice(const std::string &choice_uid, const std::optional <std::string> &choice_group);
+    bool execute_SetChoiceText(const std::string &uid, const std::string &text, const std::string &lang);
     void execute_CommitChoices();
 
     duk_context *ctx;
@@ -61,6 +63,7 @@ public:
     static const char* CMD_MS_LOG_MSG;
     static const char* CMD_MS_ADD_CHOICE;
     static const char* CMD_MS_COMMIT_CHOICES;
+    static const char* CMD_MS_SET_CHOICE_TEXT;
 };
 
 class matroska_js_codec_c : public matroska_script_codec_common_c
