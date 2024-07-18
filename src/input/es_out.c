@@ -1026,11 +1026,11 @@ static void EsOutDecodersStopBuffering(es_out_sys_t *p_sys, bool b_forced)
 
     /* */
     const vlc_tick_t i_current_date = p_sys->b_paused ? p_sys->i_pause_date : vlc_tick_now();
-    const vlc_tick_t update = i_current_date;
-    const vlc_tick_t media_start = i_stream_start + i_preroll_duration;
+
+    const vlc_tick_t update = i_current_date - i_buffering_duration;
 
     vlc_clock_Lock(p_sys->p_pgrm->clocks.input);
-    vlc_clock_Start(p_sys->p_pgrm->clocks.input, update, media_start);
+    vlc_clock_Start(p_sys->p_pgrm->clocks.input, update, i_stream_start);
     vlc_clock_Unlock(p_sys->p_pgrm->clocks.input);
 
     foreach_es_then_es_slaves(p_es)
