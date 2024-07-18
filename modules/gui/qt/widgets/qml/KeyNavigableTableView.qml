@@ -242,8 +242,12 @@ FocusScope {
 
         property alias loadedHeader: headerLoader.item
 
-        implicitWidth: view.width
-        implicitHeight: col.height
+        anchors.left: view.left
+        anchors.right: view.right
+
+        implicitWidth: col.implicitWidth
+        implicitHeight: col.implicitHeight
+
         z: 3
         color: root.headerColor
 
@@ -271,8 +275,7 @@ FocusScope {
         Column {
             id: col
 
-            anchors.left: parent.left
-            anchors.right: parent.right
+            anchors.fill: parent
 
             Loader {
                 id: headerLoader
