@@ -85,6 +85,7 @@ struct clock_ctx
     vlc_clock_main_t *mainclk;
     vlc_clock_t *master;
     vlc_clock_t *slave;
+    vlc_clock_t *input;
 
     vlc_tick_t system_start;
     vlc_tick_t stream_start;
@@ -365,6 +366,7 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
 
     const struct clock_ctx ctx = {
         .mainclk = mainclk,
+        .input = input,
         .master = master,
         .slave = slave,
         .scenario = scenario,
