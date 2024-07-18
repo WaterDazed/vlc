@@ -1,4 +1,8 @@
+mod extension_thread;
+
 use std::path::Path;
+use std::sync::{Arc, mpsc, Mutex};
+use std::thread;
 
 use vlcrs_core::error::{self, Result};
 use vlcrs_messages::{debug, error, Logger};
@@ -12,25 +16,64 @@ use vlcrs_core::input_item::InputItem;
 use crate::vlcwasm_scripts_batch_execute;
 use crate::ProvidesLogger;
 
+use extension_thread::run_extension_thread;
+
+#[derive(Debug, Clone, Eq, PartialEq, Copy)]
+enum WasmExtensionState {
+    Activating,
+    Activated,
+    Deactivated,
+    Exiting,
+}
+
+enum Command {
+    Activate,
+    Deactivate,
+}
+
 struct WasmExtension {
     module: wasmer::Module,
 
-    activated: bool,
+    thread_handle: Option<thread::JoinHandle<Result<()>>>,
+
+    tx_command: mpsc::Sender<Command>,
+    rx_command: mpsc::Receiver<Command>,
+
+    state: Mutex<WasmExtensionState>,
+    thread_running: bool,
 }
 
 impl WasmExtension {
     pub fn new(module: wasmer::Module) -> Self {
+
+        let (tx_command, rx_command) = mpsc::channel();
+
         WasmExtension {
             module,
-            activated: false,
+            thread_handle: None,
+            tx_command,
+            rx_command,
+            state: Mutex::new(WasmExtensionState::Deactivated),
+            thread_running: false,
         }
+    }
+
+    pub fn set_state(&mut self, s: WasmExtensionState) -> Result<()> {
+        let mut state = self.state.lock().map_err(|_| error::CoreError::Unknown)?;
+        *state = s;
+        Ok(())
+    }
+
+    pub fn get_state(&self) -> Result<WasmExtensionState> {
+        let state = self.state.lock().map_err(|_| error::CoreError::Unknown)?;
+        Ok(state.clone())
     }
 }
 
 pub struct WasmExtensionModule;
 
 struct WasmExtensionManager<'a> {
-    extension_manager: ThisExtensionsManager<'a>,
+    extension_manager: ThisExtensionsManager,
     logger: &'a mut Logger,
     store: wasmer::Store,
 }
@@ -43,7 +86,7 @@ impl ProvidesLogger for WasmExtensionManager<'_> {
 
 impl ExtensionCapability for WasmExtensionModule {
     fn open<'a> (
-        this_extension_manager: ThisExtensionsManager<'a>,
+        this_extension_manager: ThisExtensionsManager,
         logger: &'a mut Logger,
         _args: &mut ModuleArgs,
     ) -> Result<Box<dyn ExtensionManager + 'a>> {
@@ -199,7 +242,6 @@ impl<'a> ExtensionManager for WasmExtensionManager<'a> {
 
 impl<'a> ExtensionManagerControl for WasmExtensionManager<'a> {
     fn activate(&mut self, extension: &mut Extension) -> Result<()> {
-        let extension: &mut WasmExtension = extension.get_sys();
 
         let sys: &WasmExtension = extension.get_sys();
         if WasmExtensionState::Activated != sys.get_state()? {
