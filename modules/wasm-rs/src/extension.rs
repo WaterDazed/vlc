@@ -201,23 +201,44 @@ impl<'a> ExtensionManagerControl for WasmExtensionManager<'a> {
     fn activate(&mut self, extension: &mut Extension) -> Result<()> {
         let extension: &mut WasmExtension = extension.get_sys();
 
-        if !extension.activated {
-            extension.activated = true;
+        let sys: &WasmExtension = extension.get_sys();
+        if WasmExtensionState::Activated != sys.get_state()? {
+            sys.tx_command.send(Command::Activate).map_err(|_| error::CoreError::Unknown)?;
+        }
+
+        let sys: &WasmExtension = extension.get_sys();
+        if !sys.thread_running {
+            debug!(extension.get_logger(), "Activating Wasm extension {}", extension.get_title());
+
+            let extension = Arc::new(Mutex::new(extension.clone()));
+            let extension_clone = extension.clone();
+            
+            let mut extension = extension.lock().map_err(|_| error::CoreError::Unknown)?;
+
+            let thread_handle = std::thread::spawn(|| run_extension_thread(extension_clone));
+
+            let sys: &mut WasmExtension = extension.get_sys_mut();
+            sys.set_state(WasmExtensionState::Activating)?;
+            sys.thread_handle = Some(thread_handle);
+
+            sys.thread_running = true;
         }
 
         Ok(())
     }
 
-    fn deactivate(&self, _extension: &mut Extension) -> Result<()> {
-        unimplemented!()
+    fn deactivate(&self, extension: &mut Extension) -> Result<()> {
+        let sys: &mut WasmExtension = extension.get_sys_mut();
+        sys.set_state(WasmExtensionState::Exiting)?;
+        Ok(())
     }
 
-    fn is_activated(&self, extension: &Extension) -> bool {
-        let extension: &WasmExtension = extension.get_sys();
-        extension.activated
+    fn is_activated(&self, extension: &mut Extension) -> Result<bool> {
+        let sys: &mut WasmExtension = extension.get_sys_mut();
+        Ok(WasmExtensionState::Activated == sys.get_state()?)
     }
 
-    fn has_menu(&self, _extension: &Extension) -> bool {
+    fn has_menu(&self, _extension: &mut Extension) -> bool {
         false
         //unimplemented!()
     }
@@ -226,7 +247,7 @@ impl<'a> ExtensionManagerControl for WasmExtensionManager<'a> {
         unimplemented!()
     }
 
-    fn trigger_only(&self, _extension: &Extension) -> bool {
+    fn trigger_only(&self, _extension: &mut Extension) -> bool {
         false
         //unimplemented!()
     }

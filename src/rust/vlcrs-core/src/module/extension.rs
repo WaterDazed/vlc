@@ -1,5 +1,6 @@
 use std::ffi::{c_char, c_ushort, CString};
-use std::{marker::PhantomData, ptr::NonNull};
+use std::mem::ManuallyDrop;
+use std::ptr::NonNull;
 
 use crate::threads::{vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock};
 use crate::extension::sys::{extension_t, extensions_manager_t, vlc_extensions_manager_operations};
@@ -14,17 +15,16 @@ use vlcrs_plugin::ModuleProtocol;
 use crate::extension::Extension;
 
 use crate::input_item::InputItem;
-use std::mem::ManuallyDrop;
 
 use super::ModuleArgs;
 
 #[doc(alias = "extensions_manager_t")]
 #[repr(transparent)]
-pub struct ThisExtensionsManager<'a>(*mut extensions_manager_t, PhantomData<&'a mut ()>);
+pub struct ThisExtensionsManager(*mut extensions_manager_t);
 
-impl<'a> ThisExtensionsManager<'a> {
+impl ThisExtensionsManager {
 
-    pub fn add_extension(&self, extension: Extension<'a>) {
+    pub fn add_extension(&self, extension: Extension) {
         let manager = unsafe { &mut *self.0 };
 
         unsafe {
@@ -40,7 +40,7 @@ impl<'a> ThisExtensionsManager<'a> {
             unsafe { Vec::from_raw_parts(elem, len, cap) }
         };
 
-        elems.push(extension.leak());
+        elems.push(extension.as_ptr());
 
         manager.extensions.i_size = elems.len() as i32;
         manager.extensions.i_alloc = elems.capacity() as i32;
@@ -56,13 +56,15 @@ impl<'a> ThisExtensionsManager<'a> {
 
 #[allow(non_camel_case_types)]
 type vlc_extensions_manager_activate = unsafe extern "C" fn(*mut vlc_object_t) -> i32;
+
+#[allow(non_camel_case_types)]
 type vlc_extensions_manager_deactivate = unsafe extern "C" fn(*mut vlc_object_t) -> i32;
 
 /// Extension capability
 pub trait ExtensionCapability {
     /// Open function for a extensions manager module
     fn open<'a>(
-        _this_extension_manager: ThisExtensionsManager<'a>,
+        _this_extension_manager: ThisExtensionsManager,
         logger: &'a mut Logger,
         args: &mut ModuleArgs,
     ) -> Result<Box<dyn ExtensionManager + 'a>>;
@@ -96,13 +98,13 @@ pub trait ExtensionManagerControl {
 
     fn deactivate(&self, extension: &mut Extension) -> Result<()>;
 
-    fn is_activated(&self, extension: &Extension) -> bool;
+    fn is_activated(&self, extension: &mut Extension) -> Result<bool>;
 
-    fn has_menu(&self, extension: &Extension) -> bool;
+    fn has_menu(&self, extension: &mut Extension) -> bool;
 
     fn get_menu(&self, extension: &mut Extension) -> (Vec<String>, Vec<u16>);
     
-    fn trigger_only(&self, extension: &Extension) -> bool;
+    fn trigger_only(&self, extension: &mut Extension) -> bool;
 
     fn trigger(&self, extension: &mut Extension) -> Result<()>;
 
@@ -124,7 +126,7 @@ pub trait ExtensionManagerControl {
 pub unsafe extern "C" fn extensions_manager_activate<T: ExtensionCapability>(object: *mut vlc_object_t) -> i32 {
     let ptr_extension_manager = object as *mut extensions_manager_t;
 
-    let this_extension_manager = ThisExtensionsManager(ptr_extension_manager, PhantomData);
+    let this_extension_manager = ThisExtensionsManager(ptr_extension_manager);
 
     // SAFETY: TODO
     let logger_ptr_ptr: *mut *mut vlc_logger = unsafe { &mut (*object).logger };
@@ -167,7 +169,7 @@ pub unsafe extern "C" fn extensions_manager_deactivate(object: *mut vlc_object_t
         };
 
         for elem in elems {
-            let _ = Extension::from_raw(elem);
+            Extension::from_raw(elem).release();
         }
     }
 
@@ -218,7 +220,7 @@ unsafe extern "C" fn pf_activate<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let res = E::activate(unsafe {&mut *sys}, &mut ext);
 
@@ -233,7 +235,7 @@ unsafe extern "C" fn pf_deactivate<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let res = E::deactivate(unsafe {&mut *sys}, &mut ext);
 
@@ -248,9 +250,14 @@ unsafe extern "C" fn pf_is_activated<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> bool {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
-    E::is_activated(unsafe {&mut *sys}, &ext)
+    let res = E::is_activated(unsafe {&mut *sys}, &mut ext);
+
+    match res {
+        Ok(activated) => activated,
+        Err(_) => false,
+    }
 }
 
 unsafe extern "C" fn pf_has_menu<E: ExtensionManagerControl + ?Sized>(
@@ -258,9 +265,9 @@ unsafe extern "C" fn pf_has_menu<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> bool {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
-    E::has_menu(unsafe {&mut *sys}, &ext)
+    E::has_menu(unsafe {&mut *sys}, &mut ext)
 }
 
 /// @param pppsz Must be freed by the caller.
@@ -272,7 +279,7 @@ unsafe extern "C" fn pf_get_menu<E: ExtensionManagerControl + ?Sized>(
     ppi: *mut *mut c_ushort) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let (titles, indices) = E::get_menu(unsafe {&mut *sys}, &mut ext);
 
@@ -296,9 +303,9 @@ unsafe extern "C" fn pf_trigger_only<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> bool {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
-    E::trigger_only(unsafe {&mut *sys}, &ext)
+    E::trigger_only(unsafe {&mut *sys}, &mut ext)
 }
 
 unsafe extern "C" fn pf_trigger<E: ExtensionManagerControl + ?Sized>(
@@ -306,7 +313,7 @@ unsafe extern "C" fn pf_trigger<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let res = E::trigger(unsafe {&mut *sys}, &mut ext);
 
@@ -322,7 +329,7 @@ unsafe extern "C" fn pf_trigger_menu<E: ExtensionManagerControl + ?Sized>(
     i: i32) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let res = E::trigger_menu(unsafe {&mut *sys}, &mut ext, i);
 
@@ -338,7 +345,7 @@ unsafe extern "C" fn pf_set_input<E: ExtensionManagerControl + ?Sized>(
     input: *mut input_item_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let mut input = unsafe {
         ManuallyDrop::new(InputItem::from_ptr(NonNull::new_unchecked(input)))
@@ -357,7 +364,7 @@ unsafe extern "C" fn pf_playing_changed<E: ExtensionManagerControl + ?Sized>(
     state: i32) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let res = E::playing_changed(unsafe {&mut *sys}, &mut ext, state);
 
@@ -372,7 +379,7 @@ unsafe extern "C" fn pf_meta_changed<E: ExtensionManagerControl + ?Sized>(
     extension: *mut extension_t) -> i32 {
 
     let sys = unsafe { (*extension_manager).p_sys } as *mut Box<E>;
-    let mut ext = ManuallyDrop::new(Extension::from_raw(extension));
+    let mut ext = Extension::from_raw(extension);
 
     let res = E::meta_changed(unsafe {&mut *sys}, &mut ext);
 

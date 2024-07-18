@@ -261,11 +261,7 @@ pub fn get_name(&self) -> &str {
         }
     }
 
-    pub fn get_icon_data_size(&self) -> usize {
-        unsafe { (*self.0).i_icondata_size as usize }
-    }
-
-    pub fn release(self) {
+    pub(crate) fn release(&mut self) {
         unsafe {
             if !(*self.0).p_sys.is_null() {
                 let _ = Box::from_raw((*self.0).p_sys);
@@ -309,5 +305,27 @@ pub fn get_name(&self) -> &str {
                 self.0 = ptr::null_mut();
             }
         }
+    }
+}
+
+impl Clone for Extension {
+    fn clone(&self) -> Self {
+        // SAFETY: The pointer `self.0` is valid as long as the `Extension` is managed properly
+        // `Extension` instances are managed by `ExtensionManager`, which guarantees that
+        // the pointer remains valid and that only one `ExtensionManager` is responsible
+        // for releasing the resources. Therefore, cloning the pointer is safe as long
+        // as the lifetime of the `Extension` is properly managed.
+        //
+        // In this case, `clone` just creates a new `Extension` from the same raw pointer.
+        // Since the actual memory management (e.g., deallocation) is handled by `ExtensionManager`,
+        // this implementation assumes that `ExtensionManager` ensures no premature deallocation
+        // or race conditions, making the cloning operation safe.
+        //
+        // However, it's important to note that this does not handle deep copying of the internal
+        // data. This implementation merely provides a new `Extension` instance with the same
+        // raw pointer, so the same underlying resource is referred to by both the original
+        // and the cloned `Extension`.
+
+        Extension::from_raw(self.0)
     }
 }
