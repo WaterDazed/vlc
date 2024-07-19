@@ -581,8 +581,20 @@ vlc_clock_input_start(vlc_clock_t *clock,
     vlc_mutex_assert(&main_clock->lock);
 
     struct vlc_clock_context *context = main_clock->context;
+    // TODO: should not trigger when SetFirstPCR is called
+    if (main_clock->first_pcr.system != VLC_TICK_INVALID)
+    {
+        if (context->start_time.system == VLC_TICK_INVALID)
+        {
+            context->start_time = clock_point_Create(start_date, first_ts);
+        }
+        goto end;
+    }
 
-    if (context->start_time.system != VLC_TICK_INVALID)
+
+    if (context->start_time.system != VLC_TICK_INVALID
+     && (context->last.system != VLC_TICK_INVALID ||
+         context->wait_sync_ref.stream != VLC_TICK_INVALID))
     {
         assert(context->start_time.stream != VLC_TICK_INVALID);
         struct vlc_clock_context *new_context = malloc(sizeof(*new_context));
@@ -599,6 +611,7 @@ vlc_clock_input_start(vlc_clock_t *clock,
     context->start_time = clock_point_Create(start_date, first_ts);
     main_clock->wait_sync_ref_priority = UINT_MAX;
 
+end:
     if (main_clock->tracer != NULL)
         vlc_tracer_TraceEvent(main_clock->tracer, "clock", clock->track_str_id, "start");
 }
