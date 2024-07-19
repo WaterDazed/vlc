@@ -109,14 +109,6 @@ void vlc_clock_main_Unlock(vlc_clock_main_t *main_clock);
 void vlc_clock_main_Reset(vlc_clock_main_t *main_clock);
 
 /**
- * Set the first PCR point
- *
- * @param main_clock the locked main_clock
- */
-void vlc_clock_main_SetFirstPcr(vlc_clock_main_t *main_clock,
-                                vlc_tick_t system_now, vlc_tick_t ts);
-
-/**
  * Set the input dejitter
  *
  * @param main_clock the locked main_clock
