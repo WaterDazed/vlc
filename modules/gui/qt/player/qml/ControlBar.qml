@@ -27,7 +27,7 @@ import org.videolan.vlc 0.1
 import "qrc:///style/"
 import "qrc:///widgets/" as Widgets
 import "qrc:///playlist/" as PL
-
+import "qrc:///util/Helpers.js" as Helpers
 
 T.Pane {
     id: root
@@ -94,6 +94,64 @@ T.Pane {
     readonly property ColorContext colorContext: ColorContext {
         id: theme
         colorSet: ColorContext.Window
+    }
+
+    WheelHandler {
+        id: wheelHandlerForVolumeAdjustment
+
+        // Make it behave like a passive handler:
+        grabPermissions: PointerHandler.ApprovesTakeOverByAnything
+
+        // By default, only Mouse is accepted, but
+        // trackpad should also be accepted. They are
+        // common in laptops and provide high precision
+        // control:
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+
+        property real volume
+
+        property bool filterEvents: false
+
+        function adjustVolume() {
+            Player.volume = wheelHandlerForVolumeAdjustment.volume
+        }
+
+        onVolumeChanged: {
+            if (filterEvents)
+            {
+                // With high precision, there might be
+                // a rapid burst of events. Use
+                // `callLater()` here, in order
+                // to filter excessive events:
+                Qt.callLater(adjustVolume)
+            }
+            else
+            {
+                adjustVolume()
+            }
+
+            filterEvents = true
+            filterEventsResetTimer.restart()
+        }
+
+        onWheel: function(event) {
+            volume = Player.volume
+
+            Helpers.adjustmentFromWheelEvent(event, (fine, delta) => {
+                if (fine)
+                    wheelHandlerForVolumeAdjustment.volume += 0.001 * delta
+                else
+                    Helpers.applyVolume(Player, delta)
+            })
+        }
+
+        readonly property Timer filterEventsResetTimer: Timer {
+            id: filterEventsResetTimer
+            interval: VLCStyle.duration_humanMoment
+            onTriggered: {
+                wheelHandlerForVolumeAdjustment.filterEvents = false
+            }
+        }
     }
 
     background: Rectangle {

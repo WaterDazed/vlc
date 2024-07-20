@@ -124,3 +124,31 @@ function flickablePositionContaining(flickable, y, height, topMargin, bottomMarg
 function isArray(obj) {
     return (obj?.length !== undefined) ?? false
 }
+
+// This function makes it possible to adjust volume
+// for both ordinary and high precision mouses.
+function adjustmentFromWheelEvent(event, adjusterCallback, considerX = false, considerY = true) {
+    let delta = 0, fineControl = false
+
+    if ((considerX && (Math.abs(event.pixelDelta.x) % 120 > 0)) || (considerY && (Math.abs(event.pixelDelta.y) % 120 > 0))) {
+        if (considerX && (Math.abs(event.pixelDelta.x) > Math.abs(event.pixelDelta.y)))
+            delta = event.pixelDelta.x
+        else if (considerY)
+            delta = event.pixelDelta.y
+        fineControl = true
+    }
+    else if (considerX && event.angleDelta.x)
+        delta = event.angleDelta.x
+    else if (considerY && event.angleDelta.y)
+        delta = event.angleDelta.y
+
+    if (delta === 0)
+        return
+
+    if (event.inverted)
+        delta = -delta
+
+    adjusterCallback(true, delta)
+
+    event.accepted = true
+}
