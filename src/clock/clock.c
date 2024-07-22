@@ -301,11 +301,9 @@ vlc_clock_switch_context(vlc_clock_t *clock, struct vlc_clock_context *ctx)
 
 static void
 context_get_closest(vlc_clock_t *clock, struct vlc_clock_context *ctx,
-                    vlc_tick_t system_now, vlc_tick_t ts,
-                    struct vlc_clock_context **closest_ctx,
+                    vlc_tick_t ts, struct vlc_clock_context **closest_ctx,
                     vlc_tick_t *closest_diff)
 {
-    (void)system_now;
     /* Find the context which has the smallest gap with the last conversion. */
     vlc_tick_t converted =
         clock->ops->to_system(clock, ctx, ts, 1.0);
@@ -323,8 +321,7 @@ context_get_closest(vlc_clock_t *clock, struct vlc_clock_context *ctx,
 }
 
 static struct vlc_clock_context *
-vlc_clock_get_context(vlc_clock_t *clock, vlc_tick_t system_now, vlc_tick_t ts,
-                      bool update)
+vlc_clock_get_context(vlc_clock_t *clock, vlc_tick_t ts, bool update)
 {
     vlc_clock_main_t *main_clock = clock->owner;
 
@@ -343,9 +340,9 @@ vlc_clock_get_context(vlc_clock_t *clock, vlc_tick_t system_now, vlc_tick_t ts,
     for (struct vlc_clock_context *ctx_it = clock->context; ctx_it != NULL;
          ctx_it = vlc_list_next_entry_or_null(&main_clock->prev_contexts, ctx_it,
                                               struct vlc_clock_context, node))
-        context_get_closest(clock, ctx_it, system_now, ts, &ctx, &closest_diff);
+        context_get_closest(clock, ctx_it, ts, &ctx, &closest_diff);
 
-    context_get_closest(clock, main_clock->context, system_now, ts, &ctx,
+    context_get_closest(clock, main_clock->context, ts, &ctx,
                         &closest_diff);
 
     if (clock->context != ctx && update)
@@ -1037,7 +1034,7 @@ vlc_tick_t vlc_clock_Update(vlc_clock_t *clock, vlc_tick_t system_now,
 {
     AssertLocked(clock);
     struct vlc_clock_context *ctx =
-        vlc_clock_get_context(clock, system_now, ts, true);
+        vlc_clock_get_context(clock, ts, true);
 
     return clock->ops->update(clock, ctx, system_now, ts, rate, 0, 0);
 }
@@ -1048,7 +1045,7 @@ vlc_tick_t vlc_clock_UpdateVideo(vlc_clock_t *clock, vlc_tick_t system_now,
 {
     AssertLocked(clock);
     struct vlc_clock_context *ctx =
-        vlc_clock_get_context(clock, system_now, ts, true);
+        vlc_clock_get_context(clock, ts, true);
 
     return clock->ops->update(clock, ctx, system_now, ts, rate,
                               frame_rate, frame_rate_base);
@@ -1067,13 +1064,12 @@ vlc_tick_t vlc_clock_SetDelay(vlc_clock_t *clock, vlc_tick_t delay)
 }
 
 vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
-                                     vlc_tick_t system_now, vlc_tick_t ts,
+                                     vlc_tick_t ts,
                                      double rate, uint32_t *clock_id)
 {
-    (void)system_now;
     AssertLocked(clock);
     struct vlc_clock_context *ctx =
-        vlc_clock_get_context(clock, system_now, ts, false);
+        vlc_clock_get_context(clock, ts, false);
     if (clock_id != NULL)
         *clock_id = ctx->clock_id;
 

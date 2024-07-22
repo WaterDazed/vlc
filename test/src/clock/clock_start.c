@@ -122,14 +122,14 @@ static void test_clock_without_start(struct vlc_logger *logger)
     const vlc_tick_t now = VLC_TICK_FROM_MS(1000);
     {
         vlc_clock_Update(f.master, now, now * 1000, 1.);
-        vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now, now * 1000, 1., NULL);
+        vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now * 1000, 1., NULL);
         assert(result == VLC_TICK_INVALID);
     }
 
     vlc_clock_Start(f.slave, now, now * 1000);
 
     {
-        vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now, now * 1000, 1., NULL);
+        vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now * 1000, 1., NULL);
         assert(result == VLC_TICK_INVALID);
     }
     vlc_clock_main_Unlock(f.main);
@@ -149,7 +149,7 @@ static void test_clock_with_start(struct vlc_logger *logger)
     vlc_clock_Update(f.master, now, now * 1000, 1.);
     vlc_clock_Start(f.input, now, now * 1000);
 
-    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now, now * 1000, 1., NULL);
+    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now * 1000, 1., NULL);
     assert(result != VLC_TICK_INVALID);
     assert(result == now);
     vlc_clock_main_Unlock(f.main);
@@ -170,7 +170,7 @@ static void test_clock_with_start_master(struct vlc_logger *logger)
     vlc_clock_Start(f.master, now, now * 1000);
     vlc_clock_Update(f.master, now, now * 1000, 1.);
 
-    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now, now * 1000, 1., NULL);
+    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now * 1000, 1., NULL);
     assert(result != VLC_TICK_INVALID);
     assert(result == now);
     vlc_clock_main_Unlock(f.main);
@@ -191,7 +191,7 @@ static void test_clock_with_output_dejitter(struct vlc_logger *logger)
     vlc_clock_Update(f.master, now, now * 1000, 1.);
     vlc_clock_Start(f.input, 2 * now, now * 1000);
 
-    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now, now * 1000, 1., NULL);
+    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now * 1000, 1., NULL);
     assert(result != VLC_TICK_INVALID);
     assert(result == 2 * now);
     vlc_clock_main_Unlock(f.main);
@@ -217,7 +217,7 @@ static void test_clock_with_output_clock_start(struct vlc_logger *logger)
      * approximately match the start date. */
     vlc_clock_Update(f.master, now, now * 1000, 1.);
 
-    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now, now * 1000, 1., NULL);
+    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now * 1000, 1., NULL);
     assert(result != VLC_TICK_INVALID);
     assert(result == now);
     vlc_clock_main_Unlock(f.main);
@@ -242,7 +242,7 @@ static void test_clock_with_monotonic_clock(struct vlc_logger *logger)
     vlc_clock_Start(f.slave, now, now * 1000);
 
     // TODO
-    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now, now * 1000, 1., NULL);
+    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, now * 1000, 1., NULL);
     assert(result != VLC_TICK_INVALID);
     assert(result == now);
     vlc_clock_main_Unlock(f.main);
@@ -272,7 +272,7 @@ static vlc_tick_t test_clock_with_monotonic_clock_start(
     /* The output wants to start before a reference point is found. */
     vlc_clock_Start(f.slave, output_point.system, output_point.stream);
 
-    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, convert_point.system, convert_point.stream, 1., NULL);
+    vlc_tick_t result = vlc_clock_ConvertToSystem(f.slave, convert_point.stream, 1., NULL);
     vlc_clock_main_Unlock(f.main);
 
     destroy_fixture_simple(&f);
@@ -319,13 +319,13 @@ static void test_clock_start_reset(
     vlc_clock_main_Reset(f.main);
 
     vlc_tick_t result;
-    result = vlc_clock_ConvertToSystem(f.slave, start_point.system, start_point.stream, 1., NULL);
+    result = vlc_clock_ConvertToSystem(f.slave, start_point.stream, 1., NULL);
     assert(result == VLC_TICK_INVALID);
 
     start_point.system *= 2;
     vlc_clock_Start(f.input, start_point.system, start_point.stream);
     vlc_clock_Update(f.master, start_point.system, start_point.stream, 1.);
-    result = vlc_clock_ConvertToSystem(f.slave, start_point.system, start_point.stream, 1., NULL);
+    result = vlc_clock_ConvertToSystem(f.slave, start_point.stream, 1., NULL);
     assert(result == start_point.system);
     vlc_clock_main_Unlock(f.main);
 
@@ -347,10 +347,10 @@ static void test_clock_slave_only(
 
     vlc_clock_Start(f.slave, start_point.system, start_point.stream);
     vlc_tick_t result;
-    result = vlc_clock_ConvertToSystem(f.slave, start_point.system, start_point.stream, 1., NULL);
+    result = vlc_clock_ConvertToSystem(f.slave, start_point.stream, 1., NULL);
     assert(result == start_point.system);
 
-    result = vlc_clock_ConvertToSystem(f.slave, start_point.system, start_point.stream + 1000, 1., NULL);
+    result = vlc_clock_ConvertToSystem(f.slave, start_point.stream + 1000, 1., NULL);
     assert(result == start_point.system + 1000);
     vlc_clock_main_Unlock(f.main);
 

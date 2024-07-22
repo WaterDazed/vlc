@@ -1001,8 +1001,8 @@ static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
                 uint32_t clock_id;
                 vlc_clock_Lock(sys->clock);
                 const vlc_tick_t system_pts =
-                    vlc_clock_ConvertToSystem(sys->clock, system_now,
-                                              decoded->date, sys->rate, &clock_id);
+                    vlc_clock_ConvertToSystem(sys->clock, decoded->date,
+                                              sys->rate, &clock_id);
                 vlc_clock_Unlock(sys->clock);
                 if (clock_id != sys->clock_id)
                 {
@@ -1178,7 +1178,7 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
     {
         vlc_clock_Lock(sys->clock);
         render_subtitle_date = filtered->date <= VLC_TICK_0 ? system_now :
-            vlc_clock_ConvertToSystem(sys->clock, system_now, filtered->date,
+            vlc_clock_ConvertToSystem(sys->clock, filtered->date,
                                       sys->rate, NULL);
         vlc_clock_Unlock(sys->clock);
     }
@@ -1352,7 +1352,7 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     const vlc_tick_t pts = todisplay->date;
     vlc_clock_Lock(sys->clock);
     vlc_tick_t system_pts = render_now ? system_now :
-        vlc_clock_ConvertToSystem(sys->clock, system_now, pts, sys->rate, NULL);
+        vlc_clock_ConvertToSystem(sys->clock, pts, sys->rate, NULL);
     vlc_clock_Unlock(sys->clock);
 
     const unsigned frame_rate = todisplay->format.i_frame_rate;
@@ -1396,8 +1396,7 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
                     deadline = max_deadline;
                 else
                 {
-                    deadline = vlc_clock_ConvertToSystem(sys->clock,
-                                                         vlc_tick_now(), pts,
+                    deadline = vlc_clock_ConvertToSystem(sys->clock, pts,
                                                          sys->rate, NULL);
                     if (deadline > max_deadline)
                         deadline = max_deadline;
@@ -1505,8 +1504,8 @@ static bool UpdateCurrentPicture(vout_thread_sys_t *sys)
     const vlc_tick_t system_now = vlc_tick_now();
     vlc_clock_Lock(sys->clock);
     const vlc_tick_t system_swap_current =
-        vlc_clock_ConvertToSystem(sys->clock, system_now,
-                                  sys->displayed.current->date, sys->rate, NULL);
+        vlc_clock_ConvertToSystem(sys->clock, sys->displayed.current->date,
+                                  sys->rate, NULL);
     vlc_clock_Unlock(sys->clock);
 
     vlc_tick_t system_prepare_current = system_swap_current - GetRenderDelay(sys);

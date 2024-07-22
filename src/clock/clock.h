@@ -319,7 +319,7 @@ vlc_clock_RemoveListener(vlc_clock_t *clock, vlc_clock_listener_id *listener_id)
  * @return the valid system time
  */
 vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
-                                     vlc_tick_t system_now, vlc_tick_t ts,
+                                     vlc_tick_t ts,
                                      double rate, uint32_t *clock_id);
 
 /**

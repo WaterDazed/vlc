@@ -570,10 +570,9 @@ static void stream_Silence (vlc_aout_stream *stream, vlc_tick_t length, vlc_tick
     block->i_dts = pts;
     block->i_length = length;
 
-    const vlc_tick_t system_now = vlc_tick_now();
     vlc_clock_Lock(stream->sync.clock);
     const vlc_tick_t system_pts =
-       vlc_clock_ConvertToSystem(stream->sync.clock, system_now, pts,
+       vlc_clock_ConvertToSystem(stream->sync.clock, pts,
                                  stream->sync.rate, NULL);
     vlc_clock_Unlock(stream->sync.clock);
     stream->timing.played_samples += block->i_nb_samples;
@@ -828,11 +827,12 @@ void vlc_aout_stream_NotifyTiming(vlc_aout_stream *stream, vlc_tick_t system_ts,
 static vlc_tick_t stream_ClockConvert(vlc_aout_stream *stream,
                                       vlc_tick_t system_now, vlc_tick_t pts)
 {
+    (void)system_now;
     uint32_t clock_id;
 
     vlc_clock_Lock(stream->sync.clock);
     vlc_tick_t play_date =
-        vlc_clock_ConvertToSystem(stream->sync.clock, system_now, pts,
+        vlc_clock_ConvertToSystem(stream->sync.clock, pts,
                                   stream->sync.rate, &clock_id);
     vlc_clock_Unlock(stream->sync.clock);
 
@@ -993,7 +993,7 @@ void vlc_aout_stream_ChangePause(vlc_aout_stream *stream, bool paused, vlc_tick_
         {
             vlc_clock_Lock(stream->sync.clock);
             vlc_tick_t play_date =
-                vlc_clock_ConvertToSystem(stream->sync.clock, date,
+                vlc_clock_ConvertToSystem(stream->sync.clock,
                                           stream->timing.rate_audio_ts,
                                           stream->sync.rate, NULL);
             vlc_clock_Unlock(stream->sync.clock);
