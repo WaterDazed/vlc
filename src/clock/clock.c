@@ -610,6 +610,7 @@ vlc_clock_input_start(vlc_clock_t *clock,
 
     context_reset(context);
     context->start_time = clock_point_Create(start_date, first_ts);
+    context->wait_sync_ref = clock_point_Create(start_date + main_clock->delay, first_ts);
     main_clock->wait_sync_ref_priority = UINT_MAX;
 
 end:
