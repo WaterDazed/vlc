@@ -37,6 +37,7 @@
 #include <vlc_interface.h>
 #include <vlc_dialog.h>
 #include <vlc_player.h>
+#include <stdio.h>
 
 /* Functions to register */
 static const luaL_Reg p_reg[] =
@@ -108,6 +109,12 @@ int Open_Extension( vlc_object_t *p_this )
     var_AddCallback( p_this, "dialog-event",
                      vlclua_extension_dialog_callback, NULL );
 
+    // p_mgr->extensions.p_elems;
+    char ext_meta[10000]; 
+    struct extension_t* vsub =  p_mgr->extensions.p_elems[1];
+    sprintf(ext_meta,"name: %s \n, title: %s \n, author: %s \n, version: %s \n, url: %s \n, descript: %s \n, shortdesc: %s \n, icondata: %s \n, icondata_size: %d \n", vsub->psz_name, vsub->psz_title, vsub->psz_author, vsub->psz_version, vsub->psz_url, vsub->psz_description, vsub->psz_shortdescription, vsub->p_icondata, vsub->i_icondata_size );
+
+    printf("%s\n ",ext_meta);
     return VLC_SUCCESS;
 }
 

@@ -1,0 +1,12 @@
+[ extension start ]
+enabled: 1
+name: /home/nt/Documents/cleanvlc/share/lua/extensions/VLSub.lua
+title: VLsub 0.11.1          
+author: exebetche        
+version: 0.11.1       
+url: https://www.opensubtitles.org/        
+description: Download subtitles from OpenSubtitles.org
+shortdescription: VLsub
+icondata: (NULL)       
+icondata_size: 0
+[ extension end ]

@@ -701,9 +701,9 @@ vlc_module_begin ()
         add_string( "lua-sd", "", NULL, NULL )
             change_volatile()
         set_callbacks( Open_LuaSD, Close_LuaSD )
-    add_submodule()
-        set_capability("autorun",10)
-        set_callback(AutoRunExtension)
+    // add_submodule()
+    //     set_capability("autorun",10)
+    //     set_callback(AutoRunExtension)
     VLC_SD_PROBE_SUBMODULE
 
 vlc_module_end ()

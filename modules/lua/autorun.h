@@ -7,6 +7,6 @@
 #include <vlc_interface.h>
 #include <vlc_modules.h>
 
-void Open_ExtensionManager(vlc_object_t *obj);
+// void Open_ExtensionManager(vlc_object_t *obj);
 void initState(void);
 void AutoRunExtension(libvlc_int_t *libvlc);
