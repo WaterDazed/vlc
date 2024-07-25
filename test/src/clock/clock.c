@@ -788,6 +788,7 @@ static void contexts_run(const struct clock_ctx *ctx)
     vlc_tick_t system_context0 = system;
     vlc_tick_t stream_context1 = VLC_TICK_FROM_SEC(30);
     system += VLC_TICK_FROM_MS(100);
+    vlc_clock_Reset(ctx->input);
     vlc_clock_Start(ctx->input, system, stream_context1);
 
     /* Check that we can use the new context (or new origin) */
@@ -811,6 +812,7 @@ static void contexts_run(const struct clock_ctx *ctx)
     /* Discontinuity back to 1us */
     system += VLC_TICK_FROM_MS(100);
     vlc_tick_t stream_context2 = 1;
+    vlc_clock_Reset(ctx->input);
     vlc_clock_Start(ctx->input, system, stream_context2);
 
     /* Check that we can use the new context (or new origin) */
