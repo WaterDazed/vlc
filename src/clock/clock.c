@@ -511,6 +511,30 @@ static vlc_tick_t vlc_clock_master_update(vlc_clock_t *clock,
     return drift;
 }
 
+static void vlc_clock_input_reset(vlc_clock_t *clock)
+{
+    vlc_clock_main_t *main_clock = clock->owner;
+    vlc_mutex_assert(&main_clock->lock);
+
+    struct vlc_clock_context *context = main_clock->context;
+
+    if (context->start_time.system != VLC_TICK_INVALID
+     && (context->last.system != VLC_TICK_INVALID ||
+         context->wait_sync_ref.stream != VLC_TICK_INVALID))
+    {
+        assert(context->start_time.stream != VLC_TICK_INVALID);
+        struct vlc_clock_context *new_context = context_new();
+        if (new_context != NULL)
+        {
+            new_context->clock_id = context->clock_id + 1;
+            vlc_list_append(&context->node, &main_clock->prev_contexts);
+            main_clock->context = context = new_context;
+        }
+    }
+
+    context_reset(context);
+}
+
 static void vlc_clock_master_reset(vlc_clock_t *clock)
 {
     vlc_clock_main_t *main_clock = clock->owner;
@@ -525,7 +549,7 @@ static void vlc_clock_master_reset(vlc_clock_t *clock)
         vlc_clock_switch_context(clock, ctx);
 
     clock_point_t start_time = ctx->start_time;
-    vlc_clock_main_reset(main_clock);
+    //vlc_clock_main_reset(main_clock);
     main_clock->context->start_time = start_time;
 
     assert(main_clock->delay <= 0);
@@ -594,6 +618,7 @@ vlc_clock_input_start(vlc_clock_t *clock,
     }
 
 
+    /*
     if (context->start_time.system != VLC_TICK_INVALID
      && (context->last.system != VLC_TICK_INVALID ||
          context->wait_sync_ref.stream != VLC_TICK_INVALID))
@@ -608,7 +633,10 @@ vlc_clock_input_start(vlc_clock_t *clock,
         }
     }
 
+    fprintf(stderr, "%s: resetting context\n", __func__);
     context_reset(context);
+    */
+    fprintf(stderr, "%s: starting context\n", __func__);
     context->start_time = clock_point_Create(start_date, first_ts);
     context->wait_sync_ref = clock_point_Create(start_date + main_clock->delay, first_ts);
     main_clock->wait_sync_ref_priority = UINT_MAX;
@@ -1118,7 +1146,7 @@ static const struct vlc_clock_ops slave_ops = {
 
 static const struct vlc_clock_ops input_master_ops = {
     .update = vlc_clock_master_update,
-    .reset = vlc_clock_master_reset,
+    .reset = vlc_clock_input_reset,
     .set_delay = vlc_clock_master_set_delay,
     .to_system = vlc_clock_master_to_system,
     .start = vlc_clock_input_start,
@@ -1126,7 +1154,7 @@ static const struct vlc_clock_ops input_master_ops = {
 
 static const struct vlc_clock_ops input_slave_ops = {
     .update = vlc_clock_slave_update,
-    .reset = vlc_clock_slave_reset,
+    .reset = vlc_clock_input_reset,
     .set_delay = vlc_clock_slave_set_delay,
     .to_system = vlc_clock_slave_to_system,
     .start = vlc_clock_input_start,

@@ -887,6 +887,21 @@ static void EsOutChangePosition(es_out_sys_t *p_sys, bool b_flush,
 
     input_SendEventCache( p_sys->p_input, 0.0 );
 
+    /**
+     * We first need to reset the input clock so that a new context
+     * is created without start_date. Then we can reset each of the
+     * output.
+     */
+    es_out_pgrm_t *pgrm;
+    vlc_list_foreach(pgrm, &p_sys->programs, node)
+    {
+        input_clock_Reset(pgrm->p_input_clock);
+        pgrm->i_last_pcr = VLC_TICK_INVALID;
+        //vlc_clock_Lock(pgrm->clocks.input);
+        //vlc_clock_Reset(pgrm->clocks.input);
+        //vlc_clock_Unlock(pgrm->clocks.input);
+    }
+
     foreach_es_then_es_slaves(p_es)
     {
         if( p_es->p_dec != NULL )
@@ -903,7 +918,6 @@ static void EsOutChangePosition(es_out_sys_t *p_sys, bool b_flush,
         p_es->i_pts_level = VLC_TICK_INVALID;
     }
 
-    es_out_pgrm_t *pgrm;
     vlc_list_foreach(pgrm, &p_sys->programs, node)
     {
         input_clock_Reset(pgrm->p_input_clock);
@@ -1219,6 +1233,7 @@ ClockListenerUpdate(void *opaque, vlc_tick_t ck_system,
 
     if (discontinuity)
     {
+        vlc_clock_Reset(pgrm->clocks.input);
         const vlc_tick_t current_date = vlc_tick_now();
         vlc_clock_Start(pgrm->clocks.input, current_date, ck_stream);
     }
