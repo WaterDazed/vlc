@@ -26,6 +26,8 @@ const char* matroska_js_interpreter_c::CMD_MS_LOG_MSG = "LogMsg";
 const char* matroska_js_interpreter_c::CMD_MS_ADD_CHOICE = "AddChoice";
 const char* matroska_js_interpreter_c::CMD_MS_COMMIT_CHOICES = "CommitChoices";
 const char* matroska_js_interpreter_c::CMD_MS_SET_CHOICE_TEXT = "SetChoiceText";
+const char* matroska_js_interpreter_c::CMD_MS_SET_CHOICE_DEFAULT = "SetChoiceDefault";
+const char* matroska_js_interpreter_c::CMD_MS_GET_CHOICE = "GetChoice";
 
 static matroska_js_interpreter_c* receive_interpreter_object(duk_context *ctx)
 {
@@ -274,6 +276,76 @@ duk_ret_t matroska_js_interpreter_c::js_execute_SetChoiceText(duk_context *ctx)
 
 }
 
+/**
+ * execute_SetChoiceDefault:
+ *
+ * Set a default choice for the given group or uid.
+ *
+ */
+
+void matroska_js_interpreter_c::execute_SetChoiceDefault(const choice_uid &uid, const choice_group &group)
+{
+    choice_map.SetDefault(uid, group);
+}
+
+duk_ret_t matroska_js_interpreter_c::js_execute_SetChoiceDefault(duk_context *ctx)
+{
+    if (!duk_is_string(ctx, 0))
+        return DUK_RET_TYPE_ERROR;
+
+    if (!duk_is_string(ctx, 1))
+        return DUK_RET_TYPE_ERROR;
+
+    const char* uid = duk_to_string(ctx, 0);
+    const char* group = duk_to_string(ctx, 1);
+    auto interpretor = receive_interpreter_object(ctx);
+    interpretor->execute_SetChoiceDefault(uid, group);
+
+    return  0;
+}
+
+/**
+ * execute_GetChoice:
+ *
+ * Handles MatroskaJS GetChoice command.
+ *
+ * Returns:
+ * chapter_uid  string: uid of the choice selected by the user
+ *
+ */
+
+const std::optional<chapter_codec_vm::choice_uid> matroska_js_interpreter_c::execute_GetChoice(const choice_group &group)
+{
+    auto selected = choice_map.GetSelected(group);
+    auto choice = vm.GetChoice(group);
+    return choice;
+}
+
+duk_ret_t matroska_js_interpreter_c::js_execute_GetChoice(duk_context *ctx)
+{
+    choice_group group;
+    auto interpretor = receive_interpreter_object(ctx);
+
+    if (duk_is_null_or_undefined(ctx, 0))
+        group = std::nullopt;
+    else if (duk_is_string(ctx, 0))
+        group = duk_to_string(ctx, 0);
+    else
+    {
+        vlc_debug(interpretor->l, "%s: First argument must be a string", CMD_MS_GET_CHOICE);
+        return DUK_RET_TYPE_ERROR;
+    }
+
+    const std::optional<choice_uid> selected_uid = interpretor->execute_GetChoice(group);
+
+    if (selected_uid == std::nullopt)
+        duk_push_undefined(ctx);
+    else duk_push_string(ctx, selected_uid->c_str());
+
+    //Return Stack Top (ie. undefined or choice-uid string in this case)
+    return 1;
+}
+
 
 void matroska_js_interpreter_c::on_timeout()
 {
@@ -305,8 +377,14 @@ duk_context* matroska_js_interpreter_c::ms_setup()
     duk_push_c_function(ctx, js_execute_CommitChoices, 0);
     duk_put_global_string(ctx, CMD_MS_COMMIT_CHOICES);
 
+    duk_push_c_function(ctx, js_execute_SetChoiceDefault, 2);
+    duk_put_global_string(ctx, CMD_MS_SET_CHOICE_DEFAULT);
+
     duk_push_c_function(ctx, js_execute_SetChoiceText, 3);
     duk_put_global_string(ctx, CMD_MS_SET_CHOICE_TEXT);
+
+    duk_push_c_function(ctx, js_execute_GetChoice, 1);
+    duk_put_global_string(ctx, CMD_MS_GET_CHOICE);
 
     duk_push_global_object(ctx);
     duk_push_pointer(ctx, this);

@@ -22,6 +22,7 @@ class matroska_js_interpreter_c : public matroska_script_interpreter_common_c
 private:
 
     using choice_uid=std::string;
+    using choice_group=chapter_codec_vm::choice_group;
     chapter_codec_vm::choices choice_map;
 
 
@@ -31,15 +32,19 @@ private:
     static duk_ret_t js_execute_GotoAndPlay(duk_context *ctx);
     static duk_ret_t js_execute_LogMsg(duk_context *ctx);
     static duk_ret_t js_execute_AddChoice(duk_context *ctx);
+    static duk_ret_t js_execute_SetChoiceDefault(duk_context *ctx);
     static duk_ret_t js_execute_SetChoiceText(duk_context *ctx);
     static duk_ret_t js_execute_CommitChoices(duk_context *ctx);
+    static duk_ret_t js_execute_GetChoice(duk_context *ctx);
 
     //Command executors
     bool execute_GotoAndPlay(const std::string &arg);
     bool execute_LogMsg(const std::string &arg);
     bool execute_AddChoice(const std::string &choice_uid, const std::optional <std::string> &choice_group);
+    void execute_SetChoiceDefault(const choice_uid &uid, const choice_group &group);
     bool execute_SetChoiceText(const std::string &uid, const std::string &text, const std::string &lang);
     void execute_CommitChoices();
+    const std::optional<choice_uid> execute_GetChoice(const choice_group &group);
 
     duk_context *ctx;
 
@@ -64,6 +69,8 @@ public:
     static const char* CMD_MS_ADD_CHOICE;
     static const char* CMD_MS_COMMIT_CHOICES;
     static const char* CMD_MS_SET_CHOICE_TEXT;
+    static const char* CMD_MS_SET_CHOICE_DEFAULT;
+    static const char* CMD_MS_GET_CHOICE;
 };
 
 class matroska_js_codec_c : public matroska_script_codec_common_c
