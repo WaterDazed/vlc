@@ -215,22 +215,12 @@ static inline void TraceRender(struct vlc_tracer *tracer, const char *type,
 
 static void context_reset(struct vlc_clock_context *ctx)
 {
-    fprintf(stderr, "context reset\n");
-
     ctx->coeff = 1.0f;
     ctx->rate = 1.0f;
     ctx->offset = 0;
     ctx->wait_sync_ref = clock_point_Create(VLC_TICK_INVALID, VLC_TICK_INVALID);
     ctx->last = clock_point_Create(VLC_TICK_INVALID, VLC_TICK_INVALID);
     ctx->start_time = clock_point_Create(VLC_TICK_INVALID, VLC_TICK_INVALID);
-}
-
-#define context_reset(ctx) context_reset_traced(ctx, __FILE__, __LINE__, __func__)
-static void context_reset_traced(struct vlc_clock_context *ctx, const char *file, int line, const char *func)
-{
-    fprintf(stderr, "%s:%d: %s: calling context_reset(clock_id=%d)\n",
-            file, line, func, ctx->clock_id);
-    (context_reset)(ctx);
 }
 
 static void context_init(struct vlc_clock_context *ctx)
@@ -379,14 +369,6 @@ static void vlc_clock_main_reset(vlc_clock_main_t *main_clock)
     main_clock->wait_sync_ref_priority = UINT_MAX;
 
     vlc_cond_broadcast(&main_clock->cond);
-}
-
-#define vlc_clock_main_reset(c) vlc_clock_main_reset_traced(c, __FILE__, __LINE__, __func__)
-static void vlc_clock_main_reset_traced(vlc_clock_main_t *clock, const char *file, int line, const char *func)
-{
-    fprintf(stderr, "%s:%d: %s: calling vlc_clock_main_reset()\n",
-            file, line, func);
-    (vlc_clock_main_reset)(clock);
 }
 
 static inline void vlc_clock_on_update(vlc_clock_t *clock,
@@ -548,7 +530,6 @@ static void vlc_clock_input_reset(vlc_clock_t *clock)
         }
     }
 
-    fprintf(stderr, "%s: resetting context\n", __func__);
     context_reset(context);
 }
 
@@ -658,9 +639,6 @@ vlc_clock_monotonic_to_system(vlc_clock_t *clock, struct vlc_clock_context *ctx,
 {
     vlc_clock_main_t *main_clock = clock->owner;
     vlc_mutex_assert(&main_clock->lock);
-
-    assert(ctx->start_time.system != VLC_TICK_INVALID);
-    assert(ctx->wait_sync_ref.system != VLC_TICK_INVALID);
 
     return (ts - ctx->wait_sync_ref.stream) / rate
         + ctx->wait_sync_ref.system;
@@ -851,8 +829,6 @@ vlc_clock_output_start(vlc_clock_t *clock,
 
     main_clock->wait_sync_ref_priority = clock->priority;
     context->wait_sync_ref = clock_point_Create(start_date + delay, first_ts);
-    fprintf(stderr, "clock %s: New wait_sync_ref: system=%" PRId64 " stream=%" PRId64 "\n",
-            clock->track_str_id, context->wait_sync_ref.system, context->wait_sync_ref.stream);
 
 end:
     if (main_clock->tracer != NULL)
@@ -1080,7 +1056,6 @@ vlc_tick_t vlc_clock_UpdateVideo(vlc_clock_t *clock, vlc_tick_t system_now,
                               frame_rate, frame_rate_base);
 }
 
-#undef vlc_clock_Reset
 void vlc_clock_Reset(vlc_clock_t *clock)
 {
     AssertLocked(clock);
@@ -1093,7 +1068,6 @@ vlc_tick_t vlc_clock_SetDelay(vlc_clock_t *clock, vlc_tick_t delay)
     return clock->ops->set_delay(clock, delay);
 }
 
-#undef vlc_clock_ConvertToSystem
 vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
                                      vlc_tick_t system_now, vlc_tick_t ts,
                                      double rate, uint32_t *clock_id)
@@ -1322,7 +1296,5 @@ void vlc_clock_Start(vlc_clock_t *clock,
                      vlc_tick_t start_date,
                      vlc_tick_t first_ts)
 {
-    fprintf(stderr, "Clock %s started: system=%" PRId64 " stream=%" PRId64 "\n",
-            clock->track_str_id, start_date, first_ts);
     clock->ops->start(clock, start_date, first_ts);
 }

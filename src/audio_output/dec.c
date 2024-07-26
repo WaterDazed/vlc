@@ -316,12 +316,6 @@ static void stream_Reset(vlc_aout_stream *stream)
 
     stream_ResetTimings(stream);
 }
-#define stream_Reset(s) stream_ResetTraced(s, __FILE__, __LINE__, __func__)
-static void stream_ResetTraced(vlc_aout_stream *stream, const char *file, int line, const char *func)
-{
-    fprintf(stderr, "%s:%d %s: calling stream_Reset\n", file, line, func);
-    (stream_Reset)(stream);
-}
 
 /**
  * Creates an audio output
@@ -1018,7 +1012,6 @@ void vlc_aout_stream_ChangeDelay(vlc_aout_stream *stream, vlc_tick_t delay)
     stream->sync.request_delay = delay;
 }
 
-#undef vlc_aout_stream_Flush
 void vlc_aout_stream_Flush(vlc_aout_stream *stream)
 {
     audio_output_t *aout = aout_stream_aout(stream);
