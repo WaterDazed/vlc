@@ -90,6 +90,18 @@ VLC_API void vlc_input_decoder_Drain( vlc_input_decoder_t * );
  * This is useful when seeking or when deselecting a stream.
  */
 VLC_API void vlc_input_decoder_Flush( vlc_input_decoder_t * );
+#define vlc_input_decoder_Flush(d) vlc_input_decoder_FlushTraced(d, __FILE__, __LINE__, __func__)
+static inline void
+vlc_input_decoder_FlushTraced(vlc_input_decoder_t *d,
+                              const char *file,
+                              int line,
+                              const char *func)
+{
+    fprintf(stderr, "%s:%d %s: Calling vlc_input_decoder_Flush\n",
+            file, line, func);
+    (vlc_input_decoder_Flush)(d);
+}
+
 VLC_API int  vlc_input_decoder_SetSpuHighlight( vlc_input_decoder_t *, const vlc_spu_highlight_t * );
 VLC_API void vlc_input_decoder_ChangeDelay( vlc_input_decoder_t *, vlc_tick_t i_delay );
 

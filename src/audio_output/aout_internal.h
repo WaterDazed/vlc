@@ -171,6 +171,20 @@ void vlc_aout_stream_ChangePause(vlc_aout_stream *stream, bool b_paused, vlc_tic
 void vlc_aout_stream_ChangeRate(vlc_aout_stream *stream, float rate);
 void vlc_aout_stream_ChangeDelay(vlc_aout_stream *stream, vlc_tick_t delay);
 void vlc_aout_stream_Flush(vlc_aout_stream *stream);
+#define vlc_aout_stream_Flush(s) vlc_aout_stream_FlushTraced(s, __FILE__, __LINE__, __func__)
+
+static inline void
+vlc_aout_stream_FlushTraced(vlc_aout_stream *stream,
+                            const char *file,
+                            int line,
+                            const char *func)
+{
+    fprintf(stderr, "%s:%d %s: calling vlc_aout_stream_Flush\n",
+            file, line, func);
+    (vlc_aout_stream_Flush)(stream);
+}
+
+
 void vlc_aout_stream_Drain(vlc_aout_stream *stream);
 /* Contrary to other vlc_aout_stream_*() functions, this function can be called from
  * any threads */

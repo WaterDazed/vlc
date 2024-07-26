@@ -235,6 +235,17 @@ vlc_tick_t vlc_clock_UpdateVideo(vlc_clock_t *clock, vlc_tick_t system_now,
  */
 void vlc_clock_Reset(vlc_clock_t *clock);
 
+#define vlc_clock_Reset(clock) vlc_clock_ResetTraced(clock, __FILE__, __LINE__, __func__)
+static inline void
+vlc_clock_ResetTraced(vlc_clock_t *clock, const char *file,
+                      int line, const char *func)
+{
+    fprintf(stderr, "%s:%d %s: Resetting clock\n",
+            file, line, func);
+    (vlc_clock_Reset)(clock);
+}
+
+
 /**
  * This functions change the clock delay
  *
@@ -321,6 +332,18 @@ vlc_clock_RemoveListener(vlc_clock_t *clock, vlc_clock_listener_id *listener_id)
 vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
                                      vlc_tick_t system_now, vlc_tick_t ts,
                                      double rate, uint32_t *clock_id);
+#define vlc_clock_ConvertToSystem(c, s, t, r, i) \
+    vlc_clock_ConvertToSystemTraced(c, s, t, r, i, __FILE__, __LINE__, __func__)
+
+static inline vlc_tick_t
+vlc_clock_ConvertToSystemTraced(vlc_clock_t *clock, vlc_tick_t system_now,
+                                vlc_tick_t ts, double rate, uint32_t *clock_id,
+                                const char *file, int line, const char *func)
+{
+    fprintf(stderr, "%s:%d %s: Calling vlc_clock_ConvertToSystem\n",
+            file, line, func);
+    return (vlc_clock_ConvertToSystem)(clock, system_now, ts, rate, clock_id);
+}
 
 /**
  * Starts a new clock based on the given clock point, accounting for

@@ -2530,6 +2530,7 @@ void vlc_input_decoder_Drain( vlc_input_decoder_t *p_owner )
     vlc_fifo_Unlock( p_owner->p_fifo );
 }
 
+#undef vlc_input_decoder_Flush
 void vlc_input_decoder_Flush( vlc_input_decoder_t *p_owner )
 {
     vlc_fifo_Lock( p_owner->p_fifo );
