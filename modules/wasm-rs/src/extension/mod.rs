@@ -22,6 +22,7 @@ use extension_thread::run_extension_thread;
 enum WasmExtensionState {
     Activating,
     Activated,
+    Deactivating,
     Deactivated,
     Exiting,
 }
@@ -32,7 +33,8 @@ enum Command {
 }
 
 struct WasmExtension {
-    module: wasmer::Module,
+    store: Arc<Mutex<wasmer::Store>>,
+    instance: wasmer::Instance,
 
     thread_handle: Option<thread::JoinHandle<Result<()>>>,
 
@@ -43,19 +45,58 @@ struct WasmExtension {
     thread_running: bool,
 }
 
+fn read_u32(mem_view: &wasmer::MemoryView, ptr: u64) -> u32 {
+    let mut buf: [u8; 4] = [0; 4];
+    mem_view.read(ptr, &mut buf).expect("Should be valid");
+    u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]])
+}
+
+fn read_string(mem_view: &wasmer::MemoryView, ptr: u32, len: usize) -> Result<String> {
+    let mut buf: Vec<u8> = vec![0; len];
+
+    mem_view.read(ptr as u64, &mut buf).expect("Should be valid");
+
+    let mut string = String::with_capacity(len);
+
+    for i in 0..len {
+        string.push(buf[i] as char);
+    }
+
+    Ok(string)
+}
+
 impl WasmExtension {
-    pub fn new(module: wasmer::Module) -> Self {
+    pub fn new(store: Arc<Mutex<wasmer::Store>>, imports: &wasmer::Imports, file_name: &Path) -> Result<Self> {
+
+        let instance = {
+            let mut store = store.lock().expect("Should be valid");
+
+            let module = wasmer::Module::from_file(&store, file_name).map_err(|e| {
+                //error!(self.logger, "Can't load Wasm module: {}", e);
+                error::CoreError::Unknown
+            })?;
+
+            let instance = wasmer::Instance::new(&mut store, &module, imports).map_err(|e| {
+                //error!(self.logger, "Can't instantiate Wasm module: {}", e);
+                error::CoreError::Unknown
+            })?;
+
+            instance
+        };
 
         let (tx_command, rx_command) = mpsc::channel();
 
-        WasmExtension {
-            module,
+        let wasm_extension = WasmExtension {
+            store,
+            instance,
             thread_handle: None,
             tx_command,
             rx_command,
             state: Mutex::new(WasmExtensionState::Deactivated),
             thread_running: false,
-        }
+        };
+
+        Ok(wasm_extension)
     }
 
     pub fn set_state(&mut self, s: WasmExtensionState) -> Result<()> {
@@ -68,6 +109,78 @@ impl WasmExtension {
         let state = self.state.lock().map_err(|_| error::CoreError::Unknown)?;
         Ok(state.clone())
     }
+
+    fn read_description(&self, memory_view: &wasmer::MemoryView, ptr: u64) -> Result<Description> {
+
+        let title_ptr = read_u32(&memory_view, ptr);
+        let title_len = read_u32(&memory_view, ptr + 4);
+        let version_ptr = read_u32(&memory_view, ptr + 8);
+        let version_len = read_u32(&memory_view, ptr + 12);
+        let author_ptr = read_u32(&memory_view, ptr + 16);
+        let author_len = read_u32(&memory_view, ptr + 20);
+        let shortdesc_ptr = read_u32(&memory_view, ptr + 24);
+        let shortdesc_len = read_u32(&memory_view, ptr + 28);
+        let description_ptr = read_u32(&memory_view, ptr + 32);
+        let description_len = read_u32(&memory_view, ptr + 36);
+
+        let title = read_string(&memory_view, title_ptr, title_len as usize)?;
+        let version = read_string(&memory_view, version_ptr, version_len as usize)?;
+        let author = read_string(&memory_view, author_ptr, author_len as usize)?;
+        let shortdesc = read_string(&memory_view, shortdesc_ptr, shortdesc_len as usize)?;
+        let description = read_string(&memory_view, description_ptr, description_len as usize)?;
+
+        Ok(Description {
+            title,
+            version,
+            author,
+            shortdesc,
+            description,
+        })
+    }
+
+    pub fn get_description(&self) -> Result<Description> {
+
+        let descriptor_ptr = self.execute("descriptor").map_err(|e| {
+            //error!(self.logger, "Can't execute descriptor function: {}", e);
+            error::CoreError::Unknown
+        })?;
+
+        let descriptor_ptr = match descriptor_ptr.get(0) {
+            Some(wasmer::Value::I32(ptr)) => *ptr as u32,
+            _ => {
+                //error!(self.logger, "Descriptor function did not return a valid pointer");
+                return Err(error::CoreError::Unknown);
+            }
+        };
+
+        let memory = self.instance.exports.get_memory("memory").map_err(|e| {
+            //error!(self.logger, "Can't get memory: {}", e);
+            error::CoreError::Unknown
+        })?;
+
+        let store = self.store.lock().expect("Should be valid");
+
+        let memory_view = memory.view(&store);
+        let description = self.read_description(&memory_view, descriptor_ptr as u64)?;
+
+        Ok(description)
+    }
+
+    pub fn execute(&self, function_name: &str) -> Result<Box<[wasmer::Value]>> {
+        let mut store = self.store.lock().expect("Should be valid");
+
+        let func = self.instance.exports.get_function(function_name).map_err(|e| {
+            // error!(self.logger, "Can't get function {}: {}", function_name, e);
+            error::CoreError::Unknown
+        })?;
+
+        let ret_value = func.call(&mut store, &[]).map_err(|e| {
+            // error!(self.logger, "Can't call function {}: {}", function_name, e);
+            error::CoreError::Unknown
+        })?;
+
+        Ok(ret_value)
+    }
 }
 
 pub struct WasmExtensionModule;
@@ -75,7 +188,8 @@ pub struct WasmExtensionModule;
 struct WasmExtensionManager<'a> {
     extension_manager: ThisExtensionsManager,
     logger: &'a mut Logger,
-    store: wasmer::Store,
+    store: Arc<Mutex<wasmer::Store>>,
+    imports: wasmer::Imports,
 }
 
 impl ProvidesLogger for WasmExtensionManager<'_> {
@@ -93,10 +207,21 @@ impl ExtensionCapability for WasmExtensionModule {
 
         debug!(logger, "Wasm extensions manager module loaded");
 
+        let mut store = wasmer::Store::default();
+
+        let imports = wasmer::imports!{
+            "vlc" => {
+                "log" => wasmer::Function::new_typed(&mut store, || {
+                    println!("Log");
+                }),
+            }
+        };
+
         let mut wasm_extension_manager = WasmExtensionManager {
             extension_manager: this_extension_manager,
             logger,
-            store: wasmer::Store::default(),
+            store: Arc::new(Mutex::new(store)),
+            imports,
         };
 
         wasm_extension_manager.scan_extensions()?;
@@ -123,57 +248,9 @@ impl<'a> WasmExtensionManager<'a> {
         }
         Ok(())
     }
-
-    fn read_description(&mut self, memory: &wasmer::Memory, ptr: u64) -> Result<Description> {
-        let mem_view = memory.view(&self.store);
-
-        let title_ptr = self.read_u32(&mem_view, ptr);
-        let title_len = self.read_u32(&mem_view, ptr + 4);
-        let version_ptr = self.read_u32(&mem_view, ptr + 8);
-        let version_len = self.read_u32(&mem_view, ptr + 12);
-        let author_ptr = self.read_u32(&mem_view, ptr + 16);
-        let author_len = self.read_u32(&mem_view, ptr + 20);
-        let shortdesc_ptr = self.read_u32(&mem_view, ptr + 24);
-        let shortdesc_len = self.read_u32(&mem_view, ptr + 28);
-        let description_ptr = self.read_u32(&mem_view, ptr + 32);
-        let description_len = self.read_u32(&mem_view, ptr + 36);
-
-        let title = self.read_string(&mem_view, title_ptr, title_len as usize)?;
-        let version = self.read_string(&mem_view, version_ptr, version_len as usize)?;
-        let author = self.read_string(&mem_view, author_ptr, author_len as usize)?;
-        let shortdesc = self.read_string(&mem_view, shortdesc_ptr, shortdesc_len as usize)?;
-        let description = self.read_string(&mem_view, description_ptr, description_len as usize)?;
-
-        Ok(Description {
-            title,
-            version,
-            author,
-            shortdesc,
-            description,
-        })
-    }
-
-    fn read_u32(&self, mem_view: &wasmer::MemoryView, ptr: u64) -> u32 {
-        let mut buf: [u8; 4] = [0; 4];
-        mem_view.read(ptr, &mut buf).expect("Should be valid");
-        u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]])
-    }
-
-    fn read_string(&self, mem_view: &wasmer::MemoryView, ptr: u32, len: usize) -> Result<String> {
-        let mut buf: Vec<u8> = vec![0; len];
-
-        mem_view.read(ptr as u64, &mut buf).expect("Should be valid");
-
-        let mut string = String::with_capacity(len);
-
-        for i in 0..len {
-            string.push(buf[i] as char);
-        }
-
-        Ok(string)
-    }
     
     fn scan_callback(&mut self, file_name: &Path) -> Result<()> {
+
         debug!(self.logger, "Scanning Wasm script {}", file_name.display());
 
         let mut extension = Extension::new();
@@ -227,7 +304,7 @@ impl<'a> WasmExtensionManager<'a> {
         extension.set_description(&description.description)?;
         extension.set_short_description(&description.shortdesc)?;
 
-        let extension_sys = WasmExtension::new(module);
+        let extension_sys = WasmExtension::new(self.store.clone(), &self.imports, file_name)?;
 
         extension.set_sys(extension_sys)?;
 
@@ -244,8 +321,20 @@ impl<'a> ExtensionManagerControl for WasmExtensionManager<'a> {
     fn activate(&mut self, extension: &mut Extension) -> Result<()> {
 
         let sys: &WasmExtension = extension.get_sys();
+
+        if WasmExtensionState::Activating == sys.get_state()? {
+            return Ok(());
+        }
+
         if WasmExtensionState::Activated != sys.get_state()? {
+            if sys.thread_running {
+                debug!(extension.get_logger(), "Reactivating Wasm extension {}", extension.get_title());
+            }
+
             sys.tx_command.send(Command::Activate).map_err(|_| error::CoreError::Unknown)?;
+
+            let sys: &mut WasmExtension = extension.get_sys_mut();
+            sys.set_state(WasmExtensionState::Activating)?;
         }
 
         let sys: &WasmExtension = extension.get_sys();
@@ -260,9 +349,7 @@ impl<'a> ExtensionManagerControl for WasmExtensionManager<'a> {
             let thread_handle = std::thread::spawn(|| run_extension_thread(extension_clone));
 
             let sys: &mut WasmExtension = extension.get_sys_mut();
-            sys.set_state(WasmExtensionState::Activating)?;
             sys.thread_handle = Some(thread_handle);
-
             sys.thread_running = true;
         }
 
@@ -271,7 +358,9 @@ impl<'a> ExtensionManagerControl for WasmExtensionManager<'a> {
 
     fn deactivate(&self, extension: &mut Extension) -> Result<()> {
         let sys: &mut WasmExtension = extension.get_sys_mut();
-        sys.set_state(WasmExtensionState::Exiting)?;
+
+        sys.tx_command.send(Command::Deactivate).map_err(|_| error::CoreError::Unknown)?;
+        sys.set_state(WasmExtensionState::Deactivating)?;
         Ok(())
     }
 

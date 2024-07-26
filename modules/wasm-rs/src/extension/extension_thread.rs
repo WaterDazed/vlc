@@ -7,28 +7,32 @@ use crate::extension::{Command, WasmExtension, WasmExtensionState};
 
 pub fn run_extension_thread(extension: Arc<Mutex<Extension>>) -> Result<()> {
 
+    let mut extension = extension.lock().map_err(|_| error::CoreError::Unknown)?;
+
     loop {
-        let mut extension_lock = extension.lock().map_err(|_| error::CoreError::Unknown)?;
-        let sys: &WasmExtension = extension_lock.get_sys();
+        let sys: &WasmExtension = extension.get_sys();
 
         if WasmExtensionState::Exiting == sys.get_state()? {
-            debug!(extension_lock.get_logger(), "Exiting Wasm extension {}", extension_lock.get_title());
+            debug!(extension.get_logger(), "Exiting Wasm extension {}", extension.get_title());
             break;
         }
 
-        let sys: &mut WasmExtension = extension_lock.get_sys_mut();
+        let sys: &mut WasmExtension = extension.get_sys_mut();
         let command = sys.rx_command.recv();
 
         match command {
             Ok(Command::Activate) => { 
+                sys.execute("activate")?;
                 sys.set_state(WasmExtensionState::Activated)?;
+                debug!(extension.get_logger(), "Activated Wasm extension {}", extension.get_title());
             }
             Ok(Command::Deactivate) => {
+                sys.execute("deactivate")?;
                 sys.set_state(WasmExtensionState::Deactivated)?;
+                debug!(extension.get_logger(), "Deactivated Wasm extension {}", extension.get_title());
             }
             Err(_) => {
-                let extension_lock = extension.lock().map_err(|_| error::CoreError::Unknown)?;
-                error!(extension_lock.get_logger(), "Error receiving command");
+                error!(extension.get_logger(), "Error receiving command");
             }
         }
     }
