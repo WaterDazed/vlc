@@ -1,5 +1,6 @@
 mod extension;
 mod intf;
+mod libs;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -18,6 +19,26 @@ use crate::intf::Wasm;
 use crate::extension::WasmExtensionModule;
 
 type ScanCallbackFn<T> = fn(&mut T, &Path) -> Result<()>;
+
+fn read_u32(mem_view: &wasmer::MemoryView, ptr: u64) -> u32 {
+    let mut buf: [u8; 4] = [0; 4];
+    mem_view.read(ptr, &mut buf).expect("Should be valid");
+    u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]])
+}
+
+fn read_string(mem_view: &wasmer::MemoryView, ptr: u32, len: usize) -> Result<String> {
+    let mut buf: Vec<u8> = vec![0; len];
+
+    mem_view.read(ptr as u64, &mut buf).expect("Should be valid");
+
+    let mut string = String::with_capacity(len);
+
+    for i in 0..len {
+        string.push(buf[i] as char);
+    }
+
+    Ok(string)
+}
 
 fn vlcwasm_dir_list(dir_name: &Path) -> Result<Vec<PathBuf>> {
 

@@ -42,3 +42,5 @@ macro_rules! register_functions_with_namespace {
         $import_object.register_namespace($namespace, exports);
     }};
 }
+
+pub mod messages;

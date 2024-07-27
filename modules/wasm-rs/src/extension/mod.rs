@@ -13,7 +13,8 @@ use vlcrs_core::extension::Extension;
 
 use vlcrs_core::input_item::InputItem;
 
-use crate::vlcwasm_scripts_batch_execute;
+use crate::libs::messages::wasmopen_msg;
+use crate::{read_string, read_u32, vlcwasm_scripts_batch_execute};
 use crate::ProvidesLogger;
 
 use extension_thread::run_extension_thread;
@@ -33,6 +34,8 @@ enum Command {
 }
 
 struct WasmExtension {
+    extension: Extension,
+
     store: Arc<Mutex<wasmer::Store>>,
     instance: wasmer::Instance,
 
@@ -45,48 +48,20 @@ struct WasmExtension {
     thread_running: bool,
 }
 
-fn read_u32(mem_view: &wasmer::MemoryView, ptr: u64) -> u32 {
-    let mut buf: [u8; 4] = [0; 4];
-    mem_view.read(ptr, &mut buf).expect("Should be valid");
-    u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]])
-}
-
-fn read_string(mem_view: &wasmer::MemoryView, ptr: u32, len: usize) -> Result<String> {
-    let mut buf: Vec<u8> = vec![0; len];
-
-    mem_view.read(ptr as u64, &mut buf).expect("Should be valid");
-
-    let mut string = String::with_capacity(len);
-
-    for i in 0..len {
-        string.push(buf[i] as char);
-    }
-
-    Ok(string)
+pub struct Env {
+    pub memory: Option<wasmer::Memory>,
+    pub extension: Extension,
 }
 
 impl WasmExtension {
-    pub fn new(store: Arc<Mutex<wasmer::Store>>, imports: &wasmer::Imports, file_name: &Path) -> Result<Self> {
+    pub fn new(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path) -> Result<Self> {
 
-        let instance = {
-            let mut store = store.lock().expect("Should be valid");
-
-            let module = wasmer::Module::from_file(&store, file_name).map_err(|e| {
-                //error!(self.logger, "Can't load Wasm module: {}", e);
-                error::CoreError::Unknown
-            })?;
-
-            let instance = wasmer::Instance::new(&mut store, &module, imports).map_err(|e| {
-                //error!(self.logger, "Can't instantiate Wasm module: {}", e);
-                error::CoreError::Unknown
-            })?;
-
-            instance
-        };
+        let instance = Self::create_instance(extension.clone(), Arc::clone(&store), file_name)?;
 
         let (tx_command, rx_command) = mpsc::channel();
 
         let wasm_extension = WasmExtension {
+            extension,
             store,
             instance,
             thread_handle: None,
@@ -97,6 +72,35 @@ impl WasmExtension {
         };
 
         Ok(wasm_extension)
+    }
+
+    fn create_instance(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path) -> Result<wasmer::Instance> {
+        let mut store = store.lock().expect("Should be valid");
+        let logger = extension.get_logger();
+
+        let module = wasmer::Module::from_file(&store, file_name).map_err(|e| {
+            error!(logger, "Can't load Wasm module: {}", e);
+            error::CoreError::Unknown
+        })?;
+
+        let env = wasmer::FunctionEnv::new(&mut store, Env { memory: None, extension: extension.clone() });
+        let mut import_object = wasmer::Imports::new();
+
+        wasmopen_msg(&mut store, &env, &mut import_object);
+
+        let instance = wasmer::Instance::new(&mut store, &module, &mut import_object).map_err(|e| {
+            error!(logger, "Can't instantiate Wasm module: {}", e);
+            error::CoreError::Unknown
+        })?;
+
+        let memory = instance.exports.get_memory("memory").map_err(|e| {
+            error!(logger, "Can't get memory: {}", e);
+            error::CoreError::Unknown
+        })?;
+
+        env.as_mut(&mut store).memory = Some(memory.clone());
+
+        Ok(instance)
     }
 
     pub fn set_state(&mut self, s: WasmExtensionState) -> Result<()> {
@@ -140,21 +144,23 @@ impl WasmExtension {
 
     pub fn get_description(&self) -> Result<Description> {
 
+        let logger = self.extension.get_logger();
+
         let descriptor_ptr = self.execute("descriptor").map_err(|e| {
-            //error!(self.logger, "Can't execute descriptor function: {}", e);
+            error!(logger, "Can't execute descriptor function: {}", e);
             error::CoreError::Unknown
         })?;
 
         let descriptor_ptr = match descriptor_ptr.get(0) {
             Some(wasmer::Value::I32(ptr)) => *ptr as u32,
             _ => {
-                //error!(self.logger, "Descriptor function did not return a valid pointer");
+                error!(logger, "Descriptor function did not return a valid pointer");
                 return Err(error::CoreError::Unknown);
             }
         };
 
         let memory = self.instance.exports.get_memory("memory").map_err(|e| {
-            //error!(self.logger, "Can't get memory: {}", e);
+            error!(logger, "Can't get memory: {}", e);
             error::CoreError::Unknown
         })?;
 
@@ -168,14 +174,15 @@ impl WasmExtension {
 
     pub fn execute(&self, function_name: &str) -> Result<Box<[wasmer::Value]>> {
         let mut store = self.store.lock().expect("Should be valid");
+        let logger = self.extension.get_logger();
 
         let func = self.instance.exports.get_function(function_name).map_err(|e| {
-            // error!(self.logger, "Can't get function {}: {}", function_name, e);
+            error!(logger, "Can't get function {}: {}", function_name, e);
             error::CoreError::Unknown
         })?;
 
         let ret_value = func.call(&mut store, &[]).map_err(|e| {
-            // error!(self.logger, "Can't call function {}: {}", function_name, e);
+            error!(logger, "Can't call function {}: {}", function_name, e);
             error::CoreError::Unknown
         })?;
 
@@ -189,7 +196,6 @@ struct WasmExtensionManager<'a> {
     extension_manager: ThisExtensionsManager,
     logger: &'a mut Logger,
     store: Arc<Mutex<wasmer::Store>>,
-    imports: wasmer::Imports,
 }
 
 impl ProvidesLogger for WasmExtensionManager<'_> {
@@ -207,21 +213,10 @@ impl ExtensionCapability for WasmExtensionModule {
 
         debug!(logger, "Wasm extensions manager module loaded");
 
-        let mut store = wasmer::Store::default();
-
-        let imports = wasmer::imports!{
-            "vlc" => {
-                "log" => wasmer::Function::new_typed(&mut store, || {
-                    println!("Log");
-                }),
-            }
-        };
-
         let mut wasm_extension_manager = WasmExtensionManager {
             extension_manager: this_extension_manager,
             logger,
-            store: Arc::new(Mutex::new(store)),
-            imports,
+            store: Arc::new(Mutex::new(wasmer::Store::default())),
         };
 
         wasm_extension_manager.scan_extensions()?;
@@ -254,59 +249,25 @@ impl<'a> WasmExtensionManager<'a> {
         debug!(self.logger, "Scanning Wasm script {}", file_name.display());
 
         let mut extension = Extension::new();
-        extension.set_name(file_name.to_str().expect("Should be a valid Utf-8"))?;
-        extension.set_logger(self.logger)?;
+        extension.set_name(file_name.to_str().expect("Should be a valid Utf-8"));
+        extension.set_logger(self.logger);
 
-        let module = wasmer::Module::from_file(&self.store, file_name).map_err(|e| {
-            error!(self.logger, "Can't load Wasm module: {}", e);
+        let wasm_extension = WasmExtension::new(extension.clone(), Arc::clone(&self.store), file_name).map_err(|e| {
+            error!(self.logger, "Can't create Wasm extension: {}", e);
             error::CoreError::Unknown
         })?;
 
-        let imports_object = wasmer::imports!{};
-
-        let instance = wasmer::Instance::new(&mut self.store, &module, &imports_object).map_err(|e| {
-            error!(self.logger, "Can't instantiate Wasm module: {}", e);
+        let description = wasm_extension.get_description().map_err(|e| {
+            error!(self.logger, "Can't get description: {}", e);
             error::CoreError::Unknown
         })?;
 
-        instance.exports.iter().for_each(|(name, _export)| {
-            debug!(self.logger, "Exported function: {}", name);
-        });
-
-        let memory = instance.exports.get_memory("memory").map_err(|e| {
-            error!(self.logger, "Can't get memory: {}", e);
-            error::CoreError::Unknown
-        })?;
-
-        let descriptor_fn = instance.exports.get_function("descriptor").map_err(|e| {
-            error!(self.logger, "Can't get descriptor function: {}", e);
-            error::CoreError::Unknown
-        })?;
-
-        let descriptor_ptr = descriptor_fn.call(&mut self.store, &[]).map_err(|e| {
-            error!(self.logger, "Can't call descriptor function: {}", e);
-            error::CoreError::Unknown
-        })?;
-
-        let descriptor_ptr = match descriptor_ptr.get(0) {
-            Some(wasmer::Value::I32(ptr)) => *ptr as u32,
-            _ => {
-                error!(self.logger, "Descriptor function did not return a valid pointer");
-                return Err(error::CoreError::Unknown);
-            }
-        };
-
-        let description = self.read_description(&memory, descriptor_ptr as u64)?;
-
-        extension.set_title(&description.title)?;
-        extension.set_version(&description.version)?;
-        extension.set_author(&description.author)?;
-        extension.set_description(&description.description)?;
-        extension.set_short_description(&description.shortdesc)?;
-
-        let extension_sys = WasmExtension::new(self.store.clone(), &self.imports, file_name)?;
-
-        extension.set_sys(extension_sys)?;
+        extension.set_title(&description.title);
+        extension.set_version(&description.version);
+        extension.set_author(&description.author);
+        extension.set_description(&description.description);
+        extension.set_short_description(&description.shortdesc);
+        extension.set_sys(Box::leak(Box::new(wasm_extension)));
 
         self.extension_manager.add_extension(extension);
 
