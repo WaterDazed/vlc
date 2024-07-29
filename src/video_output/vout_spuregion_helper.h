@@ -25,6 +25,8 @@
     (-(0.148 * R) - (0.291 * G) + (0.439 * B) + 128),\
     ((0.439 * R) - (0.368 * G) - (0.071 * B) + 128)
 
+#define HEX2RGB( rgb ) \
+             (rgb >> 16), ((rgb & 0xFF00) >> 8), (rgb & 0xFF)
 #define HEX2YUV( rgb ) \
     RGB2YUV( (rgb >> 16), ((rgb & 0xFF00) >> 8), (rgb & 0xFF) )
 
