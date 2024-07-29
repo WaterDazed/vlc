@@ -20,15 +20,8 @@
 #include <vlc_image.h>
 #include <vlc_subpicture.h>
 
-#define RGB2YUV( R, G, B ) \
-    ((0.257 * R) + (0.504 * G) + (0.098 * B) + 16), \
-    (-(0.148 * R) - (0.291 * G) + (0.439 * B) + 128),\
-    ((0.439 * R) - (0.368 * G) - (0.071 * B) + 128)
-
 #define HEX2RGB( rgb ) \
              (rgb >> 16), ((rgb & 0xFF00) >> 8), (rgb & 0xFF)
-#define HEX2YUV( rgb ) \
-    RGB2YUV( (rgb >> 16), ((rgb & 0xFF00) >> 8), (rgb & 0xFF) )
 
 static inline void
 spuregion_CreateVGradientPalette( video_palette_t *p_palette, uint8_t i_splits,
