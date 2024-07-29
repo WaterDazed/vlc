@@ -31,7 +31,10 @@ static inline void SetPixelColor( plane_t *p, unsigned line, unsigned x, const u
 static inline void
 spuregion_CreateVGradientFill( plane_t *p, uint8_t i_splits, uint32_t argb1, uint32_t argb2 )
 {
-    uint8_t palette[i_splits][4];
+    uint8_t color[4];
+    const int i_split = p->i_visible_lines / i_splits;
+    const int i_left = p->i_visible_lines % i_splits + p->i_lines - p->i_visible_lines;
+
     for( uint8_t i = 0; i<i_splits; i++ )
     {
         uint32_t rgb1 = argb1 & 0x00FFFFFF;
@@ -40,21 +43,17 @@ spuregion_CreateVGradientFill( plane_t *p, uint8_t i_splits, uint32_t argb1, uin
         uint32_t r = ((((rgb1 >> 16) * (i_splits - i)) + (rgb2 >> 16) * i)) / i_splits;
         uint32_t g = (((((rgb1 >> 8) & 0xFF) * (i_splits - i)) + ((rgb2 >> 8) & 0xFF) * i)) / i_splits;
         uint32_t b = ((((rgb1 & 0xFF) * (i_splits - i)) + (rgb2 & 0xFF) * i)) / i_splits;
-        palette[i][0] = r;
-        palette[i][1] = g;
-        palette[i][2] = b;
-        palette[i][3] = argb1 >> 24;
+        color[0] = r;
+        color[1] = g;
+        color[2] = b;
+        color[3] = argb1 >> 24;
+
+        for ( int x=0; x<p->i_pitch * i_split; x++)
+            SetPixelColor( p, i * i_split, x, color );
     }
 
-    const int i_split = p->i_visible_lines / i_splits;
-    const int i_left = p->i_visible_lines % i_splits + p->i_lines - p->i_visible_lines;
-    for( int i = 0; i<i_splits; i++ )
-    {
-        for ( int x=0; x<p->i_pitch * i_split; x++)
-            SetPixelColor( p, i * i_split, x, palette[i] );
-    }
     for ( int x=0; x<p->i_pitch * i_left; x++)
-        SetPixelColor( p, (i_splits - 1) * i_split, x, palette[i_splits - 1] );
+        SetPixelColor( p, (i_splits - 1) * i_split, x, color );
 }
 
 
