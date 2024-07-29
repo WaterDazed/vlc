@@ -23,6 +23,11 @@
 #define HEX2RGB( rgb ) \
              (rgb >> 16), ((rgb & 0xFF00) >> 8), (rgb & 0xFF)
 
+static inline void SetPixelColor( plane_t *p, unsigned line, unsigned x, const uint8_t color[4])
+{
+    memcpy(&p->p_pixels[p->i_pitch * line + x * 4], color, 4);
+}
+
 static inline void
 spuregion_CreateVGradientPalette( video_palette_t *p_palette, uint8_t i_splits,
                                   uint32_t argb1, uint32_t argb2 )
