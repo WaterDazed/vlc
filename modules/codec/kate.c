@@ -638,15 +638,6 @@ static void *ProcessPacket( decoder_t *p_dec, kate_packet *p_kp,
     }
 }
 
-/* nicked off blend.c */
-static inline void rgb_to_yuv( uint8_t *y, uint8_t *u, uint8_t *v,
-                               int r, int g, int b )
-{
-    *y = ( ( (  66 * r + 129 * g +  25 * b + 128 ) >> 8 ) + 16 );
-    *u =   ( ( -38 * r -  74 * g + 112 * b + 128 ) >> 8 ) + 128 ;
-    *v =   ( ( 112 * r -  94 * g -  18 * b + 128 ) >> 8 ) + 128 ;
-}
-
 /*
   This retrieves the size of the video.
   The best case is when the original video size is known, as we can then
@@ -695,10 +686,9 @@ static void CreateKatePalette( video_palette_t *fmt_palette, const kate_palette 
     fmt_palette->i_entries = palette->ncolors;
     for( n=0; n<palette->ncolors; ++n )
     {
-        rgb_to_yuv(
-            &fmt_palette->palette[n][0], &fmt_palette->palette[n][1], &fmt_palette->palette[n][2],
-            palette->colors[n].r, palette->colors[n].g, palette->colors[n].b
-        );
+        fmt_palette->palette[n][0] = palette->colors[n].r;
+        fmt_palette->palette[n][1] = palette->colors[n].g;
+        fmt_palette->palette[n][2] = palette->colors[n].b;
         fmt_palette->palette[n][3] = palette->colors[n].a;
     }
 }
@@ -1116,7 +1106,7 @@ static subpicture_t *SetupSimpleKateSPU( decoder_t *p_dec, subpicture_t *p_spu,
 
         /* create a separate region for the bitmap */
         video_format_t fmt;
-        video_format_Init( &fmt, VLC_CODEC_YUVP );
+        video_format_Init( &fmt, VLC_CODEC_RGBP );
         fmt.i_width = fmt.i_visible_width = ev->bitmap->width;
         fmt.i_height = fmt.i_visible_height = ev->bitmap->height;
         fmt.i_x_offset = fmt.i_y_offset = 0;
