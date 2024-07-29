@@ -51,7 +51,7 @@
 
 #define SET_PALETTE_COLOR(id, rgb, alpha) \
 {\
-    uint8_t color[4] = { HEX2YUV(rgb), alpha };\
+    uint8_t color[4] = { HEX2RGB(rgb), alpha };\
     memcpy( &palette.palette[id], &color, 4 );\
 }
 
@@ -127,7 +127,7 @@ static subpicture_region_t *OSDRegion(int x, int y, int width, int height)
     palette.i_entries = 4;
 
     video_format_t fmt;
-    video_format_Init(&fmt, VLC_CODEC_YUVP);
+    video_format_Init(&fmt, VLC_CODEC_RGBP);
     fmt.i_width          =
     fmt.i_visible_width  = width;
     fmt.i_height         =
