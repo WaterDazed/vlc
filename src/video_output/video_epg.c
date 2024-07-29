@@ -98,7 +98,7 @@ static subpicture_region_t * vout_OSDBackground(int x, int y,
     spuregion_CreateVGradientPalette( &palette, GRADIENT_COLORS, i_argb, 0xFF000000 );
 
     video_format_t fmt;
-    video_format_Init(&fmt, VLC_CODEC_YUVP);
+    video_format_Init(&fmt, VLC_CODEC_RGBP);
     fmt.i_width  = fmt.i_visible_width  = width;
     fmt.i_height = fmt.i_visible_height = height;
     fmt.i_sar_num = 1;

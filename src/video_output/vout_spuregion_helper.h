@@ -42,7 +42,7 @@ spuregion_CreateVGradientPalette( video_palette_t *p_palette, uint8_t i_splits,
         uint32_t r = ((((rgb1 >> 16) * (i_splits - i)) + (rgb2 >> 16) * i)) / i_splits;
         uint32_t g = (((((rgb1 >> 8) & 0xFF) * (i_splits - i)) + ((rgb2 >> 8) & 0xFF) * i)) / i_splits;
         uint32_t b = ((((rgb1 & 0xFF) * (i_splits - i)) + (rgb2 & 0xFF) * i)) / i_splits;
-        uint8_t entry[4] = { RGB2YUV( r,g,b ), argb1 >> 24 };
+        uint8_t entry[4] = { r,g,b, argb1 >> 24 };
         memcpy( p_palette->palette[i], entry, 4 );
     }
     p_palette->i_entries = i_splits;
