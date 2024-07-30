@@ -99,11 +99,11 @@ public:
                                            chapter_cmd_match match,
                                            virtual_segment_c * & p_vsegment_found ) override;
     void JumpTo( virtual_segment_c & vsegment, virtual_chapter_c & vchapter ) override;
-    virtual_segment_c *GetCurrentVSegment() override
+    virtual_segment_c *GetCurrentVSegment() const override
     {
         return p_current_vsegment;
     }
-    virtual_chapter_c *FindVChapter( chapter_uid i_find_uid, virtual_segment_c * & p_vsegment_found ) override;
+    virtual_chapter_c *FindVChapter( chapter_uid i_find_uid, virtual_segment_c * & p_vsegment_found ) const override;
     void SetHighlight( vlc_spu_highlight_t & ) override;
 
     void PreloadFamily( const matroska_segment_c & of_segment );
