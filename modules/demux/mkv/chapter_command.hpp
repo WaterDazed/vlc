@@ -27,6 +27,7 @@
 #include "mkv.hpp"
 
 #include <memory>
+#include <optional>
 
 struct vlc_spu_highlight_t;
 
@@ -46,6 +47,28 @@ public:
                                                    chapter_cmd_match match,
                                                    virtual_segment_c * & p_vsegment_found ) = 0;
     virtual void SetHighlight( vlc_spu_highlight_t & ) = 0;
+
+    using choice_language = std::string;
+    using choice_text = std::map<choice_language, std::string>;
+    using choice_group = std::optional<std::string>;
+    using choice_uid = std::string;
+
+    struct chapter_choice
+    {
+        choice_text per_language_text;
+        choice_group group;
+    };
+
+    class choices : public std::map<choice_uid, chapter_choice>
+    {
+        std::map<choice_group,choice_uid> selected;
+    public:
+        void SetSelected(const choice_uid &, const choice_group &);
+        std::optional<choice_uid> GetSelected(const choice_group &) const;
+    };
+
+    virtual void AddChoices( const choices & ) = 0;
+    virtual std::optional<choice_uid> GetChoice( const choice_group & ) const = 0;
 };
 
 enum NavivationKey {

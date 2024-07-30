@@ -362,4 +362,16 @@ void demux_sys_t::SetHighlight( vlc_spu_highlight_t & spu_hl )
     ev.SetHighlight( spu_hl );
 }
 
+void demux_sys_t::AddChoices( const choices & choices )
+{
+    chapter_choices = choices;
+    // TODO generate the buttons in the video
+}
+
+std::optional<chapter_codec_vm::choice_uid> demux_sys_t::GetChoice( const choice_group & group ) const
+{
+    return chapter_choices.GetSelected( group );
+}
+
+
 } // namespace

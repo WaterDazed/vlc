@@ -107,6 +107,9 @@ public:
     virtual_chapter_c *FindVChapter( chapter_uid i_find_uid, virtual_segment_c * & p_vsegment_found ) const override;
     void SetHighlight( vlc_spu_highlight_t & ) override;
 
+    void AddChoices( const choices & ) override;
+    std::optional<choice_uid> GetChoice( const choice_group & ) const override;
+
     void PreloadFamily( const matroska_segment_c & of_segment );
     bool PreloadLinked();
     bool FreeUnused();
@@ -161,6 +164,7 @@ private:
     std::unique_ptr<dvd_command_interpretor_c> dvd_interpretor; // protected by lock_demuxer
     std::unique_ptr<matroska_script_interpretor_c> ms_interpreter;
     std::unique_ptr<matroska_js_interpreter_c> matroska_js_interpreter;
+    chapter_codec_vm::choices         chapter_choices;
 };
 
 } // namespace
