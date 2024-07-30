@@ -2665,8 +2665,7 @@ void vlc_input_decoder_ChangeDelay( vlc_input_decoder_t *owner, vlc_tick_t delay
 
 void vlc_input_decoder_StartWait( vlc_input_decoder_t *p_owner )
 {
-    if( p_owner->master_dec != NULL /* SubDecs are paced by their master */
-     || vlc_input_decoder_IsSynchronous( p_owner ) )
+    if ( vlc_input_decoder_IsSynchronous( p_owner ) )
         return;
 
     assert( !p_owner->b_waiting );
@@ -2681,8 +2680,7 @@ void vlc_input_decoder_StartWait( vlc_input_decoder_t *p_owner )
 
 void vlc_input_decoder_StopWait( vlc_input_decoder_t *p_owner )
 {
-    if( p_owner->master_dec != NULL /* SubDecs are paced by their master */
-     || vlc_input_decoder_IsSynchronous( p_owner ) )
+    if ( vlc_input_decoder_IsSynchronous( p_owner ) )
         return;
 
     vlc_fifo_Lock(p_owner->p_fifo);
@@ -2694,12 +2692,8 @@ void vlc_input_decoder_StopWait( vlc_input_decoder_t *p_owner )
 
 void vlc_input_decoder_Wait( vlc_input_decoder_t *p_owner )
 {
-    if( p_owner->master_dec != NULL /* SubDecs are paced by their master */
-     || vlc_input_decoder_IsSynchronous( p_owner ) )
-    {
-        /* Nothing to wait for. There's no decoder thread running. */
+    if ( vlc_input_decoder_IsSynchronous( p_owner ) )
         return;
-    }
     assert( p_owner->b_waiting );
 
     vlc_fifo_Lock(p_owner->p_fifo);
