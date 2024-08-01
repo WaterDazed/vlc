@@ -58,6 +58,7 @@ check_PROGRAMS = \
 	test_modules_stream_out_transcode \
 	test_modules_mux_webvtt \
 	test_modules_stream_out_hls_subtitles_segmenter \
+	test_modules_wasm_extension \
 	$(NULL)
 
 if HAVE_GL
@@ -309,6 +310,10 @@ test_modules_stream_out_hls_subtitles_segmenter_SOURCES = \
 	../modules/stream_out/hls/hls.h \
 	../modules/stream_out/hls/subtitles_segmenter.c
 test_modules_stream_out_hls_subtitles_segmenter_LDADD = $(LIBVLCCORE) $(LIBVLC)
+
+test_modules_wasm_extension_SOURCES = modules/wasm/extension.c
+test_modules_wasm_extension_LDADD = $(LIBVLCCORE) $(LIBVLC)
+test_modules_wasm_extension_CPPFLAGS = $(AM_CPPFLAGS)
 
 checkall:
 	$(MAKE) check_PROGRAMS="$(check_PROGRAMS) $(EXTRA_PROGRAMS)" check
