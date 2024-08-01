@@ -2,12 +2,14 @@ use std::ffi::{c_char, c_ushort, CString};
 use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 
+use crate::object::VlcObjectRef;
 use crate::threads::{vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock};
 use crate::extension::sys::{extension_t, extensions_manager_t, vlc_extensions_manager_operations};
 use crate::input_item::sys::input_item_t;
 use crate::object::sys::vlc_object_t;
 
 use crate::error::{Errno, Result};
+use crate::variables::Variables;
 
 use vlcrs_messages::{Logger, sys::vlc_logger};
 use vlcrs_plugin::ModuleProtocol;
@@ -67,6 +69,7 @@ pub trait ExtensionCapability {
         _this_extension_manager: ThisExtensionsManager,
         logger: &'a mut Logger,
         args: &mut ModuleArgs,
+        variables: Variables,
     ) -> Result<Box<dyn ExtensionManager + 'a>>;
 }
 
@@ -135,7 +138,12 @@ pub unsafe extern "C" fn extensions_manager_activate<T: ExtensionCapability>(obj
 
     let mut module_args = ModuleArgs(NonNull::new(object).unwrap());
 
-    match T::open(this_extension_manager, mut_logger, &mut module_args) {
+    let vlc_object_ref = VlcObjectRef::from_raw(object);
+    let instance = vlc_object_ref.instance();
+
+    let variables = Variables::new(instance.into_raw());
+
+    match T::open(this_extension_manager, mut_logger, &mut module_args, variables) {
         Ok(extension_manager) => unsafe { register(ptr_extension_manager, extension_manager) },
         Err(err) => err.to_vlc_errno(),
     }
