@@ -5,6 +5,7 @@ use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
 
 use vlcrs_core::error::{self, Result};
+use vlcrs_core::variables::Variables;
 use vlcrs_messages::{debug, error, Logger};
 use vlcrs_core::module::extension::{ExtensionCapability, ExtensionManager, ExtensionManagerControl, ThisExtensionsManager};
 use vlcrs_core::module::ModuleArgs;
@@ -13,7 +14,7 @@ use vlcrs_core::extension::Extension;
 
 use vlcrs_core::input_item::InputItem;
 
-use crate::libs::messages::wasmopen_msg;
+use crate::libs::{messages::wasmopen_msg, variables::wasmopen_variables};
 use crate::{read_string, read_u32, vlcwasm_scripts_batch_execute};
 use crate::ProvidesLogger;
 
@@ -51,12 +52,13 @@ struct WasmExtension {
 pub struct Env {
     pub memory: Option<wasmer::Memory>,
     pub extension: Extension,
+    pub variables: Variables,
 }
 
 impl WasmExtension {
-    pub fn new(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path) -> Result<Self> {
+    pub fn new(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path, variables: Variables) -> Result<Self> {
 
-        let instance = Self::create_instance(extension.clone(), Arc::clone(&store), file_name)?;
+        let instance = Self::create_instance(extension.clone(), Arc::clone(&store), file_name, variables)?;
 
         let (tx_command, rx_command) = mpsc::channel();
 
@@ -74,7 +76,7 @@ impl WasmExtension {
         Ok(wasm_extension)
     }
 
-    fn create_instance(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path) -> Result<wasmer::Instance> {
+    fn create_instance(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path, variables: Variables) -> Result<wasmer::Instance> {
         let mut store = store.lock().expect("Should be valid");
         let logger = extension.get_logger();
 
@@ -83,10 +85,11 @@ impl WasmExtension {
             error::CoreError::Unknown
         })?;
 
-        let env = wasmer::FunctionEnv::new(&mut store, Env { memory: None, extension: extension.clone() });
+        let env = wasmer::FunctionEnv::new(&mut store, Env { memory: None, extension: extension.clone(), variables});
         let mut import_object = wasmer::Imports::new();
 
         wasmopen_msg(&mut store, &env, &mut import_object);
+        wasmopen_variables(&mut store, &env, &mut import_object);
 
         let instance = wasmer::Instance::new(&mut store, &module, &mut import_object).map_err(|e| {
             error!(logger, "Can't instantiate Wasm module: {}", e);
@@ -196,6 +199,7 @@ struct WasmExtensionManager<'a> {
     extension_manager: ThisExtensionsManager,
     logger: &'a mut Logger,
     store: Arc<Mutex<wasmer::Store>>,
+    variables: Variables,
 }
 
 impl ProvidesLogger for WasmExtensionManager<'_> {
@@ -209,6 +213,7 @@ impl ExtensionCapability for WasmExtensionModule {
         this_extension_manager: ThisExtensionsManager,
         logger: &'a mut Logger,
         _args: &mut ModuleArgs,
+        variables: Variables,
     ) -> Result<Box<dyn ExtensionManager + 'a>> {
 
         debug!(logger, "Wasm extensions manager module loaded");
@@ -217,6 +222,7 @@ impl ExtensionCapability for WasmExtensionModule {
             extension_manager: this_extension_manager,
             logger,
             store: Arc::new(Mutex::new(wasmer::Store::default())),
+            variables,
         };
 
         wasm_extension_manager.scan_extensions()?;
@@ -252,7 +258,7 @@ impl<'a> WasmExtensionManager<'a> {
         extension.set_name(file_name.to_str().expect("Should be a valid Utf-8"));
         extension.set_logger(self.logger);
 
-        let wasm_extension = WasmExtension::new(extension.clone(), Arc::clone(&self.store), file_name).map_err(|e| {
+        let wasm_extension = WasmExtension::new(extension.clone(), Arc::clone(&self.store), file_name, self.variables.clone()).map_err(|e| {
             error!(self.logger, "Can't create Wasm extension: {}", e);
             error::CoreError::Unknown
         })?;

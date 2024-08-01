@@ -44,3 +44,4 @@ macro_rules! register_functions_with_namespace {
 }
 
 pub mod messages;
+pub mod variables;
