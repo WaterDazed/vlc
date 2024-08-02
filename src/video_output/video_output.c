@@ -976,6 +976,40 @@ static bool IsPictureLateToStaticFilter(vout_thread_sys_t *vout, const video_for
     return IsPictureLateToProcess(vout, fmt, time_until_display, prepare_decoded_duration);
 }
 
+static vlc_tick_t CountTimeToDisplay(vout_thread_sys_t *vout, vlc_tick_t pic_pts)
+{
+    vout_thread_sys_t *sys = vout;
+    const vlc_tick_t system_now = vlc_tick_now();
+    uint32_t clock_id;
+    vlc_clock_Lock(sys->clock);
+    const vlc_tick_t system_pts =
+        vlc_clock_ConvertToSystem(sys->clock, system_now,
+                                  pic_pts, sys->rate, &clock_id);
+    const bool paused = vlc_clock_IsPaused(sys->clock);
+    vlc_clock_Unlock(sys->clock);
+    if (clock_id != sys->clock_id)
+    {
+        sys->clock_id = clock_id;
+        msg_Dbg(&vout->obj, "Using a new clock context (%u), "
+                "flushing static filters", clock_id);
+
+        /* Most deinterlace modules can't handle a PTS
+         * discontinuity, so flush them.
+         *
+         * FIXME: Pass a discontinuity flag and handle it in
+         * deinterlace modules. */
+        filter_chain_VideoFlush(sys->filter.chain_static);
+    }
+    return paused ? VLC_TICK_MAX : (pic_pts - system_pts);
+}
+
+static bool IsPictureLateToRender(vout_thread_sys_t *vout, const video_format_t *fmt,
+                                  vlc_tick_t time_until_display)
+{
+    vout_thread_sys_t *sys = vout;
+    return IsPictureLateToProcess(vout, fmt, time_until_display, GetRenderDelay(sys));
+}
+
 /* */
 VLC_USED
 static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
@@ -986,8 +1020,25 @@ static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
 
     vlc_mutex_lock(&sys->filter.lock);
 
-    picture_t *picture = filter_chain_VideoFilter(sys->filter.chain_static, NULL);
-    assert(!reuse_decoded || !picture);
+    picture_t *picture = NULL;
+
+    while (!picture) {
+        picture = filter_chain_VideoFilter(sys->filter.chain_static, NULL);
+        assert(!reuse_decoded || !picture);
+
+        if (!picture)
+            break;
+
+        vlc_tick_t time_left_to_display =
+            CountTimeToDisplay(vout, picture->date);
+        if (is_late_dropped && !picture->b_force
+         && IsPictureLateToRender(vout, &picture->format, time_left_to_display))
+        {
+            picture_Release(picture);
+            vout_statistic_AddLost(&sys->statistic, 1);
+            picture = NULL; // continue looping
+        }
+    }
 
     while (!picture) {
         picture_t *decoded;
@@ -997,29 +1048,11 @@ static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
             decoded = picture_fifo_Pop(sys->decoder_fifo);
 
             if (decoded) {
-                const vlc_tick_t system_now = vlc_tick_now();
-                uint32_t clock_id;
-                vlc_clock_Lock(sys->clock);
-                const vlc_tick_t system_pts =
-                    vlc_clock_ConvertToSystem(sys->clock, system_now,
-                                              decoded->date, sys->rate, &clock_id);
-                vlc_clock_Unlock(sys->clock);
-                if (clock_id != sys->clock_id)
-                {
-                    sys->clock_id = clock_id;
-                    msg_Dbg(&vout->obj, "Using a new clock context (%u), "
-                            "flusing static filters", clock_id);
-
-                    /* Most deinterlace modules can't handle a PTS
-                     * discontinuity, so flush them.
-                     *
-                     * FIXME: Pass a discontinuity flag and handle it in
-                     * deinterlace modules. */
-                    filter_chain_VideoFlush(sys->filter.chain_static);
-                }
+                vlc_tick_t time_left_to_display =
+                    CountTimeToDisplay(vout, decoded->date);
 
                 if (is_late_dropped && !decoded->b_force
-                 && IsPictureLateToStaticFilter(vout, &decoded->format, system_pts - system_now))
+                 && IsPictureLateToStaticFilter(vout, &decoded->format, time_left_to_display))
                 {
                     picture_Release(decoded);
                     vout_statistic_AddLost(&sys->statistic, 1);
