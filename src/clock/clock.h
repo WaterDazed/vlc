@@ -109,14 +109,6 @@ void vlc_clock_main_Unlock(vlc_clock_main_t *main_clock);
 void vlc_clock_main_Reset(vlc_clock_main_t *main_clock);
 
 /**
- * Set the first PCR point
- *
- * @param main_clock the locked main_clock
- */
-void vlc_clock_main_SetFirstPcr(vlc_clock_main_t *main_clock,
-                                vlc_tick_t system_now, vlc_tick_t ts);
-
-/**
  * Set the input dejitter
  *
  * @param main_clock the locked main_clock
@@ -327,7 +319,19 @@ vlc_clock_RemoveListener(vlc_clock_t *clock, vlc_clock_listener_id *listener_id)
  * @return the valid system time
  */
 vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
-                                     vlc_tick_t system_now, vlc_tick_t ts,
+                                     vlc_tick_t ts,
                                      double rate, uint32_t *clock_id);
+
+/**
+ * Starts a new clock based on the given clock point, accounting for
+ * previous updates.
+ *
+ * @param main_clock
+ * @param start_date the system time at which the first update starts
+ * @param first_ts the media time origin
+ **/
+void vlc_clock_Start(vlc_clock_t *main_clock,
+                     vlc_tick_t start_date,
+                     vlc_tick_t first_ts);
 
 #endif /*CLOCK_H*/

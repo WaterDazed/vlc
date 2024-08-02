@@ -57,10 +57,11 @@ struct clock_scenario
         CLOCK_SCENARIO_RUN,
     } type;
 
+    vlc_tick_t stream_start;
+    vlc_tick_t system_start; /* VLC_TICK_INVALID for vlc_tick_now() */
+
     union {
         struct {
-            vlc_tick_t stream_start;
-            vlc_tick_t system_start; /* VLC_TICK_INVALID for vlc_tick_now() */
             vlc_tick_t duration;
             vlc_tick_t stream_increment; /* VLC_TICK_INVALID for manual increment */
             unsigned video_fps;
@@ -84,6 +85,7 @@ struct clock_ctx
     vlc_clock_main_t *mainclk;
     vlc_clock_t *master;
     vlc_clock_t *slave;
+    vlc_clock_t *input;
 
     vlc_tick_t system_start;
     vlc_tick_t stream_start;
@@ -328,6 +330,9 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
     assert(mainclk != NULL);
 
     vlc_clock_main_Lock(mainclk);
+    vlc_clock_t *input = vlc_clock_main_CreateInputSlave(mainclk);
+    assert(input != NULL);
+
     vlc_clock_t *master = vlc_clock_main_CreateMaster(mainclk, scenario->name,
                                                       NULL, NULL);
     assert(master != NULL);
@@ -345,17 +350,19 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
         vlc_clock_main_SetDejitter(mainclk, 0);
     }
 
-    vlc_tick_t system_start = VLC_TICK_0 + VLC_TICK_FROM_MS(15000);
+    vlc_tick_t system_start = scenario->system_start;
     vlc_tick_t stream_start = VLC_TICK_0 + VLC_TICK_FROM_MS(15000);
     if (scenario->type == CLOCK_SCENARIO_UPDATE)
     {
         system_start = scenario->system_start;
         stream_start = scenario->stream_start;
+        vlc_clock_Start(input, system_start, stream_start);
     }
     vlc_clock_main_Unlock(mainclk);
 
     const struct clock_ctx ctx = {
         .mainclk = mainclk,
+        .input = input,
         .master = master,
         .slave = slave,
         .scenario = scenario,
@@ -397,8 +404,7 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
             {
                 vlc_clock_Lock(ctx.slave);
                 vlc_tick_t play_date =
-                    vlc_clock_ConvertToSystem(ctx.slave, video_system, video_ts,
-                                              1.0f, NULL);
+                    vlc_clock_ConvertToSystem(ctx.slave, video_ts, 1.0f, NULL);
                 vlc_clock_Update(ctx.slave, play_date, video_ts, 1.0f);
                 vlc_clock_Unlock(ctx.slave);
                 video_system += video_increment;
@@ -418,6 +424,7 @@ static void play_scenario(libvlc_int_t *vlc, struct vlc_tracer *tracer,
     }
 
 end:
+    vlc_clock_Delete(input);
     vlc_clock_Delete(master);
     vlc_clock_Delete(slave);
     free(slave_name);
@@ -545,8 +552,7 @@ static void normal_check(const struct clock_ctx *ctx, size_t update_count,
         {
             case TRACER_EVENT_TYPE_UPDATE:
                 assert(event.update.coeff == 1.0f);
-                assert(event.update.offset ==
-                       scenario->system_start - scenario->stream_start);
+                assert(event.update.offset == 0);
                 break;
             case TRACER_EVENT_TYPE_RENDER_VIDEO:
                 if (last_video_date != VLC_TICK_INVALID)
@@ -560,8 +566,7 @@ static void normal_check(const struct clock_ctx *ctx, size_t update_count,
 
     vlc_clock_Lock(ctx->slave);
     vlc_tick_t converted =
-        vlc_clock_ConvertToSystem(ctx->slave, expected_system_end,
-                                  stream_end, 1.0f, NULL);
+        vlc_clock_ConvertToSystem(ctx->slave, stream_end, 1.0f, NULL);
     vlc_clock_Unlock(ctx->slave);
     assert(converted == expected_system_end);
 }
@@ -642,8 +647,7 @@ static void drift_check(const struct clock_ctx *ctx, size_t update_count,
 
     vlc_clock_Lock(ctx->slave);
     vlc_tick_t converted =
-        vlc_clock_ConvertToSystem(ctx->slave, expected_system_end,
-                                  stream_end, 1.0f, NULL);
+        vlc_clock_ConvertToSystem(ctx->slave, stream_end, 1.0f, NULL);
     vlc_clock_Unlock(ctx->slave);
 
     assert(converted - expected_system_end == scenario->total_drift_duration);
@@ -677,13 +681,20 @@ static void pause_common(const struct clock_ctx *ctx, vlc_clock_t *updater)
     const vlc_tick_t pause_duration = VLC_TICK_FROM_MS(20);
     vlc_tick_t system = system_start;
 
+    vlc_clock_Lock(ctx->input);
+    vlc_clock_Start(ctx->input, ctx->system_start, ctx->stream_start);
+    fprintf(stderr, "\t - input: system_start: %" PRId64 " stream_start: %" PRId64 "\n",
+            system_start, ctx->stream_start);
+    vlc_clock_Unlock(ctx->input);
+
     vlc_clock_Lock(updater);
     vlc_clock_Update(updater, system, ctx->stream_start, 1.0f);
     vlc_clock_Unlock(updater);
 
     {
         vlc_clock_Lock(ctx->slave);
-        vlc_tick_t converted = vlc_clock_ConvertToSystem(ctx->slave, system, ctx->stream_start, 1.0f, NULL);
+        vlc_tick_t converted = vlc_clock_ConvertToSystem(ctx->slave, ctx->stream_start, 1.0f, NULL);
+        fprintf(stderr, "\t - conversion system=%" PRId64 " stream=%"PRId64 " : %" PRId64 "\n", system, ctx->stream_start, converted);
         assert(converted == system);
         vlc_clock_Unlock(ctx->slave);
     }
@@ -695,6 +706,7 @@ static void pause_common(const struct clock_ctx *ctx, vlc_clock_t *updater)
     vlc_clock_main_Unlock(ctx->mainclk);
 
     system += pause_duration;
+    fprintf(stderr, "\t - paused for: %" PRId64 "\n", pause_duration);
 
     vlc_clock_main_Lock(ctx->mainclk);
     vlc_clock_main_ChangePause(ctx->mainclk, system, false);
@@ -702,8 +714,9 @@ static void pause_common(const struct clock_ctx *ctx, vlc_clock_t *updater)
     system += 1;
 
     vlc_clock_Lock(ctx->slave);
-    vlc_tick_t converted = vlc_clock_ConvertToSystem(ctx->slave, system, ctx->stream_start, 1.0f, NULL);
+    vlc_tick_t converted = vlc_clock_ConvertToSystem(ctx->slave, ctx->stream_start, 1.0f, NULL);
     vlc_clock_Unlock(ctx->slave);
+    fprintf(stderr, "\t - conversion: %" PRId64 "\n", converted);
     assert(converted == system_start + pause_duration);
 }
 
@@ -721,12 +734,21 @@ static void convert_paused_common(const struct clock_ctx *ctx, vlc_clock_t *upda
 {
     const vlc_tick_t system_start = ctx->system_start;
     vlc_tick_t system = system_start;
+    vlc_clock_Lock(ctx->input);
+    vlc_clock_Start(ctx->input, ctx->system_start, ctx->stream_start);
+    fprintf(stderr, "\t - input: system_start: %" PRId64 " stream_start: %" PRId64 "\n",
+            system_start, ctx->stream_start);
+    vlc_clock_Unlock(ctx->input);
 
     vlc_clock_Lock(updater);
+    vlc_clock_Start(updater, ctx->system_start, ctx->stream_start);
+    fprintf(stderr, "\t - system_start: %" PRId64 " stream_start: %" PRId64 "\n",
+            system_start, ctx->stream_start);
     vlc_clock_Update(updater, ctx->system_start, ctx->stream_start, 1.0f);
     vlc_clock_Unlock(updater);
 
     system += VLC_TICK_FROM_MS(10);
+    fprintf(stderr, "\t - paused, system: +%" PRId64 "\n", system);
 
     vlc_clock_main_Lock(ctx->mainclk);
     vlc_clock_main_ChangePause(ctx->mainclk, system, true);
@@ -734,7 +756,8 @@ static void convert_paused_common(const struct clock_ctx *ctx, vlc_clock_t *upda
     system += 1;
 
     vlc_clock_Lock(ctx->slave);
-    vlc_tick_t converted = vlc_clock_ConvertToSystem(ctx->slave, system, ctx->stream_start, 1.0f, NULL);
+    vlc_tick_t converted = vlc_clock_ConvertToSystem(ctx->slave, ctx->stream_start, 1.0f, NULL);
+    fprintf(stderr, "\t - conversion: %" PRId64 "\n", converted);
     vlc_clock_Unlock(ctx->slave);
     assert(converted == system_start);
 }
@@ -753,62 +776,71 @@ static void contexts_run(const struct clock_ctx *ctx)
 {
     vlc_tick_t converted;
     vlc_tick_t system = ctx->system_start;
-    vlc_tick_t stream_context0 = 1;
+    vlc_tick_t stream_context0 = ctx->stream_start;
     uint32_t clock_id;
 
     vlc_clock_main_Lock(ctx->mainclk);
 
-    /* Initial SetFirstPcr, that will initialise the default and main context */
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context0);
+    //* Initial start, that will initialise the default and main context */
+    vlc_clock_Start(ctx->input, system, stream_context0);
 
     /* Check that the converted point is valid */
-    converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context0,
+    converted = vlc_clock_ConvertToSystem(ctx->slave, stream_context0,
                                           1.0f, &clock_id);
     assert(clock_id == 0);
     assert(converted == system);
+    vlc_clock_Update(ctx->master, system, stream_context0, 1.0f);
     vlc_clock_Update(ctx->slave, system, stream_context0, 1.0f);
 
     /* Discontinuity from 1us to 30 sec */
     vlc_tick_t system_context0 = system;
     vlc_tick_t stream_context1 = VLC_TICK_FROM_SEC(30);
     system += VLC_TICK_FROM_MS(100);
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context1);
+    vlc_clock_Reset(ctx->input);
+    vlc_clock_Start(ctx->input, system, stream_context1);
 
     /* Check that we can use the new context (or new origin) */
-    converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context1,
+    converted = vlc_clock_ConvertToSystem(ctx->slave, stream_context1,
                                           1.0f, &clock_id);
+    fprintf(stderr, "\t - clock_id = %d, converted = % "PRId64 "\n", clock_id, converted);
     assert(clock_id == 1);
     assert(converted == system);
 
     /* Check that we can still use the old context when converting a point
      * closer to the original context */
-    converted = vlc_clock_ConvertToSystem(ctx->slave, system,
+    converted = vlc_clock_ConvertToSystem(ctx->slave,
                                           VLC_TICK_FROM_MS(10) + stream_context0,
                                           1.0f, &clock_id);
+    fprintf(stderr, "\t - clock_id = %d, converted = % "PRId64 "\n", clock_id, converted);
     assert(clock_id == 0);
     assert(converted == system_context0 + VLC_TICK_FROM_MS(10));
 
     /* Update on the newest context will cause previous contexts to be removed */
+    vlc_clock_Update(ctx->master, system, stream_context1, 1.0f);
     vlc_clock_Update(ctx->slave, system, stream_context1, 1.0f);
 
     /* Discontinuity back to 1us */
     system += VLC_TICK_FROM_MS(100);
     vlc_tick_t stream_context2 = 1;
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context2);
+    vlc_clock_Reset(ctx->input);
+    vlc_clock_Start(ctx->input, system, stream_context2);
 
     /* Check that we can use the new context (or new origin) */
-    converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context2,
+    converted = vlc_clock_ConvertToSystem(ctx->slave, stream_context2,
                                           1.0f, &clock_id);
+    fprintf(stderr, "\t - clock_id = %d, converted = % "PRId64 "\n", clock_id, converted);
     assert(clock_id == 2);
     assert(converted == system);
     /* Update on the newest context will cause previous contexts to be removed */
+    vlc_clock_Update(ctx->master, system, stream_context2, 1.0f);
     vlc_clock_Update(ctx->slave, system, stream_context2, 1.0f);
 
     /* Check that the same conversion will output a different result now that
      * the old contexts are removed */
     system += VLC_TICK_FROM_MS(100);
-    converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context1, 1.0f,
+    converted = vlc_clock_ConvertToSystem(ctx->slave, stream_context1, 1.0f,
                                           &clock_id);
+    fprintf(stderr, "\t - clock_id = %d, converted = % "PRId64 "\n", clock_id, converted);
     assert(clock_id == 2);
     assert(converted != system_context0);
 
@@ -894,6 +926,8 @@ static struct clock_scenario clock_scenarios[] = {
     .desc = "pause + resume is delaying the next conversion",
     .type = CLOCK_SCENARIO_RUN,
     .run = master_pause_run,
+    .system_start = VLC_TICK_FROM_MS(100),
+    .stream_start = VLC_TICK_FROM_MS(1000),
 },
 {
     .name = "monotonic_pause",
@@ -901,12 +935,16 @@ static struct clock_scenario clock_scenarios[] = {
     .type = CLOCK_SCENARIO_RUN,
     .run = monotonic_pause_run,
     .disable_jitter = true,
+    .system_start = VLC_TICK_FROM_MS(100),
+    .stream_start = VLC_TICK_FROM_MS(1000),
 },
 {
     .name = "master_convert_paused",
     .desc = "it is possible to convert ts while paused",
     .type = CLOCK_SCENARIO_RUN,
     .run = master_convert_paused_run,
+    .system_start = VLC_TICK_FROM_MS(100),
+    .stream_start = VLC_TICK_FROM_MS(1000),
 },
 {
     .name = "monotonic_convert_paused",
@@ -914,6 +952,8 @@ static struct clock_scenario clock_scenarios[] = {
     .type = CLOCK_SCENARIO_RUN,
     .run = monotonic_convert_paused_run,
     .disable_jitter = true,
+    .system_start = VLC_TICK_FROM_MS(100),
+    .stream_start = VLC_TICK_FROM_MS(1000),
 },
 {
     .name = "contexts",
@@ -921,6 +961,8 @@ static struct clock_scenario clock_scenarios[] = {
     .type = CLOCK_SCENARIO_RUN,
     .run = contexts_run,
     .disable_jitter = true,
+    .system_start = VLC_TICK_FROM_MS(100),
+    .stream_start = VLC_TICK_FROM_MS(1000),
 },
 };
 

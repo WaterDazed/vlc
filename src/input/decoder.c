@@ -206,6 +206,7 @@ struct vlc_input_decoder_t
     bool b_waiting;
     bool b_first;
     bool b_has_data;
+    bool out_started;
 
     /* Flushing */
     bool flushing;
@@ -975,8 +976,7 @@ static int InputThread_GetInputAttachments( decoder_t *p_dec,
     return VLC_SUCCESS;
 }
 
-static vlc_tick_t ModuleThread_GetDisplayDate( decoder_t *p_dec,
-                                       vlc_tick_t system_now, vlc_tick_t i_ts )
+static vlc_tick_t ModuleThread_GetDisplayDate(decoder_t *p_dec, vlc_tick_t i_ts)
 {
     vlc_input_decoder_t *p_owner = dec_get_owner( p_dec );
 
@@ -991,7 +991,7 @@ static vlc_tick_t ModuleThread_GetDisplayDate( decoder_t *p_dec,
 
     vlc_clock_Lock( p_owner->p_clock );
     vlc_tick_t conv_ts =
-        vlc_clock_ConvertToSystem( p_owner->p_clock, system_now, i_ts, rate, NULL );
+        vlc_clock_ConvertToSystem(p_owner->p_clock, i_ts, rate, NULL);
     vlc_clock_Unlock( p_owner->p_clock );
     return conv_ts;
 }
@@ -1034,18 +1034,32 @@ static void RequestReload( vlc_input_decoder_t *p_owner )
     atomic_compare_exchange_strong( &p_owner->reload, &expected, RELOAD_DECODER );
 }
 
-static int DecoderWaitUnblock( vlc_input_decoder_t *p_owner )
+static int DecoderWaitUnblock(vlc_input_decoder_t *p_owner, vlc_tick_t date)
 {
+    struct vlc_tracer *tracer = vlc_object_get_tracer(VLC_OBJECT(&p_owner->dec));
     vlc_fifo_Assert(p_owner->p_fifo);
 
     if( p_owner->b_waiting )
     {
+        if (tracer != NULL)
+            vlc_tracer_TraceEvent(tracer, "DEC", p_owner->psz_id, "start wait");
         p_owner->b_has_data = true;
         vlc_cond_signal( &p_owner->wait_acknowledge );
     }
 
     while (p_owner->b_waiting && p_owner->b_has_data && !p_owner->flushing)
         vlc_fifo_WaitCond(p_owner->p_fifo, &p_owner->wait_request);
+
+    if (!p_owner->out_started)
+    {
+        p_owner->out_started = true;
+        if (tracer != NULL)
+            vlc_tracer_TraceEvent(tracer, "DEC", p_owner->psz_id, "stop wait");
+
+        vlc_clock_Lock(p_owner->p_clock);
+        vlc_clock_Start(p_owner->p_clock, vlc_tick_now(), date);
+        vlc_clock_Unlock(p_owner->p_clock);
+    }
 
     if (p_owner->flushing)
     {
@@ -1364,12 +1378,13 @@ static int ModuleThread_PlayVideo( vlc_input_decoder_t *p_owner, picture_t *p_pi
     }
     else
     {
-        int ret = DecoderWaitUnblock(p_owner);
+        int ret = DecoderWaitUnblock(p_owner, p_picture->date);
         if (ret != VLC_SUCCESS)
         {
             picture_Release(p_picture);
             return ret;
         }
+
     }
 
     if( unlikely(p_owner->paused) && likely(p_owner->frames_countdown > 0) )
@@ -1506,7 +1521,7 @@ static int ModuleThread_PlayAudio( vlc_input_decoder_t *p_owner, vlc_frame_t *p_
         vlc_aout_stream_Flush( p_astream );
     }
 
-    int ret = DecoderWaitUnblock(p_owner);
+    int ret = DecoderWaitUnblock(p_owner, p_audio->i_pts);
     if (ret != VLC_SUCCESS)
     {
         block_Release(p_audio);
@@ -1573,7 +1588,7 @@ static void ModuleThread_PlaySpu( vlc_input_decoder_t *p_owner, subpicture_t *p_
     }
 
     /* */
-    int ret = DecoderWaitUnblock(p_owner);
+    int ret = DecoderWaitUnblock(p_owner, p_subpic->i_start);
 
     if (ret != VLC_SUCCESS || p_subpic->i_start == VLC_TICK_INVALID)
     {
@@ -1813,6 +1828,7 @@ static void *DecoderThread( void *p_data )
              * is called again. This will avoid a second useless flush (but
              * harmless). */
             p_owner->flushing = false;
+            p_owner->out_started = false;
             p_owner->i_preroll_end = PREROLL_NONE;
             continue;
         }
@@ -1975,6 +1991,7 @@ CreateDecoder( vlc_object_t *p_parent, const struct vlc_input_decoder_cfg *cfg )
     p_owner->b_waiting = false;
     p_owner->b_first = true;
     p_owner->b_has_data = false;
+    p_owner->out_started = false;
 
     p_owner->error = false;
 
@@ -2647,8 +2664,7 @@ void vlc_input_decoder_ChangeDelay( vlc_input_decoder_t *owner, vlc_tick_t delay
 
 void vlc_input_decoder_StartWait( vlc_input_decoder_t *p_owner )
 {
-    if( p_owner->master_dec != NULL /* SubDecs are paced by their master */
-     || vlc_input_decoder_IsSynchronous( p_owner ) )
+    if ( vlc_input_decoder_IsSynchronous( p_owner ) )
         return;
 
     assert( !p_owner->b_waiting );
@@ -2663,8 +2679,7 @@ void vlc_input_decoder_StartWait( vlc_input_decoder_t *p_owner )
 
 void vlc_input_decoder_StopWait( vlc_input_decoder_t *p_owner )
 {
-    if( p_owner->master_dec != NULL /* SubDecs are paced by their master */
-     || vlc_input_decoder_IsSynchronous( p_owner ) )
+    if ( vlc_input_decoder_IsSynchronous( p_owner ) )
         return;
 
     vlc_fifo_Lock(p_owner->p_fifo);
@@ -2676,12 +2691,8 @@ void vlc_input_decoder_StopWait( vlc_input_decoder_t *p_owner )
 
 void vlc_input_decoder_Wait( vlc_input_decoder_t *p_owner )
 {
-    if( p_owner->master_dec != NULL /* SubDecs are paced by their master */
-     || vlc_input_decoder_IsSynchronous( p_owner ) )
-    {
-        /* Nothing to wait for. There's no decoder thread running. */
+    if ( vlc_input_decoder_IsSynchronous( p_owner ) )
         return;
-    }
     assert( p_owner->b_waiting );
 
     vlc_fifo_Lock(p_owner->p_fifo);

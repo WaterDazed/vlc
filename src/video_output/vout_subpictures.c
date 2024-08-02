@@ -761,6 +761,7 @@ static int SpuRenderCmp(const void *s0, const void *s1)
 static size_t spu_channel_UpdateDates(struct spu_channel *channel,
                                        vlc_tick_t system_now)
 {
+    (void)system_now;
     /* Put every spu start and stop ts into the same array to convert them in
      * one shot */
     if (channel->entries.size == 0)
@@ -775,12 +776,12 @@ static size_t spu_channel_UpdateDates(struct spu_channel *channel,
     {
         assert(entry);
 
-        entry->start = vlc_clock_ConvertToSystem(channel->clock, system_now,
+        entry->start = vlc_clock_ConvertToSystem(channel->clock,
                                                  entry->orgstart, channel->rate,
                                                  NULL);
 
         entry->stop =
-            vlc_clock_ConvertToSystem(channel->clock, system_now,
+            vlc_clock_ConvertToSystem(channel->clock,
                                       entry->orgstop, channel->rate,
                                       NULL);
     }
@@ -2126,10 +2127,10 @@ void spu_PutSubpicture(spu_t *spu, subpicture_t *subpic)
 
         vlc_clock_Lock(channel->clock);
         subpic->i_start =
-            vlc_clock_ConvertToSystem(channel->clock, system_now,
+            vlc_clock_ConvertToSystem(channel->clock,
                                       orgstart, channel->rate, NULL);
         subpic->i_stop =
-            vlc_clock_ConvertToSystem(channel->clock, system_now,
+            vlc_clock_ConvertToSystem(channel->clock,
                                       orgstop, channel->rate, NULL);
         vlc_clock_Unlock(channel->clock);
 
