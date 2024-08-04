@@ -6,7 +6,7 @@
 #include "vlc_extensions.h"
 #include "vlc_plugin.h"
 #include "vlc_threads.h"
-#include "json/json.h"
+#include "../../modules/misc/webservices/json.h"
 #include <sys/stat.h>
 
 /*JSON handeling*/
