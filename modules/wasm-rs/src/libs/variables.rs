@@ -1,11 +1,11 @@
 use wasmer::{FunctionEnv, FunctionEnvMut, Imports, Store};
 
-use crate::{extension::Env, read_string};
+use crate::{extension::Env, vlcwasm_read_string};
 
 fn get_variable_name(env: &mut FunctionEnvMut<Env>, ptr: u32, len: i32) -> String {
     let (env_data, store) = env.data_and_store_mut();
-    let memory_view = env_data.memory.as_ref().unwrap().view(&store);
-    read_string(&memory_view, ptr, len as usize).expect("Failed to read string from memory")
+    let instance = env_data.instance.as_ref().expect("Should have instance");
+    vlcwasm_read_string(&store, &instance, ptr, len as usize).expect("Failed to read string from memory")
 }
 
 fn vlcwasm_trigger_callback(mut env: FunctionEnvMut<Env>, ptr: u32, len: i32) {

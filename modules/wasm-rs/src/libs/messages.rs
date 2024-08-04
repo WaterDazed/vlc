@@ -1,12 +1,12 @@
 use vlcrs_messages::{debug, error, info, warn, Logger};
 use wasmer::{FunctionEnv, FunctionEnvMut, Imports, Store};
 
-use crate::{extension::Env, read_string};
+use crate::{extension::Env, vlcwasm_read_string};
 
 fn get_msg_and_logger<'a>(env: &'a mut FunctionEnvMut<Env>, ptr: u32, len: i32) -> (String, &'a mut Logger) {
     let (env_data, store) = env.data_and_store_mut();
-    let memory_view = env_data.memory.as_ref().unwrap().view(&store); 
-    let msg = read_string(&memory_view, ptr, len as usize).expect("Failed to read string from memory");
+    let instance = env_data.instance.as_ref().expect("Should have instance");
+    let msg = vlcwasm_read_string(&store, &instance, ptr, len as usize).expect("Failed to read string from memory");
     let logger = env_data.extension.get_logger();
     (msg, logger)
 }

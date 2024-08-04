@@ -13,9 +13,11 @@ use vlcrs_core::module::ModuleArgs;
 use vlcrs_core::extension::Extension;
 
 use vlcrs_core::input_item::InputItem;
+use wasmer::{FunctionEnv, Imports, Instance, Module, Store, Value};
 
+use crate::libs::configuration::wasmopen_config;
 use crate::libs::{messages::wasmopen_msg, variables::wasmopen_variables};
-use crate::{read_string, read_u32, vlcwasm_scripts_batch_execute};
+use crate::{vlcwasm_read_string, vlcwasm_read_u32, vlcwasm_scripts_batch_execute};
 use crate::ProvidesLogger;
 
 use extension_thread::run_extension_thread;
@@ -37,8 +39,8 @@ enum Command {
 struct WasmExtension {
     extension: Extension,
 
-    store: Arc<Mutex<wasmer::Store>>,
-    instance: wasmer::Instance,
+    store: Arc<Mutex<Store>>,
+    instance: Instance,
 
     thread_handle: Option<thread::JoinHandle<Result<()>>>,
 
@@ -50,13 +52,13 @@ struct WasmExtension {
 }
 
 pub struct Env {
-    pub memory: Option<wasmer::Memory>,
+    pub instance: Option<Instance>,
     pub extension: Extension,
     pub variables: Variables,
 }
 
 impl WasmExtension {
-    pub fn new(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path, variables: Variables) -> Result<Self> {
+    pub fn new(extension: Extension, store: Arc<Mutex<Store>>, file_name: &Path, variables: Variables) -> Result<Self> {
 
         let instance = Self::create_instance(extension.clone(), Arc::clone(&store), file_name, variables)?;
 
@@ -76,32 +78,28 @@ impl WasmExtension {
         Ok(wasm_extension)
     }
 
-    fn create_instance(extension: Extension, store: Arc<Mutex<wasmer::Store>>, file_name: &Path, variables: Variables) -> Result<wasmer::Instance> {
+    fn create_instance(extension: Extension, store: Arc<Mutex<Store>>, file_name: &Path, variables: Variables) -> Result<Instance> {
         let mut store = store.lock().expect("Should be valid");
         let logger = extension.get_logger();
 
-        let module = wasmer::Module::from_file(&store, file_name).map_err(|e| {
+        let module = Module::from_file(&store, file_name).map_err(|e| {
             error!(logger, "Can't load Wasm module: {}", e);
             error::CoreError::Unknown
         })?;
 
-        let env = wasmer::FunctionEnv::new(&mut store, Env { memory: None, extension: extension.clone(), variables});
-        let mut import_object = wasmer::Imports::new();
+        let env = FunctionEnv::new(&mut store, Env { instance: None, extension: extension.clone(), variables});
+        let mut import_object = Imports::new();
 
         wasmopen_msg(&mut store, &env, &mut import_object);
         wasmopen_variables(&mut store, &env, &mut import_object);
+        wasmopen_config(&mut store, &env, &mut import_object);
 
-        let instance = wasmer::Instance::new(&mut store, &module, &mut import_object).map_err(|e| {
+        let instance = Instance::new(&mut store, &module, &mut import_object).map_err(|e| {
             error!(logger, "Can't instantiate Wasm module: {}", e);
             error::CoreError::Unknown
         })?;
 
-        let memory = instance.exports.get_memory("memory").map_err(|e| {
-            error!(logger, "Can't get memory: {}", e);
-            error::CoreError::Unknown
-        })?;
-
-        env.as_mut(&mut store).memory = Some(memory.clone());
+        env.as_mut(&mut store).instance = Some(instance.clone());
 
         Ok(instance)
     }
@@ -117,24 +115,26 @@ impl WasmExtension {
         Ok(state.clone())
     }
 
-    fn read_description(&self, memory_view: &wasmer::MemoryView, ptr: u64) -> Result<Description> {
+    fn read_description(&self, instance: &Instance, ptr: u64) -> Result<Description> {
 
-        let title_ptr = read_u32(&memory_view, ptr);
-        let title_len = read_u32(&memory_view, ptr + 4);
-        let version_ptr = read_u32(&memory_view, ptr + 8);
-        let version_len = read_u32(&memory_view, ptr + 12);
-        let author_ptr = read_u32(&memory_view, ptr + 16);
-        let author_len = read_u32(&memory_view, ptr + 20);
-        let shortdesc_ptr = read_u32(&memory_view, ptr + 24);
-        let shortdesc_len = read_u32(&memory_view, ptr + 28);
-        let description_ptr = read_u32(&memory_view, ptr + 32);
-        let description_len = read_u32(&memory_view, ptr + 36);
+        let store = self.store.lock().expect("Should be valid");
 
-        let title = read_string(&memory_view, title_ptr, title_len as usize)?;
-        let version = read_string(&memory_view, version_ptr, version_len as usize)?;
-        let author = read_string(&memory_view, author_ptr, author_len as usize)?;
-        let shortdesc = read_string(&memory_view, shortdesc_ptr, shortdesc_len as usize)?;
-        let description = read_string(&memory_view, description_ptr, description_len as usize)?;
+        let title_ptr = vlcwasm_read_u32(&store, &instance, ptr);
+        let title_len = vlcwasm_read_u32(&store, &instance, ptr + 4);
+        let version_ptr = vlcwasm_read_u32(&store, &instance, ptr + 8);
+        let version_len = vlcwasm_read_u32(&store, &instance, ptr + 12);
+        let author_ptr = vlcwasm_read_u32(&store, &instance, ptr + 16);
+        let author_len = vlcwasm_read_u32(&store, &instance, ptr + 20);
+        let shortdesc_ptr = vlcwasm_read_u32(&store, &instance, ptr + 24);
+        let shortdesc_len = vlcwasm_read_u32(&store, &instance, ptr + 28);
+        let description_ptr = vlcwasm_read_u32(&store, &instance, ptr + 32);
+        let description_len = vlcwasm_read_u32(&store, &instance, ptr + 36);
+
+        let title = vlcwasm_read_string(&store, &instance, title_ptr, title_len as usize)?;
+        let version = vlcwasm_read_string(&store, &instance, version_ptr, version_len as usize)?;
+        let author = vlcwasm_read_string(&store, &instance, author_ptr, author_len as usize)?;
+        let shortdesc = vlcwasm_read_string(&store, &instance, shortdesc_ptr, shortdesc_len as usize)?;
+        let description = vlcwasm_read_string(&store, &instance, description_ptr, description_len as usize)?;
 
         Ok(Description {
             title,
@@ -155,27 +155,19 @@ impl WasmExtension {
         })?;
 
         let descriptor_ptr = match descriptor_ptr.get(0) {
-            Some(wasmer::Value::I32(ptr)) => *ptr as u32,
+            Some(Value::I32(ptr)) => *ptr as u32,
             _ => {
                 error!(logger, "Descriptor function did not return a valid pointer");
                 return Err(error::CoreError::Unknown);
             }
         };
 
-        let memory = self.instance.exports.get_memory("memory").map_err(|e| {
-            error!(logger, "Can't get memory: {}", e);
-            error::CoreError::Unknown
-        })?;
-
-        let store = self.store.lock().expect("Should be valid");
-
-        let memory_view = memory.view(&store);
-        let description = self.read_description(&memory_view, descriptor_ptr as u64)?;
+        let description = self.read_description(&self.instance, descriptor_ptr as u64)?;
 
         Ok(description)
     }
 
-    pub fn execute(&self, function_name: &str) -> Result<Box<[wasmer::Value]>> {
+    pub fn execute(&self, function_name: &str) -> Result<Box<[Value]>> {
         let mut store = self.store.lock().expect("Should be valid");
         let logger = self.extension.get_logger();
 
@@ -198,7 +190,7 @@ pub struct WasmExtensionModule;
 struct WasmExtensionManager<'a> {
     extension_manager: ThisExtensionsManager,
     logger: &'a mut Logger,
-    store: Arc<Mutex<wasmer::Store>>,
+    store: Arc<Mutex<Store>>,
     variables: Variables,
 }
 
@@ -221,7 +213,7 @@ impl ExtensionCapability for WasmExtensionModule {
         let mut wasm_extension_manager = WasmExtensionManager {
             extension_manager: this_extension_manager,
             logger,
-            store: Arc::new(Mutex::new(wasmer::Store::default())),
+            store: Arc::new(Mutex::new(Store::default())),
             variables,
         };
 
