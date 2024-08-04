@@ -52,16 +52,8 @@ static char *getDataPath()
     const size_t PATH_SIZE = strlen(user_dir) + strlen(fname) + 2; // +1 path seperator, +1 null terminator
     char data_path_buff[PATH_SIZE];
 
-/* OS independent path serperator*/
-#if defined(WIN32) || defined(_WIN32)
-#define PATH_SEPARATOR "\\"
-#else
-#define PATH_SEPARATOR "/"
-#endif
-
     /* concat user directory and filename */
-    snprintf(data_path_buff, PATH_SIZE, "%s%s%s", user_dir, PATH_SEPARATOR, fname);
-#undef PATH_SEPARATOR
+    snprintf(data_path_buff, PATH_SIZE, "%s%s%s", user_dir, DIR_SEP, fname);
 
     state.data_path = strdup(data_path_buff);
 
