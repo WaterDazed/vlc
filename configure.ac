@@ -1026,6 +1026,17 @@ AC_CHECK_HEADERS([net/if.h], [], [],
 AC_CHECK_HEADER([syslog.h], [have_syslog="yes"], [have_syslog="no"])
 AM_CONDITIONAL([HAVE_SYSLOG], [test "$have_syslog" = "yes"])
 
+AS_IF([test "${ac_cv_header_search_h}" != "no" -a "${ac_cv_func_tdestroy}" != "no"],[
+    AC_CHECK_DECL([tdestroy],[],[],[
+        #define _GNU_SOURCE 1
+        #include <search.h>
+    ])
+    AS_IF([test "${ac_cv_have_decl_tdestroy}" != "no"], [
+        AC_DEFINE(HAVE_TDESTROY_DECL, 1, [Define to 1 if 'tdestroy' is found in <search.h>.])
+    ])
+])
+
+
 dnl  BSD
 AC_CHECK_HEADERS([netinet/tcp.h netinet/udplite.h sys/param.h sys/mount.h])
 
