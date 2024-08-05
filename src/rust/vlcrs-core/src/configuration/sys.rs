@@ -51,4 +51,18 @@ pub enum vlc_user_dir {
 pub use self::vlc_user_dir as vlc_userdir_t;
 extern "C" {
     pub fn config_GetUserDir(arg1: vlc_userdir_t) -> *mut ::std::os::raw::c_char;
+
+    pub fn config_GetType(name: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
+
+    pub fn config_GetPsz(name: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char;
+
+    pub fn config_GetInt(name: *const ::std::os::raw::c_char) -> i64;
+
+    pub fn config_GetFloat(name: *const ::std::os::raw::c_char) -> f32;
+
+    pub fn config_PutPsz(name: *const ::std::os::raw::c_char, val: *const ::std::os::raw::c_char);
+
+    pub fn config_PutInt(name: *const ::std::os::raw::c_char, val: i64);
+
+    pub fn config_PutFloat(name: *const ::std::os::raw::c_char, val: f32);
 }
