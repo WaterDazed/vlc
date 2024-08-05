@@ -411,8 +411,7 @@ int foo() { return my_array[0]; }
     ;;
   *emscripten*)
     SYS=emscripten
-    # tdestroy() is a GNU extension
-    CFLAGS="${CFLAGS} -pthread -D_GNU_SOURCE"
+    CFLAGS="${CFLAGS} -pthread"
     CXXFLAGS="${CXXFLAGS} -pthread"
     ac_cv_func_if_nameindex=yes
     ac_cv_header_sys_shm_h=no
