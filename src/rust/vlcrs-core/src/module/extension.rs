@@ -2,7 +2,10 @@ use std::ffi::{c_char, c_ushort, CString};
 use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 
+use crate::interface::sys::{intf_thread_t, vlc_intf_GetMainPlaylist};
 use crate::object::VlcObjectRef;
+use crate::playlist::{self, Playlist};
+use crate::playlist::sys::vlc_playlist_t;
 use crate::threads::{vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock};
 use crate::extension::sys::{extension_t, extensions_manager_t, vlc_extensions_manager_operations};
 use crate::input_item::sys::input_item_t;
@@ -70,6 +73,7 @@ pub trait ExtensionCapability {
         logger: &'a mut Logger,
         args: &mut ModuleArgs,
         variables: Variables,
+        playlist: Playlist,
     ) -> Result<Box<dyn ExtensionManager + 'a>>;
 }
 
@@ -143,7 +147,11 @@ pub unsafe extern "C" fn extensions_manager_activate<T: ExtensionCapability>(obj
 
     let variables = Variables::new(instance.into_raw());
 
-    match T::open(this_extension_manager, mut_logger, &mut module_args, variables) {
+    let intf = VlcObjectRef::from_raw(object).parent().expect("No parent found");
+    let playlist_ptr = unsafe { vlc_intf_GetMainPlaylist(intf.into_raw() as *mut intf_thread_t) };
+    let playlist = playlist::Playlist::new(playlist_ptr);
+
+    match T::open(this_extension_manager, mut_logger, &mut module_args, variables, playlist) {
         Ok(extension_manager) => unsafe { register(ptr_extension_manager, extension_manager) },
         Err(err) => err.to_vlc_errno(),
     }
