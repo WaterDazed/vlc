@@ -48,7 +48,8 @@ FocusScope {
 
     // Settings
 
-    implicitHeight: recentVideosColumn.height
+    implicitWidth: recentVideosColumn.implicitWidth
+    implicitHeight: recentVideosColumn.implicitHeight
 
     Navigation.navigable: recentModel.count > 0
 
@@ -88,12 +89,13 @@ FocusScope {
         Widgets.ViewHeader {
             id: viewHeader
 
+            anchors.left: parent.left
+            anchors.right: parent.right
+
             view: root
 
             visible: recentModel.count > 0
             seeAllButton.visible: recentModel.maximumCount > recentModel.count
-
-            Layout.fillWidth: true
 
             leftPadding: view.currentItem?.contentLeftMargin ?? 0
             rightPadding: view.currentItem?.contentRightMargin ?? 0
@@ -113,12 +115,12 @@ FocusScope {
         VideoAll {
             id: view
 
+            anchors.left: parent.left
+            anchors.right: parent.right
+
             // Settings
 
             visible: recentModel.count > 0
-
-            width: root.width
-            height: currentItem?.contentHeight ?? 0
 
             leftPadding: root.leftPadding
             rightPadding: root.rightPadding
@@ -146,6 +148,9 @@ FocusScope {
 
         Widgets.ViewHeader {
             id: subtitleLabel
+
+            anchors.left: parent.left
+            anchors.right: parent.right
 
             visible: text !== ""
 

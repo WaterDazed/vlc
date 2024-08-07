@@ -40,6 +40,12 @@ StackView {
 
     // Settings
 
+    // NOTE: The docs state that:
+    //       > StackView does not inherit an implicit size from items that are
+    //       > pushed onto it.
+    implicitWidth: currentItem?.implicitWidth ?? 0
+    implicitHeight: currentItem?.implicitHeight ?? 0
+
     replaceEnter: null
 
     replaceExit: null

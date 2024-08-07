@@ -33,6 +33,9 @@ FocusScope {
 
     // Properties
 
+    implicitHeight: header.implicitHeight + view.implicitHeight
+    implicitWidth: Math.max(header.implicitWidth, view.implicitWidth)
+
     property var sortModel: []
 
     property Component tableHeaderDelegate:  TableHeaderDelegate {
@@ -198,9 +201,6 @@ FocusScope {
     function getItemY(index) {
         let size = index * rowHeight + topMargin
 
-        if (tableHeaderItem)
-            size += tableHeaderItem.height
-
         return size
     }
 
@@ -237,14 +237,148 @@ FocusScope {
         }
     }
 
+    Rectangle {
+        id: header
+
+        property alias loadedHeader: headerLoader.item
+
+        anchors.left: view.left
+        anchors.right: view.right
+
+        implicitWidth: col.implicitWidth
+        implicitHeight: col.implicitHeight
+
+        z: 3
+        color: root.headerColor
+
+        // with inline header positioning and for `root.header` which changes it's height after loading,
+        // in such cases after `root.header` completes, the ListView will try to maintain the relative contentY,
+        // and hide the completed `root.header`, try to show the `root.header` in such cases by manually
+        // positiing view at beginning
+        onHeightChanged: if (root.contentY < 0) root.positionViewAtBeginning()
+
+        Widgets.ListLabel {
+            // NOTE: We want the section label to be slightly shifted to the left.
+            x: row.x - VLCStyle.margin_small
+            y: row.y + root.headerTopPadding
+
+            height: VLCStyle.tableHeaderText_height
+            verticalAlignment: Text.AlignVCenter
+
+            text: view.currentSection
+            color: view.colorContext.accent
+            visible: view.headerPositioning === ListView.OverlayHeader
+                     && text !== ""
+                     && view.contentY > (row.height - col.height - row.topPadding)
+        }
+
+        Column {
+            id: col
+
+            anchors.fill: parent
+
+            Loader {
+                id: headerLoader
+
+                sourceComponent: root.header
+            }
+
+            Row {
+                id: row
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+
+                anchors.leftMargin: root.contentLeftMargin
+                anchors.rightMargin: root.contentRightMargin
+
+                topPadding: root.headerTopPadding
+                bottomPadding: VLCStyle.margin_xsmall
+
+                spacing: VLCStyle.column_spacing
+
+                Repeater {
+                    model: sortModel
+                    Item {
+                        id: headerCell
+
+                        required property var modelData
+                        property TableHeaderDelegate _item: null
+
+                        height: VLCStyle.tableHeaderText_height
+                        width: {
+                            if (!!modelData.size)
+                                return modelData.size * root.baseColumnWidth
+                            else if (!!modelData.weight)
+                                return modelData.weight * root._weightedColumnsSize
+                            else
+                                return 0
+                        }
+
+                        Accessible.role: Accessible.ColumnHeader
+                        Accessible.name: modelData.model.text
+
+                        //Using a Loader is unable to pass the initial/required properties
+                        Component.onCompleted: {
+                            const comp = modelData.model.headerDelegate || root.tableHeaderDelegate
+                            headerCell._item = comp.createObject(headerCell, {
+                                width:  Qt.binding(() => headerCell.width),
+                                height:  Qt.binding(() => headerCell.height),
+                                colorContext:  Qt.binding(() => view.colorContext),
+                                colModel: Qt.binding(() => modelData.model)
+                            })
+                        }
+
+                        Text {
+                            text: (root.model.sortOrder === Qt.AscendingOrder) ? "▼" : "▲"
+                            visible: root.model.sortCriteria === modelData.model.criteria
+                            font.pixelSize: VLCStyle.fontSize_normal
+                            color: root.colorContext.accent
+
+                            anchors {
+                                top: parent.top
+                                bottom: parent.bottom
+                                right: parent.right
+                                leftMargin: VLCStyle.margin_xsmall
+                                rightMargin: VLCStyle.margin_xsmall
+                            }
+                        }
+
+                        TapHandler {
+                            onTapped: (eventPoint, button) => {
+                                if (!(modelData.model.isSortable ?? true))
+                                    return
+                                else if (root.model.sortCriteria !== modelData.model.criteria)
+                                    root.model.sortCriteria = modelData.model.criteria
+                                else
+                                    root.model.sortOrder = (root.model.sortOrder === Qt.AscendingOrder) ? Qt.DescendingOrder : Qt.AscendingOrder
+                            }
+                        }
+                    }
+                }
+
+                Item {
+                    // placeholder for context button
+
+                    width: VLCStyle.icon_normal
+
+                    height: 1
+                }
+            }
+        }
+    }
+
     KeyNavigableListView {
         id: view
 
-        anchors.fill: parent
+        anchors {
+            top: header.bottom
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
 
         focus: true
-
-        headerPositioning: ListView.OverlayHeader
 
         flickableDirection: Flickable.AutoFlickDirection
 
@@ -255,131 +389,6 @@ FocusScope {
         onShowContextMenu: (globalPos) => {
             if (selectionModel.hasSelection)
                 root.rightClick(null, null, globalPos);
-        }
-
-        header: Rectangle {
-            property alias loadedHeader: headerLoader.item
-
-            width: view.width
-            height: col.height
-            z: 3
-            color: root.headerColor
-
-            // with inline header positioning and for `root.header` which changes it's height after loading,
-            // in such cases after `root.header` completes, the ListView will try to maintain the relative contentY,
-            // and hide the completed `root.header`, try to show the `root.header` in such cases by manually
-            // positiing view at beginning
-            onHeightChanged: if (root.contentY < 0) root.positionViewAtBeginning()
-
-            Widgets.ListLabel {
-                // NOTE: We want the section label to be slightly shifted to the left.
-                x: row.x - VLCStyle.margin_small
-                y: row.y + root.headerTopPadding
-
-                height: VLCStyle.tableHeaderText_height
-                verticalAlignment: Text.AlignVCenter
-
-                text: view.currentSection
-                color: view.colorContext.accent
-                visible: view.headerPositioning === ListView.OverlayHeader
-                         && text !== ""
-                         && view.contentY > (row.height - col.height - row.topPadding)
-            }
-
-            Column {
-                id: col
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                Loader {
-                    id: headerLoader
-
-                    sourceComponent: root.header
-                }
-
-                Row {
-                    id: row
-
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-
-                    anchors.leftMargin: root.contentLeftMargin
-                    anchors.rightMargin: root.contentRightMargin
-
-                    topPadding: root.headerTopPadding
-                    bottomPadding: VLCStyle.margin_xsmall
-
-                    spacing: VLCStyle.column_spacing
-
-                    Repeater {
-                        model: sortModel
-                        Item {
-                            id: headerCell
-
-                            required property var modelData
-                            property TableHeaderDelegate _item: null
-
-                            height: VLCStyle.tableHeaderText_height
-                            width: {
-                                if (!!modelData.size)
-                                    return modelData.size * root.baseColumnWidth
-                                else if (!!modelData.weight)
-                                    return modelData.weight * root._weightedColumnsSize
-                                else
-                                    return 0
-                            }
-                            Accessible.role: Accessible.ColumnHeader
-                            Accessible.name: modelData.model.text
-
-                            //Using a Loader is unable to pass the initial/required properties
-                            Component.onCompleted: {
-                                const comp = modelData.model.headerDelegate || root.tableHeaderDelegate
-                                headerCell._item = comp.createObject(headerCell, {
-                                    width:  Qt.binding(() => headerCell.width),
-                                    height:  Qt.binding(() => headerCell.height),
-                                    colorContext:  Qt.binding(() => view.colorContext),
-                                    colModel: Qt.binding(() => modelData.model)
-                                })
-                            }
-
-                            Text {
-                                text: (root.model.sortOrder === Qt.AscendingOrder) ? "▼" : "▲"
-                                visible: root.model.sortCriteria === modelData.model.criteria
-                                font.pixelSize: VLCStyle.fontSize_normal
-                                color: root.colorContext.accent
-
-                                anchors {
-                                    top: parent.top
-                                    bottom: parent.bottom
-                                    right: parent.right
-                                    leftMargin: VLCStyle.margin_xsmall
-                                    rightMargin: VLCStyle.margin_xsmall
-                                }
-                            }
-
-                            TapHandler {
-                                onTapped: (eventPoint, button) => {
-                                    if (!(modelData.model.isSortable ?? true))
-                                        return
-                                    else if (root.model.sortCriteria !== modelData.model.criteria)
-                                        root.model.sortCriteria = modelData.model.criteria
-                                    else
-                                        root.model.sortOrder = (root.model.sortOrder === Qt.AscendingOrder) ? Qt.DescendingOrder : Qt.AscendingOrder
-                                }
-                            }
-                        }
-                    }
-
-                    Item {
-                        // placeholder for context button
-
-                        width: VLCStyle.icon_normal
-
-                        height: 1
-                    }
-                }
-            }
         }
 
         section.delegate: Widgets.ListLabel {

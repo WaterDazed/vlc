@@ -74,6 +74,9 @@ ListView {
 
     // Settings
 
+    implicitWidth: contentWidth
+    implicitHeight: contentHeight
+
     focus: true
 
     activeFocusOnTab: true

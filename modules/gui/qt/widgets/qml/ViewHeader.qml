@@ -72,10 +72,8 @@ T.Pane {
       console.assert(contentItem === root.row)
     }
 
-    RowLayout {
+    contentItem: RowLayout {
         id: row
-
-        anchors.fill: parent
 
         SubtitleLabel {
             id: label
