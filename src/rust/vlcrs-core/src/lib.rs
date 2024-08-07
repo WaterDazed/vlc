@@ -18,6 +18,7 @@ pub mod input_item;
 pub mod meta;
 pub mod module;
 pub mod object;
+pub mod playlist;
 pub mod threads;
 pub mod tick;
 pub mod url;
