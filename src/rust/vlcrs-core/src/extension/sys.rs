@@ -6,6 +6,7 @@
 
 use crate::input_item::sys::input_item_t;
 use crate::object::sys::vlc_object_t;
+use crate::player::sys::vlc_player_t;
 use crate::threads::vlc_mutex_t;
 use vlcrs_messages::sys::vlc_logger;
 
@@ -14,7 +15,6 @@ use vlcrs_messages::sys::vlc_logger;
 extern {
     pub type module_t;
     pub type vlc_param;
-    pub type vlc_player_t;
 }
 
 #[repr(C)]

@@ -19,6 +19,7 @@ pub mod interface;
 pub mod meta;
 pub mod module;
 pub mod object;
+pub mod player;
 pub mod playlist;
 pub mod threads;
 pub mod tick;
