@@ -5,6 +5,7 @@ use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
 
 use vlcrs_core::error::{self, Result};
+use vlcrs_core::playlist::Playlist;
 use vlcrs_core::variables::Variables;
 use vlcrs_messages::{debug, error, Logger};
 use vlcrs_core::module::extension::{ExtensionCapability, ExtensionManager, ExtensionManagerControl, ThisExtensionsManager};
@@ -16,6 +17,7 @@ use vlcrs_core::input_item::InputItem;
 use wasmer::{FunctionEnv, Imports, Instance, Module, Store, Value};
 
 use crate::libs::configuration::wasmopen_config;
+use crate::libs::playlist::wasmopen_playlist;
 use crate::libs::{messages::wasmopen_msg, variables::wasmopen_variables};
 use crate::{vlcwasm_read_string, vlcwasm_read_u32, vlcwasm_scripts_batch_execute};
 use crate::ProvidesLogger;
@@ -55,12 +57,13 @@ pub struct Env {
     pub instance: Option<Instance>,
     pub extension: Extension,
     pub variables: Variables,
+    pub playlist: Playlist,
 }
 
 impl WasmExtension {
-    pub fn new(extension: Extension, store: Arc<Mutex<Store>>, file_name: &Path, variables: Variables) -> Result<Self> {
+    pub fn new(extension: Extension, store: Arc<Mutex<Store>>, file_name: &Path, variables: Variables, playlist: Playlist) -> Result<Self> {
 
-        let instance = Self::create_instance(extension.clone(), Arc::clone(&store), file_name, variables)?;
+        let instance = Self::create_instance(extension.clone(), Arc::clone(&store), file_name, variables, playlist)?;
 
         let (tx_command, rx_command) = mpsc::channel();
 
@@ -78,7 +81,7 @@ impl WasmExtension {
         Ok(wasm_extension)
     }
 
-    fn create_instance(extension: Extension, store: Arc<Mutex<Store>>, file_name: &Path, variables: Variables) -> Result<Instance> {
+    fn create_instance(extension: Extension, store: Arc<Mutex<Store>>, file_name: &Path, variables: Variables, playlist: Playlist) -> Result<Instance> {
         let mut store = store.lock().expect("Should be valid");
         let logger = extension.get_logger();
 
@@ -87,12 +90,13 @@ impl WasmExtension {
             error::CoreError::Unknown
         })?;
 
-        let env = FunctionEnv::new(&mut store, Env { instance: None, extension: extension.clone(), variables});
+        let env = FunctionEnv::new(&mut store, Env { instance: None, extension: extension.clone(), variables, playlist});
         let mut import_object = Imports::new();
 
         wasmopen_msg(&mut store, &env, &mut import_object);
         wasmopen_variables(&mut store, &env, &mut import_object);
         wasmopen_config(&mut store, &env, &mut import_object);
+        wasmopen_playlist(&mut store, &env, &mut import_object);
 
         let instance = Instance::new(&mut store, &module, &mut import_object).map_err(|e| {
             error!(logger, "Can't instantiate Wasm module: {}", e);
@@ -192,6 +196,7 @@ struct WasmExtensionManager<'a> {
     logger: &'a mut Logger,
     store: Arc<Mutex<Store>>,
     variables: Variables,
+    playlist: Playlist,
 }
 
 impl ProvidesLogger for WasmExtensionManager<'_> {
@@ -206,6 +211,7 @@ impl ExtensionCapability for WasmExtensionModule {
         logger: &'a mut Logger,
         _args: &mut ModuleArgs,
         variables: Variables,
+        playlist: Playlist,
     ) -> Result<Box<dyn ExtensionManager + 'a>> {
 
         debug!(logger, "Wasm extensions manager module loaded");
@@ -215,6 +221,7 @@ impl ExtensionCapability for WasmExtensionModule {
             logger,
             store: Arc::new(Mutex::new(Store::default())),
             variables,
+            playlist,
         };
 
         wasm_extension_manager.scan_extensions()?;
@@ -250,7 +257,10 @@ impl<'a> WasmExtensionManager<'a> {
         extension.set_name(file_name.to_str().expect("Should be a valid Utf-8"));
         extension.set_logger(self.logger);
 
-        let wasm_extension = WasmExtension::new(extension.clone(), Arc::clone(&self.store), file_name, self.variables.clone()).map_err(|e| {
+        let wasm_extension = WasmExtension::new(extension.clone(), 
+            self.store.clone(), file_name, 
+            self.variables.clone(), self.playlist.clone())
+        .map_err(|e| {
             error!(self.logger, "Can't create Wasm extension: {}", e);
             error::CoreError::Unknown
         })?;
