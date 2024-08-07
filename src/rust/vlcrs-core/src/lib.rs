@@ -15,6 +15,7 @@ pub mod error;
 pub mod es;
 pub mod extension;
 pub mod input_item;
+pub mod interface;
 pub mod meta;
 pub mod module;
 pub mod object;

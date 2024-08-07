@@ -1,6 +1,7 @@
 use std::{marker::PhantomData, ptr::NonNull};
 
 use vlcrs_messages::{Logger, sys::vlc_logger};
+use crate::interface::sys::intf_thread_t;
 use crate::object::sys::vlc_object_t;
 
 use crate::error::Result;
@@ -8,12 +9,6 @@ use crate::error::Result;
 use super::ModuleArgs;
 
 use vlcrs_plugin::ModuleProtocol;
-
-#[allow(non_camel_case_types)]
-#[allow(unused)]
-extern {
-    pub type intf_thread_t;
-}
 
 #[doc(alias = "intf_thread_t")]
 #[repr(transparent)]
