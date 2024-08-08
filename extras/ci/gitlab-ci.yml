@@ -322,7 +322,7 @@ debian:
 
         # Configure VLC
         ./bootstrap
-        ./configure
+        ./configure ${CONFIGURE_FLAGS}
 
         # Allow core dumps for tracing test failures
         ulimit -c unlimited
@@ -339,6 +339,12 @@ nightly-debian:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
     after_script:
     artifacts:
+
+debian-rust:
+    extends: debian
+    allow_failure: true
+    variables:
+        CONFIGURE_FLAGS: --enable-rust
 
 #
 # Linux Meson build
