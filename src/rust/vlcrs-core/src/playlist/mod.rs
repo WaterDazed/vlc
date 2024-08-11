@@ -54,6 +54,14 @@ impl Playlist {
         unsafe { sys::vlc_playlist_GetPlaybackOrder(self.0.as_ptr()) }
     }
 
+    pub fn set_playback_repeat(&self, repeat: vlc_playlist_playback_repeat) {
+        unsafe { sys::vlc_playlist_SetPlaybackRepeat(self.0.as_ptr(), repeat) }
+    }
+
+    pub fn set_playback_order(&self, order: vlc_playlist_playback_order) {
+        unsafe { sys::vlc_playlist_SetPlaybackOrder(self.0.as_ptr(), order) }
+    }
+
     pub fn prev(&self) -> i32 {
         unsafe { sys::vlc_playlist_Prev(self.0.as_ptr()) }
     }
