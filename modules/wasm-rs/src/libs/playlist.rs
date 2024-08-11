@@ -56,6 +56,24 @@ fn vlcwasm_playlist_clear(env: FunctionEnvMut<Env>) {
     playlist.clear();
 }
 
+fn vlcwasm_playlist_repeat_common(env: FunctionEnvMut<Env>, repeat: vlc_playlist_playback_repeat) {
+    let playlist = env.data().playlist.lock();
+    
+    if repeat != playlist.get_playback_repeat() {
+        playlist.set_playback_repeat(repeat);
+    } else {
+        playlist.set_playback_repeat(vlc_playlist_playback_repeat::VLC_PLAYLIST_PLAYBACK_REPEAT_NONE);
+    }
+}
+
+fn vlcwasm_playlist_toggle_repeat(env: FunctionEnvMut<Env>) {
+    vlcwasm_playlist_repeat_common(env, vlc_playlist_playback_repeat::VLC_PLAYLIST_PLAYBACK_REPEAT_CURRENT);
+}
+
+fn vlcwasm_playlist_toggle_loop(env: FunctionEnvMut<Env>) {
+    vlcwasm_playlist_repeat_common(env, vlc_playlist_playback_repeat::VLC_PLAYLIST_PLAYBACK_REPEAT_ALL);
+}
+
 fn vlcwasm_playlist_get_repeat(env: FunctionEnvMut<Env>) -> i32 {
     let playlist = env.data().playlist.lock();
     let repeat = playlist.get_playback_repeat();
@@ -66,6 +84,16 @@ fn vlcwasm_playlist_get_loop(env: FunctionEnvMut<Env>) -> i32 {
     let playlist = env.data().playlist.lock();
     let repeat = playlist.get_playback_repeat();
     (vlc_playlist_playback_repeat::VLC_PLAYLIST_PLAYBACK_REPEAT_ALL == repeat) as i32
+}
+
+fn vlcwasm_playlist_toggle_random(env: FunctionEnvMut<Env>) {
+    let playlist = env.data().playlist.lock();
+    let order = playlist.get_playback_order();
+    if vlc_playlist_playback_order::VLC_PLAYLIST_PLAYBACK_ORDER_RANDOM != order {
+        playlist.set_playback_order(vlc_playlist_playback_order::VLC_PLAYLIST_PLAYBACK_ORDER_RANDOM);
+    } else {
+        playlist.set_playback_order(vlc_playlist_playback_order::VLC_PLAYLIST_PLAYBACK_ORDER_NORMAL);
+    }
 }
 
 fn vlcwasm_playlist_get_random(env: FunctionEnvMut<Env>) -> i32 {
@@ -161,8 +189,11 @@ pub fn wasmopen_playlist(store: &mut Store, env: &FunctionEnv<Env>, import_objec
             "playlist_pause" => vlcwasm_playlist_pause,
             "playlist_stop" => vlcwasm_playlist_stop,
             "playlist_clear" => vlcwasm_playlist_clear,
+            "playlist_toggle_repeat" => vlcwasm_playlist_toggle_repeat,
+            "playlist_toggle_loop" => vlcwasm_playlist_toggle_loop,
             "playlist_get_repeat" => vlcwasm_playlist_get_repeat,
             "playlist_get_loop" => vlcwasm_playlist_get_loop,
+            "playlist_toggle_random" => vlcwasm_playlist_toggle_random,
             "playlist_get_random" => vlcwasm_playlist_get_random,
             "playlist_gotoitem" => vlcwasm_playlist_gotoitem,
             "playlist_delete" => vlcwasm_playlist_delete,
