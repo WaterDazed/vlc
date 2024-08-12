@@ -496,13 +496,11 @@ function interface_config()
   dlg:add_label(
     lang["int_os_username"]..':', 1, 7, 0, 1)
   input_table['os_username'] = dlg:add_text_input(
-    type(openSub.option.os_username) == "string"
-    and openSub.option.os_username or "", 2, 7, 2, 1)
+    s_keystore_username or "", 2, 7, 2, 1)
   dlg:add_label(
     lang["int_os_password"]..':', 1, 8, 0, 1)
   input_table['os_password'] = dlg:add_password(
-    type(openSub.option.os_password) == "string"
-    and openSub.option.os_password or "", 2, 8, 2, 1)
+    s_keystore_password or "", 2, 8, 2, 1)
 
   input_table['message'] = nil
   input_table['message'] = dlg:add_label(' ', 1, 9, 3, 1)
@@ -571,6 +569,8 @@ function trigger_menu(dlg_id)
     close_dlg()
     dlg = vlc.dialog(
       openSub.conf.useragent..': '..lang["int_configuration"])
+    local host = parse_url(openSub.conf.url)
+    vlc.keystore.fetch("https", host)
     interface_config()
   elseif dlg_id == 3 then
     close_dlg()
@@ -897,9 +897,12 @@ function apply_config()
     end
   end
 
-
-  openSub.option.os_username = input_table['os_username']:get_text()
-  openSub.option.os_password = input_table['os_password']:get_text()
+  local host = parse_url(openSub.conf.url)
+  vlc.keystore.push(
+    input_table['os_username']:get_text(), 
+    input_table['os_password']:get_text(), 
+    "https", 
+    host)
 
   if input_table["langExt"]:get_value() == 2 then
     openSub.option.langExt = not openSub.option.langExt
@@ -1144,9 +1147,11 @@ openSub = {
     LogIn = {
       params = function()
         openSub.actionLabel = lang["action_login"]
+        local host = parse_url(openSub.conf.url)
+        vlc.keystore.fetch("https", host)
         return {
-          { value={ string=openSub.option.os_username } },
-          { value={ string=openSub.option.os_password } },
+          { value={ string=s_keystore_username } },
+          { value={ string=s_keystore_password } },
           { value={ string=openSub.movie.sublanguageid } },
           { value={ string=openSub.conf.useragent } }
         }
