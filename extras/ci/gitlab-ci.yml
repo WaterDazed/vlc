@@ -32,6 +32,7 @@ variables:
 .variables-debian: &variables-debian
         HOST_ARCH: x86_64
         TRIPLET: $HOST_ARCH-linux-gnu
+        MAKE_TARGET: distcheck
 
 .variables-snap: &variables-snap
         HOST_ARCH: x86_64
@@ -329,7 +330,7 @@ debian:
 
         # Build, check and distcheck VLC
         export XZ_OPT="-T 0"
-        make -j$NCPU distcheck AM_DISTCHECK_CONFIGURE_FLAGS="--enable-fast-install --enable-extra-checks" || ./test/dump_stacktraces.sh
+        make -j$NCPU "${MAKE_TARGET}" AM_DISTCHECK_CONFIGURE_FLAGS="--enable-fast-install --enable-extra-checks" || ./test/dump_stacktraces.sh
     variables:
         <<: *variables-debian
 
@@ -345,6 +346,7 @@ debian-rust:
     allow_failure: true
     variables:
         CONFIGURE_FLAGS: --enable-rust
+        MAKE_TARGET: all
 
 #
 # Linux Meson build
