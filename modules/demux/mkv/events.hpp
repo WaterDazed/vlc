@@ -83,6 +83,7 @@ private:
 
         EventInfo( block_t * block )
             : type( ButtonDataEvent )
+            , nav{ NavivationKey::MENU } // dummy
             , button_data( block, block_Release )
         {
         }
