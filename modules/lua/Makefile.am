@@ -16,6 +16,7 @@ liblua_plugin_la_SOURCES = \
 	lua/libs/httpd.c \
 	lua/libs/input.c lua/libs/input.h \
 	lua/libs/messages.c \
+	lua/libs/keystore.c \
 	lua/libs/misc.c lua/libs/misc.h \
 	lua/libs/net.c \
 	lua/libs/objects.c \

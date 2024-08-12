@@ -734,6 +734,7 @@ static lua_State* GetLuaState( extensions_manager_t *p_mgr,
     luaL_openlibs(L);
     luaL_register_namespace(L, "vlc", p_reg);
     luaopen_msg(L);
+    luaopen_keystore(L);
 
     /* Load more libraries */
     luaopen_config(L);

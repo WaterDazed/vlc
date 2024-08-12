@@ -30,6 +30,7 @@ void luaopen_dialog( lua_State *, void * );
 void luaopen_httpd( lua_State * );
 void luaopen_input( lua_State * );
 void luaopen_msg( lua_State * );
+void luaopen_keystore( lua_State * );
 void luaopen_misc( lua_State * );
 void luaopen_object( lua_State * );
 void luaopen_osd( lua_State * );
