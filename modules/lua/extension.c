@@ -22,6 +22,10 @@
 
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
+#include "vlc_arrays.h"
+#include "vlc_atomic.h"
+#include "vlc_extensions.h"
+#include "vlc_threads.h"
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -38,6 +42,7 @@
 #include <vlc_dialog.h>
 #include <vlc_player.h>
 #include <stdio.h>
+#include "autorun.h"
 
 /* Functions to register */
 static const luaL_Reg p_reg[] =
@@ -96,6 +101,7 @@ int Open_Extension( vlc_object_t *p_this )
 
     p_mgr->p_sys = NULL;
     vlc_mutex_init( &p_mgr->lock );
+    
 
     /* Scan available Lua Extensions */
     if( ScanExtensions( p_mgr ) != VLC_SUCCESS )
@@ -108,6 +114,26 @@ int Open_Extension( vlc_object_t *p_this )
     var_Create( p_this, "dialog-event", VLC_VAR_ADDRESS );
     var_AddCallback( p_this, "dialog-event",
                      vlclua_extension_dialog_callback, NULL );
+    
+
+    // TODO: check if extension's file last updated is greater than timesamp in cache
+    //  if so than use extension data from cache 
+    vlc_mutex_lock(&extensions_cache.lock);
+    init_use_state(p_this);
+    if(extensions_cache.initialized){
+        extension_t *p_ext;
+
+        ARRAY_FOREACH(p_ext, extensions_cache.extensions)
+        {
+            struct lua_extension * sys = p_ext->p_sys;
+            ARRAY_APPEND(p_mgr->extensions, p_ext);
+        }
+    }
+    vlc_mutex_unlock(&extensions_cache.lock);
+    // release shared state
+    // if( vlc_atomic_rc_dec(&extensions_cache.rc)){
+    //     // free state
+    // }
 
     return VLC_SUCCESS;
 }

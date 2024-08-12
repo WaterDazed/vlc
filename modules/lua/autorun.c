@@ -1,285 +1,110 @@
-#include <vlc_services_discovery.h>
-#include <vlc_interface.h>
-#include <vlc_modules.h>
-#include "vlc_common.h"
-#include "vlc_configuration.h"
-#include "vlc_extensions.h"
-#include "vlc_plugin.h"
+#include "autorun.h"
+#include "misc/webservices/json.h"
+#include "vlc_messages.h"
 #include "vlc_threads.h"
-#include "../../modules/misc/webservices/json.h"
-#include <sys/stat.h>
+#include <string.h>
 
-/*JSON handeling*/
-static ssize_t readExtensionData(const char *filename);
-static void process_value(json_value *value, int depth);
-
-struct extension_state {
-    extension_t manifest;
-    bool enabled;
+struct lua_state extensions_cache;
+struct ext_key{
+    void** src;
+    char const* name;
+    json_type jtype;
 };
 
-struct module_state {
-    vlc_mutex_t lock;
-    intf_thread_t *intf;
-    vlc_atomic_rc_t rc;
-    extensions_manager_t *p_mgr;
-    bool initialized;
-    DECL_ARRAY(struct extension_state *)
-    extensions;
-    module_t *mod_lua;
-    char *data_path;
-};
+char const * psz_vlsub_json = "{"
+"\"timestamp\": 0,"
+"\"autorun\": true,"
+"\"capabilites\": 5,"
+"\"name\": \"/home/nt/Documents/cleanvlc/share/lua/extensions/VLSub.lua\","
+"\"title\": \"Dummy Autorun\","
+"\"author\": \"Actually Vlsub in disguise\","
+"\"version\": \"0.11.1\","
+"\"url\": \"https://www.opensubtitles.org/\","
+"\"description\": \"Download subtitles from OpenSubtitles.org\","
+"\"shortdescription\": \"Dummy Autorun\","
+"\"icondata\": \"(null)\","
+"\"icondatasize\": 0,"
+"}";
 
-static struct module_state state;
-
-/**
- * if path of data file hasn't been created, store it in state and return it
- * otherwise return path
- * @return path of data file
- */
-static char *getDataPath()
-{
-    /* prevent mutiple allocations & memory leak*/
-    vlc_mutex_assert(&state.lock);
-
-    if (state.data_path != NULL) {
-        // vlc_mutex_unlock(&state.lock);
-        return state.data_path;
-    }
-
-    const char *user_dir = config_GetUserDir(VLC_USERDATA_DIR);
-    const char *fname = "autorun_data.json";
-    const size_t PATH_SIZE = strlen(user_dir) + strlen(fname) + 2; // +1 path seperator, +1 null terminator
-    char data_path_buff[PATH_SIZE];
-
-    /* concat user directory and filename */
-    snprintf(data_path_buff, PATH_SIZE, "%s%s%s", user_dir, DIR_SEP, fname);
-
-    state.data_path = strdup(data_path_buff);
-
-    return state.data_path;
-}
-
-static json_value* getValueFromKey(const char* keyName, json_value * jobj){
-    int numOfEntries = jobj->u.object.length;
-    int x;
-    for (x = 0; x < numOfEntries; x++) {
-        char *entryKeyName = jobj->u.object.values[x].name;
-        if (strcmp(keyName, entryKeyName) == 0)
-            return jobj->u.object.values[x].value;
-    }
-
-    //ERROR couldn't find key in object
-    return NULL;
-
-}
-
-static void writeExtensionData(struct extensions_manager_t *p_mgr)
-{
-    extension_t *p_extension;
-    char *data_path = getDataPath();
-    FILE *fptr = fopen(data_path, "w");
-    assert(fptr != NULL);
-
-    fprintf(fptr, "{\n\"extensions\": [\n");
-    for (int i = 0; i < p_mgr->extensions.i_size; i++)
-    {
-        p_extension = p_mgr->extensions.p_elems[i];
-        printf("%d\n" ,extension_IsActivated(p_mgr, p_extension));
-        const char * isEnabeld = extension_IsActivated(p_mgr, p_extension)? "true": "false";
-        if (i > 0)
-            fprintf(fptr, ",");
-        fprintf(fptr, "{\n");
-        fprintf(fptr, """\"enabled\": %s,\n\"name\": \"%s\",\n\"title\": \"%s\",\n\"author\": \"%s\",\n\"version\": \"%s\",\n\"url\": \"%s\",\n\"description\": \"%s\",\n\"shortdescription\": \"%s\",\n\"icondata\": \"%s\",\n\"icondata_size\": %d\n", isEnabeld, p_extension->psz_name, p_extension->psz_title, p_extension->psz_author, p_extension->psz_version, p_extension->psz_url, p_extension->psz_description, p_extension->psz_shortdescription, p_extension->p_icondata, p_extension->i_icondata_size);
-        fprintf(fptr, "}");
-    }
-    fprintf(fptr, "\n]\n}\n");
-
-    fclose(fptr);
-}
-
-static ssize_t readExtensionData(const char *filename)
-{
-    FILE *fp;
-    char *file_contents;
-    int file_size;
-    json_char *json;
-    json_value *value;
-    struct stat filestatus;
-
-    if (stat(filename, &filestatus) != 0) {
-        fprintf(stderr, "File %s not found\n", filename);
-        return 1;
-    }
-
-    file_size = filestatus.st_size;
-    file_contents = (char *)malloc(filestatus.st_size);
-
-    fp = fopen(filename, "rt");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open %s\n", filename);
-        fclose(fp);
-        free(file_contents);
-        return VLC_EGENERIC;
-    }
-
-    if (fread(file_contents, file_size, 1, fp) != 1) {
-        fprintf(stderr, "Unable to read content of %s\n", filename);
-        fclose(fp);
-        free(file_contents);
-        return VLC_EGENERIC;
-    }
-    fclose(fp);
-
-    json = (json_char *)file_contents;
-    value = json_parse(json, file_size);
-
-    if (value == NULL) {
-        fprintf(stderr, "Unable to parse data\n");
-        free(file_contents);
-        return VLC_EGENERIC;
-    }
-
-    json_value *extensionsArray = value->u.object.values->value;
-    assert(extensionsArray != NULL);
-
-
-    if (extensionsArray == NULL) {
-        return VLC_EGENERIC;
-    }
-
-    int numOfExtensions = extensionsArray->u.object.length;
-    json_value *extensionsObj;
-    for(int i = 0; i < numOfExtensions; i++){
-        struct extension_state *extension = malloc(sizeof(*extension));
-        extensionsObj = extensionsArray->u.array.values[0];
-        const char * keys [10] = {
-            "enabled",
-            "name",
-            "title",
-            "author",
-            "version",
-            "url",
-            "descript",
-            "shortdesc",
-            "icondata",
-            "icondata_size"
-        };
-
-        for (int i = 0; i < ARRAY_SIZE(keys); i++){
-            json_value* value = getValueFromKey(keys[i],extensionsObj);
-            const char * keyName = keys[i];
-
-            if (!strcmp(keyName, "enabled")) {
-                extension->enabled = value->u.boolean;
-            } else if (!strcmp(keyName, "name")) {
-                extension->manifest.psz_name = strdup(value->u.string.ptr);
-            } else if (!strcmp(keyName, "title")) {
-                extension->manifest.psz_title = strdup(value->u.string.ptr);
-            } else if (!strcmp(keyName, "author")) {
-                extension->manifest.psz_author = strdup(value->u.string.ptr);
-            } else if (!strcmp(keyName, "version")) {
-                extension->manifest.psz_version = strdup(value->u.string.ptr);
-            } else if (!strcmp(keyName, "url")) {
-                extension->manifest.psz_url = strdup(value->u.string.ptr);
-            } else if (!strcmp(keyName, "description")) {
-                extension->manifest.psz_description = strdup(value->u.string.ptr);
-            } else if (!strcmp(keyName, "shortdescription")) {
-                extension->manifest.psz_shortdescription = strdup(value->u.string.ptr);
-            } else if (!strcmp(keyName, "icondata")) {
-                extension->manifest.p_icondata = NULL;
-            } else if (!strcmp(keyName, "icondata_size")) {
-                extension->manifest.i_icondata_size = value->u.integer;
-            }
-            extension->manifest.p_sys = &extension->manifest;
-            ARRAY_APPEND(state.extensions, extension);
-        }
-    }
+void loadExtensionsCache(vlc_object_t *obj, char * psz_json){
+    assert(&extensions_cache.lock);
+    size_t psz_exts_len = strlen(psz_json);
+    assert(psz_exts_len != 0);
     
-    return VLC_SUCCESS;
+    json_value *val = json_parse(psz_json, psz_exts_len); 
+    assert (val != NULL);
+
+    // load each extension into cache
+    extension_t *ext = createExtensionFromJson(obj, val);
+    char const* psz_ext_name = jsongetstring(val, "name");
+
+    //skip ext
+    if (ext == NULL){
+        msg_Info(obj, "autorun: failed to create %s, skipping.", psz_ext_name);
+    }
+
+    ARRAY_APPEND(extensions_cache.extensions, ext);
 }
 
-static void initState(vlc_object_t *obj)
-{
-    vlc_mutex_assert(&state.lock);
-    if (readExtensionData(getDataPath()) == VLC_SUCCESS)
-        state.initialized = true;
-}
+struct extension_t * createExtensionFromJson(vlc_object_t * obj, json_value* val){
+    //TODO: change to array
+    assert (val->type == json_object);
+    struct extension_t * p_ext = calloc(1, sizeof(*p_ext));
+    struct lua_extension * sys = p_ext->p_sys = calloc(1, sizeof(*sys));
 
-static int OpenExtension(vlc_object_t *obj)
-{
-    extensions_manager_t *p_mgr = (extensions_manager_t *)obj;
+    /* Mutexes and conditions */
+    vlc_mutex_init(&sys->command_lock);
+    vlc_mutex_init(&sys->running_lock);
+    vlc_cond_init(&sys->wait);
 
-    vlc_mutex_lock(&state.lock);
+    struct ext_key keys[] = {
+        {&p_ext->psz_name, "name", json_string},
+        {&p_ext->psz_title, "title", json_string},
+        {&p_ext->psz_author, "author", json_string},
+        {&p_ext->psz_version, "version", json_string},
+        {&p_ext->psz_url, "url", json_string},
+        {&p_ext->psz_description, "description", json_string},
+        {&p_ext->psz_shortdescription, "shortdescription", json_string},
+        {&p_ext->i_icondata_size, "icondatasize", json_integer},
+        {NULL, "autorun", json_boolean}
+    };
 
-    state.mod_lua = module_need(p_mgr, "extension", "lua", false);
-
-    if (!state.initialized) {
-        initState(obj);
-        getDataPath();
-    } else {
-        /* when interface is used enable extensions */
-        extension_t *p_ext = NULL;
-        struct extension_state *p_ext_state;
-
-        ARRAY_FOREACH(p_ext_state, state.extensions)
-        {
-            ARRAY_FOREACH(p_ext, p_mgr->extensions)
-            {
-                if (strcmp(p_ext_state->manifest.psz_title, p_ext->psz_title) == 0 && p_ext_state->enabled == 1)
-                    extension_Activate(p_mgr, p_ext);
-            }
+    for (size_t i = 0; i < ARRAY_SIZE(keys); i++){
+        if (keys[i].jtype == json_string){
+            *keys[i].src = json_dupstring(val, keys[i].name);
+        }else if (keys[i].jtype == json_integer){
+            const json_value * key_val  = json_getbyname(val, keys[i].name);
+            assert(key_val != NULL);
+            *keys[i].src = (void*)key_val->u.integer;
+        }else if (strcmp(keys[i].name, "autorun") == 0){
+            const json_value * key_val  = json_getbyname(val, keys[i].name);
+            assert(key_val != NULL);
+            vlc_mutex_lock(&sys->command_lock);
+            // sys->b_activated = key_val->u.boolean;
+            sys->b_activated = false;
+            vlc_mutex_unlock(&sys->command_lock);
         }
-        vlc_atomic_rc_inc(&state.rc);
     }
 
-    vlc_mutex_unlock(&state.lock);
-
-    return VLC_SUCCESS;
+    assert(p_ext->psz_name != NULL);
+    assert(p_ext->psz_title != NULL);
+    assert(p_ext->psz_author != NULL);
+    
+    msg_Dbg(obj, "autorun: extension %s was created", p_ext->psz_title);
+    return p_ext;
 }
 
-/*
- free memory
- writes ext state to data file
-*/
-void CloseExtension(vlc_object_t *obj)
-{
-    vlc_mutex_lock(&state.lock);
-    extensions_manager_t *p_mgr = (extensions_manager_t *)obj;
-    writeExtensionData(p_mgr);
-    vlc_mutex_unlock(&state.lock);
-}
 
-static int AutorunStart(libvlc_int_t *libvlc)
-{
-    vlc_mutex_lock(&state.lock);
-    if (!state.initialized) {
-        initState(VLC_OBJECT(libvlc));
-    } else
-        vlc_atomic_rc_inc(&state.rc);
+void init_use_state(vlc_object_t *obj){
+    vlc_mutex_assert(&extensions_cache.lock);
+    const char * path = getDataPath();
+    assert(path != NULL);
 
-    vlc_mutex_unlock(&state.lock);
-
-    return VLC_SUCCESS;
-}
-
-void AutorunStop()
-{
-    if (vlc_atomic_rc_dec(&state.rc)) {
-        // Disable extensions and release state/free memory
+    if (!extensions_cache.initialized){
+        // TODO: temporary, replace with file content string
+        loadExtensionsCache(obj, psz_vlsub_json);
+        extensions_cache.initialized = true; 
+    }else {
+        vlc_atomic_rc_inc(&extensions_cache.rc);
     }
 }
-
-// clang-format off
-vlc_module_begin()
-    set_shortname("autorun extension")
-    set_description("autorun extension")
-    add_shortcut("autorun extension")
-    set_capability("extension", 100)
-    set_callbacks(OpenExtension, CloseExtension)
-    add_submodule()
-    set_capability("interface", 0)
-    add_shortcut("exampleextension")
-    set_callbacks(AutorunStart, AutorunStop)
-vlc_module_end()
-// clang-format on
