@@ -28,6 +28,7 @@
 
 #include <memory>
 #include <optional>
+#include "events.hpp"
 
 struct vlc_spu_highlight_t;
 
@@ -68,12 +69,12 @@ public:
     };
 
     virtual void AddChoices( const choices & ) = 0;
+    virtual event_thread_t GetEventManager() = 0;
     virtual std::optional<choice_uid> GetChoice( const choice_group & ) const = 0;
+    virtual void HandleMouseClicked( unsigned x, unsigned y ) = 0;
 };
 
-enum NavivationKey {
-    LEFT, RIGHT, UP, DOWN, OK, MENU, POPUP
-};
+
 
 class chapter_codec_cmds_c
 {

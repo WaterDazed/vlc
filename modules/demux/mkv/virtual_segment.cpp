@@ -24,6 +24,7 @@
 
 #include "virtual_segment.hpp"
 
+
 #include <new>
 
 namespace mkv {
@@ -421,6 +422,80 @@ virtual_chapter_c* virtual_edition_c::getChapterbyTimecode( vlc_tick_t time )
     return NULL;
 }
 
+void virtual_segment_c::AddChoices( const chapter_codec_vm::choices & choices )
+{
+    chapter_choices = choices;
+    choices_changed = true; // handled indirectly as it may take some time and the JS call has limited time
+}
+
+void virtual_segment_c::HandleMouseClick (unsigned x, unsigned y)
+{
+    if (palette == NULL)
+        return;
+    palette->try_mouse_click(x,y);
+}
+
+std::optional<chapter_codec_vm::choice_uid> virtual_segment_c::GetChoice( const chapter_codec_vm::choice_group & group ) const
+{
+    return chapter_choices.GetSelected( group );
+}
+
+
+
+void virtual_segment_c::UpdateChoices()
+{
+    if (!choices_changed)
+        return;
+
+    auto seg = CurrentSegment();
+    if (unlikely(!seg))
+        return;
+
+    mkv_track_t *video_track = nullptr;
+    for (const auto & it : seg->tracks)
+    {
+        const auto &track = it.second;
+        if( track->fmt.i_cat == VIDEO_ES && track->b_default && track->p_es )
+        {
+            video_track = &(*track);
+            break;
+        }
+    }
+
+    if (unlikely(!video_track))
+        return;
+
+
+    unsigned n_buttons = 0;
+    for (auto & choice : chapter_choices)
+    {
+        if (choice.second.per_language_text.empty())
+            continue;
+        n_buttons++;
+    }
+    if (!n_buttons)
+        return;
+
+    const unsigned video_width = video_track->fmt.video.i_visible_width;
+    const unsigned video_height =video_track->fmt.video.i_visible_height;
+
+
+    if (palette == nullptr)
+        palette = new choice_palette(video_height, video_width, chapter_choices, n_buttons);
+
+
+    for (auto & choice : chapter_choices)
+    {
+        if (choice.second.per_language_text.empty())
+            continue;
+        palette->create_button(choice.first, choice.second);
+
+    }
+
+    palette->display_overlay(seg->sys.demuxer.out, video_track->p_es);
+    choices_changed = false;
+}
+
 bool virtual_segment_c::UpdateCurrentToChapter( demux_t & demux )
 {
     demux_sys_t & sys = *(demux_sys_t *)demux.p_sys;
@@ -433,7 +508,11 @@ bool virtual_segment_c::UpdateCurrentToChapter( demux_t & demux )
     {
         b_current_vchapter_entered = true;
         if (p_current_vchapter->Enter( true ))
+        {
+            UpdateChoices();
+
             return true;
+        }
     }
 
     if ( sys.i_pts != VLC_TICK_INVALID )
@@ -454,6 +533,7 @@ bool virtual_segment_c::UpdateCurrentToChapter( demux_t & demux )
             /* FIXME EnterAndLeave has probably been broken for a long time */
             // Leave/Enter up to the link point
             b_has_seeked = p_cur_vchapter->EnterAndLeave( p_current_vchapter );
+            UpdateChoices();
             if ( !b_has_seeked )
             {
                 // only physically seek if necessary
@@ -493,7 +573,9 @@ bool virtual_segment_c::UpdateCurrentToChapter( demux_t & demux )
                 b_current_vchapter_entered = false;
             }
             else
+            {
                 return true;
+            }
         }
     }
     return false;

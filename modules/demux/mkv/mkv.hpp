@@ -245,6 +245,10 @@ class mkv_track_t
         vlc_tick_t i_codec_delay;
 };
 
+enum NavivationKey {
+    LEFT, RIGHT, UP, DOWN, OK, MENU, POPUP
+};
+
 } // namespace
 
 #endif /* _MKV_HPP_ */

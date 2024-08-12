@@ -65,7 +65,7 @@ void chapter_codec_cmds_c::AddCommand( const KaxChapterProcessCommand & command 
     }
 }
 
-void chapter_codec_vm::choices::SetDefault(const chapter_codec_vm::choice_uid &uid, const choice_group &group)
+void chapter_codec_vm::choices::SetSelected(const chapter_codec_vm::choice_uid &uid, const choice_group &group)
 {
     selected[group] = uid;
 }

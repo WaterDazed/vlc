@@ -30,7 +30,6 @@
 #include "chapter_command_dvd.hpp"
 #include "chapter_command_script.hpp"
 #include "chapter_command_matroska_js.hpp"
-#include "events.hpp"
 
 #include <memory>
 
@@ -108,6 +107,7 @@ public:
     void SetHighlight( vlc_spu_highlight_t & ) override;
 
     void AddChoices( const choices & ) override;
+    void HandleMouseClicked( unsigned x, unsigned y ) override;
     std::optional<choice_uid> GetChoice( const choice_group & ) const override;
 
     void PreloadFamily( const matroska_segment_c & of_segment );
@@ -153,18 +153,23 @@ public:
         return matroska_js_interpreter.get();
     }
 
+
+
     uint8_t        palette[4][4];
     vlc_mutex_t    lock_demuxer;
 
     /* event */
     event_thread_t ev;
 
+    event_thread_t GetEventManager() override
+    {
+        return this->ev;
+    }
 private:
     virtual_segment_c                *p_current_vsegment = nullptr;
     std::unique_ptr<dvd_command_interpretor_c> dvd_interpretor; // protected by lock_demuxer
     std::unique_ptr<matroska_script_interpretor_c> ms_interpreter;
     std::unique_ptr<matroska_js_interpreter_c> matroska_js_interpreter;
-    chapter_codec_vm::choices         chapter_choices;
 };
 
 } // namespace

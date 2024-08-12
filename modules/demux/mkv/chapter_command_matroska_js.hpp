@@ -62,6 +62,10 @@ public:
     }
 
     bool Interpret( const binary * p_command, size_t i_size ) override;
+    void HandleMousePressed (unsigned x, unsigned y)
+        {
+            vm.HandleMouseClicked(x,y);
+        }
 
     // MatroskaJS commands
     static const char* CMD_MS_GOTO_AND_PLAY;

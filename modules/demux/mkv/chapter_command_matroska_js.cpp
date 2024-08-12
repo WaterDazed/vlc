@@ -285,7 +285,7 @@ duk_ret_t matroska_js_interpreter_c::js_execute_SetChoiceText(duk_context *ctx)
 
 void matroska_js_interpreter_c::execute_SetChoiceDefault(const choice_uid &uid, const choice_group &group)
 {
-    choice_map.SetDefault(uid, group);
+    choice_map.SetSelected(uid, group);
 }
 
 duk_ret_t matroska_js_interpreter_c::js_execute_SetChoiceDefault(duk_context *ctx)
