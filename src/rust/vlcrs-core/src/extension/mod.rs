@@ -261,7 +261,7 @@ pub fn get_name(&self) -> &str {
         }
     }
 
-    pub(crate) fn release(&mut self) {
+    pub fn release(&mut self) {
         unsafe {
             if !(*self.0).p_sys.is_null() {
                 let _ = Box::from_raw((*self.0).p_sys);

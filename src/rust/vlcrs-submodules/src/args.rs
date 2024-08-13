@@ -5,10 +5,10 @@ use std::{
     ptr::{self, NonNull},
 };
 
-use crate::object::sys::vlc_object_t;
-use crate::variables::sys::{var_Inherit, vlc_value_t};
+use vlcrs_core::object::sys::vlc_object_t;
+use vlcrs_core::variables::sys::{var_Inherit, vlc_value_t};
 
-use crate::error::{cvt, CoreError, Result};
+use vlcrs_core::error::{cvt, CoreError, Result};
 
 pub struct ModuleArgs(pub(super) NonNull<vlc_object_t>);
 
@@ -32,7 +32,7 @@ impl ModuleArgs {
             var_Inherit(
                 self.0.as_ptr(),
                 var_name.as_ptr(),
-                crate::variables::sys::VLC_VAR_STRING as i32,
+                vlcrs_core::variables::sys::VLC_VAR_STRING as i32,
                 &mut val,
             )
         })?;
@@ -56,7 +56,7 @@ impl ModuleArgs {
             var_Inherit(
                 self.0.as_ptr(),
                 var_name.as_ptr(),
-                crate::variables::sys::VLC_VAR_INTEGER as i32,
+                vlcrs_core::variables::sys::VLC_VAR_INTEGER as i32,
                 &mut val,
             )
         })?;
@@ -76,7 +76,7 @@ impl ModuleArgs {
             var_Inherit(
                 self.0.as_ptr(),
                 var_name.as_ptr(),
-                crate::variables::sys::VLC_VAR_BOOL as i32,
+                vlcrs_core::variables::sys::VLC_VAR_BOOL as i32,
                 &mut val,
             )
         })?;
@@ -96,7 +96,7 @@ impl ModuleArgs {
             var_Inherit(
                 self.0.as_ptr(),
                 var_name.as_ptr(),
-                crate::variables::sys::VLC_VAR_FLOAT as i32,
+                vlcrs_core::variables::sys::VLC_VAR_FLOAT as i32,
                 &mut val,
             )
         })?;

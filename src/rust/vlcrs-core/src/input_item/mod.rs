@@ -246,7 +246,7 @@ impl InputItem {
         .map(InputItem)
     }
 
-    pub(crate) unsafe fn from_ptr(ptr: NonNull<input_item_t>) -> InputItem {
+    pub unsafe fn from_ptr(ptr: NonNull<input_item_t>) -> InputItem {
         InputItem(ptr)
     }
 

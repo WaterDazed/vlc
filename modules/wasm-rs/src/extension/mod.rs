@@ -8,8 +8,8 @@ use vlcrs_core::error::{self, Result};
 use vlcrs_core::playlist::Playlist;
 use vlcrs_core::variables::Variables;
 use vlcrs_messages::{debug, error, Logger};
-use vlcrs_core::module::extension::{ExtensionCapability, ExtensionManager, ExtensionManagerControl, ThisExtensionsManager};
-use vlcrs_core::module::ModuleArgs;
+use vlcrs_submodules::extension::{ExtensionCapability, ExtensionManager, ExtensionManagerControl, ThisExtensionsManager};
+use vlcrs_submodules::ModuleArgs;
 
 use vlcrs_core::extension::Extension;
 

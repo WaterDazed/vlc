@@ -7,4 +7,5 @@ vlcrs-core = { path = "../src/rust/vlcrs-core" }
 vlcrs-macros = { path = "../src/rust/vlcrs-macros" }
 vlcrs-messages = { path = "../src/rust/vlcrs-messages" }
 vlcrs-plugin = { path = "../src/rust/vlcrs-plugin" }
+vlcrs-submodules = { path = "../src/rust/vlcrs-submodules" }
 vlcrs-utils = { path = "../src/rust/vlcrs-utils" }

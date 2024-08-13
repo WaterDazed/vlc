@@ -7,8 +7,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use vlcrs_core::error::Result;
-use vlcrs_core::module::extension::ExtensionModuleLoader;
-use vlcrs_core::module::interface::InterfaceModuleLoader;
+use vlcrs_submodules::extension::ExtensionModuleLoader;
+use vlcrs_submodules::interface::InterfaceModuleLoader;
 use vlcrs_messages::{debug, Logger};
 use vlcrs_macros::module;
 

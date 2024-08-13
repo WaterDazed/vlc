@@ -2,24 +2,24 @@ use std::ffi::{c_char, c_ushort, CString};
 use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 
-use crate::interface::sys::{intf_thread_t, vlc_intf_GetMainPlaylist};
-use crate::object::VlcObjectRef;
-use crate::playlist::{self, Playlist};
-use crate::playlist::sys::vlc_playlist_t;
-use crate::threads::{vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock};
-use crate::extension::sys::{extension_t, extensions_manager_t, vlc_extensions_manager_operations};
-use crate::input_item::sys::input_item_t;
-use crate::object::sys::vlc_object_t;
+use vlcrs_core::interface::sys::{intf_thread_t, vlc_intf_GetMainPlaylist};
+use vlcrs_core::object::VlcObjectRef;
+use vlcrs_core::playlist::{self, Playlist};
+use vlcrs_core::playlist::sys::vlc_playlist_t;
+use vlcrs_core::threads::{vlc_mutex_init, vlc_mutex_lock, vlc_mutex_unlock};
+use vlcrs_core::extension::sys::{extension_t, extensions_manager_t, vlc_extensions_manager_operations};
+use vlcrs_core::input_item::sys::input_item_t;
+use vlcrs_core::object::sys::vlc_object_t;
 
-use crate::error::{Errno, Result};
-use crate::variables::Variables;
+use vlcrs_core::error::{Errno, Result};
+use vlcrs_core::variables::Variables;
 
 use vlcrs_messages::{Logger, sys::vlc_logger};
 use vlcrs_plugin::ModuleProtocol;
 
-use crate::extension::Extension;
+use vlcrs_core::extension::Extension;
 
-use crate::input_item::InputItem;
+use vlcrs_core::input_item::InputItem;
 
 use super::ModuleArgs;
 

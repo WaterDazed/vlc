@@ -1,8 +1,7 @@
-use vlcrs_core::{error::Result, module::{interface::InterfaceCapability, ModuleArgs}};
+use vlcrs_core::error::Result;
+use vlcrs_submodules::{interface::{InterfaceCapability, ThisInterfaceThread}, ModuleArgs};
 
 use vlcrs_messages::{Logger, debug};
-
-use vlcrs_core::module::interface::ThisInterfaceThread;
 
 pub struct Wasm;
 

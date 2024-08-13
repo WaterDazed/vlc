@@ -1,10 +1,10 @@
 use std::{marker::PhantomData, ptr::NonNull};
 
 use vlcrs_messages::{Logger, sys::vlc_logger};
-use crate::interface::sys::intf_thread_t;
-use crate::object::sys::vlc_object_t;
+use vlcrs_core::interface::sys::intf_thread_t;
+use vlcrs_core::object::sys::vlc_object_t;
 
-use crate::error::Result;
+use vlcrs_core::error::Result;
 
 use super::ModuleArgs;
 

@@ -9,7 +9,7 @@ use thiserror::Error;
 pub type Result<T> = std::result::Result<T, CoreError>;
 
 /// Returns a tuple if no errors
-pub(crate) fn cvt(result: i32) -> Result<()> {
+pub fn cvt(result: i32) -> Result<()> {
     if result != 0 {
         Err(CoreError::from(Errno::from_raw(result)))
     } else {
@@ -47,7 +47,7 @@ pub enum CoreError {
 }
 
 impl CoreError {
-    pub(crate) fn to_vlc_errno(&self) -> i32 {
+    pub fn to_vlc_errno(&self) -> i32 {
         use CoreError::*;
         match self {
             Core(errno) => errno.to_vlc_errno(),
@@ -100,7 +100,7 @@ impl Errno {
     }
 
     /// Get the underline `c_int`
-    pub(crate) fn to_vlc_errno(self) -> libc::c_int {
+    pub fn to_vlc_errno(self) -> libc::c_int {
         self.0
     }
 }

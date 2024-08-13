@@ -17,7 +17,6 @@ pub mod extension;
 pub mod input_item;
 pub mod interface;
 pub mod meta;
-pub mod module;
 pub mod object;
 pub mod player;
 pub mod playlist;

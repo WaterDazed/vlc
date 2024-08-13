@@ -10,4 +10,5 @@ vlcrs-macros = { workspace = true }
 vlcrs-messages = { workspace = true }
 vlcrs-utils = { workspace = true }
 vlcrs-plugin = { workspace = true }
+vlcrs-submodules = { workspace = true }
 wasmer = "4.3.2"
