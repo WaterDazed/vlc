@@ -32,6 +32,7 @@
 #include "media.hpp"
 #include "playlist_common.hpp"
 #include "playlist_item.hpp"
+#include "util/singleton.hpp"
 
 namespace vlc {
 namespace playlist {
@@ -41,9 +42,13 @@ QVector<vlc::playlist::Media> toMediaList(const QVariantList &sources);
 using vlc_playlist_locker = vlc_locker<vlc_playlist_t, vlc_playlist_Lock, vlc_playlist_Unlock>;
 
 class PlaylistControllerPrivate;
-class PlaylistController : public QObject
+
+//PlaylistController is a singleton in Qml, but there is no strong reason for this
+class PlaylistController : public QObject, public QMLSingleton<PlaylistController>
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(MainPlaylistController)
+    QML_SINGLETON
     Q_DISABLE_COPY(PlaylistController)
 
 public:

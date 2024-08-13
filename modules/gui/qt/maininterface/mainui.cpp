@@ -125,8 +125,7 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(m_intf->p_mainPlayerController);
     SingletonRegisterHelper<PlayerController>::setInstance(m_intf->p_mainPlayerController);
 
-    assert(m_intf->p_mainPlaylistController);
-    SingletonRegisterHelper<PlaylistController>::setInstance(m_intf->p_mainPlaylistController);
+    assert(PlaylistController::getInstance());
 
     assert(DialogsProvider::getInstance());
     SingletonRegisterHelper<DialogsProvider>::setInstance(DialogsProvider::getInstance());
@@ -325,9 +324,8 @@ void MainUI::registerQMLTypes()
         // @uri VLC.Playlist
         qmlRegisterUncreatableType<PlaylistItem>(uri, versionMajor, versionMinor, "playlistItem", "");
         qmlRegisterType<PlaylistListModel>( uri, versionMajor, versionMinor, "PlaylistListModel" );
-        qmlRegisterType<PlaylistController>( uri, versionMajor, versionMinor, "PlaylistController" );
         qmlRegisterType<PlaylistContextMenu>( uri, versionMajor, versionMinor, "PlaylistContextMenu" );
-        qmlRegisterSingletonType<PlaylistController>(uri, versionMajor, versionMinor, "MainPlaylistController", SingletonRegisterHelper<PlaylistController>::callback);
+        qmlRegisterTypesAndRevisions<PlaylistController>(uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);

@@ -985,7 +985,7 @@ static void *Thread( void *obj )
     /* Initialize the Dialog Provider and the Main Input Manager */
     DialogsProvider::getInstance( p_intf );
     p_intf->p_mainPlayerController = new PlayerController(p_intf);
-    p_intf->p_mainPlaylistController = new vlc::playlist::PlaylistController(p_intf->p_playlist);
+    p_intf->p_mainPlaylistController = vlc::playlist::PlaylistController::createInstance(p_intf->p_playlist);
 
     /* Create the normal interface in non-DP mode */
 #ifdef _WIN32
@@ -1146,11 +1146,7 @@ static void *ThreadCleanup( qt_intf_t *p_intf, CleanupReason cleanupReason )
     DialogErrorModel::killInstance();
 
     /* Destroy the main playlist controller */
-    if (p_intf->p_mainPlaylistController)
-    {
-        delete p_intf->p_mainPlaylistController;
-        p_intf->p_mainPlaylistController = nullptr;
-    }
+    vlc::playlist::PlaylistController::killInstance();
 
     /* Destroy the main InputManager */
     if (p_intf->p_mainPlayerController)
