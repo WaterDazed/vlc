@@ -25,6 +25,7 @@
 #include "vlc_arrays.h"
 #include "vlc_atomic.h"
 #include "vlc_extensions.h"
+#include "vlc_objects.h"
 #include "vlc_threads.h"
 #endif
 
@@ -103,6 +104,7 @@ int Open_Extension( vlc_object_t *p_this )
     vlc_mutex_init( &p_mgr->lock );
     
 
+
     /* Scan available Lua Extensions */
     if( ScanExtensions( p_mgr ) != VLC_SUCCESS )
     {
@@ -125,7 +127,9 @@ int Open_Extension( vlc_object_t *p_this )
 
         ARRAY_FOREACH(p_ext, extensions_cache.extensions)
         {
-            struct lua_extension * sys = p_ext->p_sys;
+            p_ext->logger = vlc_object_logger(p_mgr);
+            struct lua_extension* sys =  p_ext->p_sys;
+            sys->p_mgr = p_mgr;
             ARRAY_APPEND(p_mgr->extensions, p_ext);
         }
     }
