@@ -166,9 +166,7 @@ impl WasmExtension {
             }
         };
 
-        let description = self.read_description(&self.instance, descriptor_ptr as u64)?;
-
-        Ok(description)
+        self.read_description(&self.instance, descriptor_ptr as u64)
     }
 
     pub fn execute(&self, function_name: &str) -> Result<Box<[Value]>> {

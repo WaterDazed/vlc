@@ -34,7 +34,7 @@ fn vlcwasm_read_u32(store: &impl AsStoreRef, instance: &Instance, ptr: u64) -> u
     u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]])
 }
 
-fn vlcwasm_read_string(store: &impl AsStoreRef, instance: &Instance, ptr: u32, len: usize) -> Result<String> {
+fn vlcwasm_read_buffer(store: &impl AsStoreRef, instance: &Instance, ptr: u32, len: usize) -> Vec<u8> {
 
     let mem_view = instance.exports
         .get_memory("memory")
@@ -45,13 +45,14 @@ fn vlcwasm_read_string(store: &impl AsStoreRef, instance: &Instance, ptr: u32, l
 
     mem_view.read(ptr as u64, &mut buf).expect("Should be valid");
 
-    let mut string = String::with_capacity(len);
+    buf
+}
 
-    for i in 0..len {
-        string.push(buf[i] as char);
-    }
+fn vlcwasm_read_string(store: &impl AsStoreRef, instance: &Instance, ptr: u32, len: usize) -> Result<String> {
 
-    Ok(string)
+    let buf = vlcwasm_read_buffer(store, instance, ptr, len);
+
+    String::from_utf8(buf).map_err(|_| error::CoreError::Unknown)
 }
 
 fn vlcwasm_write_string(mut store: &mut impl AsStoreMut, instance: &Instance, string: &str) -> u32 {
