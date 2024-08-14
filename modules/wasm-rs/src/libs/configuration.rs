@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use vlcrs_core::configuration::{get_float, get_int, get_string, get_sys_path, get_type, get_user_dir, put_float, put_int, put_string, SysDir, UserDir};
 use wasmer::{FunctionEnv, FunctionEnvMut, Imports, Store};
 
-use crate::{extension::Env, vlcwasm_dir_list, vlcwasm_read_string, vlcwasm_write_string};
+use crate::{extension::Env, vlcwasm_dir_list, vlcwasm_read_string, vlcwasm_write_buffer, vlcwasm_write_string};
 
 fn vlcwasm_get_config_name(env: &mut FunctionEnvMut<Env>, ptr: u32, len: u32) -> String {
     let (env_data, mut store) = env.data_and_store_mut();
@@ -58,16 +58,30 @@ fn vlcwasm_write_dir_path(mut env: FunctionEnvMut<Env>, dir_path: PathBuf) -> u3
 }
 
 fn vlcwasm_write_dir_list(mut env: FunctionEnvMut<Env>, dir_list: Vec<PathBuf>) -> u32 {
-    const SEPARATOR: char = ';';
-
-    let mut dir_list_str = String::new();
-    for dir in dir_list {
-        dir_list_str.push_str(dir.to_str().expect("Failed to convert path to string"));
-        dir_list_str.push(SEPARATOR);
-    }
+    let mut pointers = Vec::new();
+    
     let (env_data, mut store) = env.data_and_store_mut();
     let instance = env_data.instance.as_ref().expect("Should have instance");
-    vlcwasm_write_string(&mut store, &instance, &dir_list_str)
+    
+    for dir in dir_list {
+        if let Some(dir_str) = dir.to_str() {
+            let ptr = vlcwasm_write_string(&mut store, &instance, dir_str);
+            pointers.push(ptr);
+        } else {
+            panic!("Failed to convert path to string");
+        }
+    }
+
+    // Append the sentinel value (0) to indicate the end of the list
+    pointers.push(0);
+
+    // Convert pointers to a byte buffer (little-endian representation)
+    let buf = pointers.iter()
+        .map(|&ptr| ptr.to_le_bytes())
+        .flatten()
+        .collect::<Vec<u8>>();
+    
+    vlcwasm_write_buffer(&mut store, &instance, buf.as_slice())
 }
 
 fn vlcwasm_config_datadir(env: FunctionEnvMut<Env>) -> u32 {
