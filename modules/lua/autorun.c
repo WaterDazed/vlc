@@ -1,13 +1,13 @@
-#include "autorun.h"
-#include "misc/webservices/json.h"
-#include "vlc_messages.h"
-#include "vlc_threads.h"
-#include <stdbool.h>
-#include <string.h>
-
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include "autorun.h"
+#include "misc/webservices/json.h"
+#include <vlc_messages.h>
+#include <vlc_threads.h>
+#include <stdbool.h>
+#include <string.h>
 
 struct lua_state extensions_cache;
 struct ext_key{
@@ -47,6 +47,7 @@ void loadExtensionsCache(vlc_object_t *obj, char * psz_json){
     //skip ext
     if (ext == NULL){
         msg_Info(obj, "autorun: failed to create %s, skipping.", psz_ext_name);
+        return;
     }
 
     ARRAY_APPEND(extensions_cache.extensions, ext);

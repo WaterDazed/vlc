@@ -24,12 +24,13 @@
 /*****************************************************************************
  * Preamble
  *****************************************************************************/
-#include <vlc_extensions.h>
-#include "vlc_messages.h"
-#include <string.h>
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <vlc_extensions.h>
+#include <vlc_messages.h>
+#include <string.h>
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -38,18 +39,10 @@
 
 #include "vlc.h"
 
-#include <vlc_configuration.h>
-#include <vlc_plugin.h>
-#include <vlc_arrays.h>
 #include <vlc_charset.h>
 #include <vlc_fs.h>
 #include <vlc_services_discovery.h>
-#include <vlc_stream.h>
-#include <vlc_interface.h>
-
-#include <vlc_modules.h>
 #include <vlc_plugin.h>
-#include <vlc_common.h>
 #include "autorun.h"
 
 /*****************************************************************************
