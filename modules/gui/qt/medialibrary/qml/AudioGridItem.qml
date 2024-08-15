@@ -17,12 +17,11 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-import "qrc:///util/Helpers.js" as Helpers
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Util
 
 Widgets.GridItem {
     property var model: ({})
@@ -35,7 +34,6 @@ Widgets.GridItem {
     subtitle: model.main_artist || qsTr("Unknown artist")
     pictureWidth: VLCStyle.gridCover_music_width
     pictureHeight: VLCStyle.gridCover_music_height
-    playCoverBorderWidth: VLCStyle.gridCover_music_border
     onPlayClicked: {
         if ( model.id !== undefined ) {
             MediaLib.addAndPlay( model.id )

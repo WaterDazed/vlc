@@ -20,11 +20,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import QtQuick.Templates as T
-import org.videolan.vlc 0.1
 
-
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Dialogs
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 Item {
     id: root
@@ -164,8 +165,8 @@ Item {
         }
 
         edge: Widgets.DrawerExt.Edges.Bottom
-        width: contentItem.layoutWidth
-        height: contentItem.height
+        width: contentItem?.layoutWidth ?? 0
+        height: contentItem?.height ?? 0
         z: 10
 
         ColorContext {
@@ -583,7 +584,7 @@ Item {
     Loader {
         id: toolbarEditorDialogLoader
         active: false
-        source: "qrc:///dialogs/ToolbarEditorDialog.qml"
+        source: "qrc:///qt/qml/VLC/Dialogs/ToolbarEditorDialog.qml"
 
         Connections {
             target: toolbarEditorDialogLoader.item

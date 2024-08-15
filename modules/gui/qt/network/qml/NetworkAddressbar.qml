@@ -19,10 +19,12 @@ import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Network
+import VLC.Menus
 
 T.Control {
     id: control
@@ -204,6 +206,8 @@ T.Control {
 
     StringListMenu {
         id: popup
+
+        ctx: MainCtx
 
         function show() {
             const model = control._menuModel.map(function (modelData) {

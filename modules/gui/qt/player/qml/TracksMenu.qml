@@ -22,11 +22,10 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Util
 
 // FIXME: Keyboard navigation needs to be fixed for this Popup.
 T.Popup {
@@ -142,15 +141,15 @@ T.Popup {
       }
 
       onRequestAudioPage: {
-          stackView.push("qrc:///player/TracksPageAudio.qml", {"trackMenuController": trackMenuController})
+          stackView.push("qrc:///qt/qml/VLC/Player/TracksPageAudio.qml", {"trackMenuController": trackMenuController})
       }
 
       onRequestSubtitlePage: {
-          stackView.push("qrc:///player/TracksPageSubtitle.qml", {"trackMenuController": trackMenuController})
+          stackView.push("qrc:///qt/qml/VLC/Player/TracksPageSubtitle.qml", {"trackMenuController": trackMenuController})
       }
 
       onRequestPlaybackSpeedPage: {
-          stackView.push("qrc:///player/TracksPageSpeed.qml", {"trackMenuController": trackMenuController})
+          stackView.push("qrc:///qt/qml/VLC/Player/TracksPageSpeed.qml", {"trackMenuController": trackMenuController})
       }
     }
 }

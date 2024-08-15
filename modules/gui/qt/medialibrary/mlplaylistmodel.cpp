@@ -33,17 +33,6 @@
 #include "playlist/playlist_controller.hpp"
 #include "playlist/media.hpp"
 
-//-------------------------------------------------------------------------------------------------
-// Static variables
-
-static const QHash<QByteArray, vlc_ml_sorting_criteria_t> criterias =
-{
-    {"id",             VLC_ML_SORTING_DEFAULT},
-    {"title",          VLC_ML_SORTING_ALPHA},
-    {"duration",       VLC_ML_SORTING_DURATION},
-    {"playcount",      VLC_ML_SORTING_PLAYCOUNT},
-};
-
 //=================================================================================================
 // MLPlaylistModel
 //=================================================================================================
@@ -341,11 +330,11 @@ QVariant MLPlaylistModel::itemRoleData(MLItem *item, int role) const /* override
         case MEDIA_IS_NEW:
             return QVariant::fromValue(media->isNew());
         case MEDIA_TITLE:
-            return QVariant::fromValue(media->getTitle());
+            return QVariant::fromValue(media->title());
         case MEDIA_THUMBNAIL:
         {
             vlc_ml_thumbnail_status_t status;
-            QString thumbnail = media->getThumbnail(&status);
+            QString thumbnail = media->smallCover(&status);
             if ((media->getType() == VLC_ML_MEDIA_TYPE_VIDEO)
                 && (status == VLC_ML_THUMBNAIL_STATUS_MISSING
                     || status == VLC_ML_THUMBNAIL_STATUS_FAILURE))
@@ -356,11 +345,11 @@ QVariant MLPlaylistModel::itemRoleData(MLItem *item, int role) const /* override
             return QVariant::fromValue(thumbnail);
         }
         case MEDIA_DURATION:
-            return QVariant::fromValue(media->getDuration());
+            return QVariant::fromValue(media->duration());
         case MEDIA_PROGRESS:
-            return QVariant::fromValue(media->getProgress());
+            return QVariant::fromValue(media->progress());
         case MEDIA_PLAYCOUNT:
-            return QVariant::fromValue(media->getPlayCount());
+            return QVariant::fromValue(media->playCount());
         case MEDIA_RESOLUTION:
             return QVariant::fromValue(media->getResolutionName());
         case MEDIA_CHANNEL:
@@ -374,7 +363,7 @@ QVariant MLPlaylistModel::itemRoleData(MLItem *item, int role) const /* override
         case MEDIA_AUDIO_TRACK:
             return QVariant::fromValue(media->getAudio());
         case MEDIA_TITLE_FIRST_SYMBOL:
-            return QVariant::fromValue(getFirstSymbol(media->getTitle()));
+            return QVariant::fromValue(getFirstSymbol(media->title()));
         default:
             return QVariant();
     }
@@ -384,29 +373,14 @@ QVariant MLPlaylistModel::itemRoleData(MLItem *item, int role) const /* override
 // Protected MLBaseModel implementation
 //-------------------------------------------------------------------------------------------------
 
-vlc_ml_sorting_criteria_t MLPlaylistModel::roleToCriteria(int role) const /* override */
-{
-    switch (role)
-    {
-        case MEDIA_TITLE:
-            return VLC_ML_SORTING_ALPHA;
-        case MEDIA_DURATION:
-            return VLC_ML_SORTING_DURATION;
-        case MEDIA_PLAYCOUNT:
-            return VLC_ML_SORTING_PLAYCOUNT;
-        default:
-            return VLC_ML_SORTING_DEFAULT;
-    }
-}
-
 vlc_ml_sorting_criteria_t MLPlaylistModel::nameToCriteria(QByteArray name) const /* override */
 {
-    return criterias.value(name, VLC_ML_SORTING_DEFAULT);
-}
-
-QByteArray MLPlaylistModel::criteriaToName(vlc_ml_sorting_criteria_t criteria) const /* override */
-{
-    return criterias.key(criteria, "");
+    return QHash<QByteArray, vlc_ml_sorting_criteria_t> {
+        {"id",             VLC_ML_SORTING_DEFAULT},
+        {"title",          VLC_ML_SORTING_ALPHA},
+        {"duration",       VLC_ML_SORTING_DURATION},
+        {"playcount",      VLC_ML_SORTING_PLAYCOUNT},
+    }.value(name, VLC_ML_SORTING_DEFAULT);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -453,7 +427,7 @@ void MLPlaylistModel::onVlcMlEvent(const MLEvent & event) /* override */
 void MLPlaylistModel::thumbnailUpdated(const QModelIndex& idx, MLItem* mlitem, const QString& mrl, vlc_ml_thumbnail_status_t status) /* override */
 {
     auto playlistItem = static_cast<MLPlaylistMedia*>(mlitem);
-    playlistItem->setThumbnail(mrl, status);
+    playlistItem->setSmallCover(mrl, status);
     emit dataChanged(idx, idx, { MEDIA_THUMBNAIL });
 }
 

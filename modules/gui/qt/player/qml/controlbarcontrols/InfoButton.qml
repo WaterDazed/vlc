@@ -17,15 +17,15 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Player
+import VLC.Dialogs
 
 Widgets.IconToolButton {
     id: infoBtn
-    enabled: Player.isPlaying
+    enabled: Player.isStarted
     text: VLCIcons.info
     onClicked: DialogsProvider.mediaInfoDialog()
     description: qsTr("Information")

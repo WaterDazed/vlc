@@ -33,7 +33,6 @@
 #include <limits.h>
 
 #include <vlc_common.h>
-#include <vlc_modules.h>
 #include <vlc_filter.h>
 #include <vlc_spu.h>
 #include <vlc_vector.h>
@@ -290,16 +289,6 @@ static ssize_t spu_GetFreeChannelId(spu_t *spu, enum vlc_vout_order *order)
     return VOUT_SPU_CHANNEL_INVALID;
 }
 
-static void FilterRelease(filter_t *filter)
-{
-    if (filter->p_module)
-    {
-        filter_Close(filter);
-        module_unneed(filter, filter->p_module);
-    }
-    vlc_object_delete(filter);
-}
-
 static int spu_get_attachments(filter_t *filter,
                                input_attachment_t ***attachment_ptr,
                                int *attachment_count)
@@ -337,7 +326,13 @@ static filter_t *SpuRenderCreateAndLoadText(spu_t *spu)
         .sys = spu
     };
 
-    text->p_module = module_need_var(text, "text renderer", "text-renderer");
+    char *list = var_InheritString(VLC_OBJECT(text), "text-renderer");
+    if (unlikely(list != NULL))
+    {
+        text->p_module = vlc_filter_LoadModule(text, "text renderer", list, false);
+        free(list);
+    }
+
     if (!text->p_module)
     {
         vlc_object_delete(text);
@@ -371,7 +366,7 @@ static filter_t *SpuRenderCreateAndLoadScale(vlc_object_t *object,
     scale->fmt_out.video.i_height =
     scale->fmt_out.video.i_visible_height = require_resize ? 16 : 32;
 
-    scale->p_module = module_need(scale, "video converter", NULL, false);
+    scale->p_module = vlc_filter_LoadModule(scale, "video converter", NULL, false);
     if (!scale->p_module)
     {
         vlc_object_delete(scale);
@@ -781,11 +776,13 @@ static size_t spu_channel_UpdateDates(struct spu_channel *channel,
         assert(entry);
 
         entry->start = vlc_clock_ConvertToSystem(channel->clock, system_now,
-                                                 entry->orgstart, channel->rate);
+                                                 entry->orgstart, channel->rate,
+                                                 NULL);
 
         entry->stop =
             vlc_clock_ConvertToSystem(channel->clock, system_now,
-                                      entry->orgstop, channel->rate);
+                                      entry->orgstop, channel->rate,
+                                      NULL);
     }
     vlc_clock_Unlock(channel->clock);
 
@@ -1061,16 +1058,14 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
         new_palette.i_entries = 4;
         for (int i = 0; i < 4; i++)
         {
-            for (int j = 0; j < 4; j++)
-                new_palette.palette[i][j] = sys->palette.palette[i][j];
+            memcpy(new_palette.palette[i], &sys->palette.palette[i], 4);
             b_opaque |= (new_palette.palette[i][3] > 0x00);
         }
 
         if (old_palette->i_entries == new_palette.i_entries) {
             for (int i = 0; i < old_palette->i_entries; i++)
             {
-                for (int j = 0; j < 4; j++)
-                    changed_palette |= old_palette->palette[i][j] != new_palette.palette[i][j];
+                changed_palette |= memcmp(old_palette->palette[i], new_palette.palette[i], 4);
                 b_old_opaque |= (old_palette->palette[i][3] > 0x00);
             }
         } else {
@@ -1820,13 +1815,13 @@ static void spu_Cleanup(spu_t *spu)
     spu_private_t *sys = spu->p;
 
     if (sys->text)
-        FilterRelease(sys->text);
+        vlc_filter_Delete(sys->text);
 
     if (sys->scale_yuvp)
-        FilterRelease(sys->scale_yuvp);
+        vlc_filter_Delete(sys->scale_yuvp);
 
     if (sys->scale)
-        FilterRelease(sys->scale);
+        vlc_filter_Delete(sys->scale);
 
     filter_chain_ForEach(sys->source_chain, SubSourceClean, spu);
     if (sys->vout)
@@ -1982,7 +1977,7 @@ void spu_Attach(spu_t *spu, input_thread_t *input)
 
         vlc_mutex_lock(&spu->p->textlock);
         if (spu->p->text)
-            FilterRelease(spu->p->text);
+            vlc_filter_Delete(spu->p->text);
         spu->p->text = SpuRenderCreateAndLoadText(spu);
         vlc_mutex_unlock(&spu->p->textlock);
     }
@@ -2132,10 +2127,10 @@ void spu_PutSubpicture(spu_t *spu, subpicture_t *subpic)
         vlc_clock_Lock(channel->clock);
         subpic->i_start =
             vlc_clock_ConvertToSystem(channel->clock, system_now,
-                                      orgstart, channel->rate);
+                                      orgstart, channel->rate, NULL);
         subpic->i_stop =
             vlc_clock_ConvertToSystem(channel->clock, system_now,
-                                      orgstop, channel->rate);
+                                      orgstop, channel->rate, NULL);
         vlc_clock_Unlock(channel->clock);
 
         spu_channel_EarlyRemoveLate(sys, channel, system_now);

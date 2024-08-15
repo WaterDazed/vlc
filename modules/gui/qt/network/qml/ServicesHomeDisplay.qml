@@ -20,12 +20,12 @@ import QtQuick.Controls
 import QtQml.Models
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-import "qrc:///main/" as MainInterface
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.MainInterface
+import VLC.Style
+import VLC.Network
 
 Widgets.PageLoader {
     id: root
@@ -36,7 +36,7 @@ Widgets.PageLoader {
         component: serviceSourceComponent
     }, {
         name: "services_manage",
-        url: "qrc:///network/ServicesManage.qml"
+        url: "qrc:///qt/qml/VLC/Network/ServicesManage.qml"
     }, {
         name: "source_root",
         component: sourceRootComponent
@@ -111,6 +111,7 @@ Widgets.PageLoader {
                 id: contextMenu
 
                 model: deviceModel
+                ctx: MainCtx
             }
         }
     }
@@ -150,6 +151,7 @@ Widgets.PageLoader {
 
             contextMenu: NetworkMediaContextMenu {
                 model: mediaModel
+                ctx: MainCtx
             }
         }
     }

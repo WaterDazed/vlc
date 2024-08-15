@@ -18,7 +18,7 @@
 import QtQuick
 import QtQuick.Controls
 
-import "qrc:///style/"
+import VLC.Style
 
 Item {
     id: root
@@ -28,15 +28,10 @@ Item {
     // `label`: label to scroll, don't add horizontal anchors on it
     property Text label: undefined
     property bool forceScroll: false
-    property alias hoverScroll: hoverArea.enabled
 
 
     readonly property real requiredTextWidth: label.implicitWidth
     readonly property bool _needsToScroll: (label.width < requiredTextWidth)
-
-    ToolTip.delay: VLCStyle.delayToolTipAppear
-    ToolTip.visible: scrolling && hoverArea.containsMouse
-    ToolTip.text: label.text
 
     //Accessible
     Accessible.role: Accessible.StaticText
@@ -52,19 +47,10 @@ Item {
         label.Accessible.ignored = true
     }
 
-    MouseArea {
-        id: hoverArea
-
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        cursorShape: undefined
-        hoverEnabled: true
-    }
-
     SequentialAnimation {
         id: scrollAnimation
 
-        running: (root.forceScroll || hoverArea.containsMouse) && root._needsToScroll
+        running: root.forceScroll && root._needsToScroll
         loops: Animation.Infinite
 
         onStopped: {

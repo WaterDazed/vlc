@@ -18,16 +18,14 @@
 
 import QtQuick
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MediaLibrary
 
-import "qrc:///util/" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Style
 
-MainInterface.MainViewLoader {
+MainViewLoader {
     id: root
 
     // Properties
@@ -35,7 +33,7 @@ MainInterface.MainViewLoader {
     readonly property int currentIndex: currentItem?.currentIndex ?? - 1
 
     property Component header: null
-    
+
     readonly property int contentLeftMargin: currentItem?.contentLeftMargin ?? 0
     readonly property int contentRightMargin: currentItem?.contentRightMargin ?? 0
 
@@ -62,7 +60,7 @@ MainInterface.MainViewLoader {
     list: tableComponent
     emptyLabel: emptyLabelComponent
 
-    Util.MLContextMenu {
+    MLContextMenu {
         id: contextMenu
 
         model: artistModel
@@ -81,14 +79,16 @@ MainInterface.MainViewLoader {
     Component {
         id: gridComponent
 
-        MainInterface.MainGridView {
+        Widgets.ExpandGridItemView {
             id: artistGrid
+
+            basePictureWidth: VLCStyle.gridCover_music_width
+            basePictureHeight: VLCStyle.gridCover_music_height
+            titleTopMargin: VLCStyle.gridItemTitle_topMargin + VLCStyle.margin_xxsmall
 
             selectionModel: root.selectionModel
             model: artistModel
             focus: true
-            cellWidth: VLCStyle.colWidth(1)
-            cellHeight: VLCStyle.gridItem_music_height
 
             headerDelegate: root.header
             Navigation.parentItem: root
@@ -105,19 +105,21 @@ MainInterface.MainViewLoader {
             delegate: AudioGridItem {
                 id: gridItem
 
+                width: artistGrid.cellWidth
+                height: artistGrid.cellHeight
+
+                pictureWidth: artistGrid.maxPictureWidth
+                pictureHeight: artistGrid.maxPictureHeight
+                pictureRadius: artistGrid.maxPictureWidth
+
                 image: model.cover || ""
                 fallbackImage: VLCStyle.noArtArtistSmall
 
                 title: model.name || qsTr("Unknown artist")
                 subtitle: model.nb_tracks > 1 ? qsTr("%1 songs").arg(model.nb_tracks) : qsTr("%1 song").arg(model.nb_tracks)
-                pictureRadius: VLCStyle.artistGridCover_radius
-                pictureHeight: VLCStyle.artistGridCover_radius
-                pictureWidth: VLCStyle.artistGridCover_radius
-                playCoverBorderWidth: VLCStyle.dp(3, VLCStyle.scale)
-                titleMargin: VLCStyle.margin_xlarge
+                titleTopMargin: artistGrid.titleTopMargin
                 playIconSize: VLCStyle.play_cover_small
                 textAlignHCenter: true
-                width: VLCStyle.colWidth(1)
                 dragItem: artistsDragItem
 
                 onItemClicked: (modifier) => { artistGrid.leftClickOnItem(modifier, index) }
@@ -139,13 +141,11 @@ MainInterface.MainViewLoader {
     Component {
         id: tableComponent
 
-        MainInterface.MainTableView {
+        MainTableView {
             id: artistTable
 
-            readonly property int _nbCols: VLCStyle.gridColumnsForWidth(artistTable.availableRowWidth)
-
             property var _modelSmall: [{
-                size: Math.max(2, artistTable._nbCols),
+                weight: 1,
 
                 model: ({
                     criteria: "name",
@@ -162,7 +162,7 @@ MainInterface.MainViewLoader {
             }]
 
             property var _modelMedium: [{
-                size: Math.max(1, artistTable._nbCols - 1),
+                weight: 1,
 
                 model: {
                     criteria: "name",

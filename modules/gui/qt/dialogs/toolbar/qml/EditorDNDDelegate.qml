@@ -21,11 +21,10 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///player/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Player
+import VLC.Widgets as Widgets
+import VLC.Style
 
 T.Control {
     id: control

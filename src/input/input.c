@@ -897,6 +897,11 @@ static void StartTitle( input_thread_t * p_input )
                 priv->master->i_seekpoint_offset;
     if( val.i_int > 0 /* TODO: check upper boundary */ )
         input_ControlPushHelper( p_input, INPUT_CONTROL_SET_SEEKPOINT, &val );
+}
+
+static void SetStopStart( input_thread_t * p_input )
+{
+    input_thread_private_t *priv = input_priv(p_input);
 
     /* Start/stop/run time */
     priv->i_start = llroundl(CLOCK_FREQ *
@@ -1335,6 +1340,7 @@ static int Init( input_thread_t * p_input )
 
     InitTitle( p_input, false );
 
+    SetStopStart( p_input );
     /* Load master infos */
     InputSourceStatistics( master, priv->p_item, priv->p_es_out );
 
@@ -3476,4 +3482,17 @@ bool input_CanPaceControl(input_thread_t *input)
 {
     input_thread_private_t *priv = input_priv(input);
     return priv->master->b_can_pace_control;
+}
+
+void input_SetItemDuration(input_thread_t *input, vlc_tick_t duration)
+{
+    input_thread_private_t *priv = input_priv(input);
+    input_item_t *item = input_GetItem(input);
+
+    if( priv->i_stop == 0 ) /* consider `duration` as stop time, if stop-time not set */
+        duration -= priv->i_start;
+    else /* calculate duration based on start-time and stop-time */
+        duration = priv->i_stop - priv->i_start;
+
+    input_item_SetDuration(item, duration);
 }

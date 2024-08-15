@@ -42,6 +42,8 @@
 
 #include "maininterface/windoweffects_module.hpp"
 
+#include "compositor_platform.hpp"
+
 #include <vlc_window.h>
 #include <vlc_modules.h>
 
@@ -57,10 +59,13 @@ struct {
     const char* name;
     Compositor* (*instantiate)(qt_intf_t *p_intf);
 } static compositorList[] = {
-#ifdef _WIN32
-#ifdef HAVE_DCOMP_H
+#if defined(_WIN32) && defined(HAVE_DCOMP_H)
     {"dcomp", &instanciateCompositor<CompositorDirectComposition> },
 #endif
+#if defined(_WIN32) || defined(__APPLE__)
+    {"platform", &instanciateCompositor<CompositorPlatform> },
+#endif
+#if defined(_WIN32)
     {"win7", &instanciateCompositor<CompositorWin7> },
 #endif
 #ifdef QT_HAS_WAYLAND_COMPOSITOR
@@ -195,12 +200,23 @@ void CompositorVideo::commonSetupVoutWindow(vlc_window_t* p_wnd, VoutDestroyCb d
     p_wnd->sys = this;
     p_wnd->ops = &ops;
     p_wnd->info.has_double_click = true;
+
+    // These need to be connected here, since the compositor might not be ready when
+    // these signals are emitted. VOut window might not be set, or worse, compositor's
+    // internal preparations might not be completed yet:
+    connect(m_videoSurfaceProvider.get(), &VideoSurfaceProvider::surfacePositionChanged,
+            this, &CompositorVideo::onSurfacePositionChanged, Qt::UniqueConnection);
+    connect(m_videoSurfaceProvider.get(), &VideoSurfaceProvider::surfaceSizeChanged,
+            this, &CompositorVideo::onSurfaceSizeChanged, Qt::UniqueConnection);
 }
 
 void CompositorVideo::windowDestroy()
 {
     if (m_destroyCb)
         m_destroyCb(m_wnd);
+
+    m_videoSurfaceProvider.reset();
+    m_videoWindowHandler.reset();
 }
 
 void CompositorVideo::windowResize(unsigned width, unsigned height)
@@ -247,10 +263,6 @@ bool CompositorVideo::commonGUICreateImpl(QWindow* window, CompositorVideo::Flag
     if (flags & CompositorVideo::CAN_SHOW_PIP)
     {
         m_mainCtx->setCanShowVideoPIP(true);
-        connect(m_videoSurfaceProvider.get(), &VideoSurfaceProvider::surfacePositionChanged,
-                this, &CompositorVideo::onSurfacePositionChanged);
-        connect(m_videoSurfaceProvider.get(), &VideoSurfaceProvider::surfaceSizeChanged,
-                this, &CompositorVideo::onSurfaceSizeChanged);
     }
     if (flags & CompositorVideo::HAS_ACRYLIC)
     {
@@ -311,8 +323,6 @@ void CompositorVideo::commonGUIDestroy()
 
 void CompositorVideo::commonIntfDestroy()
 {
-    m_videoWindowHandler.reset();
-    m_videoSurfaceProvider.reset();
     unloadGUI();
 }
 
@@ -320,6 +330,14 @@ bool CompositorVideo::setBlurBehind(QWindow *window, const bool enable)
 {
     assert(window);
     assert(m_intf);
+
+    if (enable)
+    {
+        if (!var_InheritBool(m_intf, "qt-backdrop-blur"))
+        {
+            return false;
+        }
+    }
 
     if (m_failedToLoadWindowEffectsModule)
         return false;
@@ -336,7 +354,9 @@ bool CompositorVideo::setBlurBehind(QWindow *window, const bool enable)
         m_windowEffectsModule->p_module = module_need(m_windowEffectsModule, "qtwindoweffects", nullptr, false);
         if (!m_windowEffectsModule->p_module)
         {
-            msg_Info(m_intf, "A module providing window effects capability could not be instantiated. Background blur effect will not be available.");
+            msg_Dbg(m_intf, "A module providing window effects capability could not be instantiated. " \
+                            "Native background blur effect will not be available. " \
+                            "The application may compensate this with a simulated effect on certain platform(s).");
             m_failedToLoadWindowEffectsModule = true;
             vlc_object_delete(m_windowEffectsModule);
             m_windowEffectsModule = nullptr;

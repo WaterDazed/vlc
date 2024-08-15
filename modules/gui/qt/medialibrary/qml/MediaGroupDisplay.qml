@@ -20,12 +20,12 @@
 
 import QtQuick
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 VideoAll {
     id: root
@@ -52,7 +52,7 @@ VideoAll {
         ml: MediaLib
     }
 
-    contextMenu: Util.MLContextMenu { model: modelVideo; showPlayAsAudioAction: true }
+    contextMenu: MLContextMenu { model: modelVideo; showPlayAsAudioAction: true }
 
     header: Widgets.ViewHeader {
         view: root

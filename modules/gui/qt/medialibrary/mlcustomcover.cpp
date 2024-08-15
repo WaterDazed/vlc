@@ -194,6 +194,13 @@ public:
         return !image.isNull() ? QQuickTextureFactory::textureFactoryForImage(image) : nullptr;
     }
 
+    QString errorString() const override
+    {
+        if (image.isNull())
+            return QStringLiteral("Unspecified error.");
+        return QStringLiteral("");
+    }
+
 private:
     void start()
     {

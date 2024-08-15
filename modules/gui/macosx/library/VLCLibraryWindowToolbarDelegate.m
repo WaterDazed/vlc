@@ -152,16 +152,15 @@ NSString * const VLCLibraryWindowTrackingSeparatorToolbarItemIdentifier =
             [self setViewModeToolbarItemVisible:NO];
             break;
         case VLCLibraryVideoSegment:
-            [self setForwardsBackwardsToolbarItemsVisible:NO];
-            [self setSortOrderToolbarItemVisible:YES];
-            [self setLibrarySearchToolbarItemVisible:YES];
-            [self setViewModeToolbarItemVisible:YES];
-            break;
+        case VLCLibraryShowsVideoSubSegment:
         case VLCLibraryMusicSegment:
         case VLCLibraryArtistsMusicSubSegment:
         case VLCLibraryAlbumsMusicSubSegment:
         case VLCLibrarySongsMusicSubSegment:
         case VLCLibraryGenresMusicSubSegment:
+        case VLCLibraryGroupsSegment:
+        case VLCLibraryGroupsGroupSubSegment:
+        case VLCLibraryPlaylistsSegment:
             [self setForwardsBackwardsToolbarItemsVisible:NO];
             [self setSortOrderToolbarItemVisible:YES];
             [self setLibrarySearchToolbarItemVisible:YES];
@@ -169,6 +168,7 @@ NSString * const VLCLibraryWindowTrackingSeparatorToolbarItemIdentifier =
             break;
         case VLCLibraryBrowseSegment:
         case VLCLibraryStreamsSegment:
+        case VLCLibraryBrowseBookmarkedLocationSubSegment:
             [self setForwardsBackwardsToolbarItemsVisible:YES];
             [self setSortOrderToolbarItemVisible:NO];
             [self setLibrarySearchToolbarItemVisible:NO];

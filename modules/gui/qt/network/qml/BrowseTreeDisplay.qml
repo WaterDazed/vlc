@@ -18,15 +18,14 @@
 import QtQuick
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///util/" as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Style
+import VLC.Network
 
-MainInterface.MainViewLoader {
+MainViewLoader {
     id: root
 
     // Properties
@@ -95,10 +94,16 @@ MainInterface.MainViewLoader {
         defaultText:  qsTr("Unknown Share")
 
         coverProvider: function(index, data) {
-            // this is used to provide context to NetworkCustomCover
-            // indexData is networkModel (model data) for this index
-            // cover is our custom cover that will be loaded insted of default DragItem cover
-            return {"indexData": data, "cover": custom_cover}
+            const fallbackImage = SVGColorImage.colorize(data.artworkFallback)
+                .background(networkDragItem.colorContext.bg.secondary)
+                .color1(networkDragItem.colorContext.fg.primary)
+                .accent(networkDragItem.colorContext.accent)
+                .uri()
+
+            return {
+                artwork: data.artwork,
+                fallback: fallbackImage
+            }
         }
 
         onRequestData: (indexes, resolve, reject) => {
@@ -112,32 +117,19 @@ MainInterface.MainViewLoader {
                 model.getItemsForIndexes(indexes)
             )
         }
-
-        Component {
-            id: custom_cover
-
-            NetworkCustomCover {
-                networkModel: model.indexData
-
-                width: networkDragItem.coverSize
-                height: networkDragItem.coverSize
-
-                // we can not change the size of cover and shodows from here,
-                // so for best visual use scale image to fit
-                fillMode: Image.PreserveAspectCrop
-
-                bgColor: networkDragItem.colorContext.bg.secondary
-                color1: networkDragItem.colorContext.fg.primary
-                accent: networkDragItem.colorContext.accent
-            }
-        }
     }
 
     Component{
         id: gridComponent
 
-        MainInterface.MainGridView {
+        Widgets.ExpandGridItemView {
             id: gridView
+
+            basePictureWidth: VLCStyle.gridCover_network_width
+            basePictureHeight: VLCStyle.gridCover_network_height
+            subtitleHeight: 0
+
+            maxNbItemPerRow: 12
 
             selectionModel: root.selectionModel
             model: root.model
@@ -157,14 +149,16 @@ MainInterface.MainViewLoader {
                 }
             }
 
-            cellWidth: VLCStyle.gridItem_network_width
-            cellHeight: VLCStyle.gridCover_network_height + VLCStyle.margin_xsmall + VLCStyle.fontHeight_normal
-
             delegate: NetworkGridItem {
                 id: delegateGrid
 
+                width: gridView.cellWidth;
+                height: gridView.cellHeight;
+
+                pictureWidth: gridView.maxPictureWidth
+                pictureHeight: gridView.maxPictureHeight
+
                 subtitle: ""
-                height: VLCStyle.gridCover_network_height + VLCStyle.margin_xsmall + VLCStyle.fontHeight_normal
                 dragItem: networkDragItem
 
                 onPlayClicked: playAt(index)
@@ -195,32 +189,15 @@ MainInterface.MainViewLoader {
     Component{
         id: tableComponent
 
-        MainInterface.MainTableView {
+        MainTableView {
             id: tableView
-
-            readonly property int _nbCols: VLCStyle.gridColumnsForWidth(tableView.availableRowWidth)
-            readonly property int _nameColSpan: Math.max((_nbCols - 1) / 2, 1)
-            property Component thumbnailHeader: Widgets.TableHeaderDelegate {
-                Widgets.IconLabel {
-                    height: VLCStyle.listAlbumCover_height
-                    width: VLCStyle.listAlbumCover_width
-
-                    anchors.centerIn: parent
-
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: VLCStyle.icon_tableHeader
-                    text: VLCIcons.album_cover
-                    color: parent.colorContext.fg.secondary
-                }
-            }
 
             property Component thumbnailColumn: NetworkThumbnailItem {
                 onPlayClicked: index => playAt(index)
             }
 
             property var _modelSmall: [{
-                size: Math.max(2, _nbCols),
+                weight: 1,
 
                 model: ({
                     criteria: "name",
@@ -231,7 +208,7 @@ MainInterface.MainViewLoader {
 
                     text: qsTr("Name"),
 
-                    headerDelegate: thumbnailHeader,
+                    headerDelegate: tableColumns.titleHeaderDelegate,
                     colDelegate: thumbnailColumn
                 })
             }]
@@ -246,11 +223,11 @@ MainInterface.MainViewLoader {
 
                     isSortable: false,
 
-                    headerDelegate: thumbnailHeader,
+                    headerDelegate: tableColumns.titleHeaderDelegate,
                     colDelegate: thumbnailColumn
                 }
             }, {
-                size: tableView._nameColSpan,
+                weight: 1,
 
                 model: {
                     criteria: "name",
@@ -258,7 +235,7 @@ MainInterface.MainViewLoader {
                     text: qsTr("Name")
                 }
             }, {
-                size: Math.max(_nbCols - _nameColSpan - 1, 1),
+                weight: 1,
 
                 model: {
                     criteria: "mrl",
@@ -266,6 +243,18 @@ MainInterface.MainViewLoader {
                     text: qsTr("Url"),
 
                     showContextButton: true
+                }
+            }, {
+                size: 1,
+
+                model: {
+                    criteria: "duration",
+
+                    text: qsTr("Duration"),
+
+                    showContextButton: true,
+                    headerDelegate: tableColumns.timeHeaderDelegate,
+                    colDelegate: tableColumns.timeColDelegate
                 }
             }]
 
@@ -306,6 +295,15 @@ MainInterface.MainViewLoader {
             }
             onRightClick: (_,_,globalMousePos) => {
                 contextMenu.popup(selectionModel.selectedIndexes, globalMousePos)
+            }
+
+            Widgets.TableColumns {
+                id: tableColumns
+
+                titleCover_width: VLCStyle.listAlbumCover_width
+                titleCover_height: VLCStyle.listAlbumCover_height
+
+                showTitleText: false
             }
         }
     }

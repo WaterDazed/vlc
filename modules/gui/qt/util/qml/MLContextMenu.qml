@@ -18,11 +18,11 @@
  *****************************************************************************/
 import QtQml
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
+import VLC.Dialogs
 
-
-import "qrc:///util/Helpers.js" as Helpers
+import VLC.Util
 
 // @brief - a generic ML context menu
 NativeMenu {

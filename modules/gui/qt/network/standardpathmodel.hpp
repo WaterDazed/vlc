@@ -26,10 +26,10 @@
 #endif
 
 // VLC includes
-#include "util/base_model.hpp"
+#include "networkbasemodel.hpp"
 
 class StandardPathModelPrivate;
-class StandardPathModel : public BaseModel
+class StandardPathModel : public NetworkBaseModel
 {
     Q_OBJECT
 
@@ -37,11 +37,7 @@ public: // Enums
     // NOTE: Roles should be aligned with the NetworkDeviceModel.
     enum Role
     {
-        PATH_NAME = Qt::UserRole + 1,
-        PATH_MRL,
-        PATH_TYPE,
-        PATH_PROTOCOL,
-        PATH_SOURCE,
+        PATH_SOURCE = NetworkBaseModel::NETWORK_BASE_MAX,
         PATH_TREE,
         PATH_ARTWORK
     };

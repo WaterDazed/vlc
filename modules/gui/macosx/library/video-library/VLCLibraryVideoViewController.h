@@ -25,6 +25,7 @@
 @class VLCLoadingOverlayView;
 @class VLCLibraryWindow;
 @class VLCLibraryVideoDataSource;
+@class VLCLibraryShowsDataSource;
 
 @protocol VLCMediaLibraryItemProtocol;
 
@@ -50,11 +51,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly) VLCLoadingOverlayView *loadingOverlayView;
 
 @property (readonly) VLCLibraryVideoDataSource *libraryVideoDataSource;
+@property (readonly) VLCLibraryShowsDataSource *libraryShowsDataSource;
 
 @property (readonly) NSArray<NSLayoutConstraint *> *videoPlaceholderImageViewSizeConstraints;
 
 - (instancetype)initWithLibraryWindow:(VLCLibraryWindow *)libraryWindow;
 - (void)presentVideoView;
+- (void)presentShowsView;
 - (void)presentLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem;
 
 @end

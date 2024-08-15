@@ -19,15 +19,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQml.Models
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MediaLibrary
 
-import "qrc:///util" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Style
 
-MainInterface.MainTableView {
+MainTableView {
     id: listView_id
 
     //---------------------------------------------------------------------------------------------
@@ -42,10 +41,8 @@ MainInterface.MainTableView {
     //---------------------------------------------------------------------------------------------
     // Private
 
-    readonly property int _nbCols: VLCStyle.gridColumnsForWidth(availableRowWidth)
-
     property var _modelSmall: [{
-        size: Math.max(2, _nbCols),
+        weight: 1,
 
         model: ({
             criteria: mainCriteria,
@@ -64,33 +61,19 @@ MainInterface.MainTableView {
     }]
 
     property var _modelMedium: [{
-        size: 1,
-
-        model: ({
-            type: "image",
-
-            criteria: "thumbnail",
-
-            text: qsTr("Cover"),
-
-            isSortable: false,
-
-            showSection: "",
-
-            placeHolder: VLCStyle.noArtVideoCover,
-
-            headerDelegate: tableColumns.titleHeaderDelegate,
-            colDelegate   : tableColumns.titleDelegate
-        })
-    }, {
-        size: Math.max(1, _nbCols - 2),
+        weight: 1,
 
         model: ({
             criteria: mainCriteria,
 
             showSection: "title",
 
-            text: qsTr("Title")
+            text: qsTr("Title"),
+
+            headerDelegate: tableColumns.titleHeaderDelegate,
+            colDelegate   : tableColumns.titleDelegate,
+
+            placeHolder: VLCStyle.noArtVideoCover
         })
     }, {
         size: 1,
@@ -124,8 +107,7 @@ MainInterface.MainTableView {
     Widgets.MLTableColumns {
         id: tableColumns
 
-        showTitleText: (listView_id.sortModel === listView_id._modelSmall)
-        showCriterias: showTitleText
+        showCriterias: (listView_id.sortModel === listView_id._modelSmall)
 
         criteriaCover: "thumbnail"
 

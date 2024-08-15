@@ -20,13 +20,13 @@
 
 import QtQuick
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
+import VLC.Menus
 
 VideoAll {
     id: root
@@ -52,7 +52,7 @@ VideoAll {
 
     model: _meta?.model ?? null
 
-    contextMenu: Util.MLContextMenu { model: _meta ? _meta.model : null; showPlayAsAudioAction: true }
+    contextMenu: MLContextMenu { model: _meta ? _meta.model : null; showPlayAsAudioAction: true }
 
     gridLabels: _meta?.gridLabels ?? root.getLabel
 
@@ -267,6 +267,9 @@ VideoAll {
         rightPadding: root.rightPadding
 
         nbItemPerRow: root.currentItem?.nbItemPerRow ?? 0
+
+        allVideosContentLeftMargin: root.currentItem?.contentLeftMargin ?? 0
+        allVideosContentRightMargin: root.currentItem?.contentRightMargin ?? 0
 
         subtitleText: (root.model && root.model.count > 0) ? qsTr("Videos") : ""
 

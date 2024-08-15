@@ -21,6 +21,7 @@
 #include <player/player_controller.hpp>
 #include <playlist/playlist_controller.hpp>
 #include "util/keyhelper.hpp"
+#include "dialogs/systray/systray.hpp"
 #include <QScreen>
 #include <QQmlProperty>
 #include <cmath>
@@ -229,6 +230,19 @@ bool InterfaceWindowHandler::eventFilter(QObject*, QEvent* event)
     }
     case QEvent::Close:
     {
+        if (var_InheritBool(p_intf, "qt-close-to-system-tray"))
+        {
+            if (const QSystemTrayIcon* const sysTrayIcon = m_mainCtx->getSysTray())
+            {
+                if (sysTrayIcon->isSystemTrayAvailable() && sysTrayIcon->isVisible())
+                {
+                    setInterfaceHiden();
+                    event->accept();
+                    return true;
+                }
+            }
+        }
+
         bool ret = m_mainCtx->onWindowClose(m_window);
         if (ret)
         {

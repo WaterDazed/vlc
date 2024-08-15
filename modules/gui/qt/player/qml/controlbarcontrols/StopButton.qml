@@ -17,15 +17,16 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Player
+import VLC.Playlist
 
 
 Widgets.IconToolButton {
     id: stopBtn
-    enabled: Player.isPlaying
+    enabled: Player.isStarted
     text: VLCIcons.stop
     onClicked: MainPlaylistController.stop()
     description: qsTr("Stop")

@@ -18,7 +18,7 @@
 
 import QtQuick
 
-import org.videolan.vlc 0.1
+import VLC.Util
 
 ScaledImage {
 

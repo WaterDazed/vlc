@@ -20,11 +20,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/Helpers.js" as Helpers
+import VLC.MainInterface
+import VLC.Player
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Util
 
 ColumnLayout {
     id: root

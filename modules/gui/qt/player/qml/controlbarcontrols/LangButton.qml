@@ -18,11 +18,10 @@
 
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-import "qrc:///player/" as Player
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Player
 
 Widgets.IconToolButton {
     id: root
@@ -59,7 +58,7 @@ Widgets.IconToolButton {
     Loader {
         id: menuLoader
 
-        sourceComponent: Player.TracksMenu {
+        sourceComponent: TracksMenu {
             id: menu
 
             parent: root._parentItem

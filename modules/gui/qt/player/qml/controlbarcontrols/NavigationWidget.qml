@@ -21,10 +21,11 @@
 import QtQuick
 import QtQuick.Templates as Templates
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Player
 
 Templates.Pane {
     id: root
@@ -37,7 +38,7 @@ Templates.Pane {
 
     // Private
 
-    readonly property string _controlPath : "qrc:///player/controlbarcontrols/"
+    readonly property string _controlPath : "qrc:///qt/qml/VLC/PlayerControls/"
 
     // Signals
 

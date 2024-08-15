@@ -65,9 +65,7 @@ protected:
 
 private:
     void onVlcMlEvent(const MLEvent &event) override;
-    vlc_ml_sorting_criteria_t roleToCriteria(int role) const override;
     vlc_ml_sorting_criteria_t nameToCriteria(QByteArray name) const override;
-    QByteArray criteriaToName(vlc_ml_sorting_criteria_t criteria) const override;
 
     QString getCover(MLGenre * genre) const;
 
@@ -81,9 +79,6 @@ private:
         std::vector<std::unique_ptr<MLItem>> load(vlc_medialibrary_t* ml, const vlc_ml_query_params_t* queryParams) const override;
         std::unique_ptr<MLItem> loadItemById(vlc_medialibrary_t* ml, MLItemId itemId) const override;
     };
-
-private: // Variables
-    static QHash<QByteArray, vlc_ml_sorting_criteria_t> M_names_to_criteria;
 };
 
 

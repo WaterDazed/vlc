@@ -65,6 +65,9 @@
 
 #include <cassert>
 #include <math.h>
+#ifdef _WIN32
+#include <wrl/client.h>
+#endif
 
 #define ICON_HEIGHT 48
 #define ICON_WIDTH 48
@@ -191,6 +194,7 @@ static int getDefaultAudioVolume(const char *aout)
 
 namespace
 {
+#if !defined( _WIN32)
     void fillStylesCombo( QComboBox *stylesCombo, const QString &initialStyle)
     {
         stylesCombo->addItem( qtr("System's default") );
@@ -200,6 +204,7 @@ namespace
         if ( stylesCombo->currentIndex() < 0 )
             stylesCombo->setCurrentIndex( 0 ); /* default */
     }
+#endif
 
     QString getQStyleKey(const QComboBox *stylesCombo, const QString &defaultStyleName)
     {
@@ -1043,6 +1048,9 @@ SPrefsPanel::SPrefsPanel( qt_intf_t *_p_intf, QWidget *_parent,
 
                 BUTTONACT( ui.addButton, &SPrefsPanel::MLaddNewFolder );
                 BUTTONACT( ui.banButton, &SPrefsPanel::MLBanFolder );
+
+                connect( ui.reloadButton, &QPushButton::clicked
+                        , p_intf->p_mi->getMediaLibrary(), &MediaLib::reload);
             }
             else
             {
@@ -1418,36 +1426,21 @@ bool SPrefsPanel::addType( const char * psz_ext, QTreeWidgetItem* current,
     return b_temp;
 }
 
-#if !defined(__IApplicationAssociationRegistrationUI_INTERFACE_DEFINED__)
-#define __IApplicationAssociationRegistrationUI_INTERFACE_DEFINED__
-    const GUID IID_IApplicationAssociationRegistrationUI = {0x1f76a169,0xf994,0x40ac, {0x8f,0xc8,0x09,0x59,0xe8,0x87,0x47,0x10}};
-    extern const GUID CLSID_ApplicationAssociationRegistrationUI;
-    interface IApplicationAssociationRegistrationUI : public IUnknown
-    {
-        virtual HRESULT STDMETHODCALLTYPE LaunchAdvancedAssociationUI(
-                LPCWSTR pszAppRegName) = 0;
-    };
-#endif /* __IApplicationAssociationRegistrationUI_INTERFACE_DEFINED__ */
-
 void SPrefsPanel::assoDialog()
 {
     HRESULT hr;
 
-    hr = CoInitializeEx( NULL, COINIT_APARTMENTTHREADED );
+    hr = CoInitializeEx( NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE );
     if( SUCCEEDED(hr) )
     {
-        void *p;
-
-        hr = CoCreateInstance(CLSID_ApplicationAssociationRegistrationUI,
-                              NULL, CLSCTX_INPROC_SERVER,
-                              IID_IApplicationAssociationRegistrationUI, &p);
-        if( SUCCEEDED(hr) )
         {
-            IApplicationAssociationRegistrationUI *p_regui =
-                (IApplicationAssociationRegistrationUI *)p;
+            Microsoft::WRL::ComPtr<IApplicationAssociationRegistrationUI> p_regui;
 
-            hr = p_regui->LaunchAdvancedAssociationUI(L"VLC" );
-            p_regui->Release();
+            hr = CoCreateInstance(__uuidof(ApplicationAssociationRegistrationUI),
+                                NULL, CLSCTX_INPROC_SERVER,
+                                IID_PPV_ARGS(&p_regui));
+            if( SUCCEEDED(hr) )
+                p_regui->LaunchAdvancedAssociationUI(L"VLC" );
         }
         CoUninitialize();
     }

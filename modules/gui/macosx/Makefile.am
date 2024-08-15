@@ -98,6 +98,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCInputNodePathControl.m \
 	gui/macosx/library/VLCInputNodePathControlItem.h \
 	gui/macosx/library/VLCInputNodePathControlItem.m \
+	gui/macosx/library/VLCLibraryAbstractGroupingDataSource.h \
+	gui/macosx/library/VLCLibraryAbstractGroupingDataSource.m \
 	gui/macosx/library/VLCLibraryCarouselViewItemView.h \
 	gui/macosx/library/VLCLibraryCarouselViewItemView.m \
 	gui/macosx/library/VLCLibraryCollectionViewDataSource.h \
@@ -109,6 +111,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryCollectionViewItem.m \
 	gui/macosx/library/VLCLibraryCollectionViewMediaItemSupplementaryDetailView.h \
 	gui/macosx/library/VLCLibraryCollectionViewMediaItemSupplementaryDetailView.m \
+	gui/macosx/library/VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.h \
+	gui/macosx/library/VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.m \
 	gui/macosx/library/VLCLibraryCollectionViewSupplementaryDetailView.h \
 	gui/macosx/library/VLCLibraryCollectionViewSupplementaryDetailView.m \
 	gui/macosx/library/VLCLibraryCollectionViewSupplementaryElementView.h \
@@ -121,6 +125,11 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryHeroView.m \
 	gui/macosx/library/VLCLibraryImageCache.h \
 	gui/macosx/library/VLCLibraryImageCache.m \
+	gui/macosx/library/VLCLibraryItemInternalMediaItemsDataSource.h \
+	gui/macosx/library/VLCLibraryItemInternalMediaItemsDataSource.m \
+	gui/macosx/library/VLCLibraryMasterDetailViewTableViewDataSource.h \
+	gui/macosx/library/VLCLibraryMasterDetailViewTableViewDelegate.h \
+	gui/macosx/library/VLCLibraryMasterDetailViewTableViewDelegate.m \
 	gui/macosx/library/VLCLibraryMenuController.h \
 	gui/macosx/library/VLCLibraryMenuController.m \
 	gui/macosx/library/VLCLibraryModel.h \
@@ -135,6 +144,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryRepresentedItem.m \
 	gui/macosx/library/VLCLibrarySegment.h \
 	gui/macosx/library/VLCLibrarySegment.m \
+	gui/macosx/library/VLCLibrarySegmentBookmarkedLocation.h \
+	gui/macosx/library/VLCLibrarySegmentBookmarkedLocation.m \
 	gui/macosx/library/VLCLibrarySortingMenuController.h \
 	gui/macosx/library/VLCLibrarySortingMenuController.m \
 	gui/macosx/library/VLCLibraryTableView.h \
@@ -153,6 +164,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryWindow.m \
 	gui/macosx/library/VLCLibraryWindowController.h \
 	gui/macosx/library/VLCLibraryWindowController.m \
+	gui/macosx/library/VLCLibraryWindowNavigationSidebarOutlineView.h \
+	gui/macosx/library/VLCLibraryWindowNavigationSidebarOutlineView.m \
 	gui/macosx/library/VLCLibraryWindowNavigationSidebarViewController.h \
 	gui/macosx/library/VLCLibraryWindowNavigationSidebarViewController.m \
 	gui/macosx/library/VLCLibraryWindowPersistentPreferences.h \
@@ -163,6 +176,10 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryWindowSplitViewController.m \
 	gui/macosx/library/VLCLibraryWindowToolbarDelegate.h \
 	gui/macosx/library/VLCLibraryWindowToolbarDelegate.m \
+	gui/macosx/library/groups-library/VLCLibraryGroupsDataSource.h \
+	gui/macosx/library/groups-library/VLCLibraryGroupsDataSource.m \
+	gui/macosx/library/groups-library/VLCLibraryGroupsViewController.h \
+	gui/macosx/library/groups-library/VLCLibraryGroupsViewController.m \
 	gui/macosx/library/home-library/VLCLibraryHomeViewAudioCarouselContainerView.h \
 	gui/macosx/library/home-library/VLCLibraryHomeViewAudioCarouselContainerView.m \
 	gui/macosx/library/home-library/VLCLibraryHomeViewBaseCarouselContainerView.h \
@@ -179,6 +196,8 @@ libmacosx_plugin_la_SOURCES = \
     gui/macosx/library/home-library/VLCLibraryHomeViewVideoContainerViewDataSource.m \
 	gui/macosx/library/home-library/VLCLibraryHomeViewVideoGridContainerView.h \
     gui/macosx/library/home-library/VLCLibraryHomeViewVideoGridContainerView.m \
+	gui/macosx/library/video-library/VLCLibraryShowsDataSource.h \
+	gui/macosx/library/video-library/VLCLibraryShowsDataSource.m \
 	gui/macosx/library/video-library/VLCLibraryVideoViewController.h \
 	gui/macosx/library/video-library/VLCLibraryVideoViewController.m \
 	gui/macosx/library/video-library/VLCLibraryVideoGroupDescriptor.h \
@@ -189,8 +208,6 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/video-library/VLCLibraryVideoTableViewDelegate.m \
 	gui/macosx/library/audio-library/VLCLibraryAlbumTableCellView.h \
 	gui/macosx/library/audio-library/VLCLibraryAlbumTableCellView.m \
-	gui/macosx/library/audio-library/VLCLibraryAlbumTracksDataSource.h \
-	gui/macosx/library/audio-library/VLCLibraryAlbumTracksDataSource.m \
 	gui/macosx/library/audio-library/VLCLibraryAlbumTracksTableViewDelegate.h \
 	gui/macosx/library/audio-library/VLCLibraryAlbumTracksTableViewDelegate.m \
 	gui/macosx/library/audio-library/VLCLibraryAllAudioGroupsMediaLibraryItem.h \
@@ -207,8 +224,6 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/audio-library/VLCLibraryAudioTableViewDelegate.m \
 	gui/macosx/library/audio-library/VLCLibraryAudioViewController.h \
 	gui/macosx/library/audio-library/VLCLibraryAudioViewController.m \
-	gui/macosx/library/audio-library/VLCLibraryCollectionViewAlbumSupplementaryDetailView.h \
-	gui/macosx/library/audio-library/VLCLibraryCollectionViewAlbumSupplementaryDetailView.m \
 	gui/macosx/library/audio-library/VLCLibrarySongTableCellView.h \
 	gui/macosx/library/audio-library/VLCLibrarySongTableCellView.m \
 	gui/macosx/library/audio-library/VLCLibrarySongsTableViewSongPlayingTableCellView.h \
@@ -227,6 +242,10 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/media-source/VLCMediaSourceDeviceCollectionViewItem.m \
 	gui/macosx/library/media-source/VLCMediaSourceProvider.h \
 	gui/macosx/library/media-source/VLCMediaSourceProvider.m \
+	gui/macosx/library/playlist-library/VLCLibraryPlaylistDataSource.h \
+	gui/macosx/library/playlist-library/VLCLibraryPlaylistDataSource.m \
+	gui/macosx/library/playlist-library/VLCLibraryPlaylistViewController.h \
+	gui/macosx/library/playlist-library/VLCLibraryPlaylistViewController.m \
 	gui/macosx/main/CompatibilityFixes.h \
 	gui/macosx/main/CompatibilityFixes.m \
 	gui/macosx/main/VLCApplication.h \
@@ -348,16 +367,16 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/views/VLCLoadingOverlayView.m \
 	gui/macosx/views/VLCNoResultsLabel.h \
 	gui/macosx/views/VLCNoResultsLabel.m \
+	gui/macosx/views/VLCPlaybackProgressSlider.h \
+	gui/macosx/views/VLCPlaybackProgressSlider.m \
+	gui/macosx/views/VLCPlaybackProgressSliderCell.h \
+	gui/macosx/views/VLCPlaybackProgressSliderCell.m \
 	gui/macosx/views/VLCRoundedCornerTextField.h \
 	gui/macosx/views/VLCRoundedCornerTextField.m \
 	gui/macosx/views/VLCScrollingClipView.h \
 	gui/macosx/views/VLCScrollingClipView.m \
 	gui/macosx/views/VLCSettingTextField.h \
 	gui/macosx/views/VLCSettingTextField.m \
-	gui/macosx/views/VLCSlider.h \
-	gui/macosx/views/VLCSlider.m \
-	gui/macosx/views/VLCSliderCell.h \
-	gui/macosx/views/VLCSliderCell.m \
 	gui/macosx/views/VLCSubScrollView.h \
 	gui/macosx/views/VLCSubScrollView.m \
 	gui/macosx/views/VLCTimeField.h \
@@ -450,7 +469,7 @@ libmacosx_plugin_la_XIB_SOURCES = \
 	gui/macosx/UI/VLCPlaylistTableCellView.xib \
 	gui/macosx/UI/VLCLibraryCarouselViewItemView.xib \
 	gui/macosx/UI/VLCLibraryCollectionViewItem.xib \
-	gui/macosx/UI/VLCLibraryCollectionViewAlbumSupplementaryDetailView.xib \
+	gui/macosx/UI/VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.xib \
 	gui/macosx/UI/VLCLibraryCollectionViewMediaItemSupplementaryDetailView.xib \
 	gui/macosx/UI/VLCLibraryHeroView.xib \
 	gui/macosx/UI/VLCLibrarySongTableCellView.xib \

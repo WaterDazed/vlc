@@ -21,10 +21,10 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
 
 FocusScope {
     id: controlLayout

@@ -102,13 +102,6 @@ AX_CHECK_COMPILE_FLAG([-Werror=unknown-warning-option], [
   AX_APPEND_FLAG([-Werror=unknown-warning-option], [OBJCFLAGS])
 ])
 
-dnl Some Qt version are generating tons of warning that cannot be
-dnl avoided so mute them...
-AX_CHECK_COMPILE_FLAG([-Wno-deprecated-copy], [
-  VLC_ADD_CXXFLAGS([qt],[-Wno-deprecated-copy])
-])
-
-
 dnl
 dnl  Check the operating system
 dnl
@@ -118,6 +111,7 @@ HAVE_OSX="0"
 HAVE_TVOS="0"
 HAVE_IOS_OR_TVOS="0"
 HAVE_XROS="0"
+HAVE_WATCHOS="0"
 
 dnl  Set x86 asm flags and defines
 X86ASMFLAGS=""
@@ -243,6 +237,19 @@ int foo() { return my_array[0]; }
              yes
              #endif],
              [HAVE_XROS="1"
+             HAVE_IOS="0"
+             HAVE_OSX="0"
+             HAVE_TVOS="0"
+             HAVE_IOS_OR_TVOS="0"
+             ac_cv_func_fork=no
+             ],)
+
+    AC_EGREP_CPP(yes,
+            [#import <TargetConditionals.h>
+             #if TARGET_OS_WATCH
+             yes
+             #endif],
+             [HAVE_WATCHOS="1"
              HAVE_IOS="0"
              HAVE_OSX="0"
              HAVE_TVOS="0"
@@ -493,6 +500,7 @@ AM_CONDITIONAL([HAVE_OSX],     [test "${HAVE_OSX}" = "1"])
 AM_CONDITIONAL([HAVE_TVOS],    [test "${HAVE_TVOS}" = "1"])
 AM_CONDITIONAL([HAVE_IOS_OR_TVOS], [test "${HAVE_IOS_OR_TVOS}" = "1"])
 AM_CONDITIONAL([HAVE_XROS],    [test "${HAVE_XROS}" = "1"])
+AM_CONDITIONAL([HAVE_WATCHOS],    [test "${HAVE_WATCHOS}" = "1"])
 
 AM_CONDITIONAL([HAVE_LIBANL],  [test "${HAVE_LIBANL}" = "1"])
 
@@ -1882,18 +1890,70 @@ AC_ARG_ENABLE([rust],
   AS_HELP_STRING([--enable-rust],
     [enable building Rust modules (default disabled)]))
 AS_IF([test "${enable_rust}" = "yes"],[
+
+  rust_target_flags=
+  AS_IF([test "$vlc_winstore_app" = "1"],[
+    rust_target_flags="${rust_target_flags} --uwp"
+  ])
+  AS_IF([test -n "$(eval ${CC} --version 2>/dev/null | grep 'clang')"],[
+    rust_target_flags="${rust_target_flags} --llvm"
+  ])
+  AS_IF([test "${HAVE_TVOS}" = "1"],[
+    rust_target_flags="${rust_target_flags} --darwin=tvos"
+  ],[
+    AS_IF([test "${HAVE_WATCHOS}" = "1"],[
+      rust_target_flags="${rust_target_flags} --darwin=watchos"
+    ],[
+      AS_IF([test "${HAVE_XROS}" = "1"],[
+        rust_target_flags="${rust_target_flags} --darwin=xros"
+      ],[
+        AS_IF([test "${HAVE_IOS}" = "1"],[
+          rust_target_flags="${rust_target_flags} --darwin=ios"
+        ],[
+          AS_IF([test "${HAVE_OSX}" = "1"],[
+            rust_target_flags="${rust_target_flags} --darwin=macos"
+          ])
+        ])
+      ])
+    ])
+  ])
+
+  AC_MSG_CHECKING([Rust target])
+  rust_target=$(${srcdir}/contrib/src/get-rust-target.sh \
+    ${rust_target_flags} \
+    ${host})
+  ac_status=$?
+  AS_IF([test $ac_status = 0],[
+    AC_MSG_RESULT([${rust_target}])
+    AC_SUBST([RUST_TARGET], ["${rust_target}"])
+  ],[
+    AC_MSG_RESULT([unsupported])
+    AC_MSG_ERROR([Unsupported Rust target for ${host}])
+  ])
+
+  AS_IF([test -n "${CARGO_HOME}"],[
+    AS_IF([test -x "${CARGO_HOME}/bin/cargo"],[
+      ac_cv_prog_CARGO="${CARGO_HOME}/bin/cargo"
+    ])
+    AS_IF([test -x "${CARGO_HOME}/bin/rustc"],[
+      ac_cv_prog_RUSTC="${CARGO_HOME}/bin/rustc"
+    ])
+  ])
+
   AC_CHECK_PROGS(RUSTC, [rustc], [no])
   AS_IF([test "$RUSTC" = "no"],[
     AC_MSG_ERROR([rustc not found but required to build Rust modules])
   ])
-  AS_IF([test "${host}" = "${build}"],[
-    AC_CACHE_CHECK([rustc host target], [ac_cv_rustc_host_target],
-                     [ac_cv_rustc_host_target=$($RUSTC --verbose --version | grep "host:" | cut -d" " -f2-)])
-    AS_IF([test -n "${ac_cv_rustc_host_target}"],
-           [AC_SUBST([RUST_TARGET], ["$ac_cv_rustc_host_target"])],
-           [AC_MSG_ERROR(failed to extract rustc host target)])
+
+  AC_MSG_CHECKING([Rust compiler supports ${rust_target}])
+  ac_try="echo 'fn main() {}' | \"${RUSTC}\" --target=${rust_target} --emit=dep-info - -o -"
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  AS_IF([test $ac_status = 0],[
+    AC_MSG_RESULT([yes])
   ],[
-    AC_MSG_ERROR([cross compilation is not yet supported for Rust modules (${host} != ${build})])
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([Required target ${rust_target} missing])
   ])
   AC_CHECK_PROGS(CARGO, [cargo], [no])
   AS_IF([test "$CARGO" = "no"],[
@@ -2602,9 +2662,9 @@ AS_HELP_STRING([--enable-merge-ffmpeg], [merge FFmpeg-based plugins (default dis
 ])
 AM_CONDITIONAL([MERGE_FFMPEG], [test "$enable_merge_ffmpeg" != "no"])
 
-dnl We need >=57.37.100 from ffmpeg
-dnl 7fc329e2dd6226dfecaa4a1d7adf353bf2773726  include libavutil 55.22.101
-PKG_HAVE_WITH_MODULES([AVCODEC], [libavcodec >= 57.37.100 libavutil >= 55.22.101],
+dnl We require ffmpeg >= 4.2
+dnl Ubuntu Focal (20.04 LTS) has 4.2, debian stable (bookworm) has 5.1
+PKG_HAVE_WITH_MODULES([AVCODEC], [libavcodec >= 58.54.100 libavutil >= 56.31.100],
                        [libavcodec codec (default enabled)], [yes])
 
 dnl
@@ -2764,7 +2824,7 @@ AS_HELP_STRING([--enable-avformat], [libavformat containers (default enabled)]),
 ])
 have_avformat="no"
 AS_IF([test "${enable_avformat}" != "no"], [
-  PKG_CHECK_MODULES(AVFORMAT,[libavformat >= 53.21.0 libavcodec libavutil], [
+  PKG_CHECK_MODULES(AVFORMAT,[libavformat >= 58.29.100 libavcodec libavutil], [
       have_avformat="yes"
       VLC_SAVE_FLAGS
       CPPFLAGS="${CPPFLAGS} ${AVFORMAT_CFLAGS}"
@@ -3437,16 +3497,8 @@ AM_CONDITIONAL([HAVE_VDPAU], [test "${have_vdpau}" = "yes"])
 
 have_avcodec_vdpau="no"
 AS_IF([test "${have_vdpau}" = "yes" -a "${enable_avcodec}" != "no"], [
-  PKG_CHECK_EXISTS([libavcodec >= 56.19.100], [
-    have_avcodec_vdpau="yes"
-    AC_MSG_NOTICE([VDPAU decoding acceleration activated])
-  ], [
-    AS_IF([test -n "${enable_vdpau}"], [
-      AC_MSG_ERROR([libavcodec >= 56.10.0 is required for VDPAU decoding.])
-    ], [
-      AC_MSG_WARN([libavcodec >= 56.10.0 are required for VDPAU decoding.])
-    ])
-  ])
+  have_avcodec_vdpau="yes"
+  AC_MSG_NOTICE([VDPAU decoding acceleration activated])
 ])
 AM_CONDITIONAL([HAVE_AVCODEC_VDPAU], [test "${have_avcodec_vdpau}" = "yes"])
 
@@ -4212,6 +4264,7 @@ AM_CONDITIONAL([HAVE_QT_DECLARATIVE_PRIVATE], [test "${have_qt_declarative_priva
 AM_CONDITIONAL([HAVE_QT_GUI_PRIVATE], [test "${have_qt_gui_private}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_CORE_PRIVATE], [test "${have_qt_core_private}" = "yes"])
 AM_CONDITIONAL([HAVE_FXC], [test "${have_fxc}" = "yes"])
+AM_CONDITIONAL([HAVE_QT67], [test "${QT_VERSION_MAJ}" -gt "6" || (test "${QT_VERSION_MAJ}" = "6" && test "${QT_VERSION_MIN}" -ge "7")])
 
 dnl
 dnl detect kde4-config patch (used for kde solids).
@@ -4869,18 +4922,18 @@ if test -n $SHELL; then
 fi
 rm -f compile
 compile_top_srcdir=`sed -ne "s/^top_srcdir *= *//p" < Makefile`
-echo "#! $SHELL
-rm -f .error\$\$
+[printf '%s\n' '#! '"${SHELL}"'
+rm -f .error$$
 ERROR=0
-export PATH=\"$PATH\" LANG=C
-if [ "$NO_COLOR" = 1 ]; then
-($MAKE V=1 \$@ 2>&1 || touch .error\$\$)
+export PATH="$PATH" LANG=C
+if test "$NO_COLOR" = 1 ; then
+('"${MAKE}"' V=1 "$@" 2>&1 || touch .error$$)
 else
-($MAKE V=1 \$@ 2>&1 || touch .error\$\$)| $compile_top_srcdir/extras/buildsystem/make.pl
+('"${MAKE}"' V=1 "$@" 2>&1 || touch .error$$)| '"$compile_top_srcdir"'/extras/buildsystem/make.pl
 fi
-test -f .error\$\$ && ERROR=1
-rm -f .error\$\$
-exit \$ERROR" >compile
+test -f .error$$ && ERROR=1
+rm -f .error$$
+exit $ERROR'] >compile
 chmod a+x compile
 
 echo "

@@ -18,12 +18,12 @@
 import QtQuick
 import QtQuick.Controls
 import QtQml.Models
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///util/" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Style
 
 Widgets.PageLoader {
     id: root

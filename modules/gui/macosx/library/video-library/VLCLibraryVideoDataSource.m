@@ -63,24 +63,6 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
     return self;
 }
 
-- (void)setupCollectionView:(NSCollectionView *)collectionView
-{
-    [collectionView registerClass:VLCLibraryCollectionViewItem.class
-            forItemWithIdentifier:VLCLibraryCellIdentifier];
-
-    [collectionView registerClass:VLCLibraryCollectionViewSupplementaryElementView.class
-       forSupplementaryViewOfKind:NSCollectionElementKindSectionHeader
-                   withIdentifier:VLCLibrarySupplementaryElementViewIdentifier];
-
-    NSNib * const mediaItemSupplementaryDetailView = [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryCollectionViewMediaItemSupplementaryDetailView.class) bundle:nil];
-    [collectionView registerNib:mediaItemSupplementaryDetailView
-     forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind
-                 withIdentifier:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewIdentifier];
-
-    collectionView.dataSource = self;
-    [collectionView reloadData];
-}
-
 - (NSUInteger)indexOfMediaItem:(const NSUInteger)libraryId inArray:(NSArray const *)array
 {
     return [array indexOfObjectPassingTest:^BOOL(VLCMediaLibraryMediaItem * const findMediaItem, const NSUInteger idx, BOOL * const stop) {
@@ -190,8 +172,16 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
 
     self->_recentsArray = [self.libraryModel listOfRecentMedia];
     self->_libraryArray = [self.libraryModel listOfVideoMedia];
-    [self.groupSelectionTableView reloadData];
-    [self.collectionView reloadData];
+
+    if (self.masterTableView.dataSource == self) {
+        [self.masterTableView reloadData];
+    }
+    if (self.detailTableView.dataSource == self) {
+        [self.detailTableView reloadData];
+    }
+    if (self.collectionView.dataSource == self) {
+        [self.collectionView reloadData];
+    }
     [NSNotificationCenter.defaultCenter postNotificationName:VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
                                                       object:self
                                                     userInfo:nil];
@@ -249,18 +239,24 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
 
     } completionHandler:^(NSIndexSet * const rowIndexSet) {
 
-        const NSInteger section = [self videoGroupToRow:group];
-        NSSet<NSIndexPath *> * const indexPathSet = [rowIndexSet indexPathSetWithSection:section];
-        [self.collectionView insertItemsAtIndexPaths:indexPathSet];
-
-        const NSInteger selectedTableViewVideoGroup = [self rowToVideoGroup:self.groupsTableView.selectedRow];
-        if (selectedTableViewVideoGroup == group) {
-            // Don't regenerate the groups by index as these do not change according to the notification
-            // Stick to the selection table view
-            const NSRange columnRange = NSMakeRange(0, self->_groupsTableView.numberOfColumns);
-            NSIndexSet * const columnIndexSet = [NSIndexSet indexSetWithIndexesInRange:columnRange];
-            [self.groupSelectionTableView reloadDataForRowIndexes:rowIndexSet columnIndexes:columnIndexSet];
+        if (self.collectionView.dataSource == self) {
+            const NSInteger section = [self videoGroupToRow:group];
+            NSSet<NSIndexPath *> * const indexPathSet =
+                [rowIndexSet indexPathSetWithSection:section];
+            [self.collectionView reloadItemsAtIndexPaths:indexPathSet];
         }
+
+        if (self.detailTableView.dataSource == self &&
+            [self rowToVideoGroup:self.masterTableView.selectedRow] == group) {
+            // Don't regenerate the groups by index as these do not change according to the
+            // notification, stick to the selection table view
+            const NSRange columnRange = NSMakeRange(0, self.masterTableView.numberOfColumns);
+            NSIndexSet * const columnIndexSet =
+                [NSIndexSet indexSetWithIndexesInRange:columnRange];
+            [self.detailTableView reloadDataForRowIndexes:rowIndexSet columnIndexes:columnIndexSet];
+        }
+
+        // Don't bother with the groups table view as we always show "recents" and "videos" there
     }];
 }
 
@@ -273,17 +269,21 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
 
         [mediaArray removeObjectAtIndex:mediaItemIndex];
 
-    } completionHandler:^(NSIndexSet * const rowIndexSet){
+    } completionHandler:^(NSIndexSet * const rowIndexSet) {
 
-        const NSInteger section = [self videoGroupToRow:group];
-        NSSet<NSIndexPath *> * const indexPathSet = [rowIndexSet indexPathSetWithSection:section];
-        [self.collectionView deleteItemsAtIndexPaths:indexPathSet];
+        if (self.collectionView.dataSource == self) {
+            const NSInteger section = [self videoGroupToRow:group];
+            NSSet<NSIndexPath *> * const indexPathSet =
+                [rowIndexSet indexPathSetWithSection:section];
+            [self.collectionView deleteItemsAtIndexPaths:indexPathSet];
+        }
 
-        const NSInteger selectedTableViewVideoGroup = [self rowToVideoGroup:self.groupsTableView.selectedRow];
-        if (selectedTableViewVideoGroup == group) {
-            // Don't regenerate the groups by index as these do not change according to the notification
-            // Stick to the selection table view
-            [self.groupSelectionTableView removeRowsAtIndexes:rowIndexSet withAnimation:NSTableViewAnimationSlideUp];
+        if (self.detailTableView.dataSource == self &&
+            [self rowToVideoGroup:self.masterTableView.selectedRow] == group) {
+            // Don't regenerate the groups by index as these do not change according to the
+            // notification, stick to the selection table view
+            [self.detailTableView removeRowsAtIndexes:rowIndexSet
+                                        withAnimation:NSTableViewAnimationSlideUp];
         }
     }];
 }
@@ -310,7 +310,7 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
     return anyRecents ? firstEntry : firstEntry + 1;
 }
 
-- (NSUInteger)rowToVideoGroup:(NSInteger)row
+- (VLCMediaLibraryParentGroupType)rowToVideoGroup:(NSInteger)row
 {
     return row + [self rowToVideoGroupAdjustment];
 }
@@ -329,23 +329,23 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
         return;
     }
 
-    [_groupsTableView reloadData];
+    [self.masterTableView reloadData];
     [self reloadData];
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
 {
-    if (tableView == _groupsTableView) {
+    if (tableView == self.masterTableView) {
         _priorNumVideoSections = [self recentItemsPresent] ? 2 : 1;
         return _priorNumVideoSections;
-    } else if (tableView == _groupSelectionTableView && _groupsTableView.selectedRow > -1) {
-        switch([self rowToVideoGroup:_groupsTableView.selectedRow]) {
+    } else if (tableView == self.detailTableView && self.masterTableView.selectedRow > -1) {
+        switch([self rowToVideoGroup:self.masterTableView.selectedRow]) {
             case VLCMediaLibraryParentGroupTypeRecentVideos:
                 return _recentsArray.count;
             case VLCMediaLibraryParentGroupTypeVideoLibrary:
                 return _libraryArray.count;
             default:
-                NSAssert(1, @"Reached unreachable case for video library section");
+                NSAssert(NO, @"Reached unreachable case for video library section");
                 break;
         }
     }
@@ -362,14 +362,14 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
 - (id<VLCMediaLibraryItemProtocol>)libraryItemAtRow:(NSInteger)row
                                        forTableView:(NSTableView *)tableView
 {
-    if (tableView == _groupSelectionTableView && _groupsTableView.selectedRow > -1) {
-        switch([self rowToVideoGroup:_groupsTableView.selectedRow]) {
+    if (tableView == self.detailTableView && self.masterTableView.selectedRow > -1) {
+        switch([self rowToVideoGroup:self.masterTableView.selectedRow]) {
             case VLCMediaLibraryParentGroupTypeRecentVideos:
                 return _recentsArray[row];
             case VLCMediaLibraryParentGroupTypeVideoLibrary:
                 return _libraryArray[row];
             default:
-                NSAssert(1, @"Reached unreachable case for video library section");
+                NSAssert(NO, @"Reached unreachable case for video library section");
                 break;
         }
     }
@@ -395,18 +395,15 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
 - (id<VLCMediaLibraryItemProtocol>)libraryItemAtIndexPath:(NSIndexPath *)indexPath
                                         forCollectionView:(NSCollectionView *)collectionView
 {
-    const NSInteger videoGroup = [self rowToVideoGroup:indexPath.section];
-    id<VLCMediaLibraryItemProtocol> item;
-    switch (videoGroup) {
-    case VLCMediaLibraryParentGroupTypeRecentVideos:
-        item = _recentsArray[indexPath.item];
-        break;
-    case VLCMediaLibraryParentGroupTypeVideoLibrary:
-        item = _libraryArray[indexPath.item];
-        break;
+    switch ([self rowToVideoGroup:indexPath.section]) {
+        case VLCMediaLibraryParentGroupTypeRecentVideos:
+            return _recentsArray[indexPath.item];
+        case VLCMediaLibraryParentGroupTypeVideoLibrary:
+            return _libraryArray[indexPath.item];
+        default:
+            NSAssert(NO, @"Unknown video group received");
+            return nil;
     }
-    NSAssert(item != nil, @"item should not be nil");
-    return item;
 }
 
 - (NSIndexPath *)indexPathForLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
@@ -422,31 +419,32 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
 - (NSArray<VLCLibraryRepresentedItem *> *)representedItemsAtIndexPaths:(NSSet<NSIndexPath *> *const)indexPaths
                                                      forCollectionView:(NSCollectionView *)collectionView
 {
-    NSMutableArray<VLCLibraryRepresentedItem *> * const representedItems = 
+    NSMutableArray<VLCLibraryRepresentedItem *> * const representedItems =
         [NSMutableArray arrayWithCapacity:indexPaths.count];
-    
+
     for (NSIndexPath * const indexPath in indexPaths) {
-        const id<VLCMediaLibraryItemProtocol> libraryItem = 
+        const VLCMediaLibraryParentGroupType parentType = [self rowToVideoGroup:indexPath.section];
+        const id<VLCMediaLibraryItemProtocol> libraryItem =
             [self libraryItemAtIndexPath:indexPath forCollectionView:collectionView];
-        VLCLibraryRepresentedItem * const representedItem = 
-            [[VLCLibraryRepresentedItem alloc] initWithItem:libraryItem 
-                                                 parentType:self.currentParentType];
+        VLCLibraryRepresentedItem * const representedItem =
+            [[VLCLibraryRepresentedItem alloc] initWithItem:libraryItem parentType:parentType];
         [representedItems addObject:representedItem];
     }
 
     return representedItems;
 }
 
-- (NSString *)titleForVideoGroup:(NSInteger)videoGroup
+- (NSString *)titleForVideoGroup:(VLCMediaLibraryParentGroupType)videoGroup
 {
     switch (videoGroup) {
-    case VLCMediaLibraryParentGroupTypeRecentVideos:
-        return _NS("Recents");
-    case VLCMediaLibraryParentGroupTypeVideoLibrary:
-        return _NS("Library");
+        case VLCMediaLibraryParentGroupTypeRecentVideos:
+            return _NS("Recents");
+        case VLCMediaLibraryParentGroupTypeVideoLibrary:
+            return _NS("Library");
+        default:
+            NSAssert(NO, @"Received unknown video group");
+            return @"";
     }
-    NSAssert(NO, @"Received unknown video group");
-    return @"";
 }
 
 - (NSInteger)numberOfSectionsInCollectionView:(NSCollectionView *)collectionView
@@ -458,23 +456,27 @@ NSString * const VLCLibraryVideoDataSourceDisplayedCollectionChangedNotification
 - (NSInteger)collectionView:(NSCollectionView *)collectionView
      numberOfItemsInSection:(NSInteger)section
 {
-    const NSInteger videoGroup = [self rowToVideoGroup:section];
-    switch (videoGroup) {
-    case VLCMediaLibraryParentGroupTypeRecentVideos:
-        return _recentsArray.count;
-    case VLCMediaLibraryParentGroupTypeVideoLibrary:
-        return _libraryArray.count;
+    switch ([self rowToVideoGroup:section]) {
+        case VLCMediaLibraryParentGroupTypeRecentVideos:
+            return _recentsArray.count;
+        case VLCMediaLibraryParentGroupTypeVideoLibrary:
+            return _libraryArray.count;
+        default:
+            NSAssert(NO, @"Unknown video group received.");
+            return NSNotFound;
     }
-    NSAssert(NO, @"Unknown video group received.");
-    return NSNotFound;
 }
 
 - (NSCollectionViewItem *)collectionView:(NSCollectionView *)collectionView
      itemForRepresentedObjectAtIndexPath:(NSIndexPath *)indexPath
 {
-    VLCLibraryCollectionViewItem * const viewItem = [collectionView makeItemWithIdentifier:VLCLibraryCellIdentifier forIndexPath:indexPath];
-    const id<VLCMediaLibraryItemProtocol> item = [self libraryItemAtIndexPath:indexPath forCollectionView:collectionView];
-    VLCLibraryRepresentedItem * const representedItem = [[VLCLibraryRepresentedItem alloc] initWithItem:item parentType:self.currentParentType];
+    VLCLibraryCollectionViewItem * const viewItem =
+        [collectionView makeItemWithIdentifier:VLCLibraryCellIdentifier forIndexPath:indexPath];
+    const VLCMediaLibraryParentGroupType parentType = [self rowToVideoGroup:indexPath.section];
+    const id<VLCMediaLibraryItemProtocol> item =
+        [self libraryItemAtIndexPath:indexPath forCollectionView:collectionView];
+    VLCLibraryRepresentedItem * const representedItem =
+        [[VLCLibraryRepresentedItem alloc] initWithItem:item parentType:parentType];
     viewItem.representedItem = representedItem;
     return viewItem;
 }
@@ -484,8 +486,11 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
                atIndexPath:(NSIndexPath *)indexPath
 {
     if([kind isEqualToString:NSCollectionElementKindSectionHeader]) {
-        VLCLibraryCollectionViewSupplementaryElementView * const sectionHeadingView = [collectionView makeSupplementaryViewOfKind:kind withIdentifier:VLCLibrarySupplementaryElementViewIdentifier forIndexPath:indexPath];
-        const NSInteger videoGroup = [self rowToVideoGroup:indexPath.section];
+        VLCLibraryCollectionViewSupplementaryElementView * const sectionHeadingView =
+            [collectionView makeSupplementaryViewOfKind:kind
+                                         withIdentifier:VLCLibrarySupplementaryElementViewIdentifier
+                                           forIndexPath:indexPath];
+        const VLCMediaLibraryParentGroupType videoGroup = [self rowToVideoGroup:indexPath.section];
         sectionHeadingView.stringValue = [self titleForVideoGroup:videoGroup];
         return sectionHeadingView;
 
@@ -500,6 +505,11 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
     }
 
     return nil;
+}
+
+- (NSString *)supplementaryDetailViewKind
+{
+    return VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind;
 }
 
 @end

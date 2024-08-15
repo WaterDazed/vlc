@@ -21,12 +21,11 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-import "qrc:///util/Helpers.js" as Helpers
-
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 Control {
     padding: VLCStyle.focus_border

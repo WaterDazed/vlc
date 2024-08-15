@@ -22,34 +22,28 @@ import QtQuick.Controls
 
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///util/" as Util
+import VLC.MainInterface
+import VLC.Style
+import VLC.Util
 
 FocusScope {
     id: root
 
     // Properties
-
-    /// cell Width
-    property int cellWidth: 100
-    // cell Height
-    property int cellHeight: 100
+    required property int cellWidth
+    required property int cellHeight
 
     //margin to apply
     property int bottomMargin: 0
     property int topMargin: 0
-    property int leftMargin: VLCStyle.column_margin + leftPadding
-    property int rightMargin: VLCStyle.column_margin + rightPadding
+    property int leftMargin: VLCStyle.margin_normal + leftPadding
+    property int rightMargin: VLCStyle.margin_normal + rightPadding
 
     property int leftPadding: 0
     property int rightPadding: 0
 
-    readonly property int extraMargin: (_contentWidth - nbItemPerRow * _effectiveCellWidth
-                                        +
-                                        horizontalSpacing) / 2
+    readonly property int extraMargin: VLCStyle.dynamicAppMargins(width)
 
     // NOTE: The grid margins for the item(s) horizontal positioning.
     readonly property int contentLeftMargin: extraMargin + leftMargin
@@ -68,13 +62,12 @@ FocusScope {
 
     property int displayMarginEnd: 0
 
-    readonly property int nbItemPerRow: Math.max(Math.floor((_contentWidth + horizontalSpacing)
-                                                            /
-                                                            _effectiveCellWidth), 1)
+    required property int nbItemPerRow
 
-    readonly property int _effectiveCellWidth: cellWidth + horizontalSpacing
+    property int _effectiveCellWidth: cellWidth + horizontalSpacing
 
     readonly property int _contentWidth: width - rightMargin - leftMargin
+    readonly property int _availableContentWidth: width - contentRightMargin - contentLeftMargin
 
     property ListSelectionModel selectionModel: ListSelectionModel {
         model: root.model
@@ -126,6 +119,10 @@ FocusScope {
     property var _unusedItemList: []
     property var _currentRange: [0,0]
     property var _delayedChildrenMap: ({})
+
+    property int _anchoredIdx: -1
+    property real _anchoredIdxFraction: 1
+    property real _anchoredIdxUpdate: 0
 
     // Aliases
 
@@ -181,12 +178,14 @@ FocusScope {
             flickable.layout(true)
     }
 
-    onHeightChanged: flickable.layout(false)
+    onHeightChanged: _anchoredLayout(false)
+    onContentWidthChanged: _anchoredLayout(true)
+    onContentHeightChanged: _anchoredLayout(true)
 
     // NOTE: Update on contentLeftMargin since we depend on this for item placements.
-    onContentLeftMarginChanged: flickable.layout(true)
+    onContentLeftMarginChanged: _anchoredLayout(true)
 
-    onDisplayMarginEndChanged: flickable.layout(false)
+    onDisplayMarginEndChanged: _anchoredLayout(false)
 
     onModelChanged: _onModelCountChanged()
 
@@ -355,6 +354,36 @@ FocusScope {
 
     // Functions
 
+    // layouts such that views indexes are preserved during a resize
+    function _anchoredLayout(forceLayout) {
+        if (_currentRange[0] === _currentRange[1])
+            return
+
+        // fix anchor for some duration, so that index remains
+        // same during whole resize operation
+        const dirty = (Date.now() - _anchoredIdxUpdate) > VLCStyle.duration_veryLong
+
+        if (dirty || (_anchoredIdx < 0) || (_anchoredIdx >= _count)) {
+            _anchoredIdx = _currentRange?.[0] ?? 0
+            const item = _getItem(_anchoredIdx)
+            _anchoredIdxFraction = (item.y - flickable.contentY) / cellHeight
+        }
+
+        // reset timer for each call, this allows preserving anchor for extened duration
+        _anchoredIdxUpdate = Date.now()
+
+        let y = 0 // by default show full view including header
+        if (_anchoredIdx !== 0)
+            y = getItemPos(_anchoredIdx)[1] + (cellHeight * _anchoredIdxFraction)
+
+        const previousContentY = flickable.contentY
+        const maxY = Math.max(0, flickable.contentHeight - height)
+
+        flickable.contentY = Helpers.clamp(y, 0, maxY)
+        if (forceLayout || (previousContentY === flickable.contentY))
+            flickable.layout(forceLayout)
+    }
+
     // NOTE: This function is useful to set the currentItem without losing the visual focus.
     function setCurrentItem(index) {
         if (currentIndex === index)
@@ -386,12 +415,14 @@ FocusScope {
         // NOTE: Saving the focus reason for later.
         _currentFocusReason = reason;
 
-        if (!model || model.count === 0 || currentIndex === -1) {
+        if (!model || model.count === 0) {
             // NOTE: By default we want the focus on the flickable.
             flickable.forceActiveFocus(reason);
-
             return;
         }
+
+        if (currentIndex === -1)
+            currentIndex = 0
 
         if (_containsItem(currentIndex))
             Helpers.enforceFocus(_getItem(currentIndex), reason);
@@ -733,30 +764,38 @@ FocusScope {
             id: flickableScrollBar
         }
 
-        MouseArea {
-            anchors.fill: parent
-            z: -1
+        TapHandler {
+            acceptedDevices: PointerDevice.Mouse
 
-            preventStealing: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-            onPressed: (mouse) => {
-                Helpers.enforceFocus(flickable, Qt.MouseFocusReason)
+            grabPermissions: PointerHandler.TakeOverForbidden
 
-                if (!(mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier))) {
-                    if (selectionModel)
-                        selectionModel.clearSelection()
+            gesturePolicy: TapHandler.ReleaseWithinBounds
+
+            onTapped: (eventPoint, button) => {
+                initialAction()
+
+                if (button === Qt.RightButton) {
+                    root.showContextMenu(parent.mapToGlobal(eventPoint.position.x, eventPoint.position.y))
                 }
             }
 
-            onReleased: (mouse) => {
-                if (mouse.button & Qt.RightButton) {
-                    root.showContextMenu(mapToGlobal(mouse.x, mouse.y))
+            Component.onCompleted: {
+                canceled.connect(initialAction)
+            }
+
+            function initialAction() {
+                Helpers.enforceFocus(flickable, Qt.MouseFocusReason)
+
+                if (!(point.modifiers & (Qt.ShiftModifier | Qt.ControlModifier))) {
+                    if (root.selectionModel)
+                        root.selectionModel.clearSelection()
                 }
             }
         }
 
-        Util.FlickableScrollHandler { }
+        DefaultFlickableScrollHandler { }
 
         Loader {
             id: headerItemLoader
@@ -775,7 +814,7 @@ FocusScope {
 
             focus: (status === Loader.Ready) ? item.focus : false
 
-            y: root.topMargin + root.headerHeight + (root.rowHeight * (Math.ceil(model.count / root.nbItemPerRow))) +
+            y: root.topMargin + root.headerHeight + (root.rowHeight * (Math.ceil(model.count / nbItemPerRow))) +
                root._expandItemVerticalSpace
         }
 
@@ -833,7 +872,7 @@ FocusScope {
             if (root.expandIndex !== -1) {
                 const rowCol = root.getItemRowCol(root.expandIndex)
                 const rowId = rowCol[1] + 1
-                return rowId * root.nbItemPerRow
+                return rowId * nbItemPerRow
             } else {
                 return root._count
             }

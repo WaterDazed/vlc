@@ -20,11 +20,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.PlayerControls
 
 Item {
     id: root
@@ -300,7 +301,7 @@ Item {
         }
     }
 
-    Util.ViewDragAutoScrollHandler {
+    ViewDragAutoScrollHandler {
         id: dragAutoScrollHandler
 
         view: _viewThatContainsDrag ?? null

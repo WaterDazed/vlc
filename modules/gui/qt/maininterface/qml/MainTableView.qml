@@ -18,10 +18,10 @@
 
 import QtQuick
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Style
 
-Widgets.KeyNavigableTableView {
+Widgets.TableViewExt {
     id: root
 
     displayMarginEnd: g_mainDisplay.displayMargin

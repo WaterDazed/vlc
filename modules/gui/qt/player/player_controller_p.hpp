@@ -60,7 +60,10 @@ public:
     {
         Q_Q(PlayerController);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-        QMetaObject::invokeMethod(q, [fun = std::forward<Fun>(fun)]() -> void* { fun(); return nullptr; }, Qt::QueuedConnection);
+        // NOTE: Starting with Qt 6.7.0, lambda expression here without a return value
+        //       causes compilation issues with some compilers.
+        // TODO: Find out if a more recent Qt version does not behave that way.
+        QMetaObject::invokeMethod(q, [fun = std::forward<Fun>(fun)]() -> std::monostate { fun(); return std::monostate{}; }, Qt::QueuedConnection);
 #else
         QMetaObject::invokeMethod(q, std::forward<Fun>(fun), Qt::QueuedConnection, nullptr);
 #endif
@@ -138,6 +141,7 @@ public:
     VLCVarChoiceModel m_zoom;
     VLCVarChoiceModel m_aspectRatio;
     VLCVarChoiceModel m_crop;
+    VLCVarChoiceModel m_fit;
     VLCVarChoiceModel m_deinterlace;
     VLCVarChoiceModel m_deinterlaceMode;
     QVLCBool m_autoscale;

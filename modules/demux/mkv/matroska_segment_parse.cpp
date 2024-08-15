@@ -28,6 +28,7 @@
 #include "Ebml_dispatcher.hpp"
 #include "string_dispatcher.hpp"
 #include "util.hpp"
+#include "chapter_command_script.hpp"
 
 extern "C" {
 #include "../vobsub.h"
@@ -59,12 +60,12 @@ static inline void fill_extra_data_alac( mkv_track_t *p_tk )
     if( unlikely( !p_tk->fmt.p_extra ) ) return;
     p_tk->fmt.i_extra = p_tk->i_extra_data + 12;
     uint8_t *p_extra = static_cast<uint8_t*>( p_tk->fmt.p_extra );
-    /* See "ALAC Specific Info (36 bytes) (required)" from
-       alac.macosforge.org/trac/browser/trunk/ALACMagicCookieDescription.txt */
+    /* 12 bytes + "ALAC Specific Info (24 bytes) (required)" from
+       https://github.com/macosforge/alac/blob/master/ALACMagicCookieDescription.txt */
     SetDWBE( p_extra, p_tk->fmt.i_extra );
     memcpy( p_extra + 4, "alac", 4 );
-    SetDWBE( p_extra + 8, 0 );
-    memcpy( p_extra + 12, p_tk->p_extra_data, p_tk->fmt.i_extra - 12 );
+    SetDWBE( p_extra + 8, p_tk->i_extra_data );
+    memcpy( p_extra + 12, p_tk->p_extra_data, p_tk->i_extra_data );
 }
 
 static inline void fill_extra_data( mkv_track_t *p_tk, unsigned int offset )
@@ -205,12 +206,14 @@ void matroska_segment_c::ParseTrackEntry( const KaxTrackEntry *m )
 {
     bool bSupported = true;
 
-    EbmlUInteger *pTrackType = static_cast<EbmlUInteger*>(m->FindElt(EBML_INFO(KaxTrackType)));
     uint8_t ttype;
-    if (likely(pTrackType != NULL))
-        ttype = (uint8_t) *pTrackType;
-    else
+    try {
+        KaxTrackType & pTrackType = GetMandatoryChild<KaxTrackType>(*m);
+        ttype = pTrackType;
+    } catch (const MissingMandatory & err) {
+        msg_Dbg( &sys.demuxer, "%s", err.what());
         ttype = 0;
+    }
 
     enum es_format_category_e es_cat;
     switch( ttype )
@@ -584,8 +587,8 @@ void matroska_segment_c::ParseTrackEntry( const KaxTrackEntry *m )
         E_CASE( KaxVideoAlphaMode, mode )
         {
             ONLY_FMT(VIDEO);
-            debug( vars, "Track Video Alpha Mode %u", static_cast<uint8>( mode ) ) ;
-            vars.tk->b_has_alpha = static_cast<uint8>( mode ) == 1;
+            debug( vars, "Track Video Alpha Mode %u", static_cast<uint8_t>( mode ) ) ;
+            vars.tk->b_has_alpha = static_cast<uint8_t>( mode ) == 1;
         }
 #endif
 #if LIBMATROSKA_VERSION >= 0x010406
@@ -1434,29 +1437,42 @@ void matroska_segment_c::ParseChapterAtom( int i_level, KaxChapterAtom *ca, chap
 
             chapter_codec_cmds_c *p_ccodec = NULL;
 
-            for( size_t j = 0; j < cp.ListSize(); j++ )
+            for (auto proc : cp)
             {
-                if( MKV_CHECKED_PTR_DECL( p_codec_id, KaxChapterProcessCodecID, cp[j] ) )
+                if( MKV_CHECKED_PTR_DECL_CONST( p_codec_id, KaxChapterProcessCodecID, proc ) )
                 {
-                    if ( static_cast<uint32_t>(*p_codec_id) == 0 )
-                        p_ccodec = new matroska_script_codec_c( vars.obj->sys );
-                    else if ( static_cast<uint32_t>(*p_codec_id) == 1 )
-                        p_ccodec = new dvd_chapter_codec_c( vars.obj->sys );
+                    if ( p_codec_id->GetValue() == MATROSKA_CHAPTER_CODEC_NATIVE )
+                    {
+                       auto interpreter = vars.obj->sys.GetMatroskaScriptInterpreter();
+                       if (unlikely(interpreter == nullptr))
+                            debug( vars, "failed to get the Matroska Script interpreter ");
+                       else
+                            p_ccodec = new matroska_script_codec_c(
+                            vlc_object_logger( &vars.obj->sys.demuxer ),
+                            vars.obj->sys, *interpreter
+                            );
+                    }
+                    else if ( p_codec_id->GetValue() == MATROSKA_CHAPTER_CODEC_DVD )
+                    {
+                        auto interepreter = vars.obj->sys.GetDVDInterpretor();
+                        if (unlikely(interepreter == nullptr))
+                            debug( vars, "failed to get the DVD interpreter ");
+                        else
+                            p_ccodec = new dvd_chapter_codec_c( vlc_object_logger( &vars.obj->sys.demuxer ), vars.obj->sys, *interepreter );
+                    }
                     break;
                 }
             }
 
             if ( p_ccodec != NULL )
             {
-                for( size_t j = 0; j < cp.ListSize(); j++ )
+                for (auto k : cp)
                 {
-                    EbmlElement *k= cp[j];
-
-                    if( MKV_CHECKED_PTR_DECL( p_private, KaxChapterProcessPrivate, k ) )
+                    if( MKV_CHECKED_PTR_DECL_CONST( p_private, KaxChapterProcessPrivate, k ) )
                     {
                         p_ccodec->SetPrivate( *p_private );
                     }
-                    else if ( MKV_CHECKED_PTR_DECL( cmd, KaxChapterProcessCommand, k ) )
+                    else if ( MKV_CHECKED_PTR_DECL_CONST( cmd, KaxChapterProcessCommand, k ) )
                     {
                         p_ccodec->AddCommand( *cmd );
                     }
@@ -1502,35 +1518,41 @@ void matroska_segment_c::ParseAttachments( KaxAttachments *attachments )
 
     KaxAttached *attachedFile = FindChild<KaxAttached>( *attachments );
 
-    while( attachedFile && ( attachedFile->GetSize() > 0 ) )
+    while( attachedFile )
     {
-        KaxFileData  &img_data     = GetChild<KaxFileData>( *attachedFile );
-        std::string attached_filename( UTFstring( GetChild<KaxFileName>( *attachedFile ) ).GetUTF8() );
-        auto new_attachment = vlc_input_attachment_New( attached_filename.c_str(),
-                                                        GetChild<KaxMimeType>( *attachedFile ).GetValue().c_str(),
-                                                        nullptr,
-                                                        img_data.GetBuffer(),
-                                                        img_data.GetSize() );
-        if (!new_attachment)
-            continue;
-        msg_Dbg( &sys.demuxer, "|   |   - %s (%s)", new_attachment->psz_name,
-                 new_attachment->psz_mime );
-
-        if( !strncmp( new_attachment->psz_mime, "image/", 6 ) )
-        {
-            char *psz_url;
-            if( asprintf( &psz_url, "attachment://%s",
-                          new_attachment->psz_name ) >= 0 )
+        if (attachedFile->GetSize() > 0 )
+        try {
+            KaxFileData  &img_data     = GetMandatoryChild<KaxFileData>( *attachedFile );
+            std::string attached_filename( UTFstring( GetMandatoryChild<KaxFileName>( *attachedFile ) ).GetUTF8() );
+            auto new_attachment = vlc_input_attachment_New( attached_filename.c_str(),
+                                                            GetMandatoryChild<KaxMimeType>( *attachedFile ).GetValue().c_str(),
+                                                            nullptr,
+                                                            img_data.GetBuffer(),
+                                                            img_data.GetSize() );
+            if (new_attachment)
             {
-                if( !sys.meta )
-                    sys.meta = vlc_meta_New();
-                vlc_meta_SetArtURL( sys.meta, psz_url );
-                free( psz_url );
+                msg_Dbg( &sys.demuxer, "|   |   - %s (%s)", new_attachment->psz_name,
+                        new_attachment->psz_mime );
+
+                if( !strncmp( new_attachment->psz_mime, "image/", 6 ) )
+                {
+                    char *psz_url;
+                    if( asprintf( &psz_url, "attachment://%s",
+                                new_attachment->psz_name ) >= 0 )
+                    {
+                        if( !sys.meta )
+                            sys.meta = vlc_meta_New();
+                        vlc_meta_SetArtURL( sys.meta, psz_url );
+                        free( psz_url );
+                    }
+                }
+                sys.stored_attachments.push_back( vlc::wrap_cptr( new_attachment,
+                                                                &vlc_input_attachment_Release ) );
             }
+        } catch (const MissingMandatory & err) {
+            msg_Dbg( &sys.demuxer, "%s", err.what());
         }
-        sys.stored_attachments.push_back( vlc::wrap_cptr( new_attachment,
-                                                          &vlc_input_attachment_Release ) );
-        attachedFile = &GetNextChild<KaxAttached>( *attachments, *attachedFile );
+        attachedFile = FindNextChild<KaxAttached>( *attachments, *attachedFile );
     }
 }
 
@@ -1648,9 +1670,9 @@ bool matroska_segment_c::ParseCluster( KaxCluster *cluster, bool b_update_start_
 
     bool b_has_timecode = false;
 
-    for( unsigned int i = 0; i < cluster->ListSize(); ++i )
+    for (auto c : *cluster)
     {
-        if( MKV_CHECKED_PTR_DECL( p_ctc, KaxClusterTimestamp, (*cluster)[i] ) )
+        if( MKV_CHECKED_PTR_DECL_CONST( p_ctc, KaxClusterTimestamp, c ) )
         {
             cluster->InitTimestamp( static_cast<uint64_t>( *p_ctc ), i_timescale );
             _seeker.add_cluster( cluster );

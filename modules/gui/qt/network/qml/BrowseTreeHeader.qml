@@ -21,12 +21,12 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
 
-import "qrc:///util/" as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Network
+import VLC.MainInterface
 
 T.Pane {
     id: root

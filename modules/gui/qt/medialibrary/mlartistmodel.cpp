@@ -18,11 +18,6 @@
 
 #include "mlartistmodel.hpp"
 
-QHash<QByteArray, vlc_ml_sorting_criteria_t> MLArtistModel::M_names_to_criteria = {
-    {"name", VLC_ML_SORTING_ALPHA},
-    {"nb_tracks", VLC_ML_SORTING_TRACKNUMBER},
-};
-
 MLArtistModel::MLArtistModel(QObject *parent)
     : MLBaseModel(parent)
 {
@@ -64,25 +59,12 @@ QHash<int, QByteArray> MLArtistModel::roleNames() const
     };
 }
 
-vlc_ml_sorting_criteria_t MLArtistModel::roleToCriteria(int role) const
-{
-    switch (role)
-    {
-    case ARTIST_NAME :
-        return VLC_ML_SORTING_ALPHA;
-    default :
-        return VLC_ML_SORTING_DEFAULT;
-    }
-}
-
 vlc_ml_sorting_criteria_t MLArtistModel::nameToCriteria(QByteArray name) const
 {
-    return M_names_to_criteria.value(name, VLC_ML_SORTING_DEFAULT);
-}
-
-QByteArray MLArtistModel::criteriaToName(vlc_ml_sorting_criteria_t criteria) const
-{
-    return M_names_to_criteria.key(criteria, "");
+    return QHash<QByteArray, vlc_ml_sorting_criteria_t> {
+        {"name", VLC_ML_SORTING_ALPHA},
+        {"nb_tracks", VLC_ML_SORTING_TRACKNUMBER},
+    }.value(name, VLC_ML_SORTING_DEFAULT);
 }
 
 void MLArtistModel::onVlcMlEvent(const MLEvent &event)

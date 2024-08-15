@@ -19,11 +19,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Style
 
 
 Widgets.PageLoader {
@@ -36,23 +36,23 @@ Widgets.PageLoader {
             displayText: qsTr("Artists"),
             name: "artists",
             default: true,
-            url: "qrc:///medialibrary/MusicArtistsDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/MusicArtistsDisplay.qml"
         }, {
             displayText: qsTr("Albums"),
             name: "albums",
-            url: "qrc:///medialibrary/MusicAlbumsDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/MusicAlbumsDisplay.qml"
         }, {
             displayText: qsTr("Tracks"),
             name: "tracks" ,
-            url: "qrc:///medialibrary/MusicTracksDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/MusicTracksDisplay.qml"
         }, {
             displayText: qsTr("Genres"),
             name: "genres" ,
-            url: "qrc:///medialibrary/MusicGenresDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/MusicGenresDisplay.qml"
         }, {
             displayText: qsTr("Playlists"),
             name: "playlists" ,
-            url: "qrc:///medialibrary/MusicPlaylistsDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/MusicPlaylistsDisplay.qml"
         }
     ]
 

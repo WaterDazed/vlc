@@ -172,7 +172,7 @@ public:
 
         const int action = TrackPopupMenu(hmenu, (TPM_RETURNCMD | alignment)
                                           , screenPoints.x(), screenPoints.y()
-                                          , NULL, hwnd, 0);
+                                          , 0, hwnd, nullptr);
 
         // unlike native system menu which sends WM_SYSCOMMAND, TrackPopupMenu sends WM_COMMAND
         // imitate native system menu by sending the action manually as WM_SYSCOMMAND
@@ -554,9 +554,7 @@ WinTaskbarWidget::~WinTaskbarWidget()
 {
     if( himl )
         ImageList_Destroy( himl );
-    if(p_taskbl)
-        p_taskbl->Release();
-    CoUninitialize();
+    p_taskbl.Reset();
 }
 
 Q_GUI_EXPORT HBITMAP qt_pixmapToWinHBITMAP(const QPixmap &p, int hbitmapFormat = 0);
@@ -573,27 +571,30 @@ void WinTaskbarWidget::createTaskBarButtons()
     /*Here is the code for the taskbar thumb buttons
     FIXME:We need pretty buttons in 16x16 px that are handled correctly by masks in Qt
     */
-    p_taskbl = NULL;
     himl = NULL;
 
     auto winId = WinId(m_window);
     if (!winId)
         return;
 
-    HRESULT hr = CoInitializeEx( NULL, COINIT_APARTMENTTHREADED );
-    if( FAILED(hr) )
-        return;
-
-    void *pv;
-    hr = CoCreateInstance( CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER,
-                           IID_ITaskbarList3, &pv);
-    if( FAILED(hr) )
+    try
     {
-        CoUninitialize();
+        m_comHolder = ComHolder();
+    }
+    catch( const std::exception& exception )
+    {
+        msg_Err( p_intf, "%s", exception.what() );
         return;
     }
 
-    p_taskbl = (ITaskbarList3 *)pv;
+    HRESULT hr = CoCreateInstance( __uuidof(TaskbarList), NULL, CLSCTX_INPROC_SERVER,
+                                   IID_PPV_ARGS(p_taskbl.ReleaseAndGetAddressOf()));
+    if( FAILED(hr) )
+    {
+        m_comHolder.reset();
+        return;
+    }
+
     p_taskbl->HrInit();
 
     int iconX = GetSystemMetrics(SM_CXSMICON);
@@ -602,9 +603,8 @@ void WinTaskbarWidget::createTaskBarButtons()
                              4 /*cInitial*/, 0 /*cGrow*/);
     if( himl == NULL )
     {
-        p_taskbl->Release();
-        p_taskbl = NULL;
-        CoUninitialize();
+        p_taskbl.Reset();
+        m_comHolder.reset();
         return;
     }
 

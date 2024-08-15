@@ -28,7 +28,7 @@
 #import <vlc_plugin.h>
 #import <vlc_aout.h>
 
-#if TARGET_OS_IPHONE || TARGET_OS_TV || TARGET_OS_VISION
+#if TARGET_OS_IPHONE || TARGET_OS_TV || TARGET_OS_VISION
 #define HAS_AVAUDIOSESSION
 #import "avaudiosession_common.h"
 #endif
@@ -39,6 +39,7 @@
 #define MIN_MACOS 11.3
 #define MIN_IOS 14.5
 #define MIN_TVOS 14.5
+#define MIN_WATCHOS 7.4
 
 // work-around to fix compilation on older Xcode releases
 #if defined(TARGET_OS_VISION) && TARGET_OS_VISION
@@ -73,8 +74,10 @@ API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILA
 
     int64_t _ptsSamples;
     vlc_tick_t _firstPts;
+    vlc_tick_t _lastDate;
     unsigned _sampleRate;
     BOOL _stopped;
+    BOOL _dateReached;
 }
 @end
 
@@ -97,6 +100,26 @@ API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILA
     _outChain = NULL;
     _outChainLast = &_outChain;
 
+    /* The first call to CMAudioFormatDescriptionCreate() might take some time
+     * (between 200 and 600ms) as it is initializing some static context/libs.
+     * Therefore, call it from the Open() callback with dummy params. Indeed,
+     * the playback is not yet started and a longer Open() call won't mess with
+     * playback timings. */
+    static const AudioStreamBasicDescription dummyDesc = {
+        .mSampleRate = 48000,
+        .mFormatID = kAudioFormatLinearPCM,
+        .mFormatFlags = kAudioFormatFlagsNativeFloatPacked,
+        .mChannelsPerFrame = 2,
+        .mFramesPerPacket = 1,
+        .mBitsPerChannel = 32,
+    };
+    CMAudioFormatDescriptionRef dummyFmtDesc;
+    OSStatus status =
+        CMAudioFormatDescriptionCreate(kCFAllocatorDefault, &dummyDesc, 0, nil,
+                                       0, nil, nil, &dummyFmtDesc);
+    if (status == noErr)
+        CFRelease(dummyFmtDesc);
+
     self = [super init];
     if (self == nil)
         return nil;
@@ -107,13 +130,6 @@ API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILA
 - (void)dealloc
 {
     block_ChainRelease(_outChain);
-}
-
-- (void)clearOutChain
-{
-    block_ChainRelease(_outChain);
-    _outChain = NULL;
-    _outChainLast = &_outChain;
 }
 
 static void
@@ -215,7 +231,9 @@ customBlock_Free(void *refcon, void *doomedMemoryBlock, size_t sizeInBytes)
         [self stopSyncRenderer];
 
     _ptsSamples = -1;
+    _dateReached = NO;
     _firstPts = VLC_TICK_INVALID;
+    _lastDate = VLC_TICK_INVALID;
 }
 
 - (void)pause:(BOOL)pause date:(vlc_tick_t)date
@@ -238,12 +256,65 @@ customBlock_Free(void *refcon, void *doomedMemoryBlock, size_t sizeInBytes)
     aout_TimingReport(_aout, system_now, pos_ticks);
 }
 
+- (void)startNow:(vlc_tick_t)delta
+{
+    assert(!_dateReached);
+
+    _dateReached = YES;
+    CMTime time = CMTimeMake(0, _sampleRate);
+    [_sync setRate:1.0f time:time];
+
+    const CMTime interval = CMTimeMake(CLOCK_FREQ, CLOCK_FREQ);
+    __weak typeof(self) weakSelf = self;
+    _observer = [_sync addPeriodicTimeObserverForInterval:interval
+                                                    queue:_timeQueue
+                                               usingBlock:^ (CMTime time){
+        [weakSelf whenTimeObserved:time];
+    }];
+}
+
 - (void)whenDataReady
 {
     vlc_mutex_lock(&_bufferLock);
 
-    while (_renderer.readyForMoreMediaData)
+    while (_renderer.readyForMoreMediaData || !_dateReached)
     {
+        if (!_dateReached)
+        {
+            /* Start playback at the requested date */
+
+            CMTime writtenTime = CMTimeMake(_ptsSamples, _sampleRate);
+            vlc_tick_t writtenTicks = [VLCAVSample CMTimeTotick:writtenTime];
+            vlc_tick_t now = vlc_tick_now();
+            vlc_tick_t deadline = _lastDate - writtenTicks;
+            vlc_tick_t delta = deadline - now;
+
+            if (delta <= 0)
+            {
+                msg_Dbg(_aout, "starting late (%"PRId64" us)", delta);
+                [self startNow:delta];
+            }
+            else
+            {
+                msg_Dbg(_aout, "deferring start (%"PRId64" us)", delta);
+
+                int timeout = 0;
+                /* Wait for the start date if there are no buffers to enqueue */
+                while (!_stopped && _outChain == NULL && timeout == 0)
+                {
+                    timeout = vlc_cond_timedwait(&_bufferWait, &_bufferLock,
+                                                 deadline);
+                    deadline = _lastDate - writtenTicks;
+                }
+
+                if (timeout != 0)
+                {
+                    msg_Dbg(_aout, "started");
+                    [self startNow:0];
+                }
+            }
+        }
+
         while (!_stopped && _outChain == NULL)
             vlc_cond_wait(&_bufferWait, &_bufferLock);
 
@@ -259,6 +330,12 @@ customBlock_Free(void *refcon, void *doomedMemoryBlock, size_t sizeInBytes)
             _outChainLast = &_outChain;
 
         CMSampleBufferRef buffer = [self wrapBuffer:&block];
+        if (buffer == nil)
+        {
+            vlc_mutex_unlock(&_bufferLock);
+            return;
+        }
+
         _ptsSamples += CMSampleBufferGetNumSamples(buffer);
 
         [_renderer enqueueSampleBuffer:buffer];
@@ -275,54 +352,61 @@ customBlock_Free(void *refcon, void *doomedMemoryBlock, size_t sizeInBytes)
 
     if (_ptsSamples == -1)
     {
+        _stopped = NO;
+        _firstPts = block->i_pts;
+        _ptsSamples = 0;
+
         __weak typeof(self) weakSelf = self;
         [_renderer requestMediaDataWhenReadyOnQueue:_dataQueue usingBlock:^{
             [weakSelf whenDataReady];
         }];
-
-        _firstPts = block->i_pts;
-        const CMTime interval = CMTimeMake(CLOCK_FREQ, CLOCK_FREQ);
-        _observer = [_sync addPeriodicTimeObserverForInterval:interval
-                                                        queue:_timeQueue
-                                                   usingBlock:^ (CMTime time){
-            [weakSelf whenTimeObserved:time];
-        }];
-
-        _ptsSamples = 0;
-        vlc_tick_t delta = date - vlc_tick_now();
-        CMTime hostTime = CMTimeAdd(CMClockGetTime(CMClockGetHostTimeClock()),
-                                    CMTimeMake(delta, CLOCK_FREQ));
-        CMTime time = CMTimeMake(_ptsSamples, _sampleRate);
-
-        _sync.delaysRateChangeUntilHasSufficientMediaData = NO;
-        [_sync setRate:1.0f time:time atHostTime:hostTime];
     }
+    _lastDate = date;
 
     block_ChainLastAppend(&_outChainLast, block);
 
     vlc_cond_signal(&_bufferWait);
     vlc_mutex_unlock(&_bufferLock);
+
+    if (_renderer.status == AVQueuedSampleBufferRenderingStatusFailed)
+    {
+        msg_Err(_aout, "AVQueuedSampleBufferRenderingStatusFailed, restarting");
+        aout_RestartRequest(_aout, false);
+    }
 }
 
 - (void)stopSyncRenderer
 {
     _sync.rate = 0.0f;
 
-    [_sync removeTimeObserver:_observer];
     [_renderer stopRequestingMediaData];
     [_renderer flush];
 
-    [self clearOutChain];
+    vlc_mutex_lock(&_bufferLock);
+    if (_dateReached)
+        [_sync removeTimeObserver:_observer];
+
+    _stopped = YES;
+
+    block_ChainRelease(_outChain);
+    _outChain = NULL;
+    _outChainLast = &_outChain;
+
+    vlc_cond_signal(&_bufferWait);
+    vlc_mutex_unlock(&_bufferLock);
+
+    /* From the doc: "Call dispatch_sync after removeTimeObserver: to wait for
+     * any in-flight blocks to finish executing." */
+    dispatch_sync(_timeQueue, ^{});
+
+    /* Not in any doc:, stopRequestingMediaData() and flush() won't wait for
+     * any blocks to finish executing, so wait here. */
+     dispatch_sync(_dataQueue, ^{});
 }
 
 - (void)stop
 {
     NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
-
-    vlc_mutex_lock(&_bufferLock);
-    _stopped = YES;
-    vlc_cond_signal(&_bufferWait);
-    vlc_mutex_unlock(&_bufferLock);
 
     if (_ptsSamples > 0)
         [self stopSyncRenderer];
@@ -425,12 +509,15 @@ customBlock_Free(void *refcon, void *doomedMemoryBlock, size_t sizeInBytes)
         goto error;
     }
 
+    _sync.delaysRateChangeUntilHasSufficientMediaData = NO;
     [_sync addRenderer:_renderer];
 
     _stopped = NO;
+    _dateReached = NO;
 
     _ptsSamples = -1;
     _firstPts = VLC_TICK_INVALID;
+    _lastDate = VLC_TICK_INVALID;
     _sampleRate = fmt->i_rate;
     _bytesPerFrame = desc.mBytesPerFrame;
 
@@ -438,7 +525,7 @@ customBlock_Free(void *refcon, void *doomedMemoryBlock, size_t sizeInBytes)
                     selector:@selector(flushedAutomatically:)
                         name:AVSampleBufferAudioRendererWasFlushedAutomaticallyNotification
                       object:nil];
-    if (@available(macOS 12.0, iOS 15.0, tvOS 15.0 VISIONOS_AVAILABLE, *))
+    if (@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0 VISIONOS_AVAILABLE, *))
     {
         [notifCenter addObserver:self
                         selector:@selector(outputConfigurationChanged:)
@@ -459,7 +546,7 @@ error_avas:
 
 @end
 
-static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 DeviceSelect(audio_output_t *aout, const char *name)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -469,7 +556,7 @@ DeviceSelect(audio_output_t *aout, const char *name)
     return VLC_SUCCESS;
 }
 
-static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 MuteSet(audio_output_t *aout, bool mute)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -479,7 +566,7 @@ MuteSet(audio_output_t *aout, bool mute)
     return VLC_SUCCESS;
 }
 
-static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 VolumeSet(audio_output_t *aout, float volume)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -489,7 +576,7 @@ VolumeSet(audio_output_t *aout, float volume)
     return VLC_SUCCESS;
 }
 
-static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 Flush(audio_output_t *aout)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -497,7 +584,7 @@ Flush(audio_output_t *aout)
     [sys flush];
 }
 
-static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 Pause(audio_output_t *aout, bool pause, vlc_tick_t date)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -505,7 +592,7 @@ Pause(audio_output_t *aout, bool pause, vlc_tick_t date)
     [sys pause:pause date:date];
 }
 
-static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 Play(audio_output_t *aout, block_t *block, vlc_tick_t date)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -513,7 +600,7 @@ Play(audio_output_t *aout, block_t *block, vlc_tick_t date)
     [sys play:block date:date];
 }
 
-static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static void API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 Stop(audio_output_t *aout)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -521,7 +608,7 @@ Stop(audio_output_t *aout)
     [sys stop];
 }
 
-static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS) VISIONOS_API_AVAILABLE)
+static int API_AVAILABLE(macos(MIN_MACOS), ios(MIN_IOS), tvos(MIN_TVOS), watchos(MIN_WATCHOS) VISIONOS_API_AVAILABLE)
 Start(audio_output_t *aout, audio_sample_format_t *restrict fmt)
 {
     VLCAVSample *sys = (__bridge VLCAVSample*)aout->sys;
@@ -532,7 +619,7 @@ Start(audio_output_t *aout, audio_sample_format_t *restrict fmt)
 static void
 Close(vlc_object_t *obj)
 {
-    if (@available(macOS MIN_MACOS, iOS MIN_IOS, tvOS MIN_TVOS VISIONOS_AVAILABLE, *))
+    if (@available(macOS MIN_MACOS, iOS MIN_IOS, tvOS MIN_TVOS, watchOS MIN_WATCHOS VISIONOS_AVAILABLE, *))
     {
         audio_output_t *aout = (audio_output_t *)obj;
         /* Transfer ownership back from VLC to ARC so that it can be released. */
@@ -546,7 +633,7 @@ Open(vlc_object_t *obj)
 {
     audio_output_t *aout = (audio_output_t *)obj;
 
-    if (@available(macOS MIN_MACOS, iOS MIN_IOS, tvOS MIN_TVOS VISIONOS_AVAILABLE, *))
+    if (@available(macOS MIN_MACOS, iOS MIN_IOS, tvOS MIN_TVOS, watchOS MIN_WATCHOS VISIONOS_AVAILABLE, *))
     {
         aout->sys = (__bridge_retained void*) [[VLCAVSample alloc] init:aout];
         if (aout->sys == nil)

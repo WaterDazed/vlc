@@ -32,7 +32,6 @@
 #include "medialibrary/medialib.hpp"
 #include <playlist/playlist_common.hpp>
 
-#include <QSystemTrayIcon>
 #include <QtQuick/QQuickView>
 #include <QApplication>
 
@@ -46,6 +45,7 @@ Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
 Q_MOC_INCLUDE( "playlist/playlist_controller.hpp" )
 Q_MOC_INCLUDE( "maininterface/mainctx_submodels.hpp" )
+Q_MOC_INCLUDE( "maininterface/videosurface.hpp" )
 
 class CSDButtonModel;
 class QSettings;
@@ -61,6 +61,7 @@ class QMenu;
 class QSize;
 class QScreen;
 class QTimer;
+class QSystemTrayIcon;
 class StandardPLPanel;
 struct vlc_window;
 class VideoSurfaceProvider;
@@ -68,6 +69,7 @@ class ControlbarProfileModel;
 class SearchCtx;
 class SortCtx;
 class WorkerThreadSet;
+class VLCSystray;
 
 namespace vlc {
 namespace playlist {
@@ -93,8 +95,6 @@ class MainCtx : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool mediaLibraryVisible READ isMediaLibraryVisible WRITE setMediaLibraryVisible
-               NOTIFY mediaLibraryVisibleChanged FINAL)
     Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
     Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
     Q_PROPERTY(double playlistWidthFactor READ getPlaylistWidthFactor WRITE setPlaylistWidthFactor NOTIFY playlistWidthFactorChanged FINAL)
@@ -126,6 +126,7 @@ class MainCtx : public QObject
     Q_PROPERTY(bool useGlobalShortcuts READ getUseGlobalShortcuts WRITE setUseGlobalShortcuts NOTIFY useGlobalShortcutsChanged FINAL)
     Q_PROPERTY(int maxVolume READ maxVolume NOTIFY maxVolumeChanged FINAL)
     Q_PROPERTY(float safeArea READ safeArea NOTIFY safeAreaChanged FINAL)
+    Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ getVideoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY hasEmbededVideoChanged FINAL)
 
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
 
@@ -158,8 +159,8 @@ public:
     inline qt_intf_t* getIntf() const { return p_intf; }
     bool smoothScroll() const { return m_smoothScroll; }
 
-    QSystemTrayIcon *getSysTray() { return sysTray; }
-    QMenu *getSysTrayMenu() { return systrayMenu.get(); }
+    VLCSystray* getSysTray() { return m_systray.get(); }
+
     enum
     {
         CONTROLS_VISIBLE  = 0x1,
@@ -189,9 +190,7 @@ public:
     };
     Q_ENUM(OsType)
 
-    inline bool isInterfaceFullScreen() const { return m_windowVisibility == QWindow::FullScreen; }
-    inline bool isInterfaceVisible() const { return m_windowVisibility != QWindow::Hidden; }
-    bool isMediaLibraryVisible() { return m_mediaLibraryVisible; }
+    inline QWindow::Visibility interfaceVisibility() const { return m_windowVisibility; }
     bool isPlaylistDocked() { return b_playlistDocked; }
     bool isPlaylistVisible() { return m_playlistVisible; }
     inline double getPlaylistWidthFactor() const { return m_playlistWidthFactor; }
@@ -246,11 +245,21 @@ public:
     Q_INVOKABLE static inline void setCursor(Qt::CursorShape cursor) { QApplication::setOverrideCursor(QCursor(cursor)); }
     Q_INVOKABLE static inline void restoreCursor(void) { QApplication::restoreOverrideCursor(); }
 
+    Q_INVOKABLE static inline void setCursor(QQuickItem* item, Qt::CursorShape cursor) { assert(item); item->setCursor(cursor); }
+    Q_INVOKABLE static inline void unsetCursor(QQuickItem* item) { assert(item); item->unsetCursor(); };
+
     Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersion() { return QT_VERSION; }
     Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersionCheck(unsigned char major,
                                                                         unsigned char minor,
                                                                         unsigned char patch)
                                                                        { return QT_VERSION_CHECK(major, minor, patch); }
+
+    Q_INVOKABLE static /*constexpr*/ inline bool qtQuickControlRejectsHoverEvents() {
+        // QTBUG-100543
+        return (QT_VERSION < QT_VERSION_CHECK(6, 3, 0) && QT_VERSION >= QT_VERSION_CHECK(6, 2, 5)) ||
+               (QT_VERSION < QT_VERSION_CHECK(6, 4, 0) && QT_VERSION >= QT_VERSION_CHECK(6, 3, 1)) ||
+               (QT_VERSION >= QT_VERSION_CHECK(6, 4, 0));
+    }
 
     /**
      * @brief ask for the application to terminate
@@ -280,11 +289,14 @@ public:
 
     WorkerThreadSet *workersThreads() const;
 
+    Q_INVOKABLE QUrl folderMRL(const QString &fileMRL) const;
+    Q_INVOKABLE QUrl folderMRL(const QUrl &fileMRL) const;
+
+    Q_INVOKABLE QString displayMRL(const QUrl &mrl) const;
+
 protected:
     /* Systray */
-    void createSystray();
     void initSystray();
-    void handleSystray();
 
     qt_intf_t* p_intf = nullptr;
 
@@ -294,8 +306,8 @@ protected:
 
     /* */
     QSettings           *settings = nullptr;
-    QSystemTrayIcon     *sysTray = nullptr;
-    std::unique_ptr<QMenu> systrayMenu;
+
+    std::unique_ptr<VLCSystray> m_systray;
 
     /* Flags */
     double               m_intfUserScaleFactor = 1.;
@@ -326,7 +338,6 @@ protected:
     QUrl                 m_dialogFilepath; /* Last path used in dialogs */
 
     /* States */
-    bool                 m_mediaLibraryVisible = true;
     bool                 m_playlistVisible = false;       ///< Is the playlist visible ?
     double               m_playlistWidthFactor = 4.;   ///< playlist size: root.width / playlistScaleFactor
     double               m_playerPlaylistWidthFactor = 4.;
@@ -360,12 +371,8 @@ protected:
     mutable std::unique_ptr<WorkerThreadSet> m_workersThreads;
 
 public slots:
-    void toggleUpdateSystrayMenu();
-    void showUpdateSystrayMenu();
-    void hideUpdateSystrayMenu();
     void toggleToolbarMenu();
     void toggleInterfaceFullScreen();
-    void setMediaLibraryVisible( bool );
     void setPlaylistDocked( bool );
     void setPlaylistVisible( bool );
     void setPlaylistWidthFactor( double );
@@ -395,10 +402,6 @@ public slots:
     VLCVarChoiceModel* getExtraInterfaces();
 
 protected slots:
-    void handleSystrayClick( QSystemTrayIcon::ActivationReason );
-    void updateSystrayTooltipName( const QString& );
-    void updateSystrayTooltipStatus( PlayerController::PlayingState );
-
     void onInputChanged( bool );
 
 signals:
@@ -413,7 +416,6 @@ signals:
     void askRaise();
     void kc_pressed(); /* easter eggs */
 
-    void mediaLibraryVisibleChanged(bool);
     void playlistDockedChanged(bool);
     void playlistVisibleChanged(bool);
     void playlistWidthFactorChanged(double);
@@ -460,6 +462,9 @@ signals:
 
     void windowSuportExtendedFrameChanged();
     void windowExtendedMarginChanged(unsigned margin);
+
+    void requestShowMainView();
+    void requestShowPlayerView();
 
 private:
     void loadPrefs(bool callSignals);

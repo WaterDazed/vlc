@@ -19,9 +19,9 @@
 import QtQuick
 import QtQuick.Window
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Style
 
 
 Window {

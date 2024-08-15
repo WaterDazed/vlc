@@ -17,16 +17,14 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MediaLibrary
 
-import "qrc:///util/" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Style
 
-MainInterface.MainViewLoader {
+MainViewLoader {
     id: root
 
     // Properties
@@ -84,7 +82,7 @@ MainInterface.MainViewLoader {
         defaultCover: VLCStyle.noArtAlbumCover
     }
 
-    Util.MLContextMenu {
+    MLContextMenu {
         id: contextMenu
 
         model: albumModelId
@@ -93,12 +91,13 @@ MainInterface.MainViewLoader {
     Component {
         id: gridComponent
 
-        MainInterface.MainGridView {
+        Widgets.ExpandGridItemView {
             id: gridView_id
 
+            basePictureWidth: VLCStyle.gridCover_music_width
+            basePictureHeight: VLCStyle.gridCover_music_height
+
             activeFocusOnTab:true
-            cellWidth: VLCStyle.gridItem_music_width
-            cellHeight: VLCStyle.gridItem_music_height
 
             headerDelegate: root.header
 
@@ -107,6 +106,12 @@ MainInterface.MainViewLoader {
 
             delegate: AudioGridItem {
                 id: audioGridItem
+
+                width: gridView_id.cellWidth;
+                height: gridView_id.cellHeight;
+
+                pictureWidth: gridView_id.maxPictureWidth
+                pictureHeight: gridView_id.maxPictureHeight
 
                 opacity: gridView_id.expandIndex !== -1 && gridView_id.expandIndex !== audioGridItem.index ? .7 : 1
                 dragItem: albumDragItem
@@ -173,13 +178,11 @@ MainInterface.MainViewLoader {
     Component {
         id: tableComponent
 
-        MainInterface.MainTableView {
+        MainTableView {
             id: tableView_id
 
-            readonly property int _nbCols: VLCStyle.gridColumnsForWidth(tableView_id.availableRowWidth)
-
             property var _modelSmall: [{
-                size: Math.max(2, tableView_id._nbCols),
+                weight: 1,
 
                 model: ({
                     criteria: "title",
@@ -196,7 +199,7 @@ MainInterface.MainViewLoader {
             }]
 
             property var _modelMedium: [{
-                size: 2,
+                weight: 1,
 
                 model: {
                     criteria: "title",
@@ -209,7 +212,7 @@ MainInterface.MainViewLoader {
                     placeHolder: VLCStyle.noArtAlbumCover
                 }
             }, {
-                size: Math.max(1, tableView_id._nbCols - 3),
+                weight: 1,
 
                 model: {
                     criteria: "main_artist",

@@ -18,6 +18,12 @@ $(TARBALLS)/sidplay-libs-$(SID_VERSION).tar.gz:
 
 sidplay-libs: sidplay-libs-$(SID_VERSION).tar.gz .sum-sidplay2
 	$(UNPACK)
+	$(call update_autoconfig,unix)
+	$(call update_autoconfig,builders/resid/unix)
+	$(call update_autoconfig,builders/resid-builder/unix)
+	$(call update_autoconfig,builders/hardsid-builder/unix)
+	$(call update_autoconfig,libsidplay/unix)
+	$(call update_autoconfig,libsidutils/unix)
 	$(APPLY) $(SRC)/sidplay2/sidplay2-openmode.patch
 	$(APPLY) $(SRC)/sidplay2/sidplay2-endian.patch
 	$(APPLY) $(SRC)/sidplay2/sidplay2-smartprt.patch
@@ -32,11 +38,6 @@ sidplay-libs: sidplay-libs-$(SID_VERSION).tar.gz .sum-sidplay2
 
 .sidplay2: sidplay-libs
 	$(REQUIRE_GPL)
-	for d in . libsidplay builders resid builders/resid-builder \
-			builders/hardsid-builder libsidutils ; \
-	do \
-		(cd $</$$d && rm -rf aclocal.m4 Makefile.in configure) || exit $$? ; \
-	done
 	for d in . libsidplay resid builders/resid-builder \
 			builders/hardsid-builder libsidutils ; \
 	do \

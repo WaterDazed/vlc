@@ -20,13 +20,12 @@ import QtQuick
 import QtQml.Models
 import QtQuick.Layouts
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MediaLibrary
 
-import "qrc:///util/" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Style
 
 
 Widgets.PageLoader {

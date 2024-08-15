@@ -1,6 +1,6 @@
 # Qt5Compat
 
-QT5COMPAT_VERSION := $(QTBASE_VERSION_MAJOR).1
+QT5COMPAT_VERSION := $(QTBASE_VERSION)
 QT5COMPAT_URL := $(QT)/$(QT5COMPAT_VERSION)/submodules/qt5compat-everywhere-src-$(QT5COMPAT_VERSION).tar.xz
 
 DEPS_qt5compat += qtdeclarative $(DEPS_qtdeclarative)
@@ -34,6 +34,6 @@ qt5compat: qt5compat-everywhere-src-$(QT5COMPAT_VERSION).tar.xz .sum-qt5compat
 .qt5compat: qt5compat toolchain.cmake
 	$(CMAKECLEAN)
 	$(HOSTVARS_CMAKE) $(CMAKE) $(QT5_COMPAT_CONFIG)
-	+$(CMAKEBUILD)
+	+PATH="$(PATH):$(PREFIX)/bin" $(CMAKEBUILD)
 	$(CMAKEINSTALL)
 	touch $@

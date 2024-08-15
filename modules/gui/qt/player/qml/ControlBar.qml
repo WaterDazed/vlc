@@ -22,12 +22,11 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///playlist/" as PL
-
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Player
 
 T.Pane {
     id: root
@@ -136,9 +135,10 @@ T.Pane {
                 anchors.right: (parent === pseudoRow) ? parent.right : undefined
                 anchors.verticalCenter: (parent === pseudoRow) ? parent.verticalCenter : undefined
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: MainCtx.showRemainingTime = !MainCtx.showRemainingTime
+                TapHandler {
+                    onTapped: (eventPoint, button) => {
+                        MainCtx.showRemainingTime = !MainCtx.showRemainingTime
+                    }
                 }
             },
             SliderBar {
@@ -164,7 +164,7 @@ T.Pane {
 
                 parent: root
                 active: MainCtx.mediaLibraryAvailable
-                source: "qrc:/player/Bookmarks.qml"
+                source: "qrc:///qt/qml/VLC/Player/Bookmarks.qml"
 
                 x: root.leftPadding + trackPositionSlider.x + row2.Layout.leftMargin
                 y: row2.y + row2.height + VLCStyle.margin_xxsmall

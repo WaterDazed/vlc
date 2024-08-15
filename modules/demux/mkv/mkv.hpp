@@ -48,6 +48,7 @@
 #include <algorithm>
 #include <map>
 #include <stdexcept>
+#include <functional>
 
 /* libebml and matroska */
 #include <ebml/EbmlVersion.h>
@@ -111,12 +112,49 @@ enum
     MATROSKA_ENCODING_SCOPE_NEXT = 4 /* unsupported */
 };
 
+enum chapter_codec_id
+{
+    MATROSKA_CHAPTER_CODEC_NATIVE  = 0,
+    MATROSKA_CHAPTER_CODEC_DVD     = 1,
+};
+
 #define MKVD_TIMECODESCALE 1000000
 
 #define MKV_IS_ID( el, C ) ( el != NULL && (el->operator const EbmlId&()) == EBML_ID(C) && !el->IsDummy() )
 #define MKV_CHECKED_PTR_DECL( name, type, src ) type * name = MKV_IS_ID(src, type) ? static_cast<type*>(src) : NULL
 #define MKV_CHECKED_PTR_DECL_CONST( name, type, src ) const type * name = MKV_IS_ID(src, type) ? static_cast<const type*>(src) : NULL
 
+class MissingMandatory : public std::runtime_error
+{
+public:
+    MissingMandatory(const char * type_name)
+        :std::runtime_error(std::string("missing mandatory element without a default ") + type_name)
+    {}
+};
+
+template <typename Type>
+Type & GetMandatoryChild(const EbmlMaster & Master)
+{
+  auto p = static_cast<Type *>(Master.FindFirstElt(EBML_INFO(Type)));
+  if (p == nullptr)
+  {
+    throw MissingMandatory(EBML_INFO_NAME(EBML_INFO(Type)));
+  }
+  return *p;
+}
+#if LIBEBML_VERSION < 0x020000
+template <typename Type>
+Type * FindChild(const EbmlMaster & Master)
+{
+  return static_cast<Type *>(Master.FindFirstElt(EBML_INFO(Type)));
+}
+
+template <typename Type>
+Type * FindNextChild(const EbmlMaster & Master, const Type & PastElt)
+{
+  return static_cast<Type *>(Master.FindNextElt(PastElt));
+}
+#endif
 
 using namespace libmatroska;
 
@@ -138,6 +176,11 @@ struct matroska_stream_c
 
     std::vector<matroska_segment_c*> segments;
 };
+
+class chapter_codec_cmds_c;
+using chapter_cmd_match = std::function<bool(const chapter_codec_cmds_c &)>;
+
+using chapter_uid = uint64_t;
 
 
 /*****************************************************************************

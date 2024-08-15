@@ -21,10 +21,11 @@ import QtQuick.Controls
 import QtQml.Models
 import Qt5Compat.GraphicalEffects
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Network
+import VLC.Util
 
 Widgets.TableRowDelegate {
     id: root
@@ -89,6 +90,8 @@ Widgets.TableRowDelegate {
                 rectHeight: artwork.paintedHeight
             }
 
+            //FIXME: implement fillMode in RoundImage and use MediaCover here instead
+            //or directly TableCollumns.titleHeaderDelegate in place of NetworkThumbnailItem
             NetworkCustomCover {
                 id: artwork
 
@@ -115,7 +118,7 @@ Widgets.TableRowDelegate {
 
                     visible: root._showPlayCover
 
-                    onClicked: playClicked(root.index)
+                    onTapped: playClicked(root.index)
                 }
             }
         }

@@ -16,20 +16,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Playlist
+import VLC.Player
+import VLC.Util
 
-Item {
+T.Control {
     id: root
     width: VLCStyle.dp(320, VLCStyle.scale)
     height: VLCStyle.dp(180, VLCStyle.scale)
 
     //VideoSurface x,y won't update
-    onXChanged: videoSurface.onSurfacePositionChanged()
-    onYChanged: videoSurface.onSurfacePositionChanged()
+    onXChanged: videoSurface.updateSurfacePosition()
+    onYChanged: videoSurface.updateSurfacePosition()
 
     objectName: "pip window"
 
@@ -42,102 +45,110 @@ Item {
     Accessible.focusable: false
     Accessible.name: qsTr("video content")
 
-    Connections {
-        target: mouseArea.drag
-        function onActiveChanged() {
-            root.anchors.left = undefined;
-            root.anchors.right = undefined
-            root.anchors.top = undefined
-            root.anchors.bottom = undefined
-            root.anchors.verticalCenter = undefined;
-            root.anchors.horizontalCenter = undefined
-        }
+    Drag.active: dragHandler.active
+
+    Drag.onActiveChanged: {
+        root.anchors.left = undefined
+        root.anchors.right = undefined
+        root.anchors.top = undefined
+        root.anchors.bottom = undefined
+        root.anchors.verticalCenter = undefined
+        root.anchors.horizontalCenter = undefined
     }
-    Drag.active: mouseArea.drag.active
 
-    VideoSurface {
-        id: videoSurface
-
+    DoubleClickIgnoringItem {
         anchors.fill: parent
 
-        enabled: root.enabled
-        visible: root.visible
+        TapHandler {
+            gesturePolicy: TapHandler.WithinBounds
 
-        ctx: MainCtx
+            onDoubleTapped: History.push(["player"])
+            onTapped: MainPlaylistController.togglePlayPause()
+        }
+
+        DragHandler {
+            id: dragHandler
+
+            target: root
+
+            cursorShape: Qt.DragMoveCursor
+
+            dragThreshold: 0
+
+            grabPermissions: PointerHandler.CanTakeOverFromAnything
+
+            xAxis.minimum: root.dragXMin
+            xAxis.maximum: root.dragXMax
+            yAxis.minimum: root.dragYMin
+            yAxis.maximum: root.dragYMax
+        }
+
+        HoverHandler {
+            id: hoverHandler
+
+            grabPermissions: PointerHandler.CanTakeOverFromAnything
+            cursorShape: Qt.ArrowCursor
+        }
     }
 
-    MouseArea {
-        id: mouseArea
+    background: VideoSurface {
+        id: videoSurface
+        videoSurfaceProvider: MainCtx.videoSurfaceProvider
+    }
 
-        anchors.fill: videoSurface
-        z: 1
+    contentItem: Rectangle {
+        color: "#10000000"
+        visible: hoverHandler.hovered
 
-        hoverEnabled: true
-        onClicked: MainPlaylistController.togglePlayPause()
-        onDoubleClicked: History.push(["player"])
+        Widgets.IconButton {
+            anchors.centerIn: parent
 
-        enabled: root.enabled
-        visible: root.visible
+            font.pixelSize: VLCStyle.icon_large
 
-        cursorShape: drag.active ? Qt.DragMoveCursor : undefined
-        drag.target: root
-        drag.minimumX: root.dragXMin
-        drag.minimumY: root.dragYMin
-        drag.maximumX: root.dragXMax
-        drag.maximumY: root.dragYMax
+            description: qsTr("play/pause")
+            text: (Player.playingState !== Player.PLAYING_STATE_PAUSED
+                   && Player.playingState !== Player.PLAYING_STATE_STOPPED)
+                  ? VLCIcons.pause_filled
+                  : VLCIcons.play_filled
 
-        onWheel: wheel.accepted = true
+            hoverEnabled: MainCtx.qtQuickControlRejectsHoverEvents()
 
-        Rectangle {
-            color: "#10000000"
-            anchors.fill: parent
-            visible: parent.containsMouse
+            onClicked: MainPlaylistController.togglePlayPause()
+        }
 
-            Widgets.IconButton {
-                anchors.centerIn: parent
-
-                font.pixelSize: VLCStyle.icon_large
-
-                description: qsTr("play/pause")
-                text: (Player.playingState !== Player.PLAYING_STATE_PAUSED
-                       && Player.playingState !== Player.PLAYING_STATE_STOPPED)
-                      ? VLCIcons.pause_filled
-                      : VLCIcons.play_filled
-
-                onClicked: MainPlaylistController.togglePlayPause()
+        Widgets.IconButton {
+            anchors {
+                top: parent.top
+                topMargin: VLCStyle.margin_small
+                right: parent.right
+                rightMargin: VLCStyle.margin_small
             }
 
-            Widgets.IconButton {
-                anchors {
-                    top: parent.top
-                    topMargin: VLCStyle.margin_small
-                    right: parent.right
-                    rightMargin: VLCStyle.margin_small
-                }
+            font.pixelSize: VLCStyle.icon_PIP
+            description: qsTr("close video")
+            text: VLCIcons.close
 
-                font.pixelSize: VLCStyle.icon_PIP
-                description: qsTr("close video")
-                text: VLCIcons.close
+            hoverEnabled: MainCtx.qtQuickControlRejectsHoverEvents()
 
-                onClicked: MainPlaylistController.stop()
+            onClicked: MainPlaylistController.stop()
+        }
+
+        Widgets.IconButton {
+            anchors {
+                top: parent.top
+                topMargin: VLCStyle.margin_small
+                left: parent.left
+                leftMargin: VLCStyle.margin_small
             }
 
+            font.pixelSize: VLCStyle.icon_PIP
 
-            Widgets.IconButton {
-                anchors {
-                    top: parent.top
-                    topMargin: VLCStyle.margin_small
-                    left: parent.left
-                    leftMargin: VLCStyle.margin_small
-                }
+            description: qsTr("maximize player")
+            text: VLCIcons.fullscreen
 
-                font.pixelSize: VLCStyle.icon_PIP
+            hoverEnabled: MainCtx.qtQuickControlRejectsHoverEvents()
 
-                description: qsTr("maximize player")
-                text: VLCIcons.fullscreen
-
-                onClicked: History.push(["player"])
-            }
+            onClicked: History.push(["player"])
         }
     }
 }

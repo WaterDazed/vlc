@@ -21,12 +21,12 @@ import QtQuick.Templates as T
 import QtQml.Models
 import QtQml
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///util/" as Util
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Util
+import VLC.Style
+import VLC.Network
 
 FocusScope {
     id: root
@@ -102,10 +102,10 @@ FocusScope {
         }
 
         // TODO: We could implement a scrolling animation like in ExpandGridView.
-        if (maxY > flickable.contentItem.contentY + flickable.height) {
-            flickable.contentItem.contentY = maxY - flickable.height
-        } else if (minY < flickable.contentItem.contentY) {
-            flickable.contentItem.contentY = minY
+        if (maxY > flickable.contentY + flickable.height) {
+            flickable.contentY = maxY - flickable.height
+        } else if (minY < flickable.contentY) {
+            flickable.contentY = minY
         }
     }
 
@@ -145,9 +145,11 @@ FocusScope {
         contentWidth: column.width
         contentHeight: column.height
 
-        Util.FlickableScrollHandler { }
+        DefaultFlickableScrollHandler { }
 
-        Column {
+        Navigation.parentItem: root
+
+        Widgets.NavigableCol {
             id: column
 
             width: foldersSection.width
@@ -156,155 +158,115 @@ FocusScope {
             spacing: (MainCtx.gridView ? VLCStyle.gridView_spacing : VLCStyle.tableView_spacing) -
                      VLCStyle.layoutTitle_top_padding
 
-            BrowseDeviceView {
-                id: foldersSection
+            Navigation.parentItem: root
 
-                width: root.width
-                height: contentHeight
+            model: ObjectModel {
+                HomeDeviceView {
+                    id: foldersSection
 
-                visible: (model.count !== 0)
+                    title: qsTr("Folders")
 
-                model: StandardPathModel {
-                    //we only have a handfull of standard path (5 or 6)
-                    //so we don't limit them
+                    model: StandardPathModel {
+                        //we only have a handfull of standard path (5 or 6)
+                        //so we don't limit them
 
-                    sortCriteria: MainCtx.sort.criteria
-                    sortOrder: MainCtx.sort.order
-                    searchPattern: MainCtx.search.pattern
+                        sortCriteria: MainCtx.sort.criteria
+                        sortOrder: MainCtx.sort.order
+                        searchPattern: MainCtx.search.pattern
+                    }
                 }
 
-                title: qsTr("My Folders")
+                HomeDeviceView {
+                    id: computerSection
 
-                Navigation.parentItem: root
+                    title: qsTr("Computer")
 
-                Navigation.downAction: function() {
-                    if (deviceSection.visible)
-                        deviceSection.setCurrentItemFocus(Qt.TabFocusReason)
-                    else if (lanSection.visible)
-                        lanSection.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        root.Navigation.defaultNavigationDown()
+                    model: NetworkDeviceModel {
+                        ctx: MainCtx
+
+                        sd_source: NetworkDeviceModel.CAT_MYCOMPUTER
+                        source_name: "*"
+
+                        limit: computerSection.maximumCount
+
+                        sortOrder: MainCtx.sort.order
+                        sortCriteria: MainCtx.sort.criteria
+                        searchPattern: MainCtx.search.pattern
+                    }
                 }
 
-                onBrowse: (tree, reason) => root.browse(tree, reason)
+                HomeDeviceView {
+                    id: deviceSection
 
-                onSeeAll: (reason) => root.seeAllFolders(title, reason)
+                    title: qsTr("Devices")
 
-                onActiveFocusChanged: _centerFlickableOnItem(foldersSection)
-                onCurrentIndexChanged: _centerFlickableOnItem(foldersSection)
-            }
+                    model: NetworkDeviceModel {
+                        ctx: MainCtx
 
-            BrowseDeviceView {
-                id: deviceSection
+                        limit: deviceSection.maximumCount
 
-                width: root.width
-                height: contentHeight
+                        sortOrder: MainCtx.sort.order
+                        sortCriteria: MainCtx.sort.criteria
+                        searchPattern: MainCtx.search.pattern
 
-                maximumRows: root.maximumRows
-
-                visible: (model.count !== 0)
-
-                model: NetworkDeviceModel {
-                    ctx: MainCtx
-
-                    limit: deviceSection.maximumCount
-
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
-                    searchPattern: MainCtx.search.pattern
-
-                    sd_source: NetworkDeviceModel.CAT_DEVICES
-                    source_name: "*"
+                        sd_source: NetworkDeviceModel.CAT_DEVICES
+                        source_name: "*"
+                    }
                 }
 
+                HomeDeviceView {
+                    id: lanSection
 
-                title: qsTr("My Machine")
+                    title: qsTr("Network")
 
-                Navigation.parentItem: root
+                    model: NetworkDeviceModel {
+                        ctx: MainCtx
 
-                Navigation.upAction: function() {
-                    if (foldersSection.visible)
-                        foldersSection.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        root.Navigation.defaultNavigationUp()
+                        sd_source: NetworkDeviceModel.CAT_LAN
+                        source_name: "*"
+
+                        limit: lanSection.maximumCount
+
+                        sortOrder: MainCtx.sort.order
+                        sortCriteria: MainCtx.sort.criteria
+                        searchPattern: MainCtx.search.pattern
+                    }
                 }
-
-                Navigation.downAction: function() {
-                    if (lanSection.visible)
-                        lanSection.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        root.Navigation.defaultNavigationDown()
-                }
-
-                onBrowse: (tree, reason) => root.browse(tree, reason)
-
-                onSeeAll: (reason) => root.seeAllDevices(title, model.sd_source, reason)
-
-                onActiveFocusChanged: _centerFlickableOnItem(deviceSection)
-                onCurrentIndexChanged: _centerFlickableOnItem(deviceSection)
-            }
-
-            BrowseDeviceView {
-                id: lanSection
-
-                width: root.width
-                height: contentHeight
-
-                maximumRows: root.maximumRows
-
-                visible: (model.count !== 0)
-
-                model: NetworkDeviceModel {
-                    ctx: MainCtx
-
-                    sd_source: NetworkDeviceModel.CAT_LAN
-                    source_name: "*"
-
-                    limit: lanSection.maximumCount
-
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
-                    searchPattern: MainCtx.search.pattern
-                }
-
-                title: qsTr("My LAN")
-
-                Navigation.parentItem: root
-
-                Navigation.upAction: function() {
-                    if (deviceSection.visible)
-                        deviceSection.setCurrentItemFocus(Qt.TabFocusReason)
-                    else if (foldersSection.visible)
-                        foldersSection.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        root.Navigation.defaultNavigationUp()
-                }
-
-                onBrowse: (tree, reason) => root.browse(tree, reason)
-
-                onSeeAll: (reason) => root.seeAllDevices(title, model.sd_source, reason)
-
-                onActiveFocusChanged: _centerFlickableOnItem(lanSection)
-                onCurrentIndexChanged: _centerFlickableOnItem(lanSection)
             }
         }
     }
 
     function resetFocus() {
-        const widgetlist = [foldersSection, deviceSection, lanSection]
-        for (let i in widgetlist) {
-            if (widgetlist[i].activeFocus && widgetlist[i].visible)
+        for (let i = 0; i < column.count; ++i) {
+            const widget = column.itemAt(i)
+            if (widget.activeFocus && widget.visible)
                 return
         }
 
         let found  = false;
-        for (let i in widgetlist) {
-            if (widgetlist[i].visible && !found) {
-                widgetlist[i].focus = true
+        for (let i = 0; i < column.count; ++i){
+            const widget = column.itemAt(i)
+            if (widget.visible && !found) {
+                widget.focus = true
                 found = true
             } else {
-                widgetlist[i].focus = false
+                widget.focus = false
             }
         }
+    }
+
+    component HomeDeviceView: BrowseDeviceView {
+        width: root.width
+        height: contentHeight
+
+        maximumRows: root.maximumRows
+
+        visible: (model.count !== 0)
+
+        onBrowse: (tree, reason) => root.browse(tree, reason)
+        onSeeAll: (reason) => root.seeAllDevices(title, model.sd_source, reason)
+
+        onActiveFocusChanged: _centerFlickableOnItem(this)
+        onCurrentIndexChanged: _centerFlickableOnItem(this)
     }
 }

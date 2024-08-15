@@ -21,12 +21,11 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///util/" as Util
+import VLC.Player
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Util
 
 T.ProgressBar {
     id: control
@@ -79,7 +78,7 @@ T.ProgressBar {
         //tooltip is a Popup, palette should be passed explicitly
         colorContext.palette: theme.palette
 
-        visible: hoverHandler.hovered || control.visualFocus
+        visible: hoverHandler.hovered || control.visualFocus || dragHandler.active
 
         text: {
             let _text
@@ -99,7 +98,7 @@ T.ProgressBar {
                                                         : (control.visualPosition * control.width), 0)
     }
 
-    Util.FSM {
+    FSM {
         id: fsm
         signal playerUpdatePosition(real position)
         signal pressControl(real position, bool forcePrecise)
@@ -136,7 +135,7 @@ T.ProgressBar {
             Player.position = position
         }
 
-        Util.FSMState {
+        FSMState {
             id: fsmReleased
 
             transitions: ({
@@ -155,7 +154,7 @@ T.ProgressBar {
             })
         }
 
-        Util.FSMState  {
+        FSMState  {
             id: fsmHeld
 
             transitions: ({
@@ -173,7 +172,7 @@ T.ProgressBar {
             })
         }
 
-        Util.FSMState  {
+        FSMState  {
             id: fsmHeldWrongInput
 
             function enter() {
@@ -229,10 +228,15 @@ T.ProgressBar {
         TapHandler {
             acceptedButtons: Qt.LeftButton
 
-            //clicked but not dragged
-            onTapped: (point, button) => {
-                fsm.pressControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
-                fsm.releaseControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
+            gesturePolicy: TapHandler.WithinBounds
+
+            onPressedChanged: {
+                if (pressed) {
+                    fsm.pressControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
+                } else {
+                    // NOTE: Point is still valid at this point.
+                    fsm.releaseControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
+                }
             }
         }
 
@@ -242,6 +246,7 @@ T.ProgressBar {
 
             target: null
             dragThreshold: 0
+            grabPermissions: PointerHandler.CanTakeOverFromAnything
 
             function moveControl() {
                 fsm.moveControl(dragHandler.centroid.position.x / control.width,

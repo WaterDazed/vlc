@@ -1,11 +1,9 @@
 import QtQuick 
 import QtQuick.Layouts 
 import QtQuick.Controls as T
-import QtQml.Models
 
-import org.videolan.vlc 0.1
-import "qrc:///style"
-import "qrc:///widgets" as Widgets
+import VLC.Style
+import VLC.Widgets as Widgets
 
 T.Pane {
     id: root
@@ -157,7 +155,6 @@ T.Pane {
         }
 
         function expandSection(name, parentIndex) {
-            // displayModel.setProperty(parentIndex, "isExpanded", "true")
             displayModel.setProperty(parentIndex, "isExpanded", NavigationPane.ExpansionState.Expanded)
 
             // Retract previously expanded elements
@@ -167,9 +164,7 @@ T.Pane {
             let initialSize = displayModel.count
             for (let index = 0; index < initialSize; index++) {
                 let obj = displayModel.get(index)
-                // if (obj.name !== name && obj.isExpanded === "true") {
                 if (obj.name !== name && obj.isExpanded === NavigationPane.ExpansionState.Expanded) {
-                    // displayModel.setProperty(index, "isExpanded", "false")
                     displayModel.setProperty(index, "isExpanded", NavigationPane.ExpansionState.Collapsed)
                     removalName = obj.name
                     removalIndex = index+1
@@ -202,7 +197,6 @@ T.Pane {
         }
 
         function retractSection(name, parentIndex) {
-            // displayModel.setProperty(parentIndex, "isExpanded", "false")
             displayModel.setProperty(parentIndex, "isExpanded", NavigationPane.ExpansionState.Collapsed)
             let size = displayModel.count
             let count = 0
@@ -220,7 +214,6 @@ T.Pane {
             for (let index = parentIndex; index < size; index++) {
                 let obj = displayModel.get(index)
                 let count = 0
-                // if (obj.isExpanded === "true" && obj.group === "root") {
                 if (obj.isExpanded === NavigationPane.ExpansionState.Expanded && obj.group === "root") {
                     for (let subIndex = index+1; subIndex < size; subIndex++) {
                         let subObj = displayModel.get(subIndex)
@@ -229,7 +222,6 @@ T.Pane {
                         else
                             break;
                     }
-                    // displayModel.setProperty(index, "isExpanded", "false")
                     displayModel.setProperty(index, "isExpanded", NavigationPane.ExpansionState.Collapsed)
                     displayModel.remove(index+1, count)
                     break;
@@ -283,7 +275,7 @@ T.Pane {
             }           
         }   
 
-        Widgets.KeyNavigableListView {
+        Widgets.ListViewExt {
             id: listView
 
             Layout.fillWidth: true

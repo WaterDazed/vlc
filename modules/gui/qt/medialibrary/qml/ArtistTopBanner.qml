@@ -21,13 +21,12 @@ import QtQuick.Layouts
 import QtQml.Models
 import Qt5Compat.GraphicalEffects
 
-import org.videolan.medialib 0.1
-import org.videolan.controls 0.1
-import org.videolan.vlc 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-import "qrc:///util/Helpers.js" as Helpers
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Util
 
 FocusScope {
     id: root
@@ -102,8 +101,10 @@ FocusScope {
             implicitHeight: VLCStyle.cover_normal
             implicitWidth: VLCStyle.cover_normal
 
-            RoundImage {
+            Widgets.RoundImage {
                 source: artist.cover || VLCStyle.noArtArtist
+                sourceSize.width: width
+                sourceSize.height: height
                 anchors.fill: parent
                 radius: VLCStyle.cover_normal
             }

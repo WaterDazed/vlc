@@ -23,16 +23,15 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/"    as MainInterface
-import "qrc:///util/"    as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Util
+import VLC.Style
+import VLC.Dialogs
 
-MainInterface.MainViewLoader {
+MainViewLoader {
     id: root
 
     //---------------------------------------------------------------------------------------------
@@ -44,7 +43,7 @@ MainInterface.MainViewLoader {
     readonly property int currentIndex: currentItem?.currentIndex ?? -1
 
     property Component header: null
-    
+
     readonly property int contentLeftMargin: currentItem?.contentLeftMargin ?? 0
     readonly property int contentRightMargin: currentItem?.contentRightMargin ?? 0
 
@@ -54,18 +53,6 @@ MainInterface.MainViewLoader {
 
     //---------------------------------------------------------------------------------------------
     // Private
-
-    property int _width: (isMusic) ? VLCStyle.gridItem_music_width
-                                   : VLCStyle.gridItem_video_width
-
-    property int _height: (isMusic) ? VLCStyle.gridItem_music_height
-                                    : VLCStyle.gridItem_video_height
-
-    property int _widthCover: (isMusic) ? VLCStyle.gridCover_music_width
-                                        : VLCStyle.gridCover_video_width
-
-    property int _heightCover: (isMusic) ? VLCStyle.gridCover_music_height
-                                         : VLCStyle.gridCover_video_height
 
     property string _placeHolder: (isMusic) ? VLCStyle.noArtAlbumCover
                                             : VLCStyle.noArtVideoCover
@@ -215,6 +202,13 @@ MainInterface.MainViewLoader {
 
         text: qsTr("Processing...")
 
+        onVisibleChanged: {
+            if (visible)
+                MainCtx.setCursor(root, Qt.BusyCursor)
+            else
+                MainCtx.unsetCursor(root)
+        }
+
         Timer {
             id: visibilityTimer
 
@@ -246,20 +240,22 @@ MainInterface.MainViewLoader {
         id: contextMenu
 
         model: root.model
+
+        ctx: MainCtx
     }
 
     // TBD: Refactor this with MusicGenres ?
     Component {
         id: grid
 
-        MainInterface.MainGridView {
+        Widgets.ExpandGridItemView {
             id: gridView
 
             //-------------------------------------------------------------------------------------
             // Settings
 
-            cellWidth : _width
-            cellHeight: _height
+            basePictureWidth: isMusic ? VLCStyle.gridCover_music_width : VLCStyle.gridCover_video_width
+            basePictureHeight: isMusic ? VLCStyle.gridCover_music_height : VLCStyle.gridCover_video_height
 
             model: root.model
 
@@ -280,8 +276,11 @@ MainInterface.MainViewLoader {
                 //---------------------------------------------------------------------------------
                 // Settings
 
-                pictureWidth : _widthCover
-                pictureHeight: _heightCover
+                width: gridView.cellWidth;
+                height: gridView.cellHeight;
+
+                pictureWidth : gridView.maxPictureWidth
+                pictureHeight: gridView.maxPictureHeight
 
                 title: (model.name) ? model.name
                                     : qsTr("Unknown title")
@@ -349,16 +348,14 @@ MainInterface.MainViewLoader {
     Component {
         id: table
 
-        MainInterface.MainTableView {
+        MainTableView {
             id: tableView
 
             //-------------------------------------------------------------------------------------
             // Properties
 
-            property int _columns: Math.max(1, VLCStyle.gridColumnsForWidth(availableRowWidth) - 2)
-
             property var _modelSmall: [{
-                size: Math.max(2, _columns),
+                weight: 1,
 
                 model: {
                     criteria: "name",
@@ -373,25 +370,15 @@ MainInterface.MainViewLoader {
             }]
 
             property var _modelMedium: [{
-                size: 1,
-
-                model: {
-                    criteria: "thumbnail",
-
-                    text: qsTr("Cover"),
-
-                    isSortable: false,
-
-                    headerDelegate: columns.titleHeaderDelegate,
-                    colDelegate   : columns.titleDelegate
-                }
-            }, {
-                size: _columns,
+                weight: 1,
 
                 model: {
                     criteria: "name",
 
-                    text: qsTr("Name")
+                    text: qsTr("Name"),
+
+                    headerDelegate: columns.titleHeaderDelegate,
+                    colDelegate   : columns.titleDelegate
                 }
             }, {
                 size: 1,
@@ -454,8 +441,7 @@ MainInterface.MainViewLoader {
             Widgets.TableColumns {
                 id: columns
 
-                showTitleText: (tableView.sortModel === tableView._modelSmall)
-                showCriterias: showTitleText
+                showCriterias: (tableView.sortModel === tableView._modelSmall)
 
                 criteriaCover: "thumbnail"
 

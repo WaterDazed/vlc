@@ -21,11 +21,11 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Style
 
 Widgets.PageLoader {
     id: root
@@ -67,11 +67,11 @@ Widgets.PageLoader {
             name: "all",
             default: true,
             displayText: qsTr("All"),
-            url: "qrc:///medialibrary/VideoAllDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/VideoAllDisplay.qml"
         },{
             name: "playlists",
             displayText: qsTr("Playlists"),
-            url: "qrc:///medialibrary/VideoPlaylistsDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/VideoPlaylistsDisplay.qml"
         }
     ]
 

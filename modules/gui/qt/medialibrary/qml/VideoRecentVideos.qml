@@ -20,13 +20,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 FocusScope {
     id: root
@@ -41,6 +40,9 @@ FocusScope {
     property int rightPadding: VLCStyle.margin_xsmall
 
     property int nbItemPerRow
+
+    property int allVideosContentLeftMargin
+    property int allVideosContentRightMargin
     
     property alias model: recentModel
 
@@ -131,7 +133,7 @@ FocusScope {
 
             sortModel: []
 
-            contextMenu: Util.MLContextMenu {
+            contextMenu: MLContextMenu {
                 model: recentModel
 
                 showPlayAsAudioAction: true
@@ -149,9 +151,11 @@ FocusScope {
 
             view: root
 
-            leftPadding: view.currentItem?.contentLeftMargin ?? 0
-            topPadding: MainCtx.gridView ? VLCStyle.gridView_spacing + VLCStyle.margin_xsmall + VLCStyle.margin_xxxsmall
-                                         : VLCStyle.tableView_spacing
+            leftPadding: allVideosContentLeftMargin
+            rightPadding: allVideosContentRightMargin
+            topPadding: recentModel.count > 0 ? (MainCtx.gridView ? VLCStyle.gridView_spacing :
+                                                                    VLCStyle.tableView_spacing)
+                                              : 0
 
             text: view.title
         }

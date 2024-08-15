@@ -17,8 +17,8 @@
  *****************************************************************************/
 import QtQuick
 import QtQuick.Controls
-import "qrc:///style/"
-import org.videolan.vlc 0.1
+import VLC.MainInterface
+import VLC.Style
 
 // targetWidth: concerned widget's current width
 // sourceWidth: target's width is bounded by this value (parent's width?)
@@ -41,6 +41,7 @@ MouseArea {
     cursorShape: Qt.SplitHCursor
     width: VLCStyle.resizeHandleWidth
     acceptedButtons: Qt.LeftButton
+    preventStealing: true
 
     onPressed: (mouse) => {
         MainCtx.setCursor(cursorShape)
@@ -48,6 +49,10 @@ MouseArea {
     }
 
     onReleased:(mouse) => {
+        MainCtx.restoreCursor()
+    }
+
+    onCanceled: {
         MainCtx.restoreCursor()
     }
 

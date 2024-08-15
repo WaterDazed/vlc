@@ -19,10 +19,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///util/" as Util
+import VLC.Style
+import VLC.Util
 
 ListView {
     id: playerBtnDND
@@ -96,8 +95,8 @@ ListView {
         id: theme
         colorSet: ColorContext.View
     }
-    
-    Util.FlickableScrollHandler {
+
+    DefaultFlickableScrollHandler {
         fallbackScroll: true
         enabled: true
     }

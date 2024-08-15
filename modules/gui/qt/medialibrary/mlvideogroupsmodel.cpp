@@ -44,13 +44,6 @@
 static const int MLVIDEOGROUPSMODEL_COVER_WIDTH  = 260 * 3; // 16 / 10 ratio
 static const int MLVIDEOGROUPSMODEL_COVER_HEIGHT = 162 * 3;
 
-static const QHash<QByteArray, vlc_ml_sorting_criteria_t> criterias =
-{
-    { "title",    VLC_ML_SORTING_ALPHA         },
-    { "duration", VLC_ML_SORTING_DURATION      },
-    { "date",     VLC_ML_SORTING_INSERTIONDATE }
-};
-
 //=================================================================================================
 // MLVideoGroupsModel
 //=================================================================================================
@@ -126,11 +119,11 @@ QVariant MLVideoGroupsModel::itemRoleData(MLItem * item, const int role) const /
         switch (role)
         {
             case Qt::DisplayRole:
-                return QVariant::fromValue(video->getTitle());
+                return QVariant::fromValue(video->title());
             case GROUP_TITLE_FIRST_SYMBOL:
                 // videos and groups are shown mixed, force this item into a group
                 // for grouping the data must be sorted by title
-                return QVariant::fromValue( getFirstSymbol(video->getTitle() ));
+                return QVariant::fromValue( getFirstSymbol(video->title() ));
             case GROUP_IS_VIDEO:
                 return true;
             case GROUP_DATE:
@@ -144,30 +137,13 @@ QVariant MLVideoGroupsModel::itemRoleData(MLItem * item, const int role) const /
     }
 }
 
-vlc_ml_sorting_criteria_t MLVideoGroupsModel::roleToCriteria(int role) const /* override */
-{
-    switch (role)
-    {
-        case VIDEO_TITLE:
-            return VLC_ML_SORTING_ALPHA;
-        case VIDEO_DURATION:
-            return VLC_ML_SORTING_DURATION;
-        case GROUP_DATE:
-            return VLC_ML_SORTING_INSERTIONDATE;
-        default:
-            return VLC_ML_SORTING_DEFAULT;
-    }
-}
-
 vlc_ml_sorting_criteria_t MLVideoGroupsModel::nameToCriteria(QByteArray name) const /* override */
 {
-    return criterias.value(name, VLC_ML_SORTING_DEFAULT);
-}
-
-QByteArray MLVideoGroupsModel::criteriaToName(vlc_ml_sorting_criteria_t criteria) const
-/* override */
-{
-    return criterias.key(criteria, "");
+    return QHash<QByteArray, vlc_ml_sorting_criteria_t> {
+        { "title",    VLC_ML_SORTING_ALPHA         },
+        { "duration", VLC_ML_SORTING_DURATION      },
+        { "date",     VLC_ML_SORTING_INSERTIONDATE },
+    }.value(name, VLC_ML_SORTING_DEFAULT);
 }
 
 std::unique_ptr<MLListCacheLoader> MLVideoGroupsModel::createMLLoader() const /* override */

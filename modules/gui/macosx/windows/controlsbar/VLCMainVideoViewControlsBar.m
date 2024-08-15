@@ -68,26 +68,54 @@
 
     NSNotificationCenter * const notificationCenter = NSNotificationCenter.defaultCenter;
     [notificationCenter addObserver:self
-                           selector:@selector(updateDetailLabel:)
-                               name:VLCPlayerCurrentMediaItemChanged
-                             object:nil];
-    [notificationCenter addObserver:self
-                           selector:@selector(updateFloatOnTopButton:)
+                           selector:@selector(floatOnTopChanged:)
                                name:VLCWindowFloatOnTopChangedNotificationName
                              object:nil];
+
+    [self update];
 }
 
-- (void)updateDetailLabel:(NSNotification *)notification
+- (void)update
 {
+    [super update];
+    [self updateFloatOnTopButton];
+}
 
-    VLCMediaLibraryMediaItem * const mediaItem = [VLCMediaLibraryMediaItem mediaItemForURL:_playerController.URLOfCurrentMediaItem];
-    if (!mediaItem) {
+- (void)floatOnTopChanged:(NSNotification *)notification
+{
+    VLCVideoWindowCommon * const videoWindow = (VLCVideoWindowCommon *)notification.object;
+    NSAssert(videoWindow != nil, @"Received video window should not be nil!");
+    VLCVideoWindowCommon * const selfVideoWindow =
+        (VLCVideoWindowCommon *)self.floatOnTopButton.window;
+
+    if (videoWindow != selfVideoWindow) {
         return;
     }
 
-    _detailLabel.hidden = [mediaItem.primaryDetailString isEqualToString:@""] ||
-                          [mediaItem.primaryDetailString isEqualToString:mediaItem.durationString];
-    _detailLabel.stringValue = mediaItem.primaryDetailString;
+    [self updateFloatOnTopButton];
+}
+
+- (void)updateFloatOnTopButton
+{
+    VLCVideoWindowCommon * const videoWindow = (VLCVideoWindowCommon *)self.floatOnTopButton.window;
+    if (videoWindow == nil) {
+        return;
+    }
+
+    VLCVoutView * const voutView = videoWindow.videoViewController.voutView;
+    NSAssert(voutView != nil, @"Vout view should not be nil!");
+    vout_thread_t * const voutThread = voutView.voutThread;
+
+    if (voutThread == NULL) {
+        return;
+    }
+
+    const bool floatOnTopEnabled = var_GetBool(voutThread, "video-on-top");
+
+    if (@available(macOS 10.14, *)) {
+        self.floatOnTopButton.contentTintColor =
+            floatOnTopEnabled ? NSColor.controlAccentColor : nil;
+    }
 }
 
 - (IBAction)openBookmarks:(id)sender
@@ -123,21 +151,6 @@
     }
     var_ToggleBool(p_vout, "video-on-top");
     vout_Release(p_vout);
-}
-
-- (void)updateFloatOnTopButton:(NSNotification *)notification
-{
-    VLCVideoWindowCommon * const videoWindow = (VLCVideoWindowCommon *)notification.object;
-    NSAssert(videoWindow != nil, @"Received video window should not be nil!");
-    NSDictionary<NSString *, NSNumber *> * const userInfo = notification.userInfo;
-    NSAssert(userInfo != nil, @"Received user info should not be nil!");
-    NSNumber * const enabledNumberWrapper = userInfo[VLCWindowFloatOnTopEnabledNotificationKey];
-    NSAssert(enabledNumberWrapper != nil, @"Received user info enabled wrapper should not be nil!");
-
-    if (@available(macOS 10.14, *)) {
-        self.floatOnTopButton.contentTintColor =
-            enabledNumberWrapper.boolValue ? NSColor.controlAccentColor : NSColor.controlTextColor;
-    }
 }
 
 @end

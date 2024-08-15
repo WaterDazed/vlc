@@ -1,5 +1,5 @@
 /*****************************************************************************
- * VLCLibrarySection.h: MacOS X interface module
+ * VLCLibrarySegment.h: MacOS X interface module
  *****************************************************************************
  * Copyright (C) 2023 VLC authors and VideoLAN
  *
@@ -24,17 +24,25 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString * const VLCLibraryBookmarkedLocationsKey;
+extern NSString * const VLCLibraryBookmarkedLocationsChanged;
+
 typedef NS_ENUM(NSInteger, VLCLibrarySegmentType) {
     VLCLibraryLowSentinelSegment = -1,
     VLCLibraryHomeSegment,
     VLCLibraryVideoSegment,
+    VLCLibraryShowsVideoSubSegment,
     VLCLibraryMusicSegment,
     VLCLibraryArtistsMusicSubSegment,
     VLCLibraryAlbumsMusicSubSegment,
     VLCLibrarySongsMusicSubSegment,
     VLCLibraryGenresMusicSubSegment,
+    VLCLibraryPlaylistsSegment,
     VLCLibraryBrowseSegment,
+    VLCLibraryBrowseBookmarkedLocationSubSegment,
     VLCLibraryStreamsSegment,
+    VLCLibraryGroupsSegment,
+    VLCLibraryGroupsGroupSubSegment,
     VLCLibraryHighSentinelSegment,
 };
 

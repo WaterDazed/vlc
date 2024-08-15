@@ -17,12 +17,12 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 Widgets.GridItem {
     id: root
@@ -45,8 +45,6 @@ Widgets.GridItem {
     subtitle: model?.duration?.formatHMS() ?? ""
     pictureWidth: VLCStyle.gridCover_video_width
     pictureHeight: VLCStyle.gridCover_video_height
-    playCoverBorderWidth: VLCStyle.gridCover_video_border
-    titleMargin: VLCStyle.margin_xxsmall
 
     pictureOverlay: Item {
         width: root.pictureWidth

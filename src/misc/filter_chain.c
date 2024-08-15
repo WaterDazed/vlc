@@ -33,6 +33,90 @@
 #include <libvlc.h>
 #include <assert.h>
 
+module_t *vlc_filter_LoadModule(filter_t *p_filter, const char *capability,
+                                const char *name, bool strict)
+{
+    const bool b_force_backup = p_filter->obj.force; /* FIXME: remove this */
+
+    if (name == NULL || name[0] == '\0')
+        name = "any";
+
+    /* Find matching modules */
+    module_t **mods;
+    size_t strict_total;
+    ssize_t total = vlc_module_match(capability, name, strict,
+                                     &mods, &strict_total);
+
+    if (unlikely(total < 0))
+        return NULL;
+
+    struct vlc_logger *log = p_filter->obj.logger;
+
+    vlc_debug(log, "looking for %s module matching \"%s\": %zd candidates",
+              capability, name, total);
+
+    p_filter->p_module = NULL;
+    for (size_t i = 0; i < (size_t)total; i++) {
+        module_t *cand = mods[i];
+        int ret = VLC_EGENERIC;
+        vlc_filter_open cb = vlc_module_map(log, cand);
+
+        if (cb == NULL)
+            continue;
+
+        p_filter->p_module = cand;
+        p_filter->obj.force = i < strict_total;
+        ret = cb(p_filter);
+        if (ret == VLC_SUCCESS)
+        {
+            vlc_debug(log, "using %s module \"%s\"", capability,
+                        module_get_object(cand));
+            assert( p_filter->ops != NULL );
+            break;
+        }
+
+        vlc_objres_clear(&p_filter->obj);
+        p_filter->p_module = NULL;
+
+        if (ret == VLC_ETIMEOUT)
+            break;
+        if (ret == VLC_ENOMEM)
+        {
+            free(mods);
+            return NULL;
+        }
+    }
+
+    if (p_filter->p_module == NULL)
+        vlc_debug(log, "no %s modules matched with name %s", capability, name);
+
+    free(mods);
+    if (p_filter->p_module != NULL) {
+        var_Create(p_filter, "module-name", VLC_VAR_STRING);
+        var_SetString(p_filter, "module-name", module_get_object(p_filter->p_module));
+    }
+
+    p_filter->obj.force = b_force_backup;
+    return p_filter->p_module;
+}
+
+void vlc_filter_UnloadModule(filter_t *p_filter)
+{
+    if (likely(p_filter->p_module))
+    {
+        if ( p_filter->ops->close )
+            p_filter->ops->close( p_filter );
+
+        msg_Dbg(p_filter, "removing \"%s\" module \"%s\"", module_get_capability(p_filter->p_module),
+                module_get_object(p_filter->p_module));
+        var_Destroy(p_filter, "module-name");
+
+        p_filter->p_module = NULL;
+    }
+
+    vlc_objres_clear(&p_filter->obj);
+}
+
 typedef struct chained_filter_t
 {
     /* Public part of the filter structure */
@@ -240,22 +324,24 @@ static filter_t *filter_chain_AppendInner( filter_chain_t *chain,
     else
         filter->owner.sub = NULL;
 
+    char *name_chained = NULL;
+    const char *module_name = name;
     assert( capability != NULL );
-    if( name != NULL && chain->b_allow_fmt_out_change )
+    if (name != NULL && name[0] != '\0' && chain->b_allow_fmt_out_change )
     {
         /* Append the "chain" video filter to the current list.
          * This filter will be used if the requested filter fails to load.
          * It will then try to add a video converter before. */
-        char name_chained[strlen(name) + sizeof(",chain")];
-        sprintf( name_chained, "%s,chain", name );
-        filter->p_module = module_need( filter, capability, name_chained, true );
+        if (asprintf(&name_chained, "%s,chain", name) == -1)
+            goto error;
+        module_name = name_chained;
     }
-    else
-        filter->p_module = module_need( filter, capability, name, name != NULL );
 
-    if( filter->p_module == NULL )
-        goto error;
-    assert( filter->ops != NULL );
+    filter->p_module =
+        vlc_filter_LoadModule(filter, capability, module_name, name != NULL);
+
+   if (filter->p_module == NULL)
+      goto error;
 
     vlc_list_append( &chained->node, &chain->filter_list );
 
@@ -272,6 +358,7 @@ error:
         msg_Err( chain->obj, "Failed to create %s '%s'", capability, name );
     else
         msg_Err( chain->obj, "Failed to create %s", capability );
+    vlc_objres_clear(&filter->obj);
     es_format_Clean( &filter->fmt_out );
     es_format_Clean( &filter->fmt_in );
     vlc_object_delete(filter);
@@ -300,8 +387,7 @@ void filter_chain_DeleteFilter( filter_chain_t *chain, filter_t *filter )
     /* Remove it from the chain */
     vlc_list_remove( &chained->node );
 
-    filter_Close( filter );
-    module_unneed( filter, filter->p_module );
+    vlc_filter_UnloadModule( filter );
 
     msg_Dbg( chain->obj, "Filter %p removed from chain", (void *)filter );
     FilterDeletePictures( &chained->pending );

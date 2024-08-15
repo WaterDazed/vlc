@@ -55,6 +55,13 @@ extern "C" char **environ;
 #include <QQmlError>
 #include <QList>
 #include <QTranslator>
+#ifdef _WIN32
+#include <QOperatingSystemVersion>
+#if __has_include(<rhi/qrhi.h>)
+#include <rhi/qrhi.h>
+#include <QOffscreenSurface>
+#endif
+#endif
 
 #include "qt.hpp"
 
@@ -63,8 +70,6 @@ extern "C" char **environ;
 #include "dialogs/dialogs_provider.hpp" /* THEDP creation */
 #include "dialogs/dialogs/dialogmodel.hpp"
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 # include "maininterface/mainctx_win32.hpp"
 #include "maininterface/win32windoweffects_module.hpp"
 #else
@@ -92,6 +97,7 @@ extern "C" char **environ;
 #include <vlc_window.h>
 #include <vlc_player.h>
 #include <vlc_threads.h>
+#include <vlc_messages.h>
 
 #include <QQuickWindow>
 
@@ -251,6 +257,13 @@ static void ShowDialog   ( intf_thread_t *, int, int, intf_dialog_args_t * );
 #define VERBOSE_TEXT N_( "Print Qt's important internal messages" )
 #define VERBOSE_LONGTEXT N_( "Enable Qt's all own messaging categories except the debug category." )
 
+#define HIDE_WINDOW_ON_CLOSE_TEXT N_( "Hide the window on close" )
+#define HIDE_WINDOW_ON_CLOSE_LONGTEXT N_( "Instead of closing the application, hide the window. This setting is only applicable when system tray icon is enabled." )
+
+#define BACKDROP_BLUR_FILTER_TEXT N_( "Enable backdrop blur filter for the main window if possible" )
+#define BACKDROP_BLUR_FILTER_LONGTEXT N_( "If backdrop blur filter is available, use translucency in the backgrounds of certain parts of the user interface " \
+    "instead of a solid color. This setting impairs readibility of text." )
+
 static const int initial_prefs_view_list[] = { 0, 1, 2 };
 static const char *const initial_prefs_view_list_texts[] =
     { N_("Simple"), N_("Advanced"), N_("Expert") };
@@ -274,6 +287,7 @@ static const char *const compositor_vlc[] = {
 #ifdef HAVE_DCOMP_H
     "dcomp",
 #endif
+    "platform",
     "win7",
 #endif
 #ifdef QT_HAS_WAYLAND_COMPOSITOR
@@ -290,6 +304,7 @@ static const char *const compositor_user[] = {
 #ifdef HAVE_DCOMP_H
     "Direct Composition",
 #endif
+    "Platform Composition",
     "Windows 7",
 #endif
 #ifdef QT_HAS_WAYLAND_COMPOSITOR
@@ -422,6 +437,10 @@ vlc_module_begin ()
     add_bool( "qt-smooth-scrolling", true, SMOOTH_SCROLLING_TEXT, SMOOTH_SCROLLING_LONGTEXT )
 
     add_bool( "qt-verbose", false, VERBOSE_TEXT, VERBOSE_LONGTEXT )
+
+    add_bool( "qt-close-to-system-tray", false, HIDE_WINDOW_ON_CLOSE_TEXT, HIDE_WINDOW_ON_CLOSE_LONGTEXT )
+
+    add_bool( "qt-backdrop-blur", true, BACKDROP_BLUR_FILTER_TEXT, BACKDROP_BLUR_FILTER_LONGTEXT )
 
     add_float_with_range( "qt-safe-area", 0, 0, 100.0, SAFE_AREA_TEXT, SAFE_AREA_LONGTEXT )
 
@@ -740,11 +759,21 @@ static void *Thread( void *obj )
         QString filterRules;
 
         const int verbosity = var_InheritInteger(p_intf, "verbose");
-        if (verbosity < 2)
+        if (verbosity < VLC_MSG_DBG)
         {
             filterRules += QStringLiteral("*.debug=false\n");
-            if (verbosity < 1)
+            if (verbosity < VLC_MSG_WARN)
+            {
                 filterRules += QStringLiteral("*.warning=false\n");
+                if (verbosity < VLC_MSG_ERR)
+                {
+                    filterRules += QStringLiteral("*.critical=false\n");
+                    if (verbosity < VLC_MSG_INFO)
+                    {
+                        filterRules += QStringLiteral("*.info=false\n");
+                    }
+                }
+            }
         }
 
         if (var_InheritBool(p_intf, "qt-verbose"))
@@ -786,9 +815,37 @@ static void *Thread( void *obj )
 #endif
     argv[argc] = NULL;
 
+    //qml modules are always statically linked
+    Q_INIT_RESOURCE( dialogs_assets );
+    Q_INIT_RESOURCE( maininterface_assets );
+    Q_INIT_RESOURCE( menus_assets );
+    Q_INIT_RESOURCE( maininterface_assets );
+    Q_INIT_RESOURCE( medialibrary_assets );
+    Q_INIT_RESOURCE( network_assets );
+    Q_INIT_RESOURCE( player_assets );
+    Q_INIT_RESOURCE( playercontrols_assets );
+    Q_INIT_RESOURCE( playlist_assets );
+    Q_INIT_RESOURCE( style_assets );
+    Q_INIT_RESOURCE( util_assets );
+    Q_INIT_RESOURCE( widgets_assets );
+
+#ifdef QT_USE_QMLCACHEGEN
+    Q_INIT_RESOURCE( dialogs_cachegen );
+    Q_INIT_RESOURCE( maininterface_cachegen );
+    Q_INIT_RESOURCE( menus_cachegen );
+    Q_INIT_RESOURCE( maininterface_cachegen );
+    Q_INIT_RESOURCE( medialibrary_cachegen );
+    Q_INIT_RESOURCE( network_cachegen );
+    Q_INIT_RESOURCE( player_cachegen );
+    Q_INIT_RESOURCE( playercontrols_cachegen );
+    Q_INIT_RESOURCE( playlist_cachegen );
+    Q_INIT_RESOURCE( style_cachegen );
+    Q_INIT_RESOURCE( util_cachegen );
+    Q_INIT_RESOURCE( widgets_cachegen );
+#endif
+
 #ifdef QT_STATIC
     Q_INIT_RESOURCE( assets );
-    Q_INIT_RESOURCE( qml );
 #ifdef _WIN32
     Q_INIT_RESOURCE( windows );
 #endif
@@ -806,27 +863,13 @@ static void *Thread( void *obj )
     Q_INIT_RESOURCE( qmake_QtQuick_Controls_impl );
     Q_INIT_RESOURCE( qmake_QtQuick_Controls_Basic );
     Q_INIT_RESOURCE( qmake_QtQuick_Controls_Basic_impl );
-    Q_INIT_RESOURCE( qmake_QtQuick_Controls_Fusion );
-    Q_INIT_RESOURCE( qmake_QtQuick_Controls_Fusion_impl );
-#ifdef _WIN32
-    Q_INIT_RESOURCE( qmake_QtQuick_Controls_Windows );
-    Q_INIT_RESOURCE( qmake_QtQuick_NativeStyle );
-    Q_INIT_RESOURCE( qtquickcontrols2windowsstyleplugin_raw_qml_0 );
-    Q_INIT_RESOURCE( qtquickcontrols2nativestyleplugin_raw_qml_0 );
-#endif
     Q_INIT_RESOURCE( qmake_QtQuick_Layouts );
     Q_INIT_RESOURCE( qmake_QtQuick_Templates );
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-    Q_INIT_RESOURCE( QuickControls2FusionStyleImpl_raw_qml_0 );
-    Q_INIT_RESOURCE( QuickControls2Fusion_raw_qml_0 );
-    Q_INIT_RESOURCE( qtquickcontrols2fusionstyle );
     Q_INIT_RESOURCE( QuickControls2Basic_raw_qml_0 );
     Q_INIT_RESOURCE( qtquickcontrols2basicstyle );
 #else
-    Q_INIT_RESOURCE( qtquickcontrols2fusionstyleimplplugin_raw_qml_0 );
-    Q_INIT_RESOURCE( qtquickcontrols2fusionstyleplugin_raw_qml_0 );
-    Q_INIT_RESOURCE( qtquickcontrols2fusionstyle );
     Q_INIT_RESOURCE( qtquickcontrols2basicstyleplugin_raw_qml_0 );
     Q_INIT_RESOURCE( qtquickcontrols2basicstyleplugin );
 #endif
@@ -835,24 +878,6 @@ static void *Thread( void *obj )
     Q_INIT_RESOURCE( qtgraphicaleffectsprivate_raw_qml_0 );
     Q_INIT_RESOURCE( qtgraphicaleffectsshaders );
     // Q_INIT_RESOURCE( qtquickshapes_shaders );
-#endif
-
-#ifdef _WIN32
-    // QSysInfo::productVersion() returns "unknown" on Windows 7
-    // RHI Fallback does not seem to work.
-
-    DWORD dwVersion = 0;
-    DWORD dwMajorVersion = 0;
-    DWORD dwMinorVersion = 0;
-
-    dwVersion = GetVersion();
-
-    dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
-    dwMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
-
-    if (dwMajorVersion <= 6 && dwMinorVersion <= 1)
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-
 #endif
 
     auto compositor = var_InheritString(p_intf, "qt-compositor");
@@ -864,17 +889,45 @@ static void *Thread( void *obj )
     QQuickWindow::setDefaultAlphaBuffer(true);
 
 #ifdef QT_STATIC
-#ifdef _WIN32
-    QQuickStyle::setStyle(QLatin1String("Windows"));
-#else
-    QQuickStyle::setStyle(QLatin1String("Fusion"));
-#endif
-    QQuickStyle::setFallbackStyle(QLatin1String("Fusion"));
+    QQuickStyle::setStyle(QLatin1String("Basic"));
 #endif
 
     /* Start the QApplication here */
     QApplication app( argc, argv );
     app.setProperty("initialStyle", app.style()->objectName());
+
+#if defined(_WIN32) && (_WIN32_WINNT < _WIN32_WINNT_WINBLUE)
+    // TODO: Qt Quick RHI Fallback does not work (Qt 6.7.1).
+    //       We have to manually pick a graphics api here for
+    //       Windows 7 and Windows 8, since it may not support
+    //       the default graphics api (Direct3D 11.2).
+
+    if (qEnvironmentVariableIsEmpty("QSG_RHI_BACKEND") && qEnvironmentVariableIsEmpty("QT_QUICK_BACKEND"))
+    {
+        if (QOperatingSystemVersion::current() < QOperatingSystemVersion::Windows8_1)
+        {
+            // TODO: Probe D3D12 when it becomes the default.
+            {
+                // If probing is not available, use OpenGL as a compromise:
+                QSGRendererInterface::GraphicsApi graphicsApi = QSGRendererInterface::OpenGL;
+#if __has_include(<rhi/qrhi.h>)
+                QRhiD3D11InitParams params;
+                if (QRhi::probe(QRhi::D3D11, &params))
+                    graphicsApi = QSGRendererInterface::Direct3D11;
+                else
+                {
+                    QRhiGles2InitParams params1;
+                    params1.fallbackSurface = QRhiGles2InitParams::newFallbackSurface();
+                    if (!QRhi::probe(QRhi::OpenGLES2, &params1))
+                        graphicsApi = QSGRendererInterface::Software;
+                    delete params1.fallbackSurface;
+                }
+#endif
+                QQuickWindow::setGraphicsApi(graphicsApi);
+            }
+        }
+    }
+#endif
 
     {
         // Install custom translator:
@@ -928,22 +981,6 @@ static void *Thread( void *obj )
     p_intf->p_mainPlayerController = new PlayerController(p_intf);
     p_intf->p_mainPlaylistController = new vlc::playlist::PlaylistController(p_intf->p_playlist);
 
-#ifdef UPDATE_CHECK
-    /* Checking for VLC updates */
-    if( var_InheritBool( p_intf, "qt-updates-notif" ) &&
-        !var_InheritBool( p_intf, "qt-privacy-ask" ) )
-    {
-        int interval = var_InheritInteger( p_intf, "qt-updates-days" );
-        if( QDate::currentDate() >
-             getSettings()->value( "updatedate" ).toDate().addDays( interval ) )
-        {
-            /* The constructor of the update Dialog will do the 1st request */
-            UpdateDialog::getInstance( p_intf );
-            getSettings()->setValue( "updatedate", QDate::currentDate() );
-        }
-    }
-#endif
-
     /* Create the normal interface in non-DP mode */
 #ifdef _WIN32
     p_intf->p_mi = new MainCtxWin32(p_intf);
@@ -980,18 +1017,13 @@ static void *Thread( void *obj )
         bool known_type = true;
 
         const QString& platform = app.platformName();
-        if( platform == QLatin1String("xcb") )
-            p_intf->voutWindowType = VLC_WINDOW_TYPE_XID;
+        if( platform == QLatin1String("xcb") ) { }
         else if( platform.startsWith( QLatin1String("wayland") ) ) {
-            p_intf->voutWindowType = VLC_WINDOW_TYPE_WAYLAND;
-
             // Workaround for popup widgets not closing on mouse press on wayland:
             app.installEventFilter(new DismissPopupEventFilter(&app));
         }
-        else if( platform == QLatin1String("windows") || platform == QLatin1String("direct2d") )
-            p_intf->voutWindowType = VLC_WINDOW_TYPE_HWND;
-        else if( platform == QLatin1String("cocoa") )
-            p_intf->voutWindowType = VLC_WINDOW_TYPE_NSOBJECT;
+        else if( platform == QLatin1String("windows") || platform == QLatin1String("direct2d") ) { }
+        else if( platform == QLatin1String("cocoa") ) { }
         else
         {
             msg_Err( p_intf, "unknown Qt platform: %s", qtu(platform) );
@@ -1006,6 +1038,22 @@ static void *Thread( void *obj )
 
     /* Explain how to show a dialog :D */
     p_intf->pf_show_dialog = ShowDialog;
+
+#ifdef UPDATE_CHECK
+    /* Checking for VLC updates */
+    if( var_InheritBool( p_intf, "qt-updates-notif" ) &&
+        !var_InheritBool( p_intf, "qt-privacy-ask" ) )
+    {
+        int interval = var_InheritInteger( p_intf, "qt-updates-days" );
+        if( QDate::currentDate() >
+             getSettings()->value( "updatedate" ).toDate().addDays( interval ) )
+        {
+            /* The constructor of the update Dialog will do the 1st request */
+            UpdateDialog::getInstance( p_intf );
+            getSettings()->setValue( "updatedate", QDate::currentDate() );
+        }
+    }
+#endif
 
     /* Tell the main LibVLC thread we are ready */
     {
@@ -1164,13 +1212,13 @@ static int WindowOpen( vlc_window_t *p_wnd )
         if (p_intf->isShuttingDown)
             return VLC_EGENERIC;
 
-        switch( p_intf->voutWindowType )
         {
-            case VLC_WINDOW_TYPE_XID:
-            case VLC_WINDOW_TYPE_HWND:
+            const QString& platform = qApp->platformName();
+            if (platform == QLatin1String("windows") || platform == QLatin1String("direct2d"))
+            {
                 if( var_InheritBool( p_wnd, "video-wallpaper" ) )
                     return VLC_EGENERIC;
-                break;
+            }
         }
 
         bool ret = p_intf->p_compositor->setupVoutWindow( p_wnd, &WindowCloseCb );

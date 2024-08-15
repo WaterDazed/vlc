@@ -19,11 +19,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.impl 
 import QtQuick.Templates as T
-import org.videolan.vlc 0.1
 import QtQuick.Layouts
 
-import "qrc:///style/"
-
+import VLC.MainInterface
+import VLC.Style
+import VLC.Menus
 
 Item {
     id: root
@@ -83,6 +83,7 @@ Item {
         id: menubar
         ctx: MainCtx
         menubar: menubarLayout
+        playerViewVisible: History.match(History.viewPath, ["player"])
 
         onMenuClosed: _menuIndex = -1
         onNavigateMenu: (direction) => {

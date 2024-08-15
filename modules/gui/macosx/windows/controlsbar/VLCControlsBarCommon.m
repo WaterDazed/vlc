@@ -34,8 +34,8 @@
 #import "views/VLCBottomBarView.h"
 #import "views/VLCDragDropView.h"
 #import "views/VLCImageView.h"
+#import "views/VLCPlaybackProgressSlider.h"
 #import "views/VLCTimeField.h"
-#import "views/VLCSlider.h"
 #import "views/VLCVolumeSlider.h"
 #import "views/VLCWrappableTextField.h"
 
@@ -171,7 +171,6 @@
     [self.playButton setAlternateImage: _pressedPlayImage];
 
     [self.timeSlider setHidden:NO];
-    [self updateTimeSlider:nil];
 
     NSString *volumeTooltip = [NSString stringWithFormat:_NS("Volume: %i %%"), 100];
     [self.volumeSlider setToolTip: volumeTooltip];
@@ -179,11 +178,9 @@
 
     [self.volumeSlider setMaxValue: VLCVolumeMaximum];
     [self.volumeSlider setDefaultValue: VLCVolumeDefault];
-    [self updateVolumeSlider:nil];
 
     [self.muteVolumeButton setToolTip: _NS("Mute")];
     self.muteVolumeButton.accessibilityLabel = self.muteVolumeButton.toolTip;
-    [self updateMuteVolumeButtonImage];
 
     [self.timeField setNeedsDisplay:YES];
     [self.timeField setRemainingIdentifier:VLCTimeFieldDisplayTimeAsElapsed];
@@ -216,6 +213,9 @@
     [_artworkImageView setCropsImagesToRoundedCorners:YES];
     [_artworkImageView setImage:[NSImage imageNamed:@"noart"]];
     [_artworkImageView setContentGravity:VLCImageViewContentGravityResize];
+
+    // Update verything post-init
+    [self update];
 }
 
 - (void)dealloc
@@ -344,7 +344,6 @@
         [_playerController setVolume:[sender floatValue]];
     } else if (sender == self.muteVolumeButton) {
         [_playerController toggleMute];
-        [self updateMuteVolumeButtonImage];
     }
 }
 
@@ -463,6 +462,17 @@
     }
 
     _playingItemDisplayField.stringValue = inputItem.name;
+
+    VLCMediaLibraryMediaItem * const mediaItem =
+        [VLCMediaLibraryMediaItem mediaItemForURL:_playerController.URLOfCurrentMediaItem];
+    if (!mediaItem) {
+        self.detailLabel.hidden = YES;
+    } else {
+        _detailLabel.hidden = 
+            [mediaItem.primaryDetailString isEqualToString:@""] ||
+            [mediaItem.primaryDetailString isEqualToString:mediaItem.durationString];
+        _detailLabel.stringValue = mediaItem.primaryDetailString;
+    }
 
     NSURL * const artworkURL = inputItem.artworkURL;
 

@@ -24,13 +24,13 @@ import Qt5Compat.GraphicalEffects
 import QtQml.Models
 import QtQuick.Window
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///playlist/" as PL
-import "qrc:///widgets/" as Widgets
-import "qrc:///menus/" as Menus
-import "qrc:///util/Helpers.js" as Helpers
+import VLC.MainInterface
+import VLC.Style
+import VLC.Playlist
+import VLC.Widgets as Widgets
+import VLC.Menus as Menus
+import VLC.Util
 
 T.ToolBar {
     id: root
@@ -43,7 +43,7 @@ T.ToolBar {
 
     // For now, used for d&d functionality
     // Not strictly necessary to set
-    property PL.PlaylistListView plListView: null
+    property PlaylistListView plListView: null
 
     property bool _showCSD: MainCtx.clientSideDecoration && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
 
@@ -110,7 +110,7 @@ T.ToolBar {
                 Loader {
                     anchors.fill: parent
                     active: root._showCSD
-                    source: "qrc:///widgets/CSDTitlebarTapNDrapHandler.qml"
+                    source: "qrc:///qt/qml/VLC/Widgets/CSDTitlebarTapNDrapHandler.qml"
                 }
 
                 Column {
@@ -205,8 +205,8 @@ T.ToolBar {
                     height: VLCStyle.globalToolbar_height
                     active: root._showCSD
                     source: VLCStyle.palette.hasCSDImage
-                              ? "qrc:///widgets/CSDThemeButtonSet.qml"
-                              : "qrc:///widgets/CSDWindowButtonSet.qml"
+                              ? "qrc:///qt/qml/VLC/Widgets/CSDThemeButtonSet.qml"
+                              : "qrc:///qt/qml/VLC/Widgets/CSDWindowButtonSet.qml"
                 }
             }
 
@@ -472,9 +472,10 @@ T.ToolBar {
 
                                 onClicked: contextMenu.popup(this.mapToGlobal(0, height))
 
-                                QmlGlobalMenu {
+                                Menus.QmlGlobalMenu {
                                     id: contextMenu
                                     ctx: MainCtx
+                                    playerViewVisible: History.match(History.viewPath, ["player"])
                                 }
                             }
                         }

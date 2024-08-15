@@ -18,11 +18,11 @@
 import QtQuick
 import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
+import VLC.MainInterface
+import VLC.Widgets as Widgets
 
-import "qrc:///style/"
+import VLC.Style
 
 T.ToolButton {
     id: control

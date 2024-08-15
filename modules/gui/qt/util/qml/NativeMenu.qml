@@ -18,8 +18,8 @@
  *****************************************************************************/
 import QtQml
 
-import org.videolan.vlc 0.1
-
+import VLC.MainInterface
+import VLC.Menus
 
 // @brief - a class that can be used to create native menus with support
 // to asyncronously retreive data from MLBaseModel like model
@@ -99,6 +99,8 @@ QtObject {
 
     readonly property StringListMenu _menu: StringListMenu {
         id: menu
+
+        ctx: MainCtx
 
         onSelected: (index, _) => {
             root._executeAction(index)

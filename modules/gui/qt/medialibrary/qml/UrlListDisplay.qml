@@ -20,15 +20,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQml.Models
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MediaLibrary
 
-import "qrc:///util" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Style
 
 
-Widgets.KeyNavigableTableView {
+Widgets.TableViewExt {
     id: listView_id
 
     readonly property bool isSearchable: false
@@ -37,8 +36,6 @@ Widgets.KeyNavigableTableView {
     property alias sortOrder: urlModel.sortOrder
     property alias sortCriteria: urlModel.sortCriteria
 
-    readonly property int _nbCols: VLCStyle.gridColumnsForWidth(
-                                       listView_id.availableRowWidth)
     property Component urlHeaderDelegate: Widgets.TableHeaderDelegate {
         Widgets.IconLabel {
             anchors.fill: parent
@@ -54,7 +51,7 @@ Widgets.KeyNavigableTableView {
     model: urlModel
 
     sortModel: [{
-        size: Math.max(listView_id._nbCols - 1, 1),
+        weight: 1,
 
         model: {
             criteria: "url",
@@ -100,7 +97,7 @@ Widgets.KeyNavigableTableView {
         ml: MediaLib
     }
 
-    Util.MLContextMenu {
+    MLContextMenu {
         id: contextMenu
 
         model: urlModel

@@ -201,7 +201,7 @@ static void GetxPSH264(uint8_t i_pps_id, void *priv,
     if (*pp_pps == NULL)
         *pp_sps = NULL;
     else
-        *pp_sps = h264ctx->hh.h264.sps_list[(*pp_pps)->i_sps_id].h264_sps;
+        *pp_sps = h264ctx->hh.h264.sps_list[h264_get_pps_sps_id(*pp_pps)].h264_sps;
 }
 
 struct sei_callback_h264_s
@@ -215,16 +215,13 @@ static bool ParseH264SEI(const hxxx_sei_data_t *p_sei_data, void *priv)
     if (p_sei_data->i_type == HXXX_SEI_PIC_TIMING)
     {
         struct sei_callback_h264_s *s = priv;
-        if (s->p_sps && s->p_sps->vui.b_valid)
+        if (s->p_sps)
         {
-            if (s->p_sps->vui.b_hrd_parameters_present_flag)
-            {
-                bs_read(p_sei_data->p_bs, s->p_sps->vui.i_cpb_removal_delay_length_minus1 + 1);
-                bs_read(p_sei_data->p_bs, s->p_sps->vui.i_dpb_output_delay_length_minus1 + 1);
-            }
-
-            if (s->p_sps->vui.b_pic_struct_present_flag)
-                s->i_pic_struct = bs_read( p_sei_data->p_bs, 4);
+            uint8_t i_dpb_output_delay;
+            h264_decode_sei_pic_timing( p_sei_data->p_bs, s->p_sps,
+                                       &s->i_pic_struct,
+                                       &i_dpb_output_delay );
+            VLC_UNUSED(i_dpb_output_delay);
         }
         return false;
     }
@@ -257,24 +254,25 @@ static bool FillReorderInfoH264(decoder_t *p_dec, const block_t *p_block,
 
         if (i_nal_type <= H264_NAL_SLICE_IDR && i_nal_type != H264_NAL_UNKNOWN)
         {
-            h264_slice_t slice;
-            if (!h264_decode_slice(p_nal, i_nal, GetxPSH264, h264ctx, &slice))
+            h264_slice_t *slice = h264_decode_slice(p_nal, i_nal, GetxPSH264, h264ctx);
+            if (!slice)
                 return false;
 
             const h264_sequence_parameter_set_t *p_sps;
             const h264_picture_parameter_set_t *p_pps;
-            GetxPSH264(slice.i_pic_parameter_set_id, h264ctx, &p_sps, &p_pps);
+            GetxPSH264(h264_get_slice_pps_id(slice), h264ctx, &p_sps, &p_pps);
             if (p_sps)
             {
                 int bFOC;
-                h264_compute_poc(p_sps, &slice, &h264ctx->poc,
+                h264_compute_poc(p_sps, slice, &h264ctx->poc,
                                  &p_info->i_poc, &p_info->i_foc, &bFOC);
 
-                p_info->b_keyframe = slice.type == H264_SLICE_TYPE_I;
-                p_info->b_flush = (slice.type == H264_SLICE_TYPE_I) || slice.has_mmco5;
-                p_info->b_field = slice.i_field_pic_flag;
-                p_info->b_progressive = !p_sps->mb_adaptive_frame_field_flag &&
-                                        !slice.i_field_pic_flag;
+                enum h264_slice_type_e slicetype = h264_get_slice_type(slice);
+                p_info->b_keyframe = slicetype == H264_SLICE_TYPE_I;
+                p_info->b_flush = p_info->b_keyframe || h264_has_mmco5(slice);
+                p_info->b_field = h264_is_field_pic(slice);
+                p_info->b_progressive = !h264_using_adaptive_frames(p_sps) &&
+                                        !p_info->b_field;
 
                 struct sei_callback_h264_s sei;
                 sei.p_sps = p_sps;
@@ -284,7 +282,7 @@ static bool FillReorderInfoH264(decoder_t *p_dec, const block_t *p_block,
                     HxxxParseSEI(sei_array[i].p_nal, sei_array[i].i_nal, 1,
                                  ParseH264SEI, &sei);
 
-                p_info->i_num_ts = h264_get_num_ts(p_sps, &slice, sei.i_pic_struct,
+                p_info->i_num_ts = h264_get_num_ts(p_sps, slice, sei.i_pic_struct,
                                                    p_info->i_foc, bFOC);
                 unsigned dummy;
                 h264_get_dpb_values(p_sps, &p_info->i_max_pics_buffering, &dummy);
@@ -293,12 +291,14 @@ static bool FillReorderInfoH264(decoder_t *p_dec, const block_t *p_block,
                     p_info->b_top_field_first = (sei.i_pic_struct % 2 == 1);
 
                 /* Set frame rate for timings in case of missing rate */
-                if (p_sps->vui.i_time_scale && p_sps->vui.i_num_units_in_tick)
+                unsigned fr[2];
+                if(h264_get_frame_rate(p_sps, fr, &fr[1]))
                 {
-                    p_info->field_rate_num = p_sps->vui.i_time_scale;
-                    p_info->field_rate_den = p_sps->vui.i_num_units_in_tick;
+                    p_info->field_rate_num = fr[0];
+                    p_info->field_rate_den = fr[1];
                 }
             }
+            h264_slice_release(slice);
 
             return true; /* No need to parse further NAL */
         }
@@ -1163,8 +1163,8 @@ static int StartVideoToolbox(decoder_t *p_dec)
     OSStatus status = CMVideoFormatDescriptionCreate(
                                             kCFAllocatorDefault,
                                             p_sys->codec,
-                                            p_dec->fmt_out.video.i_width,
-                                            p_dec->fmt_out.video.i_height,
+                                            p_dec->fmt_out.video.i_visible_width,
+                                            p_dec->fmt_out.video.i_visible_height,
                                             decoderConfiguration,
                                             &p_sys->videoFormatDescription);
     if (status)

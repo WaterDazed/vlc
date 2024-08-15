@@ -20,7 +20,7 @@
 
 import QtQuick
 
-import "qrc:///style/"
+import VLC.Style
 
 StateGroup {
     id: root

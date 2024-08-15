@@ -19,11 +19,11 @@
 import QtQuick
 import QtQuick.Controls
 
-import org.videolan.vlc 0.1
 
-import "qrc:///player/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Player
+import VLC.Widgets as Widgets
+import VLC.Style
 
 
 Control {

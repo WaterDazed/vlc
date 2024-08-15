@@ -143,18 +143,12 @@ struct vlc_filter_operations
     void (*close)(filter_t *);
 };
 
-typedef int (*vlc_open_deinterlace)(filter_t *);
-typedef int (*vlc_video_converter_open)(filter_t *);
-typedef int (*vlc_video_filter_open)(filter_t *);
-typedef int (*vlc_video_text_renderer_open)(filter_t *);
-typedef int (*vlc_video_sub_filter_open)(filter_t *);
-typedef int (*vlc_video_sub_source_open)(filter_t *);
-typedef int (*vlc_video_blending_open)(filter_t *);
+typedef int (*vlc_filter_open)(filter_t *);
 
 
 #define set_deinterlace_callback( activate )     \
     {                                            \
-        vlc_open_deinterlace open__ = activate;  \
+        vlc_filter_open open__ = activate;       \
         (void) open__;                           \
         set_callback(activate)                   \
     }                                            \
@@ -163,7 +157,7 @@ typedef int (*vlc_video_blending_open)(filter_t *);
 
 #define set_callback_video_filter( activate )              \
     {                                                      \
-        vlc_video_filter_open open__ = activate;           \
+        vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
         set_callback(activate)                             \
     }                                                      \
@@ -171,7 +165,7 @@ typedef int (*vlc_video_blending_open)(filter_t *);
 
 #define set_callback_video_converter( activate, priority ) \
     {                                                      \
-        vlc_video_converter_open open__ = activate;        \
+        vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
         set_callback(activate)                             \
     }                                                      \
@@ -179,7 +173,7 @@ typedef int (*vlc_video_blending_open)(filter_t *);
 
 #define set_callback_text_renderer( activate, priority )   \
     {                                                      \
-        vlc_video_text_renderer_open open__ = activate;    \
+        vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
         set_callback(activate)                             \
     }                                                      \
@@ -187,7 +181,7 @@ typedef int (*vlc_video_blending_open)(filter_t *);
 
 #define set_callback_sub_filter( activate )                \
     {                                                      \
-        vlc_video_sub_filter_open open__ = activate;       \
+        vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
         set_callback(activate)                             \
     }                                                      \
@@ -195,7 +189,7 @@ typedef int (*vlc_video_blending_open)(filter_t *);
 
 #define set_callback_sub_source( activate, priority )      \
     {                                                      \
-        vlc_video_sub_source_open open__ = activate;       \
+        vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
         set_callback(activate)                             \
     }                                                      \
@@ -203,14 +197,14 @@ typedef int (*vlc_video_blending_open)(filter_t *);
 
 #define set_callback_video_blending( activate, priority )  \
     {                                                      \
-        vlc_video_blending_open open__ = activate;         \
+        vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
         set_callback(activate)                             \
     }                                                      \
     set_capability( "video blending", priority )
 
 /** Structure describing a filter
- * @warning BIG FAT WARNING : the code relies on the first 4 members of
+ * @warning BIG FAT WARNING : the code relies on the first 3 members of
  * filter_t and decoder_t to be the same, so if you have anything to add,
  * do it at the end of the structure.
  */
@@ -243,10 +237,14 @@ struct filter_t
     filter_owner_t      owner;
 };
 
-static inline void filter_Close( filter_t *p_filter )
+VLC_API module_t *vlc_filter_LoadModule(filter_t *, const char *cap,
+                                        const char *name, bool strict);
+VLC_API void vlc_filter_UnloadModule(filter_t *);
+
+static inline void vlc_filter_Delete(filter_t *p_filter)
 {
-    if ( p_filter->ops->close )
-        p_filter->ops->close( p_filter );
+    vlc_filter_UnloadModule(p_filter);
+    vlc_object_delete(p_filter);
 }
 
 /**

@@ -106,7 +106,7 @@ public:
 
     //playback
     Q_PROPERTY(PlayingState playingState READ getPlayingState NOTIFY playingStateChanged FINAL)
-    Q_PROPERTY(bool isPlaying READ hasInput NOTIFY inputChanged FINAL)
+    Q_PROPERTY(bool isStarted READ isStarted NOTIFY playingStateChanged FINAL)
     Q_PROPERTY(QString name READ getName NOTIFY nameChanged FINAL)
     Q_PROPERTY(float buffering READ getBuffering  NOTIFY bufferingChanged FINAL)
     Q_PROPERTY(float rate READ getRate WRITE setRate NOTIFY rateChanged FINAL)
@@ -169,6 +169,7 @@ public:
     Q_PROPERTY(VLCVarChoiceModel* zoom READ getZoom CONSTANT FINAL)
     Q_PROPERTY(VLCVarChoiceModel* aspectRatio READ getAspectRatio CONSTANT FINAL)
     Q_PROPERTY(VLCVarChoiceModel* crop READ getCrop CONSTANT FINAL)
+    Q_PROPERTY(VLCVarChoiceModel* fit READ getFit CONSTANT FINAL)
     Q_PROPERTY(VLCVarChoiceModel* deinterlace READ getDeinterlace CONSTANT FINAL)
     Q_PROPERTY(VLCVarChoiceModel* deinterlaceMode READ getDeinterlaceMode CONSTANT FINAL)
     Q_PROPERTY(bool fullscreen READ isFullscreen WRITE setFullscreen NOTIFY fullscreenChanged FINAL)
@@ -257,7 +258,7 @@ public:
 public:
     vlc_player_t * getPlayer() const;
 
-    input_item_t *getInput();
+    input_item_t *getInput() const;
 
     SharedVOutThread getVout();
     VOutThreadList getVouts() const;
@@ -274,6 +275,7 @@ public:
 public slots:
     //playback
     PlayingState getPlayingState() const;
+    bool isStarted() const;
     bool hasInput() const;
     QString getName() const;
     float getBuffering() const;
@@ -347,6 +349,7 @@ public slots:
     VLCVarChoiceModel* getZoom();
     VLCVarChoiceModel* getAspectRatio();
     VLCVarChoiceModel* getCrop();
+    VLCVarChoiceModel* getFit();
     VLCVarChoiceModel* getDeinterlace();
     VLCVarChoiceModel* getDeinterlaceMode();
     bool isFullscreen() const;

@@ -20,15 +20,12 @@ import QtQuick
 import QtQml.Models
 import QtQuick.Layouts
 
-import org.videolan.medialib 0.1
-import org.videolan.controls 0.1
-import org.videolan.vlc 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///util/" as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Style
 
 FocusScope {
     id: root
@@ -125,7 +122,7 @@ FocusScope {
     Widgets.AcrylicBackground {
       id: artistListBackground
 
-      visible: artistModel.count > 0
+      visible: artistList.visible
       width: artistList.width
       height: artistList.height + artistList.displayMarginEnd
 
@@ -141,7 +138,7 @@ FocusScope {
 
         spacing: 0
 
-        Widgets.KeyNavigableListView {
+        Widgets.ListViewExt {
             id: artistList
 
             model: artistModel
@@ -232,6 +229,7 @@ FocusScope {
 
             implicitWidth: VLCStyle.border
             color: artistList.colorContext.separator
+            visible: artistList.visible
         }
 
         MusicArtist {

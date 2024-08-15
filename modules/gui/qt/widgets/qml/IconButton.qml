@@ -19,10 +19,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "."
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
 
 T.Button {
     id: control
@@ -49,7 +49,7 @@ T.Button {
     T.ToolTip.delay: VLCStyle.delayToolTipAppear
     T.ToolTip.text: description
 
-    contentItem: IconLabel {
+    contentItem: Widgets.IconLabel {
         font: control.font
         color: control.color
         text: control.text

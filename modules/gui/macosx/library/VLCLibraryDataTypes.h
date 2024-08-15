@@ -148,6 +148,7 @@ typedef NS_ENUM(NSUInteger, VLCMediaLibraryParentGroupType) {
 @property (readonly) id<VLCMediaLibraryItemProtocol> primaryActionableDetailLibraryItem;
 @property (readonly) BOOL secondaryActionableDetail;
 @property (readonly) id<VLCMediaLibraryItemProtocol> secondaryActionableDetailLibraryItem;
+@property (readonly) NSArray<NSString *> *labels;
 
 - (void)iterateMediaItemsWithBlock:(void (^)(VLCMediaLibraryMediaItem*))mediaItemBlock;
 
@@ -216,7 +217,70 @@ typedef NS_ENUM(NSUInteger, VLCMediaLibraryParentGroupType) {
 
 @end
 
-@interface VLCMediaLibraryMediaItem : VLCAbstractMediaLibraryItem<VLCMediaLibraryItemProtocol>
+@interface VLCMediaLibraryShow : VLCAbstractMediaLibraryItem<VLCMediaLibraryItemProtocol>
+
+- (instancetype)initWithShow:(struct vlc_ml_show_t *)p_show;
+
+@property (readonly) NSString *name;
+@property (readonly) NSString *summary;
+@property (readonly) NSString *tvdbId;
+@property (readonly) unsigned int releaseYear;
+@property (readonly) uint32_t episodeCount;
+@property (readonly) uint32_t seasonCount;
+@property (readonly) NSArray<VLCMediaLibraryMediaItem *> *episodes;
+
+@end
+
+@interface VLCMediaLibraryGroup : VLCAbstractMediaLibraryItem
+
+- (instancetype)initWithGroup:(struct vlc_ml_group_t *)p_group;
+
+@property (readonly) NSString *name;
+@property (readonly) NSUInteger numberOfTotalItems;
+@property (readonly) NSUInteger numberOfVideoItems;
+@property (readonly) NSUInteger numberOfAudioItems;
+@property (readonly) NSUInteger numberOfUnknownItems;
+@property (readonly) NSUInteger numberOfPresentTotalItems;
+@property (readonly) NSUInteger numberOfPresentVideoItems;
+@property (readonly) NSUInteger numberOfPresentAudioItems;
+@property (readonly) NSUInteger numberOfPresentUnknownItems;
+@property (readonly) NSUInteger numberOfSeenItems;
+@property (readonly) NSUInteger numberOfPresentSeenItems;
+@property (readonly) NSInteger duration; // milliseconds
+@property (readonly) NSDate *creationDate;
+@property (readonly) NSDate *lastModificationDate;
+
+@end
+
+@interface VLCMediaLibraryPlaylist : VLCAbstractMediaLibraryItem<VLCMediaLibraryItemProtocol>
+
+@property (readonly) NSString *MRL;
+
+@property (readonly) NSArray<VLCMediaLibraryMediaItem *> *mediaItems;
+
+@property (readonly) unsigned int numberOfMedia;
+@property (readonly) uint32_t numberOfVideos;
+@property (readonly) uint32_t numberOfAudios;
+@property (readonly) uint32_t numberOfUnknowns;
+
+@property (readonly) unsigned int numberOfPresentMedia;
+@property (readonly) uint32_t numberOfPresentVideos;
+@property (readonly) uint32_t numberOfPresentAudios;
+@property (readonly) uint32_t numberOfPresentUnknowns;
+
+@property (readonly) NSDate *creationDate;
+
+@property (readonly) int64_t duration;
+@property (readonly) uint32_t numberDurationUnknown;
+
+@property (readonly) BOOL readOnly;
+
++ (instancetype)playlistForLibraryID:(int64_t)libraryID;
+- (instancetype)initWithPlaylist:(struct vlc_ml_playlist_t *)p_playlist;
+
+@end
+
+@interface VLCMediaLibraryMediaItem : NSObject<VLCMediaLibraryItemProtocol>
 
 + (nullable instancetype)mediaItemForLibraryID:(int64_t)libraryID;
 + (nullable instancetype)mediaItemForURL:(NSURL *)url;

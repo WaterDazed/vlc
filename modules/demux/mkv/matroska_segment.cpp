@@ -27,6 +27,8 @@
 #include "util.hpp"
 #include "Ebml_dispatcher.hpp"
 
+#include <vlc_arrays.h>
+
 #include <new>
 #include <iterator>
 #include <limits>
@@ -1070,28 +1072,24 @@ void matroska_segment_c::EnsureDuration()
     {
         // use the last block + duration
         uint64_t i_last_timecode = p_last_cluster->GlobalTimestamp();
-        for( unsigned int i = 0; i < p_last_cluster->ListSize(); i++ )
+        for (auto l : *p_last_cluster)
         {
-            EbmlElement *l = (*p_last_cluster)[i];
-
             if( MKV_CHECKED_PTR_DECL ( simpleblock, KaxSimpleBlock, l ) )
             {
                 simpleblock->SetParent( *p_last_cluster );
                 i_last_timecode = std::max(i_last_timecode, simpleblock->GlobalTimestamp());
             }
-            else if( MKV_CHECKED_PTR_DECL ( group, KaxBlockGroup, l ) )
+            else if( MKV_CHECKED_PTR_DECL_CONST ( group, KaxBlockGroup, l ) )
             {
                 uint64_t i_group_timecode = 0;
-                for( unsigned int j = 0; j < group->ListSize(); j++ )
+                for (auto g : *group)
                 {
-                    EbmlElement *g = (*group)[j];
-
                     if( MKV_CHECKED_PTR_DECL ( block, KaxBlock, g ) )
                     {
                         block->SetParent( *p_last_cluster );
                         i_group_timecode += block->GlobalTimestamp();
                     }
-                    else if( MKV_CHECKED_PTR_DECL ( kbd_ptr, KaxBlockDuration, g ) )
+                    else if( MKV_CHECKED_PTR_DECL_CONST ( kbd_ptr, KaxBlockDuration, g ) )
                     {
                         i_group_timecode += static_cast<uint64_t>( *kbd_ptr );
                     }
@@ -1132,7 +1130,7 @@ bool matroska_segment_c::ESCreate()
             track.p_es = es_out_Add( sys.demuxer.out, &track.fmt );
 
             if( track.p_es &&
-                !sys.ev.AddES( track.p_es, track.fmt.i_cat ) )
+                !sys.ev.AddTrack( track ) )
             {
                 msg_Warn( &sys.demuxer, "Could not register events, interactive menus will not work");
             }
@@ -1162,7 +1160,7 @@ bool matroska_segment_c::ESCreate()
 
 void matroska_segment_c::ESDestroy( )
 {
-    sys.ev.ResetPci();
+    sys.ev.AbortThread();
 
     for( tracks_map_t::iterator it = tracks.begin(); it != tracks.end(); ++it )
     {
@@ -1171,7 +1169,7 @@ void matroska_segment_c::ESDestroy( )
         if( track.p_es != NULL )
         {
             es_out_Del( sys.demuxer.out, track.p_es );
-            sys.ev.DelES( track.p_es );
+            sys.ev.DelTrack( track );
             track.p_es = NULL;
         }
     }

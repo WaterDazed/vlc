@@ -19,7 +19,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 
-import org.videolan.vlc 0.1
+import VLC.MainInterface
 
 Repeater {
     id: repeater
@@ -65,7 +65,22 @@ Repeater {
 
         Binding on visible {
             delayed: true // this is important
-            value: (loader.x + loader.Layout.minimumWidth <= repeater.availableWidth)
+            when: condition
+            value: {
+                if (condition)
+                    return (loader.x + loader.Layout.minimumWidth <= repeater.availableWidth)
+                else
+                    return true;
+            }
+
+            property bool condition: false
+
+            Binding on condition {
+                delayed: true
+                value: (loader.status === Loader.Ready) &&
+                       (loader.Layout.minimumWidth > 0) &&
+                       (repeater.availableWidth < Number.MAX_VALUE)
+            }
         }
 
         // Events

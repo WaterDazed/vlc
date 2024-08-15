@@ -21,21 +21,20 @@ import QtQuick
 import QtQuick.Controls
 import QtQml.Models
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MediaLibrary
 
-import "qrc:///main/" as MainInterface
-import "qrc:///util" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Style
 
-MainInterface.MainGridView {
+Widgets.ExpandGridItemView {
     id: gridView
 
     // Properties
 
     property Widgets.MLDragItem dragItem
-    property Util.MLContextMenu contextMenu
+    property MLContextMenu contextMenu
     property var labels
 
     // Signals
@@ -44,8 +43,8 @@ MainInterface.MainGridView {
 
     // Settings
 
-    cellWidth : VLCStyle.gridItem_video_width
-    cellHeight: VLCStyle.gridItem_video_height
+    basePictureWidth: VLCStyle.gridCover_video_width
+    basePictureHeight: VLCStyle.gridCover_video_height
 
     activeFocusOnTab: true
 
@@ -93,6 +92,12 @@ MainInterface.MainGridView {
 
         // Settings
 
+        width: gridView.cellWidth
+        height: gridView.cellHeight
+
+        pictureWidth: gridView.maxPictureWidth
+        pictureHeight: gridView.maxPictureHeight
+
         opacity: (gridView.expandIndex !== -1
                   &&
                   gridView.expandIndex !== gridItem.index) ? 0.7 : 1
@@ -108,7 +113,7 @@ MainInterface.MainGridView {
 
         onItemClicked: (modifier) => { gridView.leftClickOnItem(modifier, index) }
 
-        onItemDoubleClicked: model => gridView.itemDoubleClicked(model)
+        onItemDoubleClicked: gridView.itemDoubleClicked(model)
 
         onContextMenuButtonClicked: (_, globalMousePos) => {
             gridView.rightClickOnItem(index);

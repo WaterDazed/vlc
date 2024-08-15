@@ -21,10 +21,12 @@
 import QtQuick
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
+import VLC.MainInterface
+import VLC.Style
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Player
 
 TracksPage {
     id: root

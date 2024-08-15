@@ -42,12 +42,6 @@
 static const int MLVIDEOFOLDERSMODEL_COVER_WIDTH  = 260 * 3; // 16 / 10 ratio
 static const int MLVIDEOFOLDERSMODEL_COVER_HEIGHT = 162 * 3;
 
-static const QHash<QByteArray, vlc_ml_sorting_criteria_t> criterias =
-{
-    { "title",    VLC_ML_SORTING_ALPHA    },
-    { "duration", VLC_ML_SORTING_DURATION }
-};
-
 // Ctor / dtor
 
 /* explicit */ MLVideoFoldersModel::MLVideoFoldersModel(QObject * parent) : MLBaseModel(parent) {}
@@ -102,28 +96,12 @@ QVariant MLVideoFoldersModel::itemRoleData(MLItem * item, const int role) const 
     }
 }
 
-vlc_ml_sorting_criteria_t MLVideoFoldersModel::roleToCriteria(int role) const /* override */
-{
-    switch (role)
-    {
-        case FOLDER_TITLE:
-            return VLC_ML_SORTING_ALPHA;
-        case FOLDER_DURATION:
-            return VLC_ML_SORTING_DURATION;
-        default:
-            return VLC_ML_SORTING_DEFAULT;
-    }
-}
-
 vlc_ml_sorting_criteria_t MLVideoFoldersModel::nameToCriteria(QByteArray name) const /* override */
 {
-    return criterias.value(name, VLC_ML_SORTING_DEFAULT);
-}
-
-QByteArray MLVideoFoldersModel::criteriaToName(vlc_ml_sorting_criteria_t criteria) const
-/* override */
-{
-    return criterias.key(criteria, "");
+    return QHash<QByteArray, vlc_ml_sorting_criteria_t> {
+        { "title",    VLC_ML_SORTING_ALPHA    },
+        { "duration", VLC_ML_SORTING_DURATION },
+    }.value(name, VLC_ML_SORTING_DEFAULT);
 }
 
 std::unique_ptr<MLListCacheLoader>

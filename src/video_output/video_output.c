@@ -82,9 +82,11 @@ typedef struct vout_thread_sys_t
     vlc_mutex_t clock_lock;
     bool clock_nowait; /* protected by vlc_clock_Lock()/vlc_clock_Unlock() */
     bool wait_interrupted;
+    bool first_picture;
 
     vlc_clock_t     *clock;
     vlc_clock_listener_id *clock_listener_id;
+    uint32_t clock_id;
     float           rate;
     vlc_tick_t      delay;
 
@@ -935,18 +937,17 @@ static void ChangeFilters(vout_thread_sys_t *vout)
     sys->filter.changed = false;
 }
 
-static bool IsPictureLate(vout_thread_sys_t *vout, picture_t *decoded,
-                          vlc_tick_t system_now, vlc_tick_t system_pts)
+static bool IsPictureLateToProcess(vout_thread_sys_t *vout, const video_format_t *fmt,
+                          vlc_tick_t time_until_display,
+                          vlc_tick_t process_duration)
 {
     vout_thread_sys_t *sys = vout;
 
-    const vlc_tick_t prepare_decoded_duration = vout_chrono_GetHigh(&sys->chrono.render) +
-                                                vout_chrono_GetHigh(&sys->chrono.static_filter);
-    vlc_tick_t late = system_now + prepare_decoded_duration - system_pts;
+    vlc_tick_t late = process_duration - time_until_display;
 
     vlc_tick_t late_threshold;
-    if (decoded->format.i_frame_rate && decoded->format.i_frame_rate_base) {
-        late_threshold = vlc_tick_from_samples(decoded->format.i_frame_rate_base, decoded->format.i_frame_rate);
+    if (fmt->i_frame_rate && fmt->i_frame_rate_base) {
+        late_threshold = vlc_tick_from_samples(fmt->i_frame_rate_base, fmt->i_frame_rate);
     }
     else
         late_threshold = VOUT_DISPLAY_LATE_THRESHOLD;
@@ -959,6 +960,21 @@ static bool IsPictureLate(vout_thread_sys_t *vout, picture_t *decoded,
         return true;
     }
     return false;
+}
+
+static inline vlc_tick_t GetRenderDelay(vout_thread_sys_t *sys)
+{
+    return vout_chrono_GetHigh(&sys->chrono.render) + VOUT_MWAIT_TOLERANCE;
+}
+
+static bool IsPictureLateToStaticFilter(vout_thread_sys_t *vout, const video_format_t *fmt,
+                                        vlc_tick_t time_until_display)
+{
+    vout_thread_sys_t *sys = vout;
+    const vlc_tick_t prepare_decoded_duration =
+        vout_chrono_GetHigh(&sys->chrono.render) +
+        vout_chrono_GetHigh(&sys->chrono.static_filter);
+    return IsPictureLateToProcess(vout, fmt, time_until_display, prepare_decoded_duration);
 }
 
 /* */
@@ -978,49 +994,65 @@ static picture_t *PreparePicture(vout_thread_sys_t *vout, bool reuse_decoded,
         picture_t *decoded;
         if (unlikely(reuse_decoded && sys->displayed.decoded)) {
             decoded = picture_Hold(sys->displayed.decoded);
+            if (decoded == NULL)
+                break;
         } else {
             decoded = picture_fifo_Pop(sys->decoder_fifo);
+            if (decoded == NULL)
+                break;
 
-            if (decoded) {
-                if (is_late_dropped && !decoded->b_force)
+            if (!decoded->b_force)
+            {
+                const vlc_tick_t system_now = vlc_tick_now();
+                uint32_t clock_id;
+                vlc_clock_Lock(sys->clock);
+                const vlc_tick_t system_pts =
+                    vlc_clock_ConvertToSystem(sys->clock, system_now,
+                                              decoded->date, sys->rate, &clock_id);
+                vlc_clock_Unlock(sys->clock);
+                if (clock_id != sys->clock_id)
                 {
-                    const vlc_tick_t system_now = vlc_tick_now();
-                    vlc_clock_Lock(sys->clock);
-                    const vlc_tick_t system_pts =
-                        vlc_clock_ConvertToSystem(sys->clock, system_now,
-                                                  decoded->date, sys->rate);
-                    vlc_clock_Unlock(sys->clock);
+                    sys->clock_id = clock_id;
+                    msg_Dbg(&vout->obj, "Using a new clock context (%u), "
+                            "flusing static filters", clock_id);
 
-                    if (IsPictureLate(vout, decoded, system_now, system_pts))
-                    {
-                        picture_Release(decoded);
-                        vout_statistic_AddLost(&sys->statistic, 1);
-
-                        /* A picture dropped means discontinuity for the
-                         * filters and we need to notify eg. deinterlacer. */
-                        filter_chain_VideoFlush(sys->filter.chain_static);
-                        continue;
-                    }
+                    /* Most deinterlace modules can't handle a PTS
+                     * discontinuity, so flush them.
+                     *
+                     * FIXME: Pass a discontinuity flag and handle it in
+                     * deinterlace modules. */
+                    filter_chain_VideoFlush(sys->filter.chain_static);
                 }
 
-                if (!VideoFormatIsCropArEqual(&decoded->format, &sys->filter.src_fmt))
+                if (is_late_dropped
+                 && IsPictureLateToStaticFilter(vout, &decoded->format,
+                                                system_pts - system_now))
                 {
-                    // we received an aspect ratio change
-                    // Update the filters with the filter source format with the new aspect ratio
-                    video_format_Clean(&sys->filter.src_fmt);
-                    video_format_Copy(&sys->filter.src_fmt, &decoded->format);
-                    if (sys->filter.src_vctx)
-                        vlc_video_context_Release(sys->filter.src_vctx);
-                    vlc_video_context *pic_vctx = picture_GetVideoContext(decoded);
-                    sys->filter.src_vctx = pic_vctx ? vlc_video_context_Hold(pic_vctx) : NULL;
+                    picture_Release(decoded);
+                    vout_statistic_AddLost(&sys->statistic, 1);
 
-                    ChangeFilters(vout);
+                    /* A picture dropped means discontinuity for the
+                     * filters and we need to notify eg. deinterlacer. */
+                    filter_chain_VideoFlush(sys->filter.chain_static);
+                    continue;
                 }
+            }
+
+            if (!VideoFormatIsCropArEqual(&decoded->format, &sys->filter.src_fmt))
+            {
+                // we received an aspect ratio change
+                // Update the filters with the filter source format with the new aspect ratio
+                video_format_Clean(&sys->filter.src_fmt);
+                video_format_Copy(&sys->filter.src_fmt, &decoded->format);
+                if (sys->filter.src_vctx)
+                    vlc_video_context_Release(sys->filter.src_vctx);
+                vlc_video_context *pic_vctx = picture_GetVideoContext(decoded);
+                sys->filter.src_vctx = pic_vctx ? vlc_video_context_Hold(pic_vctx) : NULL;
+
+                ChangeFilters(vout);
             }
         }
 
-        if (!decoded)
-            break;
         reuse_decoded = false;
 
         if (sys->displayed.decoded)
@@ -1147,12 +1179,14 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
     vlc_tick_t render_subtitle_date;
     if (sys->pause.is_on)
         render_subtitle_date = sys->pause.date;
+    else if (filtered->b_force)
+        render_subtitle_date = system_now;
     else
     {
         vlc_clock_Lock(sys->clock);
         render_subtitle_date = filtered->date <= VLC_TICK_0 ? system_now :
             vlc_clock_ConvertToSystem(sys->clock, system_now, filtered->date,
-                                      sys->rate);
+                                      sys->rate, NULL);
         vlc_clock_Unlock(sys->clock);
     }
 
@@ -1323,10 +1357,17 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
 
     vlc_tick_t system_now = vlc_tick_now();
     const vlc_tick_t pts = todisplay->date;
-    vlc_clock_Lock(sys->clock);
-    vlc_tick_t system_pts = render_now ? system_now :
-        vlc_clock_ConvertToSystem(sys->clock, system_now, pts, sys->rate);
-    vlc_clock_Unlock(sys->clock);
+    vlc_tick_t system_pts;
+    if (render_now)
+        system_pts = system_now;
+    else
+    {
+        vlc_clock_Lock(sys->clock);
+        assert(!sys->displayed.current->b_force);
+        system_pts = vlc_clock_ConvertToSystem(sys->clock, system_now, pts,
+                                               sys->rate, NULL);
+        vlc_clock_Unlock(sys->clock);
+    }
 
     const unsigned frame_rate = todisplay->format.i_frame_rate;
     const unsigned frame_rate_base = todisplay->format.i_frame_rate_base;
@@ -1369,9 +1410,10 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
                     deadline = max_deadline;
                 else
                 {
+                    assert(!sys->displayed.current->b_force);
                     deadline = vlc_clock_ConvertToSystem(sys->clock,
                                                          vlc_tick_now(), pts,
-                                                         sys->rate);
+                                                         sys->rate, NULL);
                     if (deadline > max_deadline)
                         deadline = max_deadline;
                 }
@@ -1475,15 +1517,27 @@ static bool UpdateCurrentPicture(vout_thread_sys_t *sys)
     if (sys->pause.is_on || sys->wait_interrupted)
         return false;
 
+    /* Prevent to query the clock if we know that there are no next pictures.
+     * Since the clock is likely no properly setup at that stage. Indeed, the
+     * input/decoder.c send a first forced picture quickly, then a next one
+     * when the clock is configured. */
+    if (sys->first_picture)
+    {
+        bool has_next_pic = !picture_fifo_IsEmpty(sys->decoder_fifo);
+        if (!has_next_pic)
+            return false;
+
+        sys->first_picture = false;
+    }
+
     const vlc_tick_t system_now = vlc_tick_now();
     vlc_clock_Lock(sys->clock);
     const vlc_tick_t system_swap_current =
         vlc_clock_ConvertToSystem(sys->clock, system_now,
-                                  sys->displayed.current->date, sys->rate);
+                                  sys->displayed.current->date, sys->rate, NULL);
     vlc_clock_Unlock(sys->clock);
 
-    const vlc_tick_t render_delay = vout_chrono_GetHigh(&sys->chrono.render) + VOUT_MWAIT_TOLERANCE;
-    vlc_tick_t system_prepare_current = system_swap_current - render_delay;
+    vlc_tick_t system_prepare_current = system_swap_current - GetRenderDelay(sys);
     if (unlikely(system_prepare_current > system_now))
         // the current frame is not late, we still have time to display it
         // no need to get a new picture
@@ -1534,9 +1588,8 @@ static vlc_tick_t DisplayPicture(vout_thread_sys_t *vout)
     }
     else if (likely(sys->displayed.date != VLC_TICK_INVALID))
     {
-        const vlc_tick_t render_delay = vout_chrono_GetHigh(&sys->chrono.render) + VOUT_MWAIT_TOLERANCE;
         // next date we need to display again the current picture
-        vlc_tick_t date_refresh = sys->displayed.date + VOUT_REDISPLAY_DELAY - render_delay;
+        vlc_tick_t date_refresh = sys->displayed.date + VOUT_REDISPLAY_DELAY - GetRenderDelay(sys);
         const vlc_tick_t system_now = vlc_tick_now();
         /* FIXME/XXX we must redisplay the last decoded picture (because
         * of potential vout updated, or filters update or SPU update)
@@ -1620,6 +1673,7 @@ static void vout_FlushUnlocked(vout_thread_sys_t *vout, bool below,
         vlc_clock_SetDelay(sys->clock, sys->delay);
         vlc_clock_Unlock(sys->clock);
     }
+    sys->first_picture = true;
 }
 
 void vout_Flush(vout_thread_t *vout, vlc_tick_t date)
@@ -1932,6 +1986,8 @@ static void vout_ReleaseDisplay(vout_thread_sys_t *vout)
     sys->clock = NULL;
     vlc_mutex_unlock(&sys->clock_lock);
     sys->str_id = NULL;
+    sys->clock_id = 0;
+    sys->first_picture = true;
 }
 
 void vout_StopDisplay(vout_thread_t *vout)
@@ -2109,6 +2165,7 @@ vout_thread_t *vout_Create(vlc_object_t *object)
     vlc_mutex_init(&sys->clock_lock);
     sys->clock_nowait = false;
     sys->wait_interrupted = false;
+    sys->first_picture = true;
 
     /* Display */
     sys->display = NULL;
@@ -2269,6 +2326,7 @@ int vout_Request(const vout_configuration_t *cfg, vlc_video_context *vctx, input
     sys->delay = 0;
     sys->rate = 1.f;
     sys->str_id = cfg->str_id;
+    sys->clock_id = 0;
 
     vlc_mutex_lock(&sys->clock_lock);
     sys->clock = cfg->clock;

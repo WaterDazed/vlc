@@ -23,12 +23,14 @@
 
 #import "VLCInformationWindowController.h"
 
+#import "extensions/NSImage+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCInputItem.h"
 #import "library/VLCLibraryController.h"
 #import "library/VLCLibraryImageCache.h"
 #import "library/VLCLibraryModel.h"
+#import "library/VLCLibraryRepresentedItem.h"
 
 #import "main/VLCMain.h"
 
@@ -110,18 +112,16 @@ actionCallback(encodedBy);
 
 - (void)awakeFromNib
 {
+    _statisticsEnabled = var_InheritBool(getIntf(), "stats");
+
     [self.window setExcludedFromWindowsMenu: YES];
     [self.window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenAuxiliary];
     [self.window setInitialFirstResponder: _decodedMRLLabel];
 
-    _outlineView.dataSource = self;
+    self.outlineView.dataSource = self;
 
-    NSNotificationCenter *notificationCenter = NSNotificationCenter.defaultCenter;
-    if (_mainMenuInstance) {
-        [notificationCenter addObserver:self
-                               selector:@selector(currentPlayingItemChanged:)
-                                   name:VLCPlayerCurrentMediaItemChanged
-                                 object:nil];
+    NSNotificationCenter * const notificationCenter = NSNotificationCenter.defaultCenter;
+    if (_mainMenuInstance && _statisticsEnabled) {
         [notificationCenter addObserver:self
                                selector:@selector(updateStatistics:)
                                    name:VLCPlayerStatisticsUpdated
@@ -140,11 +140,8 @@ actionCallback(encodedBy);
                                name:VLCInputItemPreparsingSucceeded
                              object:nil];
 
-    [notificationCenter postNotificationName:VLCPlayerStatisticsUpdated object:self];
-
     [self initStrings];
 
-    _statisticsEnabled = var_InheritBool(getIntf(), "stats");
     if (!_statisticsEnabled || !_mainMenuInstance) {
         if ([_segmentedView segmentCount] >= 3)
             [_segmentedView setSegmentCount: 2];
@@ -233,9 +230,44 @@ _##field##TextField.delegate = self
 
 - (IBAction)copyMrl:(id)sender
 {
+    if (self.representedInputItems.count == 0) {
+        return;
+    } else if (self.representedInputItems.count == 1) {
+        NSPasteboard * const pasteboard = NSPasteboard.generalPasteboard;
+        [pasteboard clearContents];
+        [pasteboard setString:self.representedInputItems.firstObject.MRL
+                      forType:NSPasteboardTypeString];
+    } else {
+        NSMenu * const choiceMenu = [[NSMenu alloc] initWithTitle:_NS("Copy MRL")];
+        for (VLCInputItem * const inputItem in self.representedInputItems) {
+            NSMenuItem * const menuItem =
+                [[NSMenuItem alloc] initWithTitle:inputItem.title
+                                           action:@selector(copyMrlFromMenuItem:)
+                                    keyEquivalent:@""];
+            menuItem.representedObject = inputItem;
+            [choiceMenu addItem:menuItem];
+        }
+        CGFloat senderHeight = 0;
+        if ([sender isKindOfClass:NSView.class]) {
+            senderHeight = ((NSView *)sender).frame.size.height;
+        }
+        [choiceMenu popUpMenuPositioningItem:nil
+                                  atLocation:NSMakePoint(0, senderHeight)
+                                      inView:sender];
+    }
+}
+
+- (void)copyMrlFromMenuItem:(id)sender
+{
+    NSParameterAssert(sender);
+    NSParameterAssert([sender isKindOfClass:NSMenuItem.class]);
+    NSMenuItem * const menuItem = (NSMenuItem *)sender;
+    NSParameterAssert(menuItem.representedObject);
+    NSParameterAssert([menuItem.representedObject isKindOfClass:VLCInputItem.class]);
+    VLCInputItem * const inputItem = (VLCInputItem *)menuItem.representedObject;
     NSPasteboard * const pasteboard = NSPasteboard.generalPasteboard;
     [pasteboard clearContents];
-    [pasteboard setString:self.representedInputItems.firstObject.MRL forType:NSPasteboardTypeString];
+    [pasteboard setString:inputItem.MRL forType:NSPasteboardTypeString];
 }
 
 - (void)initMediaPanelStats
@@ -262,40 +294,124 @@ _##field##TextField.delegate = self
     [_lostAudioBuffersTextField setIntValue: 0];
 }
 
-- (void)currentPlayingItemChanged:(NSNotification *)aNotification
-{
-    VLCPlayerController * const playerController = VLCMain.sharedInstance.playlistController.playerController;
-    VLCInputItem * const currentMediaItem = playerController.currentMedia;
-    [self setRepresentedInputItem:currentMediaItem];
-}
-
-- (void)setRepresentedInputItem:(VLCInputItem *)representedInputItem
-{
-    _representedInputItems = (representedInputItem == nil) ? @[] : @[representedInputItem];
-    [VLCLibraryImageCache thumbnailForInputItem:representedInputItem 
-                                 withCompletion:^(NSImage * const image) {
-        self->_artwork = image;
-    }];
-    [self updateRepresentation];
-}
-
-- (void)setRepresentedMediaLibraryAudioGroup:(id<VLCMediaLibraryAudioGroupProtocol>)representedMediaLibraryAudioGroup
+- (void)setRepresentedMediaLibraryItems:(NSArray<VLCLibraryRepresentedItem *> *)representedMediaLibraryItems
 {
     NSMutableArray<VLCInputItem *> * const inputItems = NSMutableArray.array;
-    for (VLCMediaLibraryMediaItem * const mediaItem in representedMediaLibraryAudioGroup.mediaItems) {
-        [inputItems addObject:mediaItem.inputItem];
+    for (VLCLibraryRepresentedItem * const representedItem in representedMediaLibraryItems) {
+        NSArray<VLCMediaLibraryMediaItem *> * const mediaItems = representedItem.item.mediaItems;
+        for (VLCMediaLibraryMediaItem * const mediaItem in mediaItems) {
+            [inputItems addObject:mediaItem.inputItem];
+        }
     }
 
-    _representedInputItems = [inputItems copy];
+    NSParameterAssert(inputItems.count > 0);
+    _representedInputItems = inputItems.copy;
 
-    [VLCLibraryImageCache thumbnailForLibraryItem:representedMediaLibraryAudioGroup 
-                                   withCompletion:^(NSImage * const image) {
-        // HACK: Input items retrieved via an audio group do not acquire an artwork URL.
-        // To show something in the information window, set the small artwork from the audio group.
-        self->_artwork = image;
-    }];
+    NSMutableSet * const artworkMrlSet = NSMutableSet.set;
 
-    [self updateRepresentation];
+    const dispatch_queue_t queue = dispatch_queue_create("vlc_infowindow_libraryitemimg_queue", 0);
+    dispatch_async(queue, ^{
+        NSMutableArray<NSImage *> * const artworkImages = NSMutableArray.array;
+        dispatch_group_t group = dispatch_group_create();
+
+        for (VLCLibraryRepresentedItem * const item in representedMediaLibraryItems) {
+            NSArray<VLCMediaLibraryMediaItem *> * const mediaItems = item.item.mediaItems;
+
+            for (VLCMediaLibraryMediaItem * const mediaItem in mediaItems) {
+                @synchronized (artworkMrlSet) {
+                    NSString * const itemArtworkMrl = mediaItem.smallArtworkMRL;
+                    if ([artworkMrlSet containsObject:itemArtworkMrl] || itemArtworkMrl == nil) {
+                        continue;
+                    }
+                    [artworkMrlSet addObject:itemArtworkMrl];
+                }
+
+                @synchronized (artworkImages) {
+                    dispatch_group_enter(group);
+                    [VLCLibraryImageCache thumbnailForLibraryItem:mediaItem
+                                                   withCompletion:^(NSImage * const image) {
+                        if (image) {
+                            [artworkImages addObject:image];
+                        }
+                        dispatch_group_leave(group);
+                    }];
+                }
+            }
+        }
+
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+
+        if (artworkImages.count == 0) {
+            _artwork = [NSImage imageNamed:@"noart.png"];
+            [self updateRepresentation];
+            return;
+        }
+
+        // Without an image set the button's size can be {{0, 0}, {0, 0}}
+        const CGFloat buttonHeight = self.artworkImageButton.frame.size.height;
+        const NSSize artworkSize =
+            buttonHeight == 0 ? NSMakeSize(256, 256) : NSMakeSize(buttonHeight, buttonHeight);
+        NSArray<NSValue *> * const frames =
+            [NSImage framesForCompositeImageSquareGridWithImages:artworkImages
+                                                            size:artworkSize
+                                                   gridItemCount:artworkImages.count];
+        _artwork = [NSImage compositeImageWithImages:artworkImages
+                                              frames:frames
+                                                size:artworkSize];
+
+        [self updateRepresentation];
+    });
+}
+
+- (void)setRepresentedInputItems:(NSArray<VLCInputItem *> *)representedInputItems
+{
+    if (representedInputItems == _representedInputItems) {
+        return;
+    }
+
+    NSParameterAssert(representedInputItems.count > 0);
+    _representedInputItems = representedInputItems;
+
+    const dispatch_queue_t queue = dispatch_queue_create("vlc_infowindow_inputitemimg_queue", 0);
+    dispatch_async(queue, ^{
+        NSMutableArray<NSImage *> * const artworkImages = NSMutableArray.array;
+        dispatch_group_t group = dispatch_group_create();
+
+        for (VLCInputItem * const item in representedInputItems) {
+            @synchronized (artworkImages) {
+                dispatch_group_enter(group);
+                [VLCLibraryImageCache thumbnailForInputItem:item
+                                             withCompletion:^(NSImage * const image) {
+                    if (image) {
+                        [artworkImages addObject:image];
+                    }
+                    dispatch_group_leave(group);
+                }];
+            }
+        }
+
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+
+        if (artworkImages.count == 0) {
+            _artwork = [NSImage imageNamed:@"noart.png"];
+            [self updateRepresentation];
+            return;
+        }
+
+        // Without an image set the button's size can be {{0, 0}, {0, 0}}
+        const CGFloat buttonHeight = self.artworkImageButton.frame.size.height;
+        const NSSize artworkSize =
+            buttonHeight == 0 ? NSMakeSize(256, 256) : NSMakeSize(buttonHeight, buttonHeight);
+        NSArray<NSValue *> * const frames =
+            [NSImage framesForCompositeImageSquareGridWithImages:artworkImages
+                                                            size:artworkSize
+                                                   gridItemCount:artworkImages.count];
+        _artwork = [NSImage compositeImageWithImages:artworkImages
+                                              frames:frames
+                                                size:artworkSize];
+
+        [self updateRepresentation];
+    });
 }
 
 - (void)mediaItemWasParsed:(NSNotification *)aNotification
@@ -305,17 +421,16 @@ _##field##TextField.delegate = self
 
 - (void)updateStatistics:(NSNotification *)aNotification
 {
-    if (!_statisticsEnabled)
-        return;
-
-    if (![self.window isVisible])
-        return;
-
-    VLCInputStats *inputStats = aNotification.userInfo[VLCPlayerInputStats];
-    if (!inputStats) {
-        [self initMediaPanelStats];
-        return;
-    }
+    NSAssert(self.representedInputItems.count == 1, @"Should not be updating stats for many items");
+    VLCPlayerController * const playerController =
+        VLCMain.sharedInstance.playlistController.playerController;
+    VLCInputItem * const currentPlayingItem = playerController.currentMedia;
+    VLCInputItem * const firstItem = self.representedInputItems.firstObject;
+    NSAssert([currentPlayingItem.MRL isEqualToString:firstItem.MRL],
+             @"Should not update statistics when items are different!");
+    NSAssert(_statisticsEnabled, @"Statistics should not be updated when they are disabled!");
+    VLCInputStats * const inputStats = aNotification.userInfo[VLCPlayerInputStats];
+    NSAssert(inputStats != nil, @"inputStats received for statistics update should not be nil!");
 
     /* input */
     [_inputReadBytesTextField setStringValue: [NSString stringWithFormat:
@@ -367,7 +482,9 @@ _##field##TextField.delegate = self
     _artworkImageButton.image = _artwork;
 
     if (!_mainMenuInstance) {
-        [self.window setTitle:inputItem.title];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.window.title = inputItem.title;
+        });
     }
 }
 
@@ -375,17 +492,22 @@ _##field##TextField.delegate = self
 {
     NSParameterAssert(dict != nil);
 
-#define FILL_FIELD_FROM_DICT(field)                                         \
-{                                                                           \
-    NSString * const dictKey = [NSString stringWithUTF8String:#field];      \
-    NSString * const fieldValue = [dict objectForKey:dictKey];              \
-                                                                            \
-    if (fieldValue != nil) {                                                \
-        _##field##TextField.originalStateString = fieldValue;               \
-    } else {                                                                \
-        _##field##TextField.originalStateString = @"";                      \
-    }                                                                       \
-}                                                                           \
+#define FILL_FIELD_FROM_DICT(field)                                                 \
+{                                                                                   \
+    NSString * const dictKey = [NSString stringWithUTF8String:#field];              \
+    NSString * const fieldValue = [dict objectForKey:dictKey];                      \
+                                                                                    \
+    if ([fieldValue isEqualToString:VLCInputItemCommonDataDifferingFlagString]) {   \
+        _##field##TextField.placeholderString = _NS("(Multiple values)");           \
+        _##field##TextField.originalStateString = @"";                              \
+    } else if (fieldValue != nil) {                                                 \
+        _##field##TextField.placeholderString = @"";                                \
+        _##field##TextField.originalStateString = fieldValue;                       \
+    } else {                                                                        \
+        _##field##TextField.placeholderString = @"";                                \
+        _##field##TextField.originalStateString = @"";                              \
+    }                                                                               \
+}
 
     PERFORM_ACTION_ALL_TEXTFIELDS(FILL_FIELD_FROM_DICT);
 
@@ -416,7 +538,7 @@ _##field##TextField.originalStateString = @"";
         NSDictionary * const commonItemsData = commonInputItemData(_representedInputItems);
 
         if ([commonItemsData objectForKey:@"inputItem"]) {
-            [self setRepresentedInputItem:[commonItemsData objectForKey:@"inputItem"]];
+            self.representedInputItems = @[[commonItemsData objectForKey:@"inputItem"]];
         } else {
             [self fillWindowWithDictionaryData:commonItemsData];
         }
@@ -515,7 +637,9 @@ settingsChanged = settingsChanged || _##field##TextField.settingChanged;
 SET_INPUTITEM_PROP(field, field)                \
 
     for (VLCInputItem * const inputItem in inputItems) {
-        SET_INPUTITEM_PROP(title, name); // Input items do not have a title field
+        // We do not have a textfield for names; set the contents of the title field to the input
+        // item's name
+        SET_INPUTITEM_PROP(title, name);
         PERFORM_ACTION_READWRITE_TEXTFIELDS(SET_INPUTITEM_MATCHING_PROP);
 
         if (_newArtworkURL != nil) { // Artwork urls require their own handling

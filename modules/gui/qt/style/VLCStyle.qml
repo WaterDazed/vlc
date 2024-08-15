@@ -18,7 +18,8 @@
 pragma Singleton
 import QtQuick
 import QtQuick.Controls
-import org.videolan.vlc 0.1
+import VLC.MainInterface
+import VLC.Style
 
 QtObject {
     id: vlc_style
@@ -201,14 +202,11 @@ QtObject {
     readonly property int artistGridCover_radius: MainCtx.dp(90, scale)
 
     //GridItem
-    readonly property int gridItem_network_width: VLCStyle.gridCover_network_width
-    readonly property int gridItem_network_height: VLCStyle.gridCover_network_height + VLCStyle.margin_xsmall + VLCStyle.fontHeight_normal + VLCStyle.margin_xsmall + VLCStyle.fontHeight_normal
+    readonly property int gridItemTitle_topMargin: margin_xsmall + margin_xxxsmall
+    readonly property int gridItemTitle_height: fontHeight_normal
 
-    readonly property int gridItem_music_width: VLCStyle.gridCover_music_width
-    readonly property int gridItem_music_height: VLCStyle.gridCover_music_height + VLCStyle.margin_xsmall + VLCStyle.fontHeight_normal + VLCStyle.margin_xsmall + VLCStyle.fontHeight_small
-
-    readonly property int gridItem_video_width: VLCStyle.gridCover_video_width
-    readonly property int gridItem_video_height: VLCStyle.gridCover_video_height + VLCStyle.margin_xxsmall + VLCStyle.fontHeight_normal + VLCStyle.fontHeight_normal
+    readonly property int gridItemSubtitle_topMargin: margin_xsmall - margin_xxxsmall
+    readonly property int gridItemSubtitle_height: fontHeight_normal
 
     readonly property int gridItemSelectedBorder: MainCtx.dp(8, scale)
 
@@ -241,6 +239,8 @@ QtObject {
     property int appHeight: 0
 
     readonly property int smallWidth: MainCtx.dp(600, scale)
+    readonly property int mediumWidth: MainCtx.dp(1000, scale)
+
     readonly property bool isScreenSmall: appWidth <= smallWidth
 
     //global application margin "safe area"
@@ -325,11 +325,6 @@ QtObject {
       return nb * VLCStyle.column_width + ( nb - 1 ) * VLCStyle.column_spacing;
     }
 
-    //Returns the number columns fitting in given width
-    function gridColumnsForWidth(width) {
-        return Math.floor((width + column_spacing) / (column_width + column_spacing))
-    }
-
     Component.onCompleted: {
         {
             // Resize handle width setting:
@@ -341,5 +336,16 @@ QtObject {
             _scrollBarComponent = null
             resizeHandleWidth = (scrollBarWidth / 2)
         }
+    }
+
+    //dynamic margins based on screen width
+    function dynamicAppMargins(width : int) : int {
+        if (width < smallWidth)
+            return margin_normal;
+        else if(width > mediumWidth)
+            return margin_large;
+        else
+            return margin_normal + (width - smallWidth) * (margin_large - margin_normal) /
+                    (mediumWidth - smallWidth);
     }
 }

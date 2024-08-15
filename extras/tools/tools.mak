@@ -39,10 +39,14 @@ download_pkg = $(call download,$(VIDEOLAN)/$(2)/$(lastword $(subst /, ,$(@)))) |
 	( $(call download,$(1)) && echo "Please upload this package $(lastword $(subst /, ,$(@))) to our FTP" )  \
 	&& grep $(@) $(TOOLS)/SHA512SUMS| $(SHA512SUM)
 
+ifeq ($(V),1)
+TAR_VERBOSE := v
+endif
+
 UNPACK = $(RM) -R $@ \
-    $(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xvzfo $(f)) \
-    $(foreach f,$(filter %.tar.bz2,$^), && tar xvjfo $(f)) \
-    $(foreach f,$(filter %.tar.xz,$^), && tar xvJfo $(f)) \
+    $(foreach f,$(filter %.tar.gz %.tgz,$^), && tar $(TAR_VERBOSE)xzfo $(f)) \
+    $(foreach f,$(filter %.tar.bz2,$^), && tar $(TAR_VERBOSE)xjfo $(f)) \
+    $(foreach f,$(filter %.tar.xz,$^), && tar $(TAR_VERBOSE)xJfo $(f)) \
     $(foreach f,$(filter %.zip,$^), && unzip $(f))
 
 UNPACK_DIR = $(patsubst %.tar,%,$(basename $(notdir $<)))
@@ -165,13 +169,40 @@ CLEAN_PKG += xz
 DISTCLEAN_PKG += xz-$(XZ_VERSION).tar.bz2
 CLEAN_FILE += .buildxz
 
+# config.guess
+
+config.guess-$(CONFIGGUESS_VERSION):
+	$(call download_pkg,$(CONFIGGUESS_URL),config.guess)
+
+config.sub-$(CONFIGSUB_VERSION):
+	$(call download_pkg,$(CONFIGSUB_URL),config.sub)
+
+config.guess: UNPACK_DIR=.
+config.guess: config.guess-$(CONFIGGUESS_VERSION)
+	cp -f $< $@
+	$(APPLY) $(TOOLS)/config.guess-config-add-support-for-arm64_32.patch
+
+config.sub:UNPACK_DIR=.
+config.sub: config.sub-$(CONFIGSUB_VERSION)
+	cp -f $< $@
+	$(APPLY) $(TOOLS)/config.sub-config-add-support-for-arm64_32.patch
+
+.buildconfigguess: config.guess config.sub
+	# install in a dummy autoconf so that VLC contribs pick it
+	install -d           "$(PREFIX)/share/autoconf-vlc/build-aux"
+	install config.guess "$(PREFIX)/share/autoconf-vlc/build-aux"
+	install config.sub   "$(PREFIX)/share/autoconf-vlc/build-aux"
+	touch $@
+
 # autoconf
 
 autoconf-$(AUTOCONF_VERSION).tar.gz:
 	$(call download_pkg,$(AUTOCONF_URL),autoconf)
 
-autoconf: autoconf-$(AUTOCONF_VERSION).tar.gz
+autoconf: autoconf-$(AUTOCONF_VERSION).tar.gz .configguess
 	$(UNPACK)
+	@-cp config.guess $(UNPACK_DIR)/build-aux
+	@-cp config.sub $(UNPACK_DIR)/build-aux
 	$(MOVE)
 
 .buildautoconf: autoconf .pkg-config .m4
@@ -187,10 +218,12 @@ DISTCLEAN_PKG += autoconf-$(AUTOCONF_VERSION).tar.gz
 automake-$(AUTOMAKE_VERSION).tar.gz:
 	$(call download_pkg,$(AUTOMAKE_URL),automake)
 
-automake: automake-$(AUTOMAKE_VERSION).tar.gz
+automake: automake-$(AUTOMAKE_VERSION).tar.gz .configguess
 	$(UNPACK)
 	$(APPLY) $(TOOLS)/automake-disable-documentation.patch
 	$(APPLY) $(TOOLS)/automake-clang.patch
+	@-cp config.guess $(UNPACK_DIR)/lib
+	@-cp config.sub $(UNPACK_DIR)/lib
 	$(MOVE)
 
 .buildautomake: automake .autoconf

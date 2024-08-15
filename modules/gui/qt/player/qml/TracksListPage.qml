@@ -22,12 +22,13 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-
+import VLC.MainInterface
+import VLC.Style
+import VLC.Player
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Dialogs
 
 RowLayout {
     id: root
@@ -195,7 +196,7 @@ RowLayout {
                     }
                 }
 
-                Widgets.KeyNavigableListView {
+                Widgets.ListViewExt {
                     id: tracksList
 
                     model: tracksListContainer.tracksModel
@@ -253,6 +254,7 @@ RowLayout {
         id: menuSubtitle
 
         player: Player
+        ctx: MainCtx
 
         onTriggered: {
             if (action === QmlSubtitleMenu.Open) {
@@ -269,6 +271,8 @@ RowLayout {
 
     QmlAudioMenu {
         id: menuAudio
+
+        ctx: MainCtx
 
         onTriggered: {
             if (action === QmlSubtitleMenu.Open) {

@@ -58,6 +58,7 @@ avas_PrepareFormat(audio_output_t *p_aout, AVAudioSession *instance,
         channel_count = max_channel_count;
     }
 
+#if !TARGET_OS_WATCH
     NSError *error = nil;
     BOOL success = [instance setPreferredOutputNumberOfChannels:channel_count
                                                           error:&error];
@@ -69,10 +70,13 @@ avas_PrepareFormat(audio_output_t *p_aout, AVAudioSession *instance,
                  !success ? (int)error.code : 0);
         channel_count = 2;
     }
+#else
+    channel_count = 2;
+#endif
 
     if (spatial_audio)
     {
-        if (@available(iOS 15.0, tvOS 15.0 VISIONOS_AVAILABLE, *))
+        if (@available(iOS 15.0, watchOS 8.0, tvOS 15.0 VISIONOS_AVAILABLE, *))
         {
             /* Not mandatory, SpatialAudio can work without it. It just signals to
              * the user that he is playing spatial content */
@@ -88,6 +92,7 @@ avas_PrepareFormat(audio_output_t *p_aout, AVAudioSession *instance,
         aout_FormatPrepare(fmt);
     }
 
+#if !TARGET_OS_WATCH
     success = [instance setPreferredSampleRate:fmt->i_rate error:&error];
     if (!success)
     {
@@ -95,6 +100,7 @@ avas_PrepareFormat(audio_output_t *p_aout, AVAudioSession *instance,
         msg_Dbg(p_aout, "setPreferredSampleRate failed %s(%d)",
                 error.domain.UTF8String, (int)error.code);
     }
+#endif
 }
 
 int
@@ -128,21 +134,21 @@ avas_GetPortType(audio_output_t *p_aout, AVAudioSession *instance,
     return VLC_SUCCESS;
 }
 
-struct API_AVAILABLE(ios(11.0) VISIONOS_API_AVAILABLE)
+struct API_AVAILABLE(ios(11.0), watchos(7.0) VISIONOS_API_AVAILABLE)
 role2policy
 {
     char role[sizeof("accessibility")];
     AVAudioSessionRouteSharingPolicy policy;
 };
 
-static int API_AVAILABLE(ios(11.0) VISIONOS_API_AVAILABLE)
+static int API_AVAILABLE(ios(11.0), watchos(7.0) VISIONOS_API_AVAILABLE)
 role2policy_cmp(const void *key, const void *val)
 {
     const struct role2policy *entry = val;
     return strcmp(key, entry->role);
 }
 
-static AVAudioSessionRouteSharingPolicy API_AVAILABLE(ios(11.0) VISIONOS_API_AVAILABLE)
+static AVAudioSessionRouteSharingPolicy API_AVAILABLE(ios(11.0), watchos(7.0) VISIONOS_API_AVAILABLE)
 GetRouteSharingPolicy(audio_output_t *p_aout)
 {
 #if __IPHONEOS_VERSION_MAX_ALLOWED < 130000
@@ -154,7 +160,7 @@ GetRouteSharingPolicy(audio_output_t *p_aout)
     /* LongFormAudio by default */
     AVAudioSessionRouteSharingPolicy policy = AVAudioSessionRouteSharingPolicyLongFormAudio;
     AVAudioSessionRouteSharingPolicy video_policy;
-#if !TARGET_OS_TV
+#if TARGET_OS_IOS || TARGET_OS_VISION
     if (@available(iOS 13.0 VISIONOS_AVAILABLE, *))
         video_policy = AVAudioSessionRouteSharingPolicyLongFormVideo;
     else
@@ -199,7 +205,7 @@ avas_SetActive(audio_output_t *p_aout, AVAudioSession *instance, bool active,
 
     if (active)
     {
-        if (@available(iOS 11.0, tvOS 11.0 VISIONOS_AVAILABLE, *))
+        if (@available(iOS 11.0, watchOS 7.0, tvOS 11.0 VISIONOS_AVAILABLE, *))
         {
             AVAudioSessionRouteSharingPolicy policy = GetRouteSharingPolicy(p_aout);
 

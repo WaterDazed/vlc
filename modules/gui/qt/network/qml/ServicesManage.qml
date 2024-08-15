@@ -18,12 +18,13 @@
 import QtQuick
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Network
 
-Widgets.KeyNavigableListView {
+Widgets.ListViewExt {
     id: servicesView
 
     // required by g_root to indicate view with 'grid' or 'list' mode

@@ -245,6 +245,8 @@ struct vlc_input_event_es {
      * the user.
      */
     bool forced;
+
+    enum vlc_vout_order vout_order;
 };
 
 struct vlc_input_event_signal {
@@ -636,6 +638,17 @@ int input_GetAttachments(input_thread_t *input, input_attachment_t ***attachment
 input_attachment_t *input_GetAttachment(input_thread_t *input, const char *name);
 
 bool input_CanPaceControl(input_thread_t *input);
+
+/**
+ * Set the duration of the input item.
+ *
+ * This function sets the duration of the input item associated with the input thread.
+ * It uses the 'start-time' and 'stop-time' values to calculate the track duration.
+ *
+ * @param input The input thread object.
+ * @param duration The duration to be set, in vlc_tick_t units.
+ */
+void input_SetItemDuration(input_thread_t *input, vlc_tick_t duration);
 
 /* Bound pts_delay */
 #define INPUT_PTS_DELAY_MAX VLC_TICK_FROM_SEC(60)

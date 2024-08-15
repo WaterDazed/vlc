@@ -91,14 +91,9 @@ signals:
 protected:
     virtual std::unique_ptr<MLListCacheLoader> createMLLoader() const  = 0;
 
-    virtual vlc_ml_sorting_criteria_t roleToCriteria(int role) const = 0;
-    static QString getFirstSymbol(QString str);
-    virtual vlc_ml_sorting_criteria_t nameToCriteria(QByteArray) const {
-        return VLC_ML_SORTING_DEFAULT;
-    }
-    virtual QByteArray criteriaToName(vlc_ml_sorting_criteria_t ) const
+    virtual vlc_ml_sorting_criteria_t nameToCriteria(QByteArray /* name */) const
     {
-        return "";
+        return VLC_ML_SORTING_DEFAULT;
     }
 
     MLItem *item(int signedidx) const;

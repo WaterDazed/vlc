@@ -20,12 +20,12 @@
 
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///main/"    as MainInterface
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/"    as Util
+import VLC.Style
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Network
 
 FocusScope {
     id: root
@@ -182,15 +182,17 @@ FocusScope {
     Component {
         id: grid
 
-        Widgets.ExpandGridView {
+        Widgets.ExpandGridItemView {
             id: gridView
+
+            basePictureWidth: VLCStyle.gridCover_network_width
+            basePictureHeight: VLCStyle.gridCover_network_height
+
+            maxNbItemPerRow: 12
 
             readonly property int maximumCount: (root.maximumRows === -1)
                                                 ? -1
                                                 : root.maximumRows * nbItemPerRow
-
-            cellWidth: VLCStyle.gridItem_network_width
-            cellHeight: VLCStyle.gridItem_network_height
 
             displayMarginEnd: root.displayMarginEnd
 
@@ -207,6 +209,12 @@ FocusScope {
             onActionAtIndex: (index) => { root.onAction(index) }
 
             delegate: NetworkGridItem {
+                width: gridView.cellWidth;
+                height: gridView.cellHeight;
+
+                pictureWidth: gridView.maxPictureWidth
+                pictureHeight: gridView.maxPictureHeight
+
                 onItemClicked: (modifier) => { root.onClicked(model, index, modifier) }
 
                 onItemDoubleClicked: root.onDoubleClicked(model, index)
@@ -219,7 +227,7 @@ FocusScope {
     Component {
         id: list
 
-        Widgets.KeyNavigableTableView {
+        Widgets.TableViewExt {
             id: listView
 
             // Properties
@@ -228,12 +236,8 @@ FocusScope {
 
             readonly property int nbItemPerRow: 1
 
-            readonly property int _nbCols: VLCStyle.gridColumnsForWidth(availableRowWidth)
-
-            readonly property int _size: (_nbCols - 1) / 2
-
             property var _modelSmall: [{
-                size: Math.max(2, _nbCols),
+                weight: 1,
 
                 model: ({
                     criteria: "name",
@@ -244,7 +248,7 @@ FocusScope {
 
                     text: qsTr("Name"),
 
-                    headerDelegate: artworkHeader,
+                    headerDelegate: tableColumns.titleHeaderDelegate,
                     colDelegate: artworkColumn
                 })
             }]
@@ -259,11 +263,11 @@ FocusScope {
 
                     isSortable: false,
 
-                    headerDelegate: artworkHeader,
+                    headerDelegate: tableColumns.titleHeaderDelegate,
                     colDelegate: artworkColumn
                 }
             }, {
-                size: _size,
+                weight: 1,
 
                 model: {
                     criteria: "name",
@@ -271,7 +275,7 @@ FocusScope {
                     text: qsTr("Name")
                 }
             }, {
-                size: Math.max(_nbCols - _size - 1, 1),
+                weight: 1,
 
                 model: {
                     criteria: "mrl",
@@ -305,25 +309,13 @@ FocusScope {
 
             onItemDoubleClicked: (index, model) => root.onDoubleClicked(model, index)
 
-            Component {
-                id: artworkHeader
+            Widgets.TableColumns {
+                id: tableColumns
 
-                Widgets.TableHeaderDelegate {
-                    Widgets.IconLabel {
+                titleCover_width: VLCStyle.listAlbumCover_width
+                titleCover_height: VLCStyle.listAlbumCover_height
 
-                        height: VLCStyle.listAlbumCover_height
-                        width: VLCStyle.listAlbumCover_width
-                        anchors.centerIn: parent
-
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: VLCStyle.icon_tableHeader
-
-                        text: VLCIcons.album_cover
-
-                        color: parent.colorContext.fg.secondary
-                    }
-                }
+                showTitleText: false
             }
 
             Component {

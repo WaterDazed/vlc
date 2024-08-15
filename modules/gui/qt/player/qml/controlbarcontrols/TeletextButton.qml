@@ -21,10 +21,11 @@
 import QtQuick
 import QtQuick.Controls
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/"
+import VLC.MainInterface
+import VLC.Style
+import VLC.Player
+import VLC.Widgets
 
 PopupIconToolButton {
     id: root

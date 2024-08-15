@@ -21,12 +21,11 @@
 import QtQuick
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-import "qrc:///util/Helpers.js" as Helpers
-
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 Widgets.StackViewExt {
     id: root

@@ -111,7 +111,12 @@ namespace
                     , this, &ImageResponseRadiusAdaptor::handleResponseFinished);
         }
 
-        QString errorString() const override { return errStr; }
+        QString errorString() const override
+        {
+            if (result.isNull() && errStr.isEmpty())
+                return QStringLiteral("Unspecified error.");
+            return errStr;
+        }
 
         QQuickTextureFactory *textureFactory() const override
         {
@@ -302,9 +307,6 @@ RoundImage::RoundImage(QQuickItem *parent) : QQuickItem {parent}
     if (Q_LIKELY(qGuiApp))
         setDPR(qGuiApp->devicePixelRatio());
 
-    connect(this, &QQuickItem::heightChanged, this, &RoundImage::regenerateRoundImage);
-    connect(this, &QQuickItem::widthChanged, this, &RoundImage::regenerateRoundImage);
-
     connect(this, &QQuickItem::windowChanged, this, [this](const QQuickWindow* const window) {
         if (window)
             setDPR(window->devicePixelRatio());
@@ -412,6 +414,11 @@ QUrl RoundImage::source() const
     return m_source;
 }
 
+QSize RoundImage::sourceSize() const
+{
+    return m_sourceSize;
+}
+
 qreal RoundImage::radius() const
 {
     return m_radius;
@@ -434,6 +441,16 @@ void RoundImage::setSource(const QUrl& source)
 
     m_source = source;
     emit sourceChanged(m_source);
+    regenerateRoundImage();
+}
+
+void RoundImage::setSourceSize(const QSize& size)
+{
+    if (m_sourceSize == size)
+        return;
+
+    m_sourceSize = size;
+    emit sourceSizeChanged(size);
     regenerateRoundImage();
 }
 
@@ -473,14 +490,28 @@ void RoundImage::setDPR(const qreal value)
 
 void RoundImage::load()
 {
+    // NOTE: at this point we still have old content displayed
+
     m_enqueuedGeneration = false;
 
-    auto engine = qmlEngine(this);
-    if (!engine || m_source.isEmpty() || !size().isValid() || size().isEmpty())
-        return;
+    if (m_source.isEmpty())
+    {
+        // nothing to load, clear old content
+        setStatus(Status::Null);
+        setRoundImage({});
 
-    const qreal scaledWidth = this->width() * m_dpr;
-    const qreal scaledHeight = this->height() * m_dpr;
+        return;
+    }
+
+    auto engine = qmlEngine(this);
+    if (!engine || !m_sourceSize.isValid() || m_sourceSize.isEmpty())
+    {
+        onRequestCompleted(Status::Error, {});
+        return;
+    }
+
+    const qreal scaledWidth = m_sourceSize.width() * m_dpr;
+    const qreal scaledHeight = m_sourceSize.height() * m_dpr;
     const qreal scaledRadius = m_QSGCustomGeometry ? 0.0 : (this->radius() * m_dpr);
 
     const ImageCacheKey key {source(), QSizeF {scaledWidth, scaledHeight}.toSize(), scaledRadius};
@@ -502,6 +533,7 @@ void RoundImage::load()
         m_activeImageResponse->saveInCache();
 
     connect(m_activeImageResponse.get(), &RoundImageRequest::requestCompleted, this, &RoundImage::onRequestCompleted);
+
     //at this point m_activeImageResponse is either in Loading or Error status
     onRequestCompleted(RoundImage::Loading, {});
 }
@@ -563,11 +595,6 @@ void RoundImage::regenerateRoundImage()
 {
     if (!isComponentComplete() || m_enqueuedGeneration)
         return;
-
-    setStatus(source().isEmpty() ? Status::Null : Status::Loading);
-
-    // remove old contents
-    setRoundImage({});
 
     m_activeImageResponse.reset();
 

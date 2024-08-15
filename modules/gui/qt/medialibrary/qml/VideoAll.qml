@@ -21,16 +21,14 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/"    as MainInterface
-import "qrc:///util/"    as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Util
+import VLC.Style
 
-MainInterface.MainViewLoader {
+MainViewLoader {
     id: root
 
     // Properties
@@ -53,7 +51,7 @@ MainInterface.MainViewLoader {
     required  property string sectionProperty
 
     // NOTE: The ContextMenu depends on the model so we have to provide it too.
-    required property Util.MLContextMenu contextMenu
+    required property MLContextMenu contextMenu
 
     // function(model) -> [strings....]
     // used to get grid labels per model item

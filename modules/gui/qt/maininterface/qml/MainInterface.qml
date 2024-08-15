@@ -27,12 +27,13 @@ import QtQuick.Controls
 import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-import "qrc:///util/" as Util
-import "qrc:///playlist/" as PL
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Util
+import VLC.Playlist
+import VLC.Player
 
 Item {
     id: root
@@ -44,8 +45,8 @@ Item {
                                       && (MainCtx.intfMainWindow.visibility === Window.Windowed)
 
     readonly property var _pageModel: [
-        { name: "mc", url: "qrc:///main/MainDisplay.qml" },
-        { name: "player", url:"qrc:///player/Player.qml" },
+        { name: "mc", url: "qrc:///qt/qml/VLC/MainInterface/MainDisplay.qml" },
+        { name: "player", url:"qrc:///qt/qml/VLC/Player/Player.qml" },
     ]
 
     property var _oldHistoryPath: ([])
@@ -82,7 +83,7 @@ Item {
         _oldHistoryPath = History.viewPath
     }
 
-    Util.ModelSortSettingHandler {
+    ModelSortSettingHandler {
         id: contextSaver
     }
 
@@ -142,7 +143,7 @@ Item {
             id: playlistWindowLoader
             asynchronous: true
             active: !MainCtx.playlistDocked
-            source: "qrc:///playlist/PlaylistDetachedWindow.qml"
+            source: "qrc:///qt/qml/VLC/Playlist/PlaylistDetachedWindow.qml"
         }
 
         Connections {
@@ -166,31 +167,21 @@ Item {
         Connections {
             target: MainCtx
 
-            function onMediaLibraryVisibleChanged() {
-                if (MainCtx.mediaLibraryVisible) {
-                    if (History.match(History.viewPath, ["mc"]))
-                        return
+            function onRequestShowMainView() {
+                if (History.match(History.viewPath, ["mc"]))
+                    return
 
-                    // NOTE: Useful when we started the application on the 'player' view.
-                    if (History.previousEmpty) {
-                        if (MainCtx.hasEmbededVideo && MainCtx.canShowVideoPIP === false)
-                            MainPlaylistController.stop()
+                if (MainCtx.hasEmbededVideo && MainCtx.canShowVideoPIP === false)
+                    MainPlaylistController.stop()
 
-                        _pushHome()
+                _pushHome()
+            }
 
-                        return
-                    }
+            function onRequestShowPlayerView() {
+                if (History.match(History.viewPath, ["player"]))
+                    return
 
-                    if (MainCtx.hasEmbededVideo && MainCtx.canShowVideoPIP === false)
-                        MainPlaylistController.stop()
-
-                    History.previous()
-                } else {
-                    if (History.match(History.viewPath, ["player"]))
-                        return
-
-                    History.push(["player"])
-                }
+                History.push(["player"])
             }
         }
 
@@ -200,15 +191,15 @@ Item {
                 setInitialView()
         }
 
-
         DropArea {
             anchors.fill: parent
+            z: -1
 
             onEntered: (drag) => {
                 // Do not handle internal drag here:
                 if (!drag.source) {
                     // Foreign drag, check if valid:
-                    if (drop.hasUrls || drop.hasText) {
+                    if (drag.hasUrls || drag.hasText) {
                         drag.accepted = true
                         return
                     }
@@ -239,7 +230,7 @@ Item {
 
                 if (urls.length > 0) {
                     /* D&D of a subtitles file, add it on the fly */
-                    if (Player.isPlaying && urls.length == 1) {
+                    if (Player.isStarted && urls.length == 1) {
                         if (Player.associateSubtitleFile(urls[0])) {
                             drop.accept()
                             return
@@ -250,25 +241,25 @@ Item {
                     drop.accept()
                 }
             }
+        }
 
-            Widgets.PageLoader {
-                id: stackView
-                anchors.fill: parent
-                focus: true
-                clip: _extendedFrameVisible
+        Widgets.PageLoader {
+            id: stackView
+            anchors.fill: parent
+            focus: true
+            clip: _extendedFrameVisible
 
-                pageModel: _pageModel
+            pageModel: _pageModel
 
-                Connections {
-                    target: Player
-                    function onPlayingStateChanged() {
-                        if (Player.playingState === Player.PLAYING_STATE_STOPPED
-                                && History.match(History.viewPath, ["player"]) ) {
-                            if (History.previousEmpty)
-                                _pushHome()
-                            else
-                                History.previous()
-                        }
+            Connections {
+                target: Player
+                function onPlayingStateChanged() {
+                    if (Player.playingState === Player.PLAYING_STATE_STOPPED
+                            && History.match(History.viewPath, ["player"]) ) {
+                        if (History.previousEmpty)
+                            _pushHome()
+                        else
+                            History.previous()
                     }
                 }
             }
@@ -276,7 +267,7 @@ Item {
 
         Loader {
             asynchronous: true
-            source: "qrc:///menus/GlobalShortcuts.qml"
+            source: "qrc:///qt/qml/VLC/Menus/GlobalShortcuts.qml"
         }
 
         MouseArea {
@@ -297,7 +288,7 @@ Item {
             }
             Component.onCompleted: {
                 setSource(
-                    "qrc:///widgets/CSDMouseStealer.qml", {
+                    "qrc:///qt/qml/VLC/Widgets/CSDMouseStealer.qml", {
                         target: g_mainInterface,
                         anchorInside: Qt.binding(() => !_extendedFrameVisible)
                     })

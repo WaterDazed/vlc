@@ -20,11 +20,12 @@ import QtQuick.Controls
 import QtQml.Models
 import QtQml
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
+import VLC.Network
 
 Widgets.PageLoader {
     id: root
@@ -33,11 +34,11 @@ Widgets.PageLoader {
             displayText: qsTr("Services"),
             default: true,
             name: "services",
-            url: "qrc:///network/ServicesHomeDisplay.qml"
+            url: "qrc:///qt/qml/VLC/Network/ServicesHomeDisplay.qml"
         }, {
             displayText: qsTr("URL"),
             name: "url",
-            url: "qrc:///network/DiscoverUrlDisplay.qml"
+            url: "qrc:///qt/qml/VLC/Network/DiscoverUrlDisplay.qml"
         }
     ]
 

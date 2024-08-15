@@ -20,14 +20,13 @@ import QtQuick.Controls
 import QtQml.Models
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MediaLibrary
 
-import "qrc:///util/" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Style
 
-Widgets.KeyNavigableTableView {
+Widgets.TableViewExt {
     id: root
 
     // Properties
@@ -42,11 +41,6 @@ Widgets.KeyNavigableTableView {
     property alias parentId: rootmodel.parentId
 
     // Private
-    property int _nbCols: VLCStyle.gridColumnsForWidth(availableRowWidth)
-
-    readonly property int _sizeA: Math.floor((_nbCols - 3) / 3)
-    readonly property int _sizeB: Math.floor((_nbCols - 2) / 2)
-
     property var _lineTitle: ({
         criteria: "title",
 
@@ -104,21 +98,17 @@ Widgets.KeyNavigableTableView {
     })
 
     property var _modelLarge: [{
-        size: _sizeA,
+        weight: 1,
 
         model: _lineTitle
     }, {
-        size: _sizeA,
+        weight: 1,
 
         model: _lineAlbum
     }, {
-        size: _sizeA,
+        weight: 1,
 
         model: _lineArtist
-    }, {
-        size: 1,
-
-        model: _lineDuration
     }, {
         size: 1,
 
@@ -127,18 +117,22 @@ Widgets.KeyNavigableTableView {
         size: 1,
 
         model: _lineDisc
+    }, {
+        size: 1,
+
+        model: _lineDuration
     }]
 
     property var _modelMedium: [{
-        size: _sizeB,
+        weight: 1,
 
         model: _lineTitle
     }, {
-        size: _sizeB,
+        weight: 1,
 
         model: _lineAlbum
     }, {
-        size: 1,
+        weight: 1,
 
         model: _lineArtist
     }, {
@@ -148,7 +142,7 @@ Widgets.KeyNavigableTableView {
     }]
 
     property var _modelSmall: [{
-        size: Math.max(2, _nbCols),
+        weight: 1,
 
         model: ({
             criteria: "title",
@@ -228,7 +222,7 @@ Widgets.KeyNavigableTableView {
         }
     }
 
-    Util.MLContextMenu {
+    MLContextMenu {
         id: contextMenu
 
         model: rootmodel

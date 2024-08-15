@@ -19,11 +19,11 @@ import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/Helpers.js" as Helpers
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Util
 
 T.ComboBox {
     id: control

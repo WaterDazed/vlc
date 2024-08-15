@@ -19,9 +19,9 @@
 import QtQuick
 import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Network
 
 T.AbstractButton {
     id: button

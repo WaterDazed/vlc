@@ -21,12 +21,14 @@ import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
 
-import org.videolan.vlc 0.1
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Style
 
 Window {
     id: root
+
+    transientParent: MainCtx.intfMainWindow
 
     flags: Qt.Dialog
 

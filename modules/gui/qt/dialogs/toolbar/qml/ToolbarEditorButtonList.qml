@@ -20,12 +20,11 @@ import QtQuick.Controls
 import QtQml.Models
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///player/"
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
+import VLC.Player
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Util
 
 GridView {
     id: root
@@ -61,7 +60,7 @@ GridView {
         preventStealing: true
     }
 
-    Util.FlickableScrollHandler { }
+    DefaultFlickableScrollHandler { }
 
     DropArea {
         id: dropArea

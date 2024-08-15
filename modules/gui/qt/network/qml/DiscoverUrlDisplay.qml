@@ -19,11 +19,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQml.Models
 
-import org.videolan.vlc 0.1
 
-import "qrc:///util" as Util
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Playlist
+import VLC.Network
 
 FocusScope {
     id: root
@@ -72,7 +74,7 @@ FocusScope {
                 focus: true
                 anchors.centerIn: parent
                 height: VLCStyle.dp(32, VLCStyle.scale)
-                width: VLCStyle.colWidth(Math.max(VLCStyle.gridColumnsForWidth(root.width * .6), 2))
+                width: root.width * .6
                 placeholderText: qsTr("Paste or write the URL here")
                 selectByMouse: true
 
@@ -104,7 +106,7 @@ FocusScope {
             height: parent.height - searchFieldContainer.height
 
             active: MainCtx.mediaLibraryAvailable
-            source: "qrc:///medialibrary/UrlListDisplay.qml"
+            source: "qrc:///qt/qml/VLC/MediaLibrary/UrlListDisplay.qml"
 
             onLoaded: {
                 item.leftPadding = Qt.binding(function() {

@@ -23,12 +23,11 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.medialib 0.1
-import org.videolan.controls 0.1
-import org.videolan.vlc 0.1
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Util
 
 T.ItemDelegate {
     id: root
@@ -64,6 +63,8 @@ T.ItemDelegate {
     verticalPadding: VLCStyle.margin_xsmall
     horizontalPadding: VLCStyle.margin_normal
 
+    hoverEnabled: true
+
     Accessible.onPressAction: root.itemClicked()
 
     // Childs
@@ -75,6 +76,62 @@ T.ItemDelegate {
         focused: root.activeFocus
         hovered: root.hovered
         enabled: root.enabled
+    }
+
+    // TODO: Qt bug 6.2: QTBUG-103604
+    DoubleClickIgnoringItem {
+        anchors.fill: parent
+
+        TapHandler {
+            gesturePolicy: TapHandler.ReleaseWithinBounds // TODO: Qt 6.2 bug: Use TapHandler.DragThreshold
+
+            grabPermissions: TapHandler.CanTakeOverFromHandlersOfDifferentType | TapHandler.ApprovesTakeOverByAnything
+
+            // We need this for extra information such as modifiers
+            Component.onCompleted: {
+                canceled.connect(initialAction) // DragHandler stole the event
+            }
+
+            onSingleTapped: (eventPoint, button) => {
+                initialAction()
+
+                if (!(root.selected && button === Qt.RightButton)) {
+                    view.selectionModel.updateSelection(point.modifiers, view.currentIndex, index)
+                    view.currentIndex = index
+                }
+            }
+
+            onDoubleTapped: (eventPoint, button) => {
+                if (button !== Qt.RightButton)
+                    MediaLib.addAndPlay(model.id);
+            }
+
+            function initialAction() {
+                root.forceActiveFocus(Qt.MouseFocusReason)
+            }
+        }
+
+        DragHandler {
+            target: null
+
+            grabPermissions: PointerHandler.CanTakeOverFromHandlersOfDifferentType | PointerHandler.ApprovesTakeOverByAnything
+
+            onActiveChanged: {
+                const target = root.dragTarget
+                if (target) {
+                    if (active) {
+                        if (!selected) {
+                            view.selectionModel.select(index, ItemSelectionModel.ClearAndSelect)
+                            view.currentIndex = index
+                        }
+
+                        target.Drag.active = true
+                    } else {
+                        target.Drag.drop()
+                    }
+                }
+            }
+        }
     }
 
     background: Widgets.AnimatedBackground {
@@ -95,51 +152,10 @@ T.ItemDelegate {
         }
     }
 
-    MouseArea {
-        anchors.fill: parent
-
-        drag.axis: Drag.XAndYAxis
-        drag.smoothed: false
-
-        drag.target: root.dragTarget
-
-        drag.onActiveChanged: {
-            if (drag.target) {
-                const target = drag.target
-                if (drag.active) {
-                    if (!selected) {
-                        view.selectionModel.select(index, ItemSelectionModel.ClearAndSelect)
-                        view.currentIndex = index
-                    }
-
-                    target.Drag.active = true
-                } else {
-                    target.Drag.drop()
-                }
-            }
-        }
-
-        onClicked: (mouse) => {
-            if (!(root.selected && mouse.button === Qt.RightButton)) {
-                view.selectionModel.updateSelection(mouse.modifiers, view.currentIndex, index)
-                view.currentIndex = index
-            }
-        }
-
-        onDoubleClicked: (mouse) => {
-            if (mouse.button !== Qt.RightButton)
-                MediaLib.addAndPlay(model.id);
-        }
-
-        onPressed: (mouse) => {
-            root.forceActiveFocus(Qt.MouseFocusReason)
-        }
-    }
-
     contentItem: RowLayout {
         spacing: VLCStyle.margin_xsmall
 
-        RoundImage {
+        Widgets.RoundImage {
             implicitWidth: VLCStyle.play_cover_small
             implicitHeight: VLCStyle.play_cover_small
             Layout.fillHeight: true
@@ -149,6 +165,8 @@ T.ItemDelegate {
 
             source: (model.cover) ? model.cover
                                   : VLCStyle.noArtArtistSmall
+            sourceSize.width: width
+            sourceSize.height: height
 
             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
 
@@ -169,7 +187,7 @@ T.ItemDelegate {
         Widgets.TextAutoScroller {
             label: artistName
 
-            forceScroll: root.isCurrent || root._isHover
+            forceScroll: root.isCurrent || root.visualFocus
             clip: scrolling
 
             implicitHeight: artistName.implicitHeight

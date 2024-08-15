@@ -22,16 +22,13 @@
 
 #import "VLCLibraryCollectionViewFlowLayout.h"
 
+#import "library/VLCLibraryCollectionViewDataSource.h"
 #import "library/VLCLibraryCollectionViewMediaItemSupplementaryDetailView.h"
+#import "library/VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.h"
 #import "library/VLCLibraryUIUnits.h"
 
 #import "library/audio-library/VLCLibraryAudioDataSource.h"
 #import "library/audio-library/VLCLibraryAudioGroupDataSource.h"
-#import "library/audio-library/VLCLibraryCollectionViewAlbumSupplementaryDetailView.h"
-
-#import "library/home-library/VLCLibraryHomeViewVideoContainerViewDataSource.h"
-
-#import "library/video-library/VLCLibraryVideoDataSource.h"
 
 #pragma mark - Private data
 static const NSUInteger kAnimationSteps = 32;
@@ -83,6 +80,19 @@ static CVReturn detailViewAnimationCallback(CVDisplayLinkRef displayLink,
 @end
 
 @implementation VLCLibraryCollectionViewFlowLayout
+
++ (instancetype)standardLayout
+{
+    const CGFloat collectionItemSpacing = VLCLibraryUIUnits.collectionViewItemSpacing;
+    const NSEdgeInsets collectionViewSectionInset = VLCLibraryUIUnits.collectionViewSectionInsets;
+
+    VLCLibraryCollectionViewFlowLayout * const collectionViewLayout = [[VLCLibraryCollectionViewFlowLayout alloc] init];
+    collectionViewLayout.minimumLineSpacing = collectionItemSpacing;
+    collectionViewLayout.minimumInteritemSpacing = collectionItemSpacing;
+    collectionViewLayout.sectionInset = collectionViewSectionInset;
+
+    return collectionViewLayout;
+}
 
 - (instancetype)init
 {
@@ -261,28 +271,16 @@ static CVReturn detailViewAnimationCallback(CVDisplayLinkRef displayLink,
         layoutAttributesArray[i] = attributes;
     }
 
-    const id<NSCollectionViewDataSource> dataSource = self.collectionView.dataSource;
-
-    if ([dataSource isKindOfClass:VLCLibraryAudioDataSource.class]) {
-        VLCLibraryAudioDataSource * const audioDataSource = (VLCLibraryAudioDataSource *)dataSource;
-        // Add detail view to the attributes set -- detail view about to be shown
-        switch(audioDataSource.audioLibrarySegment) {
-            case VLCAudioLibraryArtistsSegment:
-            case VLCAudioLibraryGenresSegment:
-                break;
-            case VLCAudioLibraryAlbumsSegment:
-                [layoutAttributesArray addObject:[self layoutAttributesForSupplementaryViewOfKind:VLCLibraryCollectionViewAlbumSupplementaryDetailViewKind atIndexPath:self.selectedIndexPath]];
-                break;
-            case VLCAudioLibrarySongsSegment:
-            default:
-                [layoutAttributesArray addObject:[self layoutAttributesForSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind atIndexPath:self.selectedIndexPath]];
-                break;
+    if ([self.collectionView.dataSource conformsToProtocol:@protocol(VLCLibraryCollectionViewDataSource)]) {
+        id<VLCLibraryCollectionViewDataSource> const libraryDataSource = 
+            (id<VLCLibraryCollectionViewDataSource>)self.collectionView.dataSource;
+        NSString * const supplementaryDetailViewKind = libraryDataSource.supplementaryDetailViewKind;
+        if (supplementaryDetailViewKind != nil && supplementaryDetailViewKind.length > 0) {
+            NSCollectionViewLayoutAttributes * const supplementaryDetailViewLayoutAttributes =
+                [self layoutAttributesForSupplementaryViewOfKind:supplementaryDetailViewKind
+                                                     atIndexPath:self.selectedIndexPath];
+            [layoutAttributesArray addObject:supplementaryDetailViewLayoutAttributes];
         }
-    } else if ([dataSource isKindOfClass:VLCLibraryAudioGroupDataSource.class]) {
-        [layoutAttributesArray addObject:[self layoutAttributesForSupplementaryViewOfKind:VLCLibraryCollectionViewAlbumSupplementaryDetailViewKind atIndexPath:self.selectedIndexPath]];
-    } else if ([dataSource isKindOfClass:VLCLibraryHomeViewVideoContainerViewDataSource.class] ||
-               [dataSource isKindOfClass:VLCLibraryVideoDataSource.class]) {
-        [layoutAttributesArray addObject:[self layoutAttributesForSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind atIndexPath:self.selectedIndexPath]];
     }
 
     return layoutAttributesArray;
@@ -293,7 +291,7 @@ static CVReturn detailViewAnimationCallback(CVDisplayLinkRef displayLink,
 {
     BOOL isLibrarySupplementaryView = NO;
 
-    if ([elementKind isEqualToString:VLCLibraryCollectionViewAlbumSupplementaryDetailViewKind] ||
+    if ([elementKind isEqualToString:VLCLibraryCollectionViewMediaItemListSupplementaryDetailViewKind] ||
                [elementKind isEqualToString:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind]) {
 
         isLibrarySupplementaryView = YES;
@@ -338,7 +336,7 @@ static CVReturn detailViewAnimationCallback(CVDisplayLinkRef displayLink,
 
 - (NSSet<NSIndexPath *> *)indexPathsToDeleteForSupplementaryViewOfKind:(NSString *)elementKind
 {
-    if ([elementKind isEqualToString:VLCLibraryCollectionViewAlbumSupplementaryDetailViewKind] ||
+    if ([elementKind isEqualToString:VLCLibraryCollectionViewMediaItemListSupplementaryDetailViewKind] ||
         [elementKind isEqualToString:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind]) {
 
         return [self.collectionView indexPathsForVisibleSupplementaryElementsOfKind:elementKind];

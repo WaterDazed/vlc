@@ -20,14 +20,14 @@ default:
 
 variables:
     VLC_TEST_TIMEOUT: 60
-    VLC_WIN64_IMAGE: registry.videolan.org/vlc-debian-win64-posix:20240522152555
-    VLC_WIN_LLVM_MSVCRT_IMAGE: registry.videolan.org/vlc-debian-llvm-msvcrt:20240531102610
-    VLC_WIN_LLVM_UCRT_IMAGE: registry.videolan.org/vlc-debian-llvm-ucrt:20240531102610
-    VLC_DEBIAN_IMAGE: registry.videolan.org/vlc-debian-unstable:20240402131352
-    VLC_ANDROID_IMAGE: registry.videolan.org/vlc-debian-android:20240522152555
+    VLC_WIN64_IMAGE: registry.videolan.org/vlc-debian-win64-posix:20240808131936
+    VLC_WIN_LLVM_MSVCRT_IMAGE: registry.videolan.org/vlc-debian-llvm-msvcrt:20240731083648
+    VLC_WIN_LLVM_UCRT_IMAGE: registry.videolan.org/vlc-debian-llvm-ucrt:20240731083648
+    VLC_DEBIAN_IMAGE: registry.videolan.org/vlc-debian-unstable:20240723100046
+    VLC_ANDROID_IMAGE: registry.videolan.org/vlc-debian-android:20240731083648
     VLC_SNAP_IMAGE: registry.videolan.org/vlc-ubuntu-focal:20231013031754
-    VLC_RASPBIAN_IMAGE: registry.videolan.org/vlc-ubuntu-raspberry:20240514145422
-    VLC_WASM_EMSCRIPTEN: registry.videolan.org/vlc-debian-wasm-emscripten:20240522152555
+    VLC_RASPBIAN_IMAGE: registry.videolan.org/vlc-ubuntu-raspberry:20240806085528
+    VLC_WASM_EMSCRIPTEN: registry.videolan.org/vlc-debian-wasm-emscripten:20240731083648
 
 .variables-debian: &variables-debian
         HOST_ARCH: x86_64
@@ -97,6 +97,18 @@ variables:
         TRIPLET: $HOST_ARCH-apple-appletvos
         SDKNAME: appletvos
 
+.variables-watchos-arm64_32: &variables-watchos-arm64_32
+        VLC_PATH: /Users/videolanci/sandbox/bin
+        HOST_ARCH: arm64_32
+        TRIPLET: $HOST_ARCH-apple-watchos
+        SDKNAME: watchos
+
+.variables-xros-arm64: &variables-xros-arm64
+        VLC_PATH: /Users/videolanci/sandbox/bin
+        HOST_ARCH: arm64
+        TRIPLET: $HOST_ARCH-apple-xros
+        SDKNAME: xros
+
 .variables-android-arm: &variables-android-arm
         ANDROID_ARCH: arm
         TRIPLET: arm-linux-androideabi
@@ -141,7 +153,7 @@ variables:
             echo "Building using prebuilt contribs at $VLC_PREBUILT_CONTRIBS_URL"
             EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} -p"
         fi
-        if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" ]; then
+        if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" -a "${CI_PROJECT_PATH}" = "videolan/vlc" ]; then
             EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} -c"
         fi
         extras/package/win32/build.sh -a $HOST_ARCH $EXTRA_BUILD_FLAGS $LIBVLC_EXTRA_BUILD_FLAGS $UWP_EXTRA_BUILD_FLAGS
@@ -212,7 +224,9 @@ nightly-win32-llvm:
     extends: .nightly-win-common
     image:
         name: $VLC_WIN_LLVM_MSVCRT_IMAGE
-    variables: *variables-win32
+    variables:
+        <<: *variables-win32
+        LIBVLC_EXTRA_BUILD_FLAGS: -D /
 
 nightly-win64:
     extends: .nightly-win-common
@@ -224,7 +238,9 @@ nightly-win64-llvm:
     extends: .nightly-win-common
     image:
         name: $VLC_WIN_LLVM_MSVCRT_IMAGE
-    variables: *variables-win64
+    variables:
+        <<: *variables-win64
+        LIBVLC_EXTRA_BUILD_FLAGS: -D /
 
 nightly-win64-ucrt-llvm:
     extends: .nightly-win-common
@@ -234,6 +250,7 @@ nightly-win64-ucrt-llvm:
         <<: *variables-win64
         VLCARCH: win64-ucrt
         TRIPLET: $HOST_ARCH-ucrt-w64-mingw32
+        LIBVLC_EXTRA_BUILD_FLAGS: -D /
         UWP_EXTRA_BUILD_FLAGS: -u -x -S 0x0A000006
 
 nightly-win64-arm-llvm:
@@ -244,6 +261,7 @@ nightly-win64-arm-llvm:
         <<: *variables-win64-arm
         VLCARCH: winarm64-ucrt
         TRIPLET: $HOST_ARCH-ucrt-w64-mingw32
+        LIBVLC_EXTRA_BUILD_FLAGS: -D /
         UWP_EXTRA_BUILD_FLAGS: -u -x -S 0x0A000006
         # Clang <= 15 produces incorrect unwind info for code with
         # branch protection enabled on Windows.
@@ -284,7 +302,7 @@ debian-contrib:
             make list
             make -j$NCPU --output-sync=recurse fetch
             make -j$NCPU --output-sync=recurse
-            if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" ]; then
+            if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" -a "${CI_PROJECT_PATH}" = "videolan/vlc" ]; then
                 make package
             fi
         else
@@ -363,10 +381,10 @@ debian-meson:
         - |
             # We split in two different commands to handle the case where
             # the coverage will be generated on different jobs later.
-            # Note: qt6-assets_qrc.cpp, qt6-qml_qrc.cpp, qt6-shaders_qrc.cpp, qt6-windows_qrc.cpp need to be remove from the report since their
+            # Note: qt generated files need to be remove from the report since their
             # coverage should not be checked. It leads to gcovr having trouble
             # parsing the coverage otherwise.
-            gcovr -r "${CI_PROJECT_DIR}/" --json "${CI_PROJECT_DIR}/${CI_JOB_NAME}.cov.json" -j$NCPU --gcov-ignore-parse-errors=negative_hits.warn_once_per_file --exclude build-meson/modules/gui/qt/qt6-assets_qrc.cpp --exclude build-meson/modules/gui/qt/qt6-qml_qrc.cpp --exclude build-meson/modules/gui/qt/shaders/qt6-shaders_qrc.cpp --exclude build-meson/modules/gui/qt/qt6-windows_qrc.cpp
+            gcovr -r "${CI_PROJECT_DIR}/" --json "${CI_PROJECT_DIR}/${CI_JOB_NAME}.cov.json" -j$NCPU --gcov-ignore-parse-errors=negative_hits.warn_once_per_file --exclude "build-meson/modules/gui/qt/.*_qrc.cpp" --exclude "build-meson/modules/gui/qt/.*_assets.cpp"
 
         - mkdir html-coverage
         - >
@@ -413,24 +431,24 @@ debian-meson:
     allow_failure: true
     variables: *variables-snap
 
-snap:
-    extends: .snap-common
+# snap:
+#     extends: .snap-common
 
-nightly-snap:
-    extends: .snap-common
-    rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    after_script:
-        - if [ "$CI_PROJECT_NAMESPACE" = "videolan" ]; then /bin/true; else exit 0; fi
-        - mkdir nightlies
-        - mv extras/package/snap/vlc_*.snap nightlies/
-        - echo $SNAP_LOGIN | base64 --decode | snapcraft login --with -
-        - snapcraft push nightlies/vlc_*.snap --release edge
-        - snapcraft logout
-        - cd nightlies && find . -maxdepth 1 -type f -not -name SHA512SUM | xargs shasum -a 512 | tee SHA512SUM
-    artifacts:
-        paths:
-           - nightlies/*
+# nightly-snap:
+#     extends: .snap-common
+#     rules:
+#         - if: '$CI_PIPELINE_SOURCE == "schedule"'
+#     after_script:
+#         - if [ "$CI_PROJECT_NAMESPACE" = "videolan" ]; then /bin/true; else exit 0; fi
+#         - mkdir nightlies
+#         - mv extras/package/snap/vlc_*.snap nightlies/
+#         - echo $SNAP_LOGIN | base64 --decode | snapcraft login --with -
+#         - snapcraft push nightlies/vlc_*.snap --release edge
+#         - snapcraft logout
+#         - cd nightlies && find . -maxdepth 1 -type f -not -name SHA512SUM | xargs shasum -a 512 | tee SHA512SUM
+#     artifacts:
+#         paths:
+#            - nightlies/*
 
 #
 # Raspbian
@@ -444,7 +462,7 @@ raspbian-arm:
             echo "Building using prebuilt contribs at $VLC_PREBUILT_CONTRIBS_URL"
             EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} -p"
         fi
-        if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" ]; then
+        if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" -a "${CI_PROJECT_PATH}" = "videolan/vlc" ]; then
             EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} -c"
         fi
         extras/package/raspberry/build.sh $EXTRA_BUILD_FLAGS -x -a $HOST_ARCH
@@ -485,8 +503,6 @@ raspbian-arm:
     extends:
         - .base-template
         - .ccache-common-apple
-    tags:
-        - monterey
     script: |
         if [ "${CI_JOB_NAME:0:8}" = "nightly-" ]; then
             NIGHTLY_EXTRA_BUILD_FLAGS="-i n"
@@ -498,7 +514,7 @@ raspbian-arm:
         else
             EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} -c"
         fi
-        if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" ]; then
+        if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" -a "${CI_PROJECT_PATH}" = "videolan/vlc" ]; then
             EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} -p"
         fi
         export PATH="${VLC_PATH}:$PATH"
@@ -509,10 +525,14 @@ raspbian-arm:
 
 macos-x86_64:
     extends: .macos-common
+    tags:
+        - monterey
     variables: *variables-macos-x86_64
 
 macos-arm64:
     extends: .macos-common
+    tags:
+        - macos-xcode15
     variables: *variables-macos-arm64
 
 .nightly-macos-common:
@@ -530,10 +550,14 @@ macos-arm64:
 
 nightly-macos-x86_64:
     extends: .nightly-macos-common
+    tags:
+        - monterey
     variables: *variables-macos-x86_64
 
 nightly-macos-arm64:
     extends: .nightly-macos-common
+    tags:
+        - macos-xcode15
     variables: *variables-macos-arm64
 
 #
@@ -541,34 +565,53 @@ nightly-macos-arm64:
 #
 .apple-os-common:
     extends: .base-template
-    tags:
-        - monterey
     script: |
         export PATH="${VLC_PATH}:$PATH"
         mkdir build && cd build
+        EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} --enable-extra-checks"
         if [ -n "$VLC_PREBUILT_CONTRIBS_URL" ]; then
-            ../extras/package/apple/build.sh --sdk=$SDKNAME --arch=$HOST_ARCH --package-contribs \
-                --enable-extra-checks --with-prebuilt-contribs
-        else
-            ../extras/package/apple/build.sh --sdk=$SDKNAME --arch=$HOST_ARCH --package-contribs \
-                --enable-extra-checks
+          EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} --with-prebuilt-contribs"
         fi
+        if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" -a "${CI_PROJECT_PATH}" = "videolan/vlc" ]; then
+          EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} --package-contribs"
+        fi
+        ../extras/package/apple/build.sh --sdk=$SDKNAME --arch=$HOST_ARCH $EXTRA_BUILD_FLAGS
 
 ios-arm64:
     extends: .apple-os-common
+    tags:
+        - macos-xcode15
     variables: *variables-ios-arm64
 
 ios-armv7:
     extends: .apple-os-common
+    tags:
+        - monterey
     variables: *variables-ios-armv7
 
 ios-simulator-x86_64:
     extends: .apple-os-common
+    tags:
+        - macos-xcode15
     variables: *variables-ios-simulator-x86_64
 
 tvos-arm64:
     extends: .apple-os-common
+    tags:
+        - macos-xcode15
     variables: *variables-tvos-arm64
+
+watchos-arm64_32:
+    extends: .apple-os-common
+    tags:
+        - macos-xcode15
+    variables: *variables-watchos-arm64_32
+
+xros-arm64:
+    extends: .apple-os-common
+    tags:
+        - macos-xcode15
+    variables: *variables-xros-arm64
 
 #
 # Android
@@ -579,10 +622,10 @@ tvos-arm64:
         name: $VLC_ANDROID_IMAGE
     script: |
         git clone https://code.videolan.org/videolan/libvlcjni.git
-        (cd libvlcjni && git checkout b4416c1acbd4714fbd2e648c13723b20f3b2d834)
+        (cd libvlcjni && git checkout 5076ef767eb4126c74a496033ace54649ac200e7)
         if [ -n "$VLC_PREBUILT_CONTRIBS_URL" ]; then
           CONTRIB_FLAGS="--with-prebuilt-contribs"
-        else
+        elif [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" -a "${CI_PROJECT_PATH}" = "videolan/vlc" ]; then
           CONTRIB_FLAGS="--package-contribs"
         fi
         EXTRA_PARAMS="--enable-extra-checks" /bin/sh ./libvlcjni/buildsystem/compile-libvlc.sh --no-jni -a $ANDROID_ARCH $CONTRIB_FLAGS
@@ -620,7 +663,7 @@ wasm32-emscripten-build :
                 echo "Building using prebuilt contribs at $VLC_PREBUILT_CONTRIBS_URL"
                 EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} --with-prebuilt-contribs"
             fi
-            if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" ]; then
+            if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" -a "${CI_PROJECT_PATH}" = "videolan/vlc" ]; then
                 EXTRA_BUILD_FLAGS="${EXTRA_BUILD_FLAGS} --gen-contrib-archive"
             fi
             ./extras/package/wasm-emscripten/build.sh $EXTRA_BUILD_FLAGS

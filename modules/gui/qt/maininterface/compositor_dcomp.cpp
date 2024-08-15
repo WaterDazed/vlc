@@ -154,34 +154,37 @@ void CompositorDirectComposition::setup()
 
     assert(m_quickView->rhi()->backend() == QRhi::D3D11 || m_quickView->rhi()->backend() == QRhi::D3D12);
 
+    IDCompositionTarget* dcompTarget;
     if (rhi->backend() == QRhi::D3D11)
     {
 #ifdef QRhiD3D11_ACTIVE
         m_dcompDevice = static_cast<QRhiD3D11*>(rhiImplementation)->dcompDevice;
-        m_dcompTarget = static_cast<QD3D11SwapChain*>(rhiSwapChain)->dcompTarget;
-        m_uiVisual = static_cast<QD3D11SwapChain*>(rhiSwapChain)->dcompVisual;
+        auto qswapchain = static_cast<QD3D11SwapChain*>(rhiSwapChain);
+        dcompTarget = qswapchain->dcompTarget;
+        m_uiVisual = qswapchain->dcompVisual;
 #endif
     }
     else if (rhi->backend() == QRhi::D3D12)
     {
 #ifdef QRhiD3D12_ACTIVE
         m_dcompDevice = static_cast<QRhiD3D12*>(rhiImplementation)->dcompDevice;
-        m_dcompTarget = static_cast<QD3D12SwapChain*>(rhiSwapChain)->dcompTarget;
-        m_uiVisual = static_cast<QD3D12SwapChain*>(rhiSwapChain)->dcompVisual;
+        auto qswapchain = static_cast<QD3D12SwapChain*>(rhiSwapChain);
+        dcompTarget = qswapchain->dcompTarget;
+        m_uiVisual = qswapchain->dcompVisual;
 #endif
     }
     else
         Q_UNREACHABLE();
 
     assert(m_dcompDevice);
-    assert(m_dcompTarget);
+    assert(dcompTarget);
     assert(m_uiVisual);
 
     HRESULT res;
     res = m_dcompDevice->CreateVisual(&m_rootVisual);
     assert(res == S_OK);
 
-    res = m_dcompTarget->SetRoot(m_rootVisual.Get());
+    res = dcompTarget->SetRoot(m_rootVisual.Get());
     assert(res == S_OK);
 
     res = m_rootVisual->AddVisual(m_uiVisual, FALSE, NULL);
@@ -191,15 +194,18 @@ void CompositorDirectComposition::setup()
 
     if (!m_blurBehind)
     {
-        try
+        if (var_InheritBool(m_intf, "qt-backdrop-blur"))
         {
-            m_acrylicSurface = new CompositorDCompositionAcrylicSurface(m_intf, this, m_mainCtx, m_dcompDevice);
-        }
-        catch (const std::exception& exception)
-        {
-            if (const auto what = exception.what())
-                msg_Warn(m_intf, "%s", what);
-            delete m_acrylicSurface.data();
+            try
+            {
+                m_acrylicSurface = new CompositorDCompositionAcrylicSurface(m_intf, this, m_mainCtx, m_dcompDevice);
+            }
+            catch (const std::exception& exception)
+            {
+                if (const auto what = exception.what())
+                    msg_Warn(m_intf, "%s", what);
+                delete m_acrylicSurface.data();
+            }
         }
     }
 }
@@ -230,14 +236,17 @@ bool CompositorDirectComposition::makeMainInterface(MainCtx* mainCtx)
                     connect(quickViewPtr,
                             &QQuickWindow::frameSwapped, // At this stage, we can be sure that QRhi and QRhiSwapChain are valid.
                             this,
-                            &CompositorDirectComposition::setup,
+                            [this, &eventLoop]() {
+                                setup();
+                                eventLoop.quit();
+                            },
                             Qt::SingleShotConnection);
                 }
                 else
                 {
                     appropriateGraphicsApi = false;
+                    eventLoop.quit();
                 }
-                eventLoop.quit();
         }, static_cast<Qt::ConnectionType>(Qt::SingleShotConnection | Qt::DirectConnection));
 
     connect(quickViewPtr,
@@ -372,6 +381,15 @@ bool CompositorDirectComposition::eventFilter(QObject *watched, QEvent *event)
             // deleted by Qt itself)
             m_rootVisual->RemoveVisual(m_uiVisual);
             m_rootVisual.Reset();
+
+            // When the window receives the event `SurfaceAboutToBeDestroyed`,
+            // the RHI and the RHI swap chain are going to be destroyed.
+            // It should be noted that event filters receive events
+            // before the watched object receives them.
+            // Since these objects belong to Qt, we should clear them
+            // in order to prevent potential dangling pointer dereference:
+            m_dcompDevice = nullptr;
+            m_uiVisual = nullptr;
         }
         break;
     default:

@@ -18,9 +18,9 @@
 
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
+import VLC.Style
+import VLC.Util
 
 // A convenience file to encapsulate two drop shadow images stacked on top
 // of each other
@@ -29,8 +29,11 @@ ScaledImage {
 
     property Item sourceItem: null
 
-    property real viewportWidth: rectWidth + (Math.max(Math.abs(primaryHorizontalOffset) + primaryBlurRadius, Math.abs(secondaryHorizontalOffset) + secondaryBlurRadius)) * 2
-    property real viewportHeight: rectHeight + (Math.max(Math.abs(primaryVerticalOffset) + primaryBlurRadius, Math.abs(secondaryVerticalOffset) + secondaryBlurRadius)) * 2
+    readonly property real viewportHorizontalOffset: (Math.max(Math.abs(primaryHorizontalOffset) + primaryBlurRadius, Math.abs(secondaryHorizontalOffset) + secondaryBlurRadius)) * 2
+    readonly property real viewportVerticalOffset: (Math.max(Math.abs(primaryVerticalOffset) + primaryBlurRadius, Math.abs(secondaryVerticalOffset) + secondaryBlurRadius)) * 2
+
+    property real viewportWidth: rectWidth + viewportHorizontalOffset
+    property real viewportHeight: rectHeight + viewportVerticalOffset
 
     property real rectWidth: sourceItem ? Math.min(sourceItem.paintedWidth ?? Number.MAX_VALUE, sourceItem.width) : 0
     property real rectHeight: sourceItem ? Math.min(sourceItem.paintedHeight ?? Number.MAX_VALUE, sourceItem.height) : 0

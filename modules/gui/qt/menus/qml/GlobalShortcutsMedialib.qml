@@ -17,8 +17,8 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MediaLibrary
+import VLC.Dialogs
 
 Item {
     ShortcutExt{ sequence:"Ctrl+B"; onActivated: DialogsProvider.bookmarksDialog() }

@@ -1,6 +1,5 @@
 # qtbase
 
-QTBASE_VERSION := $(QTBASE_VERSION_MAJOR).1
 # Insert potential -betaX suffix here:
 QTBASE_VERSION_FULL := $(QTBASE_VERSION)
 QTBASE_URL := $(QT)/$(QTBASE_VERSION_FULL)/submodules/qtbase-everywhere-src-$(QTBASE_VERSION_FULL).tar.xz
@@ -98,11 +97,6 @@ QTBASE_NATIVE_CONFIG := $(QTBASE_COMMON_CONFIG) -DQT_BUILD_TESTS=FALSE \
 	-DFEATURE_texthtmlparser=OFF -DFEATURE_cssparser=OFF -DFEATURE_textodfwriter=OFF -DFEATURE_textmarkdownreader=OFF \
 	-DFEATURE_textmarkdownwriter=OFF -DINPUT_libb2=no -DFEATURE_harfbuzz=OFF -DFEATURE_freetype=OFF -DINPUT_opengl=no
 
-ifdef QT_USES_SYSTEM_TOOLS
-# We checked the versions match, assume we know what we're going
-QTBASE_CONFIG += -DQT_NO_PACKAGE_VERSION_CHECK=TRUE
-endif
-
 .qt-tools: BUILD_DIR=$</vlc_native
 .qt-tools: qt
 	$(CMAKECLEAN)
@@ -114,6 +108,6 @@ endif
 .qt: qt toolchain.cmake
 	$(CMAKECLEAN)
 	$(HOSTVARS_CMAKE) $(CMAKE) $(QTBASE_CONFIG)
-	+$(CMAKEBUILD)
+	+PATH="$(PATH):$(PREFIX)/bin" $(CMAKEBUILD)
 	$(CMAKEINSTALL)
 	touch $@

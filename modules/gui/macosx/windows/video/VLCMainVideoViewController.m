@@ -42,6 +42,7 @@
 
 #import "windows/video/VLCMainVideoViewAudioMediaDecorativeView.h"
 #import "windows/video/VLCMainVideoViewOverlayView.h"
+#import "windows/video/VLCVideoOutputProvider.h"
 #import "windows/video/VLCVideoWindowCommon.h"
 
 #import <vlc_common.h>
@@ -76,6 +77,14 @@
         [notificationCenter addObserver:self
                                    selector:@selector(playerBufferChanged:)
                                    name:VLCPlayerBufferChanged
+                                 object:nil];
+        [notificationCenter addObserver:self
+                               selector:@selector(floatOnTopChanged:)
+                                   name:VLCWindowFloatOnTopChangedNotificationName
+                                 object:nil];
+        [notificationCenter addObserver:self
+                               selector:@selector(shouldShowControls:)
+                                   name:VLCVideoWindowShouldShowFullscreenController
                                  object:nil];
     }
     return self;
@@ -121,23 +130,29 @@
     ]];
 
     [self.view addSubview:_audioDecorativeView positioned:NSWindowAbove relativeTo:_voutView];
-    _audioDecorativeView.hidden = YES;
+    VLCPlayerController * const controller =
+        VLCMain.sharedInstance.playlistController.playerController;
+    [self updateDecorativeViewVisibilityOnControllerChange:controller];
 }
 
 - (void)viewDidLoad
 {
     self.loadingIndicator.hidden = YES;
+
+    BOOL floatOnTopActive = NO;
+    VLCVideoWindowCommon * const window = (VLCVideoWindowCommon *)self.view.window;
+    vout_thread_t * const p_vout = window.videoViewController.voutView.voutThread;
+    if (p_vout) {
+        floatOnTopActive = var_GetBool(p_vout, "video-on-top");
+        vout_Release(p_vout);
+    }
+    self.floatOnTopIndicatorImageView.hidden = !floatOnTopActive;
+
     _autohideControls = YES;
 
     [self setDisplayLibraryControls:NO];
     [self updatePlaylistToggleState];
     [self updateLibraryControls];
-
-    NSNotificationCenter *notificationCenter = NSNotificationCenter.defaultCenter;
-    [notificationCenter addObserver:self
-                           selector:@selector(shouldShowControls:)
-                               name:VLCVideoWindowShouldShowFullscreenController
-                             object:nil];
 
     _returnButtonBottomConstraint = [NSLayoutConstraint constraintWithItem:_returnButton
                                                                  attribute:NSLayoutAttributeBottom
@@ -159,11 +174,13 @@
 
     [self setupAudioDecorativeView];
     [self.controlsBar update];
+    [self updateFloatOnTopIndicator];
 }
 
 - (void)updateDecorativeViewVisibilityOnControllerChange:(VLCPlayerController *)controller
 {
-    VLCMediaLibraryMediaItem * const mediaItem = [VLCMediaLibraryMediaItem mediaItemForURL:controller.URLOfCurrentMediaItem];
+    VLCMediaLibraryMediaItem * const mediaItem = 
+        [VLCMediaLibraryMediaItem mediaItemForURL:controller.URLOfCurrentMediaItem];
 
     BOOL decorativeViewVisible = NO;
     if (mediaItem != nil) {
@@ -214,6 +231,30 @@
     } else {
         [self.loadingIndicator startAnimation:self];
     }
+}
+
+- (void)floatOnTopChanged:(NSNotification *)notification
+{
+    VLCVideoWindowCommon * const videoWindow = (VLCVideoWindowCommon *)notification.object;
+    NSAssert(videoWindow != nil, @"Received video window should not be nil!");
+    VLCVideoWindowCommon * const selfVideoWindow = (VLCVideoWindowCommon *)self.view.window;
+
+    if (videoWindow != selfVideoWindow) {
+        return;
+    }
+
+    [self updateFloatOnTopIndicator];
+}
+
+- (void)updateFloatOnTopIndicator
+{
+    vout_thread_t * const voutThread = self.voutView.voutThread;
+    if (voutThread == NULL) {
+        return;
+    }
+
+    const bool floatOnTopEnabled = var_GetBool(voutThread, "video-on-top");
+    self.floatOnTopIndicatorImageView.hidden = !floatOnTopEnabled;
 }
 
 - (BOOL)mouseOnControls

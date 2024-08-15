@@ -51,6 +51,8 @@
 #import "library/VLCLibraryWindowSplitViewController.h"
 #import "library/VLCLibraryWindowToolbarDelegate.h"
 
+#import "library/groups-library/VLCLibraryGroupsViewController.h"
+
 #import "library/home-library/VLCLibraryHomeViewController.h"
 
 #import "library/video-library/VLCLibraryVideoDataSource.h"
@@ -59,6 +61,8 @@
 #import "library/audio-library/VLCLibraryAlbumTableCellView.h"
 #import "library/audio-library/VLCLibraryAudioViewController.h"
 #import "library/audio-library/VLCLibraryAudioDataSource.h"
+
+#import "library/playlist-library/VLCLibraryPlaylistViewController.h"
 
 #import "media-source/VLCMediaSourceBaseDataSource.h"
 #import "media-source/VLCLibraryMediaSourceViewController.h"
@@ -74,6 +78,7 @@
 #import "windows/video/VLCVideoOutputProvider.h"
 #import "windows/video/VLCMainVideoViewController.h"
 
+#import "windows/VLCDetachedAudioWindow.h"
 #import "windows/VLCOpenWindowController.h"
 #import "windows/VLCOpenInputMetadata.h"
 
@@ -89,6 +94,7 @@ const NSUserInterfaceItemIdentifier VLCLibraryWindowIdentifier = @"VLCLibraryWin
 {
     NSInteger _librarySegmentType;
     NSInteger _currentSelectedViewModeSegment;
+    VLCVideoWindowCommon *_temporaryAudioDecorativeWindow;
 }
 
 @property NSTimer *searchInputTimer;
@@ -180,6 +186,8 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     _libraryVideoViewController = [[VLCLibraryVideoViewController alloc] initWithLibraryWindow:self];
     _libraryAudioViewController = [[VLCLibraryAudioViewController alloc] initWithLibraryWindow:self];
     _libraryMediaSourceViewController = [[VLCLibraryMediaSourceViewController alloc] initWithLibraryWindow:self];
+    _libraryGroupsViewController = [[VLCLibraryGroupsViewController alloc] initWithLibraryWindow:self];
+    _libraryPlaylistViewController = [[VLCLibraryPlaylistViewController alloc] initWithLibraryWindow:self];
 
     [self setViewForSelectedSegment];
 }
@@ -214,6 +222,9 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     case VLCLibraryVideoSegment:
         _currentSelectedViewModeSegment = preferences.videoLibraryViewMode;
         break;
+    case VLCLibraryShowsVideoSubSegment:
+        _currentSelectedViewModeSegment = preferences.showsLibraryViewMode;
+        break;
     case VLCLibraryMusicSegment:
     case VLCLibraryArtistsMusicSubSegment:
         _currentSelectedViewModeSegment = preferences.artistLibraryViewMode;
@@ -227,11 +238,18 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     case VLCLibrarySongsMusicSubSegment:
         _currentSelectedViewModeSegment = preferences.songsLibraryViewMode;
         break;
+    case VLCLibraryPlaylistsSegment:
+        _currentSelectedViewModeSegment = preferences.playlistLibraryViewMode;
+        break;
     case VLCLibraryBrowseSegment:
         _currentSelectedViewModeSegment = preferences.browseLibraryViewMode;
         break;
     case VLCLibraryStreamsSegment:
         _currentSelectedViewModeSegment = preferences.streamLibraryViewMode;
+        break;
+    case VLCLibraryGroupsSegment:
+    case VLCLibraryGroupsGroupSubSegment:
+        _currentSelectedViewModeSegment = preferences.groupsLibraryViewMode;
         break;
     default:
         break;
@@ -249,6 +267,9 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     case VLCLibraryVideoSegment:
         [self showVideoLibrary];
         break;
+    case VLCLibraryShowsVideoSubSegment:
+        [self showShowLibrary];
+        break;
     case VLCLibraryMusicSegment:
     case VLCLibraryArtistsMusicSubSegment:
     case VLCLibraryAlbumsMusicSubSegment:
@@ -256,10 +277,17 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     case VLCLibraryGenresMusicSubSegment:
         [self showAudioLibrary];
         break;
+    case VLCLibraryPlaylistsSegment:
+        [self showPlaylistLibrary];
+        break;
     case VLCLibraryBrowseSegment:
+    case VLCLibraryBrowseBookmarkedLocationSubSegment:
     case VLCLibraryStreamsSegment:
         [self showMediaSourceLibrary];
         break;
+    case VLCLibraryGroupsSegment:
+    case VLCLibraryGroupsGroupSubSegment:
+        [self showGroupsLibrary];
     default:
         break;
     }
@@ -295,6 +323,9 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     case VLCLibraryVideoSegment:
         preferences.videoLibraryViewMode = _currentSelectedViewModeSegment;
         break;
+    case VLCLibraryShowsVideoSubSegment:
+        preferences.showsLibraryViewMode = _currentSelectedViewModeSegment;
+        break;
     case VLCLibraryMusicSegment:
     case VLCLibraryArtistsMusicSubSegment:
         preferences.artistLibraryViewMode = _currentSelectedViewModeSegment;
@@ -308,11 +339,19 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     case VLCLibrarySongsMusicSubSegment:
         preferences.songsLibraryViewMode = _currentSelectedViewModeSegment;
         break;
+    case VLCLibraryPlaylistsSegment:
+        preferences.playlistLibraryViewMode = _currentSelectedViewModeSegment;
+        break;
     case VLCLibraryBrowseSegment:
+    case VLCLibraryBrowseBookmarkedLocationSubSegment:
         preferences.browseLibraryViewMode = _currentSelectedViewModeSegment;
         break;
     case VLCLibraryStreamsSegment:
         preferences.streamLibraryViewMode = _currentSelectedViewModeSegment;
+        break;
+    case VLCLibraryGroupsSegment:
+    case VLCLibraryGroupsGroupSubSegment:
+        preferences.groupsLibraryViewMode = _currentSelectedViewModeSegment;
         break;
     default:
         break;
@@ -334,10 +373,22 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     [_libraryVideoViewController presentVideoView];
 }
 
+- (void)showShowLibrary
+{
+    [self.toolbarDelegate layoutForSegment:VLCLibraryShowsVideoSubSegment];
+    [self.libraryVideoViewController presentShowsView];
+}
+
 - (void)showAudioLibrary
 {
     [self.toolbarDelegate layoutForSegment:VLCLibraryMusicSegment];
     [self.libraryAudioViewController presentAudioView];
+}
+
+- (void)showPlaylistLibrary
+{
+    [self.toolbarDelegate layoutForSegment:VLCLibraryPlaylistsSegment];
+    [_libraryPlaylistViewController presentPlaylistsView];
 }
 
 - (void)showMediaSourceLibrary
@@ -353,6 +404,12 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     }
 }
 
+- (void)showGroupsLibrary
+{
+    [self.toolbarDelegate layoutForSegment:self.librarySegmentType];
+    [_libraryGroupsViewController presentGroupsView];
+}
+
 - (void)presentAudioLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
 {
     [self showAudioLibrary];
@@ -365,6 +422,12 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     [self.libraryVideoViewController presentLibraryItem:libraryItem];
 }
 
+- (void)presentGroup:(VLCMediaLibraryGroup *)group
+{
+    [self showGroupsLibrary];
+    [self.libraryGroupsViewController presentGroup:group];
+}
+
 - (void)presentLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
 {
     const BOOL isAudioGroup = [libraryItem isKindOfClass:VLCMediaLibraryAlbum.class] ||
@@ -373,6 +436,9 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
 
     if (isAudioGroup) {
         [self presentAudioLibraryItem:libraryItem];
+        return;
+    } else if ([libraryItem isKindOfClass:VLCMediaLibraryGroup.class]) {
+        [self presentGroup:(VLCMediaLibraryGroup *)libraryItem];
         return;
     }
 
@@ -387,6 +453,12 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     }
 
     NSLog(@"Unknown kind of library item provided, cannot present library view for it: %@", libraryItem.displayString);
+}
+
+- (void)goToLocalFolderMrl:(NSString *)mrl
+{
+    [self goToBrowseSection:self];
+    [self.libraryMediaSourceViewController presentLocalFolderMrl:mrl];
 }
 
 - (IBAction)sortLibrary:(id)sender
@@ -540,6 +612,15 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
 {
     VLCVideoOutputProvider * const voutProvider = VLCMain.sharedInstance.voutProvider;
     NSArray<NSWindow *> * const voutWindows = voutProvider.voutWindows.allValues;
+
+    if (voutWindows.count == 0 && self.playerController.videoTracks.count == 0) {
+        // If we have no video windows in the video provider but are being asked to present a window
+        // then we are dealing with an audio item and the user wants to see the decorative artwork
+        // window for said audio
+        [VLCMain.sharedInstance.detachedAudioWindow makeKeyAndOrderFront:self];
+        return;
+    }
+
     for (NSWindow * const window in voutWindows) {
         [window makeKeyAndOrderFront:self];
     }

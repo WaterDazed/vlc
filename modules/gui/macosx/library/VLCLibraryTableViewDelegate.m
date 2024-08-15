@@ -30,6 +30,16 @@
 
 @implementation VLCLibraryTableViewDelegate
 
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.cellViewIdentifier = @"VLCLibraryTableViewCellIdentifier";
+        self.cellViewClass = [VLCLibraryTableCellView class];
+    }
+    return self;
+}
+
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row
 {
     if (![tableView.dataSource conformsToProtocol:@protocol(VLCLibraryTableViewDataSource)]) {
@@ -47,12 +57,12 @@
     }
 
     NSObject<VLCMediaLibraryItemProtocol> * const libraryItem = [vlcDataSource libraryItemAtRow:row forTableView:tableView];
-    if (libraryItem == nil) {
-        return nil;
+    if (libraryItem != nil) {
+        VLCLibraryRepresentedItem * const representedItem = 
+            [[VLCLibraryRepresentedItem alloc] initWithItem:libraryItem
+                                                 parentType:vlcDataSource.currentParentType];
+        [cellView setRepresentedItem:representedItem];
     }
-
-    VLCLibraryRepresentedItem * const representedItem = [[VLCLibraryRepresentedItem alloc] initWithItem:libraryItem parentType:vlcDataSource.currentParentType];
-    [cellView setRepresentedItem:representedItem];
     return cellView;
 }
 

@@ -20,14 +20,12 @@ import QtQuick.Controls
 import QtQml.Models
 import QtQuick.Layouts
 
-import org.videolan.medialib 0.1
-import org.videolan.controls 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import org.videolan.vlc 0.1
-
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 FocusScope {
     id: root
@@ -110,11 +108,13 @@ FocusScope {
                         width: VLCStyle.gridCover_video_width
 
                         /* A bigger cover for the album */
-                        RoundImage {
+                        Widgets.RoundImage {
                             id: expand_cover_id
 
                             anchors.fill: parent
                             source: model.thumbnail || VLCStyle.noArtVideoCover
+                            sourceSize.width: width
+                            sourceSize.height: height
                             radius: VLCStyle.gridCover_radius
 
                             Widgets.DefaultShadow {
@@ -122,7 +122,7 @@ FocusScope {
 
                                 sourceItem: parent
 
-                                visible: (parent.status === RoundImage.Ready)
+                                visible: (parent.status === Widgets.RoundImage.Ready)
                             }
                         }
                     }
@@ -204,12 +204,29 @@ FocusScope {
                 }
 
                 Widgets.MenuCaption {
-                    text: "<b>" + qsTr("Path:") + "</b> " + root.model.display_mrl
+
+                    readonly property string folderMRL: MainCtx.folderMRL(root.model?.mrl ?? "")
+
+                    text: {
+                        if (!!folderMRL)
+                            return "<b>%1</b> <a href='%2'>%3</a>"
+                                        .arg(qsTr("Folder:"))
+                                        .arg(folderMRL)
+                                        .arg(MainCtx.displayMRL(folderMRL))
+
+                        return "<b>" + qsTr("Path:") + "</b> " + root.model.display_mrl
+                    }
+
+                    linkColor: theme.fg.link
                     color: theme.fg.secondary
                     topPadding: VLCStyle.margin_xsmall
                     bottomPadding: VLCStyle.margin_large
                     width: parent.width
                     textFormat: Text.StyledText
+
+                    onLinkActivated: function (link) {
+                        Qt.openUrlExternally(link)
+                    }
                 }
 
                 Widgets.ButtonExt {
@@ -274,6 +291,17 @@ FocusScope {
                             {text: qsTr("Channel:"), role: "nbchannels" }
                         ]
                     }
+
+                    DescriptionList {
+                        title: qsTr("Subtitle track")
+
+                        sourceModel: [{"text": root.model.subtitleDesc?.map(desc => desc.language)
+                                                    .filter(l => !!l).join(", ")}]
+
+                        delegateModel:  [
+                            {text: qsTr("Language:"), role: "text" }
+                        ]
+                    }
                 }
             }
         }
@@ -300,7 +328,7 @@ FocusScope {
         Repeater {
             id: sourceRepeater
 
-            delegate: Repeater {
+            Repeater {
                 id: delegateRepeater
 
                 model: column.delegateModel
@@ -309,7 +337,7 @@ FocusScope {
                 required property int index
                 readonly property bool isFirst: (index === 0)
 
-                delegate: Widgets.MenuCaption {
+                Widgets.MenuCaption {
                     required property var modelData
                     required property int index
 

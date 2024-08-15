@@ -96,15 +96,9 @@
 
 - (void)setupCollectionView
 {
-    const CGFloat collectionItemSpacing = VLCLibraryUIUnits.collectionViewItemSpacing;
-    const NSEdgeInsets collectionViewSectionInset = [VLCLibraryUIUnits collectionViewSectionInsets];
-    
-    NSCollectionViewFlowLayout *mediaSourceCollectionViewLayout = [[VLCLibraryCollectionViewFlowLayout alloc] init];
+    VLCLibraryCollectionViewFlowLayout * const mediaSourceCollectionViewLayout = VLCLibraryCollectionViewFlowLayout.standardLayout;
     _collectionView.collectionViewLayout = mediaSourceCollectionViewLayout;
-    mediaSourceCollectionViewLayout.itemSize = [VLCLibraryCollectionViewItem defaultSize];
-    mediaSourceCollectionViewLayout.minimumLineSpacing = collectionItemSpacing;
-    mediaSourceCollectionViewLayout.minimumInteritemSpacing = collectionItemSpacing;
-    mediaSourceCollectionViewLayout.sectionInset = collectionViewSectionInset;
+    mediaSourceCollectionViewLayout.itemSize = VLCLibraryCollectionViewItem.defaultSize;
 }
 
 - (void)setupMediaSourceLibraryViews
@@ -188,6 +182,12 @@
 
     _baseDataSource.mediaSourceMode = viewSegment == VLCLibraryBrowseSegment ? VLCMediaSourceModeLAN : VLCMediaSourceModeInternet;
     [_baseDataSource reloadViews];
+}
+
+- (void)presentLocalFolderMrl:(NSString *)mrl
+{
+    [self presentBrowseView];
+    [self.baseDataSource presentLocalFolderMrl:mrl];
 }
 
 @end

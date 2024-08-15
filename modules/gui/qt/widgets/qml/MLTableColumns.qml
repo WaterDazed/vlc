@@ -17,7 +17,8 @@
  *****************************************************************************/
 
 
-import org.videolan.medialib 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
 
 TableColumns {

@@ -124,7 +124,7 @@ struct report_media_attachments
     size_t count;
 };
 
-#define REPORT_LIST \
+#define PLAYER_REPORT_LIST \
     X(input_item_t *, on_current_media_changed) \
     X(enum vlc_player_state, on_state_changed) \
     X(enum vlc_player_error, on_error_changed) \
@@ -154,6 +154,14 @@ struct report_media_attachments
     X(struct report_media_subitems, on_media_subitems_changed) \
     X(struct report_media_attachments, on_media_attachments_added) \
 
+struct report_aout_first_pts
+{
+    vlc_tick_t first_pts;
+};
+
+#define REPORT_LIST \
+    X(vlc_tick_t, on_aout_first_pts) \
+
 struct report_timer
 {
     enum
@@ -179,12 +187,14 @@ struct timer_state
 };
 
 #define X(type, name) typedef struct VLC_VECTOR(type) vec_##name;
+PLAYER_REPORT_LIST
 REPORT_LIST
 #undef X
 
 #define X(type, name) vec_##name name;
 struct reports
 {
+PLAYER_REPORT_LIST
 REPORT_LIST
 };
 #undef X
@@ -193,6 +203,7 @@ static inline void
 reports_init(struct reports *report)
 {
 #define X(type, name) vlc_vector_init(&report->name);
+PLAYER_REPORT_LIST
 REPORT_LIST
 #undef X
 }
@@ -220,6 +231,7 @@ struct media_params
     vlc_tick_t pts_delay;
 
     const char *config;
+    const char *discontinuities;
 };
 
 #define DEFAULT_MEDIA_PARAMS(param_length) { \
@@ -243,10 +255,19 @@ struct media_params
     .null_names = false, \
     .pts_delay = DEFAULT_PTS_DELAY, \
     .config = NULL, \
+    .discontinuities = NULL, \
 }
+
+#define DISABLE_VIDEO_OUTPUT (1 << 0)
+#define DISABLE_AUDIO_OUTPUT (1 << 1)
+#define DISABLE_VIDEO        (1 << 2)
+#define DISABLE_AUDIO        (1 << 3)
+#define AUDIO_INSTANT_DRAIN  (1 << 4)
 
 struct ctx
 {
+    int flags;
+
     libvlc_instance_t *vlc;
     vlc_player_t *player;
     vlc_player_listener_id *listener;
@@ -748,6 +769,7 @@ ctx_reset(struct ctx *ctx)
 #undef FOREACH_VEC
 
 #define X(type, name) vlc_vector_clear(&ctx->report.name);
+PLAYER_REPORT_LIST
 REPORT_LIST
 #undef X
 
@@ -786,7 +808,7 @@ create_mock_media(const char *name, const struct media_params *params)
         "video_frame_rate=%u;video_frame_rate_base=%u;"
         "title_count=%zu;chapter_count=%zu;"
         "can_seek=%d;can_pause=%d;error=%d;null_names=%d;pts_delay=%"PRId64";"
-        "config=%s;attachment_count=%zu",
+        "config=%s;discontinuities=%s;attachment_count=%zu",
         params->track_count[VIDEO_ES], params->track_count[AUDIO_ES],
         params->track_count[SPU_ES], params->program_count,
         params->video_packetized, params->audio_packetized,
@@ -795,7 +817,9 @@ create_mock_media(const char *name, const struct media_params *params)
         params->title_count, params->chapter_count,
         params->can_seek, params->can_pause, params->error, params->null_names,
         params->pts_delay,
-        params->config ? params->config : "", params->attachment_count);
+        params->config ? params->config : "",
+        params->discontinuities ? params->discontinuities : "",
+        params->attachment_count);
     assert(ret != -1);
     input_item_t *item = input_item_New(url, name);
     assert(item);
@@ -1421,7 +1445,7 @@ test_tracks(struct ctx *ctx, bool packetized)
         /* Select all track via next calls */
         for (size_t j = 0; j < params.track_count[cat]; ++j)
         {
-            vlc_player_SelectNextTrack(player, cat);
+            vlc_player_SelectNextTrack(player, cat, VLC_VOUT_ORDER_PRIMARY);
 
             /* Wait that the next track is selected */
             const struct vlc_player_track *track =
@@ -1435,7 +1459,7 @@ test_tracks(struct ctx *ctx, bool packetized)
         /* Select all track via previous calls */
         for (size_t j = params.track_count[cat] - 1; j > 0; --j)
         {
-            vlc_player_SelectPrevTrack(player, cat);
+            vlc_player_SelectPrevTrack(player, cat, VLC_VOUT_ORDER_PRIMARY);
 
             const struct vlc_player_track *track =
                 vlc_player_GetTrackAt(player, cat, j - 1);
@@ -1448,7 +1472,7 @@ test_tracks(struct ctx *ctx, bool packetized)
 
         }
         /* Current track index is 0, a previous will unselect the track */
-        vlc_player_SelectPrevTrack(player, cat);
+        vlc_player_SelectPrevTrack(player, cat, VLC_VOUT_ORDER_PRIMARY);
         const struct vlc_player_track *track =
             vlc_player_GetTrackAt(player, cat, 0);
         /* Wait that the track is unselected */
@@ -2234,6 +2258,7 @@ static void
 ctx_destroy(struct ctx *ctx)
 {
 #define X(type, name) vlc_vector_destroy(&ctx->report.name);
+PLAYER_REPORT_LIST
 REPORT_LIST
 #undef X
     vlc_player_RemoveListener(ctx->player, ctx->listener);
@@ -2243,16 +2268,8 @@ REPORT_LIST
     libvlc_release(ctx->vlc);
 }
 
-enum ctx_flags
-{
-    DISABLE_VIDEO_OUTPUT = 1 << 0,
-    DISABLE_AUDIO_OUTPUT = 1 << 1,
-    DISABLE_VIDEO        = 1 << 2,
-    DISABLE_AUDIO        = 1 << 3,
-};
-
 static void
-ctx_init(struct ctx *ctx, enum ctx_flags flags)
+ctx_init(struct ctx *ctx, int flags)
 {
     const char * argv[] = {
         "-v",
@@ -2277,11 +2294,12 @@ ctx_init(struct ctx *ctx, enum ctx_flags flags)
 
 #define X(type, name) .name = player_##name,
     static const struct vlc_player_cbs cbs = {
-REPORT_LIST
+PLAYER_REPORT_LIST
     };
 #undef X
 
     *ctx = (struct ctx) {
+        .flags = flags,
         .vlc = vlc,
         .next_medias = VLC_VECTOR_INITIALIZER,
         .added_medias = VLC_VECTOR_INITIALIZER,
@@ -2295,6 +2313,11 @@ REPORT_LIST
 
     /* Force wdummy window */
     int ret = var_SetString(vlc->p_libvlc_int, "window", "wdummy");
+    assert(ret == VLC_SUCCESS);
+
+    ret = var_Create(vlc->p_libvlc_int, "test-ctx", VLC_VAR_ADDRESS);
+    assert(ret == VLC_SUCCESS);
+    ret = var_SetAddress(vlc->p_libvlc_int, "test-ctx", ctx);
     assert(ret == VLC_SUCCESS);
 
     ctx->player = vlc_player_New(VLC_OBJECT(vlc->p_libvlc_int),
@@ -2965,6 +2988,32 @@ test_attachments(struct ctx *ctx)
 }
 
 static void
+test_clock_discontinuities(struct ctx *ctx)
+{
+    test_log("discontinuities\n");
+
+    vlc_player_t *player = ctx->player;
+
+    struct media_params params = DEFAULT_MEDIA_PARAMS(VLC_TICK_FROM_SEC(20));
+    params.pts_delay = VLC_TICK_FROM_MS(50);
+    params.discontinuities = "(400000,2)(400000,2500000)(3000000,10000000)";
+    player_set_next_mock_media(ctx, "media1", &params);
+
+    player_start(ctx);
+
+    vec_on_aout_first_pts *vec = &ctx->report.on_aout_first_pts;
+    while (vec->size != 4)
+        vlc_player_CondWait(player, &ctx->wait);
+
+    assert(vec->data[0] == VLC_TICK_0); /* Initial PTS */
+    assert(vec->data[1] == 2); /* 1st discontinuity */
+    assert(vec->data[2] == 2500000); /* 2nd discontinuity */
+    assert(vec->data[3] == 10000000); /* 3rd discontinuity */
+
+    test_end(ctx);
+}
+
+static void
 test_audio_loudness_meter_cb(vlc_tick_t date, double momentary_loudness,
                              void *data)
 {
@@ -3122,6 +3171,12 @@ main(void)
     test_delete_while_playback(VLC_OBJECT(ctx.vlc->p_libvlc_int), false);
 
     ctx_destroy(&ctx);
+
+    /* Test with instantaneous audio drain */
+    ctx_init(&ctx, AUDIO_INSTANT_DRAIN);
+    test_clock_discontinuities(&ctx);
+    ctx_destroy(&ctx);
+
     /* Test with --no-video */
     ctx_init(&ctx, DISABLE_VIDEO);
     test_es_selection_override(&ctx);
@@ -3144,6 +3199,8 @@ struct aout_sys
     vlc_tick_t first_pts;
     vlc_tick_t first_play_date;
     vlc_tick_t pos;
+
+    struct ctx *ctx;
 };
 
 static void aout_Play(audio_output_t *aout, block_t *block, vlc_tick_t date)
@@ -3155,6 +3212,9 @@ static void aout_Play(audio_output_t *aout, block_t *block, vlc_tick_t date)
         assert(sys->first_pts == VLC_TICK_INVALID);
         sys->first_play_date = date;
         sys->first_pts = block->i_pts;
+
+        struct ctx *ctx = sys->ctx;
+        VEC_PUSH(on_aout_first_pts, sys->first_pts);
     }
 
     aout_TimingReport(aout, sys->first_play_date + sys->pos - VLC_TICK_0,
@@ -3168,6 +3228,11 @@ static void aout_Flush(audio_output_t *aout)
     struct aout_sys *sys = aout->sys;
     sys->pos = 0;
     sys->first_pts = sys->first_play_date = VLC_TICK_INVALID;
+}
+
+static void aout_InstantDrain(audio_output_t *aout)
+{
+    aout_DrainedReport(aout);
 }
 
 static int aout_Start(audio_output_t *aout, audio_sample_format_t *restrict fmt)
@@ -3197,6 +3262,13 @@ static int aout_Open(vlc_object_t *obj)
 
     struct aout_sys *sys = aout->sys = malloc(sizeof(*sys));
     assert(sys != NULL);
+
+    sys->ctx = var_InheritAddress(aout, "test-ctx");
+    assert(sys->ctx != NULL);
+
+    if (sys->ctx->flags & AUDIO_INSTANT_DRAIN)
+        aout->drain = aout_InstantDrain;
+
     aout_Flush(aout);
 
     return VLC_SUCCESS;

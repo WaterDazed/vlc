@@ -13,6 +13,7 @@ endif
 
 libxau: libXau-$(XAU_VERSION).tar.bz2 .sum-xau
 	$(UNPACK)
+	$(call update_autoconfig,.)
 	$(MOVE)
 
 DEPS_xau = xorg-macros $(DEPS_xorg-macros) xproto $(DEPS_xproto)
@@ -20,7 +21,6 @@ DEPS_xau = xorg-macros $(DEPS_xorg-macros) xproto $(DEPS_xproto)
 XAU_CONF := --enable-xthreads
 
 .xau: libxau
-	$(RECONF)
 	$(MAKEBUILDDIR)
 	$(MAKECONFIGURE) $(XAU_CONF)
 	+$(MAKEBUILD)

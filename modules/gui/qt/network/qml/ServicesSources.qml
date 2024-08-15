@@ -19,14 +19,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/" as Util
-import "qrc:///main/" as MainInterface
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.MainInterface
+import VLC.Style
+import VLC.Network
 
-MainInterface.MainGridView {
+Widgets.ExpandGridItemView {
     id: root
 
     //properties
@@ -43,9 +43,11 @@ MainInterface.MainGridView {
 
     //settings
 
+    basePictureWidth: VLCStyle.gridCover_network_width
+    basePictureHeight: VLCStyle.gridCover_network_height
+    subtitleHeight: 0
+
     model: sourcesModel
-    cellWidth: VLCStyle.gridItem_network_width
-    cellHeight: VLCStyle.gridCover_network_height + VLCStyle.margin_xsmall + VLCStyle.fontHeight_normal
 
     headerDelegate: Widgets.ViewHeader {
         view: root
@@ -59,12 +61,14 @@ MainInterface.MainGridView {
         property int index: -1
         readonly property bool is_dummy: model.type === NetworkSourcesModel.TYPE_DUMMY
 
+        width: root.cellWidth;
+        height: root.cellHeight;
+
+        pictureWidth: root.maxPictureWidth
+        pictureHeight: root.maxPictureHeight
+
         title: is_dummy ? qsTr("Add a service") : model.long_name
         subtitle: ""
-        pictureWidth: VLCStyle.colWidth(1)
-        pictureHeight: VLCStyle.gridCover_network_height
-        height: VLCStyle.gridCover_network_height + VLCStyle.margin_xsmall + VLCStyle.fontHeight_normal
-        playCoverBorderWidth: VLCStyle.gridCover_network_border
         playCoverShowPlay: false
         image: {
             if (is_dummy) {

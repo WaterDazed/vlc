@@ -13,6 +13,7 @@ BUILT_SOURCES = $(nodist_pluginsinclude_HEADERS)
 CLEANFILES = $(BUILT_SOURCES)
 
 SUFFIXES = .pc.in .pc .rc.in .rc
+TEST_EXTENSIONS =
 
 ###############################################################################
 # Headers
@@ -694,6 +695,16 @@ test_media_source_SOURCES = media_source/test.c \
 test_thread_SOURCES = test/thread.c
 test_cpp_list_SOURCES = test/list_cpp.cpp
 
+test_input_es_out_SOURCES = input/test/es_out.c \
+	input/es_out.c input/es_out.h \
+	input/source.c input/source.h \
+	input/item.c input/item.h \
+	clock/clock.c clock/clock.h \
+	text/strings.c \
+	clock/clock_internal.c clock/clock_internal.h \
+	clock/input_clock.c clock/input_clock.h
+check_PROGRAMS += test_input_es_out
+
 LDADD = libvlccore.la \
 	../compat/libcompat.la
 
@@ -788,6 +799,8 @@ check-local:
 		fi ; \
 	done
 	$(SHELL) $(srcdir)/check_headers $(pluginsinclude_HEADERS)
+
+include rust/Makefile.am
 
 FORCE:
 	@echo "Generated source cannot be phony. Go away." >&2

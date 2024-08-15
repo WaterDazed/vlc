@@ -18,10 +18,11 @@
 
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
+import VLC.MainInterface
+import VLC.Style
+import VLC.Menus
+import VLC.Widgets as Widgets
 
 Widgets.IconToolButton {
     id: root
@@ -119,7 +120,10 @@ Widgets.IconToolButton {
 
     // Children
 
-    SortMenu { id: sortMenu }
+    SortMenu {
+        id: sortMenu
 
+        ctx: MainCtx
+    }
 }
 

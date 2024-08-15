@@ -768,7 +768,7 @@ static filter_t *CreateConverter( vlc_object_t *p_this,
 
     p_filter->fmt_out.i_codec = p_fmt_out->i_chroma;
     p_filter->vctx_in = p_vctx_in;
-    p_filter->p_module = module_need( p_filter, "video converter", NULL, false );
+    p_filter->p_module = vlc_filter_LoadModule( p_filter, "video converter", NULL, false );
 
     if( !p_filter->p_module )
     {
@@ -783,11 +783,7 @@ static filter_t *CreateConverter( vlc_object_t *p_this,
 
 static void DeleteConverter( filter_t * p_filter )
 {
-    if( p_filter->p_module )
-    {
-        filter_Close( p_filter );
-        module_unneed( p_filter, p_filter->p_module );
-    }
+    vlc_filter_UnloadModule( p_filter );
 
     es_format_Clean( &p_filter->fmt_in );
     es_format_Clean( &p_filter->fmt_out );

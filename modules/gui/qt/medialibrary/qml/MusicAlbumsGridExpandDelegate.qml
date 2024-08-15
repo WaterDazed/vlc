@@ -20,13 +20,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.medialib 0.1
-import org.videolan.controls 0.1
-import org.videolan.vlc 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 FocusScope {
     id: root
@@ -114,7 +113,7 @@ FocusScope {
         Component {
             id: cover
 
-            RoundImage {
+            Widgets.RoundImage {
                 id: expand_cover_id
 
                 property int cover_height: parent.cover_height
@@ -126,13 +125,15 @@ FocusScope {
                 source: (root.model && root.model.cover && root.model.cover !== "")
                     ?  root.model.cover
                     : VLCStyle.noArtAlbumCover
+                sourceSize.width: width
+                sourceSize.height: height
 
                 Widgets.DefaultShadow {
                     anchors.centerIn: parent
 
                     sourceItem: parent
 
-                    visible: (parent.status === RoundImage.Ready)
+                    visible: (parent.status === Widgets.RoundImage.Ready)
                 }
             }
         }
@@ -240,7 +241,7 @@ FocusScope {
                         Widgets.SubtitleLabel {
                             id: expand_infos_title_id
 
-                            text: root.model?.title ?? qsTr("Unknown title")
+                            text: root.model?.title || qsTr("Unknown title")
 
                             color: theme.fg.primary
 
@@ -250,6 +251,8 @@ FocusScope {
                         Widgets.IconToolButton {
                             text: VLCIcons.close
                             focus: true
+
+                            description: qsTr("Close Panel")
 
                             Navigation.parentItem: headerFocusScope
                             Layout.rightMargin: VLCStyle.margin_small
@@ -264,9 +267,10 @@ FocusScope {
                         color: theme.fg.secondary
 
                         width: parent.width
+
                         text: qsTr("%1 - %2 - %3 - %4")
-                            .arg(root.model?.main_artist ?? qsTr("Unknown artist"))
-                            .arg(root.model?.release_year ?? "")
+                            .arg(root.model?.main_artist || qsTr("Unknown artist"))
+                            .arg(root.model?.release_year || "")
                             .arg(_getStringTrack())
                             .arg(root.model?.duration?.formatHMS() ?? 0)
                     }
@@ -363,29 +367,29 @@ FocusScope {
 
             fadingEdge.backgroundColor: headerColor
 
-            readonly property int _nbCols: VLCStyle.gridColumnsForWidth(tracks.availableRowWidth)
+            property Component titleDelegate: Widgets.TableRowDelegate {
+                id: title
 
-            property Component titleDelegate: RowLayout {
-                property var rowModel: parent.rowModel
+                RowLayout {
+                    anchors.fill: parent
 
-                anchors.fill: parent
+                    Widgets.ListLabel {
+                        text: title.rowModel?.track_number ?? ""
+                        color: theme.fg.primary
+                        font.weight: Font.Normal
 
-                Widgets.ListLabel {
-                    text: rowModel?.track_number ?? ""
-                    color: theme.fg.primary
-                    font.weight: Font.Normal
+                        Layout.fillHeight: true
+                        Layout.leftMargin: VLCStyle.margin_xxsmall
+                        Layout.preferredWidth: VLCStyle.margin_large
+                    }
 
-                    Layout.fillHeight: true
-                    Layout.leftMargin: VLCStyle.margin_xxsmall
-                    Layout.preferredWidth: VLCStyle.margin_large
-                }
+                    Widgets.ListLabel {
+                        text: title.rowModel?.title ?? ""
+                        color: theme.fg.primary
 
-                Widgets.ListLabel {
-                    text: rowModel?.title ?? ""
-                    color: theme.fg.primary
-
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                    }
                 }
             }
 
@@ -430,7 +434,7 @@ FocusScope {
             }
 
             sortModel: [{
-                size: Math.max(tracks._nbCols - 1, 1),
+                weight: 1,
 
                 model: {
                     criteria: "title",

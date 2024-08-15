@@ -1,6 +1,6 @@
 # QtDeclarative
 
-QTDECLARATIVE_VERSION := $(QTBASE_VERSION_MAJOR).1
+QTDECLARATIVE_VERSION := $(QTBASE_VERSION)
 QTDECLARATIVE_URL := $(QT)/$(QTDECLARATIVE_VERSION)/submodules/qtdeclarative-everywhere-src-$(QTDECLARATIVE_VERSION).tar.xz
 
 DEPS_qtdeclarative-tools = qt-tools $(DEPS_qt-tools) qtshadertools-tools $(DEPS_qtshadertools-tools)
@@ -36,6 +36,7 @@ qtdeclarative: qtdeclarative-everywhere-src-$(QTDECLARATIVE_VERSION).tar.xz .sum
 	$(UNPACK)
 	$(APPLY) $(SRC)/qtdeclarative/0001-Fix-incorrect-library-inclusion.patch
 	$(APPLY) $(SRC)/qtdeclarative/0002-Fix-build-with-no-feature-network.patch
+	$(APPLY) $(SRC)/qtdeclarative/0001-Take-care-of-asyncResponses-when-qml_network-is-disa.patch
 	# disable unused CLI tools: qml, qmleasing, qmldom, qmlformat, qmltc
 	sed -i.orig -e 's,add_subdirectory(qml),#add_subdirectory(qml),' $(UNPACK_DIR)/tools/CMakeLists.txt
 	sed -i.orig -e 's,add_subdirectory(qmleasing),#add_subdirectory(qmleasing),' $(UNPACK_DIR)/tools/CMakeLists.txt
@@ -63,6 +64,8 @@ QT_DECLARATIVE_COMMON_CONFIG := \
 	-DFEATURE_quickcontrols2_universal=OFF \
 	-DFEATURE_quickcontrols2_macos=OFF \
 	-DFEATURE_quickcontrols2_ios=OFF \
+	-DFEATURE_quickcontrols2_fusion=OFF \
+	-DFEATURE_quickcontrols2_windows=OFF \
 	-DFEATURE_qml_network=OFF \
 	-DFEATURE_quick_animatedimage=OFF \
 	-DFEATURE_quick_flipable=OFF \
@@ -99,6 +102,6 @@ QT_DECLARATIVE_NATIVE_CONFIG := $(QT_DECLARATIVE_COMMON_CONFIG) \
 .qtdeclarative: qtdeclarative toolchain.cmake
 	$(CMAKECLEAN)
 	$(HOSTVARS_CMAKE) $(CMAKE) $(QT_DECLARATIVE_CONFIG)
-	+$(CMAKEBUILD)
+	+PATH="$(PATH):$(PREFIX)/bin" $(CMAKEBUILD)
 	$(CMAKEINSTALL)
 	touch $@

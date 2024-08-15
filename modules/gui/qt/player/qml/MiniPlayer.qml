@@ -17,9 +17,11 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
+import VLC.MainInterface
+import VLC.Player
+import VLC.PlayerControls
+import VLC.Style
 
 ControlBar {
     id: root
@@ -28,8 +30,8 @@ ControlBar {
 
     anchors.bottomMargin: (state === "outViewport") ? -_delayedImplicitHeight : 0
 
-    state: (Player.playingState === Player.PLAYING_STATE_STOPPED) ? "outViewport"
-                                                                  : "inViewport"
+    state: Player.isStarted ? "inViewport"
+                            : "outViewport"
 
     textPosition: (MainCtx.pinVideoControls) ? ControlBar.TimeTextPosition.LeftRightSlider
                                              : ControlBar.TimeTextPosition.Hide

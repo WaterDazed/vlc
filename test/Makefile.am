@@ -453,6 +453,16 @@ if HAVE_XROS
 noinst_PROGRAMS += vlccoreios
 endif
 
+vlccorewatchos_SOURCES = watchosvlc.m
+vlccorewatchos_LDFLAGS = $(LDFLAGS_vlc) -Wl,-framework,WatchKit
+vlccorewatchos_LDFLAGS += -Xlinker -rpath -Xlinker "@executable_path/Frameworks/"
+vlccorewatchos_OBJCFLAGS = -fobjc-arc
+vlccorewatchos_LDADD = ../lib/libvlc.la ../src/libvlccore.la
+
+if HAVE_WATCHOS
+noinst_PROGRAMS += vlccorewatchos
+endif
+
 vlc_window_SOURCES = vlc-window.c
 vlc_window_CPPFLAGS = $(AM_CPPFLAGS) -I../include/
 vlc_window_LDADD = ../lib/libvlc.la ../src/libvlccore.la ../compat/libcompat.la

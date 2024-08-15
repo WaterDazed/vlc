@@ -19,8 +19,7 @@
 import QtQuick
 import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
-
+import VLC.MainInterface
 
 T.Control {
     id: root
@@ -35,6 +34,19 @@ T.Control {
 
     property alias model: repeater.model
     property alias delegate: repeater.delegate
+
+    property alias count: repeater.count
+
+    function itemAt(index) {
+        return repeater.itemAt(index)
+    }
+
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
+                            implicitContentWidth + leftPadding + rightPadding)
+
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
+                             implicitContentHeight + topPadding + bottomPadding)
+
 
     // Settings
 

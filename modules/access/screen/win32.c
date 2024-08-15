@@ -30,7 +30,6 @@
 
 #include <vlc_common.h>
 #include <vlc_plugin.h>
-#include <vlc_modules.h>                 /* module_need for "video blending" */
 #include <vlc_filter.h>
 
 #include "screen.h"
@@ -184,9 +183,7 @@ void screen_CloseCapture( void *opaque )
 #ifdef SCREEN_MOUSE
     if( p_data->p_blend )
     {
-        filter_Close( p_data->p_blend );
-        module_unneed( p_data->p_blend, p_data->p_blend->p_module );
-        vlc_object_delete(p_data->p_blend);
+        vlc_filter_Delete( p_data->p_blend );
     }
 #endif
 
@@ -310,7 +307,7 @@ static void RenderCursor( demux_t *p_demux, int i_x, int i_y,
             p_data->p_blend->fmt_in.video = p_sys->p_mouse->format;
             p_data->p_blend->fmt_out = p_sys->fmt;
             p_data->p_blend->p_module =
-                module_need( p_data->p_blend, "video blending", NULL, false );
+                vlc_filter_LoadModule( p_data->p_blend, "video blending", NULL, false );
             if( !p_data->p_blend->p_module )
             {
                 msg_Err( p_demux, "Could not load video blending module" );

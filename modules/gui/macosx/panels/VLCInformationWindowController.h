@@ -25,6 +25,7 @@
 
 @class VLCInputItem;
 @class VLCImageView;
+@class VLCLibraryRepresentedItem;
 @class VLCSettingTextField;
 @protocol VLCMediaLibraryAudioGroupProtocol;
 
@@ -109,7 +110,7 @@
 @property (readwrite, weak) IBOutlet NSTextField *demuxDiscontinuitiesLabel;
 @property (readwrite, weak) IBOutlet NSTextField *demuxDiscontinuitiesTextField;
 
-@property (readwrite, strong, atomic) NSArray<VLCInputItem *> *representedInputItems;
+@property (readwrite, strong, nonatomic) NSArray<VLCInputItem *> *representedInputItems;
 @property (readwrite) BOOL mainMenuInstance;
 
 - (IBAction)toggleWindow:(id)sender;
@@ -117,7 +118,6 @@
 - (IBAction)saveMetaData:(id)sender;
 - (IBAction)chooseArtwork:(id)sender;
 
-- (void)setRepresentedInputItem:(VLCInputItem *)representedInputItem;
-- (void)setRepresentedMediaLibraryAudioGroup:(id<VLCMediaLibraryAudioGroupProtocol>)representedMediaLibraryAudioGroup;
+- (void)setRepresentedMediaLibraryItems:(NSArray<VLCLibraryRepresentedItem *> *)representedMediaLibraryItems;
 
 @end

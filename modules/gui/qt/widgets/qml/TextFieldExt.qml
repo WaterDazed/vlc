@@ -19,9 +19,8 @@
 import QtQuick
 import QtQuick.Controls
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
+import VLC.Style
 
 TextField {
     id: control

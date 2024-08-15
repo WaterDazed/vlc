@@ -23,6 +23,7 @@
 #include <vlc_common.h>
 #include <vlc_arrays.h>
 #include <vlc_es_out.h>
+#include <vlc_frame.h>
 
 #include "moving_avg.h"
 
@@ -351,15 +352,14 @@ static void timestamps_filter_es_out_Del(es_out_t *out, es_out_id_t *id)
 
 static const struct es_out_callbacks timestamps_filter_es_out_cbs =
 {
-    timestamps_filter_es_out_Add,
-    timestamps_filter_es_out_Send,
-    timestamps_filter_es_out_Del,
-    timestamps_filter_es_out_Control,
-    timestamps_filter_es_out_Delete,
-    NULL,
+    .add = timestamps_filter_es_out_Add,
+    .send = timestamps_filter_es_out_Send,
+    .del = timestamps_filter_es_out_Del,
+    .control = timestamps_filter_es_out_Control,
+    .destroy = timestamps_filter_es_out_Delete,
 };
 
-static es_out_t * timestamps_filter_es_out_New(es_out_t *orig)
+static inline es_out_t * timestamps_filter_es_out_New(es_out_t *orig)
 {
     struct tf_es_out_s *tf = malloc(sizeof(*tf));
     if(!tf)

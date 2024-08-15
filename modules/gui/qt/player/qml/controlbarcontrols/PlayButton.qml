@@ -19,11 +19,13 @@
 import QtQuick
 import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-import "qrc:///util/Helpers.js" as Helpers
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Player
+import VLC.Playlist
+import VLC.Util
 
 T.Control {
     id: root
@@ -157,6 +159,15 @@ T.Control {
             }
         }
 
+        onCursorInsideChanged: {
+            if (pressed && !cursorInside) {
+                // Press and hold action can no longer be done,
+                // so reset the state in order to reset the
+                // animation:
+                innerRectangle.state = ""
+            }
+        }
+
         onPressed: (mouse) => {
             if (!cursorInside) {
                 mouse.accepted = false
@@ -177,6 +188,11 @@ T.Control {
         }
 
         onPressAndHold: (mouse) => {
+            if (!cursorInside) {
+                mouse.accepted = false
+                return
+            }
+
             _pressAndHoldAction()
             mouse.accepted = true
         }

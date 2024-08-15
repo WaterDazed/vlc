@@ -21,11 +21,11 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Templates as T
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///menus/" as Menus
+import VLC.MainInterface
+import VLC.Player
+import VLC.Style
+import VLC.Widgets as Widgets
 
 FocusScope {
     id: resumePanel

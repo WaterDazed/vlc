@@ -1,6 +1,6 @@
 # qtsvg
 
-QTSVG_VERSION := $(QTBASE_VERSION_MAJOR).1
+QTSVG_VERSION := $(QTBASE_VERSION)
 QTSVG_URL := $(QT)/$(QTSVG_VERSION)/submodules/qtsvg-everywhere-src-$(QTSVG_VERSION).tar.xz
 
 DEPS_qtsvg += qt $(DEPS_qt)
@@ -32,6 +32,6 @@ qtsvg: qtsvg-everywhere-src-$(QTSVG_VERSION).tar.xz .sum-qtsvg
 .qtsvg: qtsvg toolchain.cmake
 	$(CMAKECLEAN)
 	$(HOSTVARS_CMAKE) $(CMAKE) $(QTSVG_CONFIG)
-	+$(CMAKEBUILD)
+	+PATH="$(PATH):$(PREFIX)/bin" $(CMAKEBUILD)
 	$(CMAKEINSTALL)
 	touch $@

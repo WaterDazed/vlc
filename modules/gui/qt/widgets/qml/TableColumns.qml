@@ -19,11 +19,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 Item {
     id: root
@@ -95,6 +94,9 @@ Item {
 
                 Layout.preferredHeight: root.titleCover_height
                 Layout.preferredWidth: root.titleCover_width
+                
+                pictureWidth: width
+                pictureHeight: height
 
                 source: titleDel.rowModel?.[root.criteriaCover] ?? ""
 

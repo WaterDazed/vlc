@@ -64,7 +64,9 @@ endif
 libaudiotoolboxmidi_plugin_la_SOURCES = codec/audiotoolbox_midi.c
 libaudiotoolboxmidi_plugin_la_LDFLAGS = $(AM_LDFLAGS) -Wl,-framework,CoreFoundation,-framework,AudioToolbox
 if HAVE_DARWIN
+if !HAVE_WATCHOS
 codec_LTLIBRARIES += libaudiotoolboxmidi_plugin.la
+endif
 endif
 
 liblpcm_plugin_la_SOURCES = codec/lpcm.c
@@ -364,7 +366,9 @@ libvideotoolbox_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) # Trigger MODULE_NAME declar
 libvideotoolbox_plugin_la_LIBADD = libchroma_copy.la libvlc_hxxxhelper.la libvlc_vtutils.la
 libvideotoolbox_plugin_la_LDFLAGS = $(AM_LDFLAGS) -Wl,-framework,CoreFoundation -Wl,-framework,VideoToolbox -Wl,-framework,CoreMedia -Wl,-framework,CoreVideo -Wl,-framework,Metal
 if HAVE_DARWIN
+if !HAVE_WATCHOS
 codec_LTLIBRARIES += libvideotoolbox_plugin.la
+endif
 endif
 
 videotoolbox_dpb_test_SOURCES = codec/videotoolbox/dpb_test.c \
@@ -449,6 +453,7 @@ libdxva2_plugin_la_SOURCES = \
 	codec/avcodec/va_surface.c codec/avcodec/va_surface.h \
 	packetizer/h264_nal.c packetizer/h264_nal.h \
 	packetizer/hevc_nal.c packetizer/hevc_nal.h \
+	packetizer/h26x_nal_common.h \
 	codec/avcodec/dxva_blocklist.c
 libdxva2_plugin_la_LIBADD = libd3d9_common.la $(LIBCOM) -luuid
 if !HAVE_WINSTORE
@@ -470,6 +475,7 @@ libd3d11va_plugin_la_SOURCES = \
         codec/avcodec/va_surface.c codec/avcodec/va_surface.h \
 	packetizer/h264_nal.c packetizer/h264_nal.h \
 	packetizer/hevc_nal.c packetizer/hevc_nal.h \
+	packetizer/h26x_nal_common.h \
 	codec/avcodec/dxva_blocklist.c
 libd3d11va_plugin_la_LIBADD = libd3d11_common.la $(LIBCOM) -luuid
 if HAVE_WINSTORE
@@ -497,6 +503,7 @@ libomxil_plugin_la_SOURCES = \
 	codec/omxil/utils.c codec/omxil/omxil_utils.h \
 	packetizer/h264_nal.c packetizer/h264_nal.h \
 	packetizer/hevc_nal.c packetizer/hevc_nal.h \
+	packetizer/h26x_nal_common.h \
 	codec/omxil/qcom.c codec/omxil/qcom.h \
 	codec/omxil/omxil.c codec/omxil/omxil.h codec/omxil/omxil_core.c codec/omxil/omxil_core.h
 libomxil_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/codec/omxil $(CFLAGS_omxil)
@@ -689,6 +696,7 @@ libvlc_hxxxhelper_la_SOURCES = \
 	packetizer/hxxx_sei.h packetizer/hxxx_sei.c \
 	packetizer/h264_slice.c packetizer/h264_slice.h \
 	packetizer/h264_nal.c packetizer/h264_nal.h \
+	packetizer/h26x_nal_common.h \
 	packetizer/hevc_nal.c packetizer/hevc_nal.h
 libvlc_hxxxhelper_la_CPPFLAGS = -Dneedsomethinghere
 libvlc_hxxxhelper_la_LDFLAGS = -static

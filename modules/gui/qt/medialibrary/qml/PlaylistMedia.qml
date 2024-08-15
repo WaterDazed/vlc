@@ -20,22 +20,19 @@ import QtQuick
 import QtQuick.Controls
 import QtQml.Models
 
-import org.videolan.vlc 0.1
-import org.videolan.medialib 0.1
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/"    as MainInterface
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Util
+import VLC.Style
 
-MainInterface.MainTableView {
+MainTableView {
     id: root
 
     //---------------------------------------------------------------------------------------------
     // Properties
     //---------------------------------------------------------------------------------------------
-
-    readonly property int columns: VLCStyle.gridColumnsForWidth(root.availableRowWidth)
 
     property bool isMusic
 
@@ -47,7 +44,7 @@ MainInterface.MainTableView {
     property bool _before: true
 
     property var _modelSmall: [{
-        size: Math.max(2, columns),
+        weight: 1,
 
         model: {
             criteria: "title",
@@ -66,31 +63,19 @@ MainInterface.MainTableView {
     }]
 
     property var _modelMedium: [{
-        size: 1,
-
-        model: {
-            criteria: "thumbnail",
-
-            text: qsTr("Cover"),
-
-            isSortable: false,
-
-            type: "image",
-
-            headerDelegate: table.titleHeaderDelegate,
-            colDelegate   : table.titleDelegate,
-
-            placeHolder: VLCStyle.noArtAlbumCover
-        }
-    }, {
-        size: Math.max(1, columns - 2),
+        weight: 1,
 
         model: {
             criteria: "title",
 
             text: qsTr("Title"),
 
-            isSortable: false
+            isSortable: false,
+
+            headerDelegate: table.titleHeaderDelegate,
+            colDelegate   : table.titleDelegate,
+
+            placeHolder: VLCStyle.noArtAlbumCover
         }
     }, {
         size: 1,
@@ -117,6 +102,17 @@ MainInterface.MainTableView {
 
     sortModel: (availableRowWidth < VLCStyle.colWidth(4)) ? _modelSmall
                                                           : _modelMedium
+
+
+    listView.acceptDropFunc: function(index, drop) {
+        // FIXME: The DnD API seems quite poorly designed in this file.
+        //        Why does it ask for both index and "before"
+        //        When index + 1 is essentially the same as
+        //        before being false?
+        //        What is "delegate" and why is it passed in applyDrop()?
+        //        We have to come up with a shim function here...
+        return applyDrop(drop, index - 1, null, false)
+    }
 
     //---------------------------------------------------------------------------------------------
     // Events
@@ -166,7 +162,7 @@ MainInterface.MainTableView {
     //---------------------------------------------------------------------------------------------
     // Drop interface
 
-    function isDroppable(drop, index) {
+    listView.isDropAcceptableFunc: function(drop, index) {
         if (drop.source === dragItem) {
             return Helpers.itemsMovable(selectionModel.sortedSelectedIndexesFlat, index)
         } else if (Helpers.isValidInstanceOf(drop.source, Widgets.DragItem)) {
@@ -179,9 +175,9 @@ MainInterface.MainTableView {
     }
 
     function applyDrop(drop, index, delegate, before) {
-        if (root.isDroppable(drop, index + (before ? 0 : 1)) === false) {
+        if (listView.isDropAcceptableFunc(drop, index + (before ? 0 : 1)) === false) {
             root.hideLine(delegate)
-            return
+            return Promise.resolve()
         }
 
         const item = drop.source;
@@ -191,27 +187,31 @@ MainInterface.MainTableView {
         // NOTE: Move implementation.
         if (dragItem === item) {
             model.move(selectionModel.selectedRows(), destinationIndex)
+            root.forceActiveFocus()
+            root.hideLine(delegate)
         // NOTE: Dropping medialibrary content into the playlist.
         } else if (Helpers.isValidInstanceOf(item, Widgets.DragItem)) {
-            item.getSelectedInputItem()
-                .then(inputItems => {
-                    model.insert(inputItems, destinationIndex)
-                })
+            return item.getSelectedInputItem()
+                        .then(inputItems => {
+                            model.insert(inputItems, destinationIndex)
+                        })
+                        .then(() => { root.forceActiveFocus(); root.hideLine(delegate); })
         } else if (drop.hasUrls) {
             const urlList = []
             for (let url in drop.urls)
                 urlList.push(drop.urls[url])
 
             model.insert(urlList, destinationIndex)
+
+            root.forceActiveFocus()
+            root.hideLine(delegate)
         }
 
-        root.forceActiveFocus()
-
-        root.hideLine(delegate)
+        return Promise.resolve()
     }
 
     function _dropUpdatePosition(drag, index, delegate, before) {
-        if (root.isDroppable(drag, index + (before ? 0 : 1)) === false) {
+        if (listView.isDropAcceptableFunc(drag, index + (before ? 0 : 1)) === false) {
             root.hideLine(delegate)
             return
         }
@@ -260,8 +260,7 @@ MainInterface.MainTableView {
         titleCover_radius: isMusic ? VLCStyle.trackListAlbumCover_radius
                                    : VLCStyle.listAlbumCover_radius
 
-        showTitleText: (root.sortModel === root._modelSmall)
-        showCriterias: showTitleText
+        showCriterias: (root.sortModel === root._modelSmall)
 
         criteriaCover: "thumbnail"
 

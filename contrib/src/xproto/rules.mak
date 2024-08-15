@@ -13,6 +13,7 @@ endif
 
 xproto: xproto-$(XPROTO_VERSION).tar.bz2 .sum-xproto
 	$(UNPACK)
+	$(call update_autoconfig,.)
 	$(MOVE)
 
 DEPS_xproto = xorg-macros $(DEPS_xorg-macros)
@@ -20,7 +21,6 @@ DEPS_xproto = xorg-macros $(DEPS_xorg-macros)
 XPROTO_CONF := --enable-xthreads
 
 .xproto: xproto
-	$(RECONF)
 	$(MAKEBUILDDIR)
 	$(MAKECONFIGURE) $(XPROTO_CONF)
 	+$(MAKEBUILD)

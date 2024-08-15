@@ -23,13 +23,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MainInterface
+import VLC.MediaLibrary
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///util/" as Util
-import "qrc:///style/"
+import VLC.Widgets as Widgets
+import VLC.Util
+import VLC.Style
 
 FocusScope {
     id: root
@@ -152,6 +151,13 @@ FocusScope {
 
         text: qsTr("Processing...")
 
+        onVisibleChanged: {
+            if (visible)
+                MainCtx.setCursor(root, Qt.BusyCursor)
+            else
+                MainCtx.unsetCursor(root)
+        }
+
         Timer {
             id: visibilityTimer
 
@@ -182,6 +188,7 @@ FocusScope {
         id: contextMenu
 
         model: root.model
+        ctx: MainCtx
     }
 
     PlaylistMedia

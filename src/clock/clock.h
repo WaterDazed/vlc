@@ -171,6 +171,17 @@ vlc_clock_t *vlc_clock_main_CreateMaster(vlc_clock_main_t *main_clock,
 vlc_clock_t *vlc_clock_main_CreateInputMaster(vlc_clock_main_t *main_clock);
 
 /**
+ * This function creates a new input slave vlc_clock_t interface
+ *
+ * @warning There can be only one input, slave or master, at a given time.
+ *
+ * You must use vlc_clock_Delete to free it.
+ *
+ * @param main_clock the locked main_clock
+ */
+vlc_clock_t *vlc_clock_main_CreateInputSlave(vlc_clock_main_t *main_clock);
+
+/**
  * This function creates a new slave vlc_clock_t interface
  *
  * You must use vlc_clock_Delete to free it.
@@ -265,7 +276,7 @@ void vlc_clock_Unlock(vlc_clock_t *clock);
  * @retval true if the clock is paused
  * @retval false if the clock is not paused
  */
-bool vlc_clock_IsPaused(vlc_clock_t *clock);
+bool vlc_clock_IsPaused(const vlc_clock_t *clock);
 
 /**
  * Wait for a timestamp expressed in system time
@@ -312,10 +323,11 @@ vlc_clock_RemoveListener(vlc_clock_t *clock, vlc_clock_listener_id *listener_id)
  * This function converts a timestamp from stream to system
  *
  * @param clock the locked clock used by the source
+ * @param clock_id pointer to the clock id used for conversion. Can be NULL.
  * @return the valid system time
  */
 vlc_tick_t vlc_clock_ConvertToSystem(vlc_clock_t *clock,
                                      vlc_tick_t system_now, vlc_tick_t ts,
-                                     double rate);
+                                     double rate, uint32_t *clock_id);
 
 #endif /*CLOCK_H*/

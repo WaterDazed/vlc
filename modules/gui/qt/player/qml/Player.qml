@@ -22,14 +22,15 @@ import QtQml.Models
 import Qt5Compat.GraphicalEffects
 import QtQuick.Window
 
-import org.videolan.vlc 0.1
 
-import "qrc:///style/"
-import "qrc:///widgets/" as Widgets
-import "qrc:///playlist/" as PL
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///dialogs/" as DG
-import "qrc:///util/" as Util
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Playlist
+import VLC.Player
+import VLC.PlayerControls
+import VLC.Dialogs
+import VLC.Util
 
 FocusScope {
     id: rootPlayer
@@ -190,9 +191,10 @@ FocusScope {
     VideoSurface {
         id: videoSurface
 
-        ctx: MainCtx
+        videoSurfaceProvider: MainCtx.videoSurfaceProvider
+
         visible: rootPlayer.hasEmbededVideo
-        enabled: rootPlayer.hasEmbededVideo
+
         anchors.fill: parent
         anchors.topMargin: rootPlayer._controlsUnderVideo ? topBar.height : 0
         anchors.bottomMargin: rootPlayer._controlsUnderVideo ? controlBar.height : 0
@@ -328,7 +330,7 @@ FocusScope {
             History.previous()
         }
 
-        Util.FadeControllerStateGroup {
+        FadeControllerStateGroup {
             target: topBar
         }
 
@@ -431,17 +433,19 @@ FocusScope {
                         if (status === Image.Ready)
                             backgroundImage.scheduleUpdate()
                     }
-                }
 
-                //don't use a DoubleShadow here as cover size will change
-                //dynamically with the window size
-                Widgets.CoverShadow {
-                    anchors.fill: parent
-                    source: cover
-                    primaryVerticalOffset: VLCStyle.dp(24)
-                    primaryBlurRadius: VLCStyle.dp(54)
-                    secondaryVerticalOffset: VLCStyle.dp(5)
-                    secondaryBlurRadius: VLCStyle.dp(14)
+                    // TODO: Qt >= 6.4 Investigate using MultiEffect.
+                    Widgets.DoubleShadow {
+                        anchors.centerIn: parent
+                        sourceItem: parent
+
+                        cache: false
+
+                        primaryVerticalOffset: VLCStyle.dp(24)
+                        primaryBlurRadius: VLCStyle.dp(54)
+                        secondaryVerticalOffset: VLCStyle.dp(5)
+                        secondaryBlurRadius: VLCStyle.dp(14)
+                    }
                 }
             }
 
@@ -595,7 +599,7 @@ FocusScope {
             value: playlistVisibility.isPlaylistVisible ? "visible" : "hidden"
         }
 
-        component: PL.PlaylistListView {
+        component: PlaylistListView {
             id: playlistView
 
             width: Helpers.clamp(rootPlayer.width / resizeHandle.widthFactor
@@ -684,7 +688,7 @@ FocusScope {
         }
     }
 
-    DG.Dialogs {
+    Dialogs {
         z: 10
         bgContent: rootPlayer
 
@@ -832,7 +836,7 @@ FocusScope {
             color: windowTheme.bg.primary
         }
 
-        Util.FadeControllerStateGroup {
+        FadeControllerStateGroup {
             target: controlBar
         }
     }

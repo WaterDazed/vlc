@@ -26,12 +26,15 @@ NSString * const VLCLibraryWindowPreferencePrefix = @"VLCLibraryWindow";
 
 NSString * const VLCLibraryHomeLibraryViewModePreferenceKey = @"HomeLibraryViewMode";
 NSString * const VLCLibraryVideoLibraryViewModePreferenceKey = @"VideoLibraryViewMode";
+NSString * const VLCLibraryShowsLibraryViewModePreferenceKey = @"ShowsLibraryViewMode";
 NSString * const VLCLibraryAlbumLibraryViewModePreferenceKey = @"AlbumLibraryViewMode";
 NSString * const VLCLibraryGenreLibraryViewModePreferenceKey = @"GenreLibraryViewMode";
 NSString * const VLCLibrarySongsLibraryViewModePreferenceKey = @"SongsLibraryViewMode";
 NSString * const VLCLibraryArtistLibraryViewModePreferenceKey = @"ArtistLibraryViewMode";
+NSString * const VLCLibraryPlaylistLibraryViewModePreferenceKey = @"PlaylistLibraryViewMode";
 NSString * const VLCLibraryBrowseLibraryViewModePreferenceKey = @"BrowseLibraryViewMode";
 NSString * const VLCLibraryStreamLibraryViewModePreferenceKey = @"StreamLibraryViewMode";
+NSString * const VLCLibraryGroupsLibraryViewModePreferenceKey = @"GroupsLibraryViewMode";
 
 @implementation VLCLibraryWindowPersistentPreferences
 
@@ -101,6 +104,17 @@ static VLCLibraryWindowPersistentPreferences *sharedInstance = nil;
                                               value:videoLibraryViewMode];
 }
 
+- (VLCLibraryViewModeSegment)showsLibraryViewMode
+{
+    return [self libraryViewModePreferenceWithKey:VLCLibraryShowsLibraryViewModePreferenceKey];
+}
+
+- (void)setShowsLibraryViewMode:(VLCLibraryViewModeSegment)showsLibraryViewMode
+{
+    [self setLibraryWindowViewModePreferenceWithKey:VLCLibraryShowsLibraryViewModePreferenceKey
+                                              value:showsLibraryViewMode];
+}
+
 - (VLCLibraryViewModeSegment)albumLibraryViewMode
 {
     return [self libraryViewModePreferenceWithKey:VLCLibraryAlbumLibraryViewModePreferenceKey];
@@ -146,6 +160,17 @@ static VLCLibraryWindowPersistentPreferences *sharedInstance = nil;
                                               value:artistLibraryViewMode];
 }
 
+- (VLCLibraryViewModeSegment)playlistLibraryViewMode
+{
+    return [self libraryViewModePreferenceWithKey:VLCLibraryPlaylistLibraryViewModePreferenceKey];
+}
+
+- (void)setPlaylistLibraryViewMode:(VLCLibraryViewModeSegment)playlistLibraryViewMode
+{
+    [self setLibraryWindowViewModePreferenceWithKey:VLCLibraryPlaylistLibraryViewModePreferenceKey
+                                              value:playlistLibraryViewMode];
+}
+
 - (VLCLibraryViewModeSegment)browseLibraryViewMode
 {
     return [self libraryViewModePreferenceWithKey:VLCLibraryBrowseLibraryViewModePreferenceKey];
@@ -166,6 +191,17 @@ static VLCLibraryWindowPersistentPreferences *sharedInstance = nil;
 {
     [self setLibraryWindowViewModePreferenceWithKey:VLCLibraryStreamLibraryViewModePreferenceKey
                                               value:streamLibraryViewMode];
+}
+
+- (VLCLibraryViewModeSegment)groupsLibraryViewMode
+{
+    return [self libraryViewModePreferenceWithKey:VLCLibraryGroupsLibraryViewModePreferenceKey];
+}
+
+- (void)setGroupsLibraryViewMode:(VLCLibraryViewModeSegment)groupsLibraryViewMode
+{
+    [self setLibraryWindowViewModePreferenceWithKey:VLCLibraryGroupsLibraryViewModePreferenceKey
+                                              value:groupsLibraryViewMode];
 }
 
 @end

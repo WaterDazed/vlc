@@ -20,14 +20,12 @@ import QtQuick
 import QtQml.Models
 import QtQuick.Layouts
 
-import org.videolan.medialib 0.1
-import org.videolan.vlc 0.1
+import VLC.MediaLibrary
 
-import "qrc:///util/" as Util
-import "qrc:///util/Helpers.js" as Helpers
-import "qrc:///widgets/" as Widgets
-import "qrc:///main/" as MainInterface
-import "qrc:///style/"
+import VLC.Util
+import VLC.Widgets as Widgets
+import VLC.MainInterface
+import VLC.Style
 
 FocusScope {
     id: root
@@ -142,23 +140,30 @@ FocusScope {
                     width: albumsList.width
                     height: implicitHeight
 
-                    spacing: VLCStyle.tableView_spacing
+                    spacing: VLCStyle.tableView_spacing - VLCStyle.margin_xxxsmall
 
-                    Widgets.KeyNavigableListView {
+                    Widgets.ListViewExt {
                         id: albumsList
+
+                        x: VLCStyle.margin_xlarge - VLCStyle.gridItemSelectedBorder
+
+                        width: root.width - root.rightPadding - x * 2
+                        height: gridHelper.cellHeight + topMargin + bottomMargin + VLCStyle.margin_xxxsmall
+
+                        leftMargin: VLCStyle.gridItemSelectedBorder
+                        rightMargin: leftMargin
+
+                        topMargin: VLCStyle.gridItemSelectedBorder
+                        bottomMargin: VLCStyle.gridItemSelectedBorder
 
                         focus: true
 
-                        height: VLCStyle.gridItem_music_height + topMargin + bottomMargin
-                        width: root.width - root.rightPadding
-
-                        leftMargin: VLCStyle.margin_xlarge
-                        topMargin: VLCStyle.gridItemSelectedBorder
-                        bottomMargin: VLCStyle.gridItemSelectedBorder
                         model: albumModel
                         selectionModel: albumSelectionModel
                         orientation: ListView.Horizontal
                         spacing: VLCStyle.column_spacing
+                        buttonMargin: (gridHelper.cellHeight - gridHelper.textHeight - buttonLeft.height) / 2 +
+                                      VLCStyle.gridItemSelectedBorder
 
                         Navigation.parentItem: root
 
@@ -170,8 +175,24 @@ FocusScope {
                             root.setCurrentItemFocus(Qt.TabFocusReason);
                         }
 
+                        GridSizeHelper {
+                            id: gridHelper
+
+                            availableWidth: albumsList.width
+                            basePictureWidth: VLCStyle.gridCover_music_width
+                            basePictureHeight: VLCStyle.gridCover_music_height
+                        }
+
                         delegate: Widgets.GridItem {
                             id: gridItem
+
+                            y: selectedBorderWidth
+
+                            width: gridHelper.cellWidth
+                            height: gridHelper.cellHeight
+
+                            pictureWidth: gridHelper.maxPictureWidth
+                            pictureHeight: gridHelper.maxPictureHeight
 
                             image: model.cover || ""
                             fallbackImage: VLCStyle.noArtAlbumCover
@@ -179,11 +200,6 @@ FocusScope {
                             title: model.title || qsTr("Unknown title")
                             subtitle: model.release_year || ""
                             textAlignHCenter: true
-                            x: selectedBorderWidth
-                            y: selectedBorderWidth
-                            pictureWidth: VLCStyle.gridCover_music_width
-                            pictureHeight: VLCStyle.gridCover_music_height
-                            playCoverBorderWidth: VLCStyle.gridCover_music_border
                             dragItem: albumDragItem
 
                             onPlayClicked: play()
@@ -315,13 +331,13 @@ FocusScope {
         parentId: albumModel.parentId
     }
 
-    Util.MLContextMenu {
+    MLContextMenu {
         id: contextMenu
 
         model: albumModel
     }
 
-    Util.MLContextMenu {
+    MLContextMenu {
         id: trackContextMenu
 
         model: trackModel
@@ -330,13 +346,14 @@ FocusScope {
     Component {
         id: gridComponent
 
-        MainInterface.MainGridView {
+        Widgets.ExpandGridItemView {
             id: gridView_id
+
+            basePictureWidth: VLCStyle.gridCover_music_width
+            basePictureHeight: VLCStyle.gridCover_music_height
 
             focus: true
             activeFocusOnTab:true
-            cellWidth: VLCStyle.gridItem_music_width
-            cellHeight: VLCStyle.gridItem_music_height
             headerDelegate: root.header
             selectionModel: albumSelectionModel
             model: albumModel
@@ -351,6 +368,12 @@ FocusScope {
 
             delegate: AudioGridItem {
                 id: audioGridItem
+
+                width: gridView_id.cellWidth
+                height: gridView_id.cellHeight
+
+                pictureWidth: gridView_id.maxPictureWidth
+                pictureHeight: gridView_id.maxPictureHeight
 
                 opacity: gridView_id.expandIndex !== -1 && gridView_id.expandIndex !== audioGridItem.index ? .7 : 1
                 dragItem: albumDragItem
@@ -425,10 +448,8 @@ FocusScope {
     Component {
         id: tableComponent
 
-        MainInterface.MainTableView {
+        MainTableView {
             id: tableView_id
-
-            readonly property int _nbCols: VLCStyle.gridColumnsForWidth(tableView_id.availableRowWidth)
 
             model: trackModel
 
@@ -441,7 +462,7 @@ FocusScope {
             rowHeight: VLCStyle.tableCoverRow_height
 
             property var _modelSmall: [{
-                size: Math.max(2, tableView_id._nbCols),
+                weight: 1,
 
                 model: {
                     criteria: "title",
@@ -456,7 +477,7 @@ FocusScope {
             }]
 
             property var _modelMedium: [{
-                size: 2,
+                weight: 1,
 
                 model: {
                     criteria: "title",
@@ -467,7 +488,7 @@ FocusScope {
                     colDelegate: tableColumns.titleDelegate
                 }
             }, {
-                size: Math.max(1, tableView_id._nbCols - 3),
+                weight: 1,
 
                 model: {
                     criteria: "album_title",

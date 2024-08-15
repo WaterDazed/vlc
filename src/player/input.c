@@ -640,6 +640,7 @@ vlc_player_input_HandleEsEvent(struct vlc_player_input *input,
             {
                 trackpriv->t.selected = true;
                 trackpriv->selected_by_user = ev->forced;
+                trackpriv->vout_order = ev->vout_order;
                 vlc_player_SendEvent(player, on_track_selection_changed,
                                      NULL, trackpriv->t.es_id);
                 vlc_player_input_HandleTeletextMenu(input, ev, trackpriv);
@@ -932,7 +933,7 @@ input_thread_Events(input_thread_t *input_thread,
             if (input->length != event->times.length)
             {
                 input->length = event->times.length;
-                input_item_SetDuration(input_GetItem(input->thread), event->times.length);
+                input_SetItemDuration(input->thread, event->times.length);
                 vlc_player_SendEvent(player, on_length_changed, input->length);
                 changed = true;
             }

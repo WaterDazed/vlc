@@ -17,11 +17,11 @@
  *****************************************************************************/
 import QtQuick
 
-import org.videolan.vlc 0.1
 
-import "qrc:///widgets/" as Widgets
-import "qrc:///style/"
-
+import VLC.MainInterface
+import VLC.Widgets as Widgets
+import VLC.Style
+import VLC.Menus
 
 Widgets.IconToolButton {
     id: menuBtn
@@ -38,6 +38,7 @@ Widgets.IconToolButton {
         id: contextMenu
 
         ctx: MainCtx
+        playerViewVisible: History.match(History.viewPath, ["player"])
 
         onAboutToShow: menuBtn.requestLockUnlockAutoHide(true)
         onAboutToHide: menuBtn.requestLockUnlockAutoHide(false)

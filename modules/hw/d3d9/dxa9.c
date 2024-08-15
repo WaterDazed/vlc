@@ -31,7 +31,6 @@
 #include <vlc_common.h>
 #include <vlc_filter.h>
 #include <vlc_picture.h>
-#include <vlc_modules.h>
 
 #include "d3d9_filters.h"
 
@@ -169,11 +168,7 @@ static void DXA9_NV12(filter_t *p_filter, picture_t *src, picture_t *dst)
 
 static void DeleteFilter( filter_t * p_filter )
 {
-    if( p_filter->p_module )
-    {
-        filter_Close( p_filter );
-        module_unneed( p_filter, p_filter->p_module );
-    }
+    vlc_filter_UnloadModule( p_filter );
 
     es_format_Clean( &p_filter->fmt_in );
     es_format_Clean( &p_filter->fmt_out );
@@ -212,7 +207,7 @@ static filter_t *CreateFilter( filter_t *p_this, const es_format_t *p_fmt_in,
     es_format_InitFromVideo( &p_filter->fmt_in,  &p_fmt_in->video );
     es_format_InitFromVideo( &p_filter->fmt_out, &p_fmt_in->video );
     p_filter->fmt_out.i_codec = p_filter->fmt_out.video.i_chroma = dst_chroma;
-    p_filter->p_module = module_need( p_filter, "video converter", NULL, false );
+    p_filter->p_module = vlc_filter_LoadModule (p_filter, "video converter", NULL, false );
 
     if( !p_filter->p_module )
     {

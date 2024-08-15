@@ -6,8 +6,9 @@ VIDEOLAN=http://downloads.videolan.org/pub/contrib
 NASM_VERSION=2.14
 NASM_URL=http://www.nasm.us/pub/nasm/releasebuilds/$(NASM_VERSION)/nasm-$(NASM_VERSION).tar.gz
 
-CMAKE_VERSION=3.24.2
-CMAKE_URL=http://www.cmake.org/files/v3.24/cmake-$(CMAKE_VERSION).tar.gz
+CMAKE_VERSION_MAJ=3.29
+CMAKE_VERSION=$(CMAKE_VERSION_MAJ).5
+CMAKE_URL=http://www.cmake.org/files/v$(CMAKE_VERSION_MAJ)/cmake-$(CMAKE_VERSION).tar.gz
 
 LIBTOOL_VERSION=2.4.7
 LIBTOOL_URL=$(GNU)/libtool/libtool-$(LIBTOOL_VERSION).tar.gz
@@ -48,7 +49,7 @@ GETTEXT_URL=$(GNU)/gettext/gettext-$(GETTEXT_VERSION).tar.gz
 HELP2MAN_VERSION=1.47.6
 HELP2MAN_URL=$(GNU)/help2man/help2man-$(HELP2MAN_VERSION).tar.xz
 
-MESON_VERSION=1.2.0
+MESON_VERSION=1.4.2
 MESON_URL=https://github.com/mesonbuild/meson/releases/download/$(MESON_VERSION)/meson-$(MESON_VERSION).tar.gz
 
 NINJA_VERSION=1.11.1
@@ -57,3 +58,9 @@ NINJA_URL=https://github.com/Kitware/ninja/archive/refs/tags/v$(NINJA_BUILD_NAME
 
 GPERF_VERSION=3.1
 GPERF_URL=$(GNU)/gperf/gperf-$(GPERF_VERSION).tar.gz
+
+CONFIGGUESS_VERSION=948ae97ca5703224bd3eada06b7a69f40dd15a02
+CONFIGGUESS_URL=https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=$(CONFIGGUESS_VERSION)
+
+CONFIGSUB_VERSION=948ae97ca5703224bd3eada06b7a69f40dd15a02
+CONFIGSUB_URL=https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIGGUESS_VERSION)
