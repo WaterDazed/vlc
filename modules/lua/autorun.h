@@ -1,18 +1,26 @@
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #include <vlc_arrays.h>
-#include "vlc_common.h"
-#include "vlc_configuration.h"
+#include <vlc_common.h>
+#include <vlc_configuration.h>
+#include <vlc_messages.h>
+#include <vlc_threads.h>
+#include <vlc_extensions.h>
+
+#include <stdbool.h>
+#include <string.h>
+
+#include "misc/webservices/json.h"
 #include "../misc/webservices/json.h"
 #include "../misc/webservices/json_helper.h"
 #include "extension.h"
-#include "vlc_extensions.h"
-#include "vlc_messages.h"
-#include "vlc_threads.h"
 
 struct lua_state {
     vlc_mutex_t lock; 
     vlc_atomic_rc_t rc;
     bool initialized; // protected by lock
-    DECL_ARRAY(struct extension_t *) extensions; // protected by lock
+    DECL_ARRAY(struct extension_t *) extensions; 
 };
 
 extern struct lua_state extensions_cache;
@@ -32,6 +40,7 @@ static char *getDataPath()
     return psz_ret;
 }
 
+int getCachedExtensionIdx(char const * ext_name);
 
 void writeExtensionsCache(vlc_object_t * obj, json_value* val);
 

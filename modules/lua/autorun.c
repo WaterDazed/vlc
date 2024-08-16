@@ -1,13 +1,5 @@
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #include "autorun.h"
-#include "misc/webservices/json.h"
-#include <vlc_messages.h>
-#include <vlc_threads.h>
-#include <stdbool.h>
-#include <string.h>
+#include "vlc_threads.h"
 
 struct lua_state extensions_cache;
 struct ext_key{
@@ -30,28 +22,8 @@ char const * psz_vlsub_json = "{"
 "\"shortdescription\": \"Dummy Autorun\","
 "\"icondata\": \"(null)\","
 "\"icondatasize\": 0,"
+"\"timestamp\": 1723670489"
 "}";
-
-void loadExtensionsCache(vlc_object_t *obj, char * psz_json){
-    assert(&extensions_cache.lock);
-    size_t psz_exts_len = strlen(psz_json);
-    assert(psz_exts_len != 0);
-    
-    json_value *val = json_parse(psz_json, psz_exts_len); 
-    assert (val != NULL);
-
-    // load each extension into cache
-    extension_t *ext = createExtensionFromJson(obj, val);
-    char const* psz_ext_name = jsongetstring(val, "name");
-
-    //skip ext
-    if (ext == NULL){
-        msg_Info(obj, "autorun: failed to create %s, skipping.", psz_ext_name);
-        return;
-    }
-
-    ARRAY_APPEND(extensions_cache.extensions, ext);
-}
 
 /** Watch timer callback
  * The timer expired, Lua may be stuck, ask the user what to do now
@@ -143,33 +115,80 @@ struct extension_t * createExtensionFromJson(vlc_object_t * obj, json_value* val
         {.ppsz=&p_ext->psz_shortdescription,.name="shortdescription",.jtype=json_string },
         {.p_data=&p_ext->i_icondata_size,.name="icondatasize",.jtype= json_integer },
         {.p_data=&sys->i_capabilities,.name="capabilites",.jtype=json_integer},
-        {.p_data=&sys->b_activated,.name="autorun",.jtype=json_boolean},
+        {.p_data=&sys->b_autorun,.name="autorun",.jtype=json_boolean},
     };
 
     for (size_t i = 0; i < ARRAY_SIZE(keys); i++){
-        if (keys[i].jtype == json_string){
+        if(strcmp(keys[i].name, "timestamp") == 0){
+            char *endptr;
+
+            char *psz_timestamp = json_dupstring(val, keys[i].name);
+            assert(psz_timestamp != NULL);
+
+            time_t timestamp = strtol(psz_timestamp, &endptr, 10);
+
+            if (*endptr != '\0') {
+                msg_Dbg(obj, "autorun: failed creating extension from json, invalid time stamp '%s' \n", psz_timestamp);
+                return NULL;
+            }
+        } else if (strcmp(keys[i].name, "autorun") == 0){
+            const json_value * key_val  = json_getbyname(val, keys[i].name);
+            assert(key_val != NULL);
+
+            vlc_mutex_lock(&sys->command_lock);
+            *(bool*)keys[i].p_data = key_val->u.boolean;
+            vlc_mutex_unlock(&sys->command_lock);
+        } else if (keys[i].jtype == json_string){
             *keys[i].ppsz = json_dupstring(val, keys[i].name);
         }else if (keys[i].jtype == json_integer){
             const json_value * key_val  = json_getbyname(val, keys[i].name);
             assert(key_val != NULL);
+
             *(int*)keys[i].p_data = key_val->u.integer;
-        }else if (strcmp(keys[i].name, "autorun") == 0){
-            const json_value * key_val  = json_getbyname(val, keys[i].name);
-            assert(key_val != NULL);
-            vlc_mutex_lock(&sys->command_lock);
-            sys->b_activated = false;
-            // *(bool*)keys[i].p_data = key_val->u.boolean;
-            vlc_mutex_unlock(&sys->command_lock);
         }
     }
 
-    assert(p_ext->psz_name != NULL);
-    assert(p_ext->psz_title != NULL);
-    assert(p_ext->psz_author != NULL);
+    if (p_ext->psz_name == NULL || p_ext->psz_title == NULL || p_ext->psz_author == NULL){
+        return NULL;
+    }
     
     msg_Dbg(obj, "autorun: extension %s was created", p_ext->psz_title);
     return p_ext;
 }
+
+int getCachedExtensionIdx(char const * ext_name){
+    extension_t* p_ext;
+    size_t i = 0;
+
+    ARRAY_FOREACH(p_ext, extensions_cache.extensions){
+        if (p_ext->psz_name == ext_name)
+            return i;
+        i++;
+    }
+    return -1;
+}
+
+void loadExtensionsCache(vlc_object_t *obj, char * psz_json){
+    assert(&extensions_cache.lock);
+    size_t psz_exts_len = strlen(psz_json);
+    assert(psz_exts_len != 0);
+    
+    json_value *val = json_parse(psz_json, psz_exts_len); 
+    assert (val != NULL);
+
+    // load each extension into cache
+    extension_t *ext = createExtensionFromJson(obj, val);
+    char const* psz_ext_name = jsongetstring(val, "name");
+
+    //skip ext
+    if (ext == NULL){
+        msg_Info(obj, "autorun: failed to create %s, skipping.", psz_ext_name);
+        return;
+    }
+
+    ARRAY_APPEND(extensions_cache.extensions, ext);
+}
+
 
 
 void init_use_state(vlc_object_t *obj){

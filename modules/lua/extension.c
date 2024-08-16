@@ -22,11 +22,6 @@
 
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
-#include "vlc_arrays.h"
-#include "vlc_atomic.h"
-#include "vlc_extensions.h"
-#include "vlc_objects.h"
-#include "vlc_threads.h"
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -37,13 +32,16 @@
 #include "libs.h"
 #include "extension.h"
 #include "assert.h"
+#include "autorun.h"
 
 #include <vlc_common.h>
 #include <vlc_interface.h>
 #include <vlc_dialog.h>
 #include <vlc_player.h>
-#include <stdio.h>
-#include "autorun.h"
+
+#include <assert.h>
+#include <sys/stat.h>
+
 
 /* Functions to register */
 static const luaL_Reg p_reg[] =
@@ -118,8 +116,6 @@ int Open_Extension( vlc_object_t *p_this )
                      vlclua_extension_dialog_callback, NULL );
     
 
-    // TODO: check if extension's file last updated is greater than timesamp in cache
-    //  if so than use extension data from cache 
     vlc_mutex_lock(&extensions_cache.lock);
     init_use_state(p_this);
     if(extensions_cache.initialized){
@@ -131,6 +127,8 @@ int Open_Extension( vlc_object_t *p_this )
             struct lua_extension* sys =  p_ext->p_sys;
             sys->p_mgr = p_mgr;
             ARRAY_APPEND(p_mgr->extensions, p_ext);
+            if (sys->b_autorun)
+                extension_Activate(p_mgr, p_ext);
         }
     }
     vlc_mutex_unlock(&extensions_cache.lock);
@@ -320,6 +318,22 @@ int ScanLuaCallback( vlc_object_t *p_this, const char *psz_filename,
         psz_script = strdup( psz_filename );
         if( !psz_script )
             return 0;
+    }
+
+    /* use cache if it's timestamp is newer than extension file's last update */
+    int cached_idx = getCachedExtensionIdx(psz_filename);
+    if (cached_idx != -1){
+        extension_t* p_ext = extensions_cache.extensions.p_elems[cached_idx];
+        struct lua_extension * p_lua_ext = p_ext->p_sys;
+        
+        struct stat attr;
+        stat(psz_filename, &attr);
+        time_t last_modified = attr.st_mtime;
+        if ( p_lua_ext->last_saved > last_modified) {
+            ARRAY_APPEND(p_mgr->extensions, p_ext);
+            /* Continue batch execution */
+            return VLC_EGENERIC;
+        }
     }
 
     /* Create new script descriptor */
