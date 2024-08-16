@@ -141,6 +141,7 @@ Item {
         _data = data
 
         const covers = []
+        let mimeData = ""
 
         for (let i in indexes) {
             if (covers.length === _maxCovers)
@@ -151,6 +152,10 @@ Item {
                 continue
 
             covers.push(cover)
+
+            const url = data[i]?.url
+            if (url)
+                mimeData += "%1\r\n".arg(url)
         }
 
         if (covers.length === 0)
@@ -160,6 +165,25 @@ Item {
             })
 
         _covers = covers
+
+        if (mimeData.length > 0) {
+            // Trim the trailing CRLF pair:
+            mimeData = mimeData.slice(0, -2)
+
+            // NOTE: Due to a Qt regression since 17318c4
+            //       (Nov 11, 2022), it is not possible to
+            //       use RFC-2483 compliant string here.
+            //       This regression was later corrected by
+            //       c25f53b (Jul 31, 2024).
+            // NOTE: Due to Qt bug, use QByteArray here,
+            //       which is used as is by Qt:
+            if ((MainCtx.qtVersion() >= MainCtx.qtVersionCheck(6, 5, 0)) &&
+                (MainCtx.qtVersion() < MainCtx.qtVersionCheck(6, 8, 0))) {
+                mimeData = MainCtx.stringToUTF8ByteArray(mimeData)
+            }
+
+            Drag.mimeData = { "text/uri-list": mimeData }
+        }
     }
 
     function _setInputItems(inputItems) {
