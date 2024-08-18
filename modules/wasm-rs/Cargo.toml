@@ -12,3 +12,4 @@ vlcrs-utils = { workspace = true }
 vlcrs-plugin = { workspace = true }
 vlcrs-submodules = { workspace = true }
 wasmer = "4.3.2"
+bitflags = "2.6.0"

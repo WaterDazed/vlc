@@ -4,10 +4,12 @@ use std::path::Path;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
 
+use bitflags::bitflags;
+
 use vlcrs_core::error::{self, Result};
 use vlcrs_core::playlist::Playlist;
 use vlcrs_core::variables::Variables;
-use vlcrs_messages::{debug, error, Logger};
+use vlcrs_messages::{debug, error, warn, Logger};
 use vlcrs_submodules::extension::{ExtensionCapability, ExtensionManager, ExtensionManagerControl, ThisExtensionsManager};
 use vlcrs_submodules::ModuleArgs;
 
@@ -19,7 +21,7 @@ use wasmer::{FunctionEnv, Imports, Instance, Module, Store, Value};
 use crate::libs::configuration::wasmopen_config;
 use crate::libs::playlist::wasmopen_playlist;
 use crate::libs::{messages::wasmopen_msg, variables::wasmopen_variables};
-use crate::{vlcwasm_read_string, vlcwasm_read_u32, vlcwasm_scripts_batch_execute};
+use crate::{vlcwasm_read_buffer, vlcwasm_read_string, vlcwasm_read_u32, vlcwasm_scripts_batch_execute};
 use crate::ProvidesLogger;
 
 use extension_thread::run_extension_thread;
@@ -38,11 +40,39 @@ enum Command {
     Deactivate,
 }
 
+bitflags! {
+    #[derive(Default, Debug)]
+    struct Capabilities: u32 {
+        const HAS_MENU = 1 << 0;
+        const TRIGGER_ONLY = 1 << 1;
+        const INPUT_LISTENER = 1 << 2;
+        const META_LISTENER = 1 << 3;
+        const PLAYING_LISTENER = 1 << 4;
+    }
+}
+
+impl TryFrom<&str> for Capabilities {
+    type Error = error::CoreError;
+
+    fn try_from(s: &str) -> Result<Capabilities> {
+        match s {
+            "menu" => Ok(Capabilities::HAS_MENU),
+            "trigger" => Ok(Capabilities::TRIGGER_ONLY),
+            "input_listener" => Ok(Capabilities::INPUT_LISTENER),
+            "meta_listener" => Ok(Capabilities::META_LISTENER),
+            "playing_listener" => Ok(Capabilities::PLAYING_LISTENER),
+            _ => Err(error::CoreError::Unknown),
+        }
+    }
+}
+
 struct WasmExtension {
     extension: Extension,
 
     store: Arc<Mutex<Store>>,
     instance: Instance,
+
+    capabilities: Capabilities,
 
     thread_handle: Option<thread::JoinHandle<Result<()>>>,
 
@@ -71,6 +101,7 @@ impl WasmExtension {
             extension,
             store,
             instance,
+            capabilities: Capabilities::empty(),
             thread_handle: None,
             tx_command,
             rx_command,
@@ -133,6 +164,8 @@ impl WasmExtension {
         let shortdesc_len = vlcwasm_read_u32(&store, &instance, ptr + 28);
         let description_ptr = vlcwasm_read_u32(&store, &instance, ptr + 32);
         let description_len = vlcwasm_read_u32(&store, &instance, ptr + 36);
+        let capabilities_ptr = vlcwasm_read_u32(&store, &instance, ptr + 40);
+        let capabilities_len = vlcwasm_read_u32(&store, &instance, ptr + 44);
 
         let title = vlcwasm_read_string(&store, &instance, title_ptr, title_len as usize)?;
         let version = vlcwasm_read_string(&store, &instance, version_ptr, version_len as usize)?;
@@ -140,12 +173,25 @@ impl WasmExtension {
         let shortdesc = vlcwasm_read_string(&store, &instance, shortdesc_ptr, shortdesc_len as usize)?;
         let description = vlcwasm_read_string(&store, &instance, description_ptr, description_len as usize)?;
 
+        const POINTER_LENGTH_PAIR_SIZE: usize = 8;
+        
+        // Read the buffer from the Wasm instance, which contains the capability strings
+        let capabilities: Vec<String> = vlcwasm_read_buffer(&store, &instance, capabilities_ptr, capabilities_len as usize * POINTER_LENGTH_PAIR_SIZE)
+            // Split the buffer into chunks of 8 bytes, where each chunk represents a pointer-length pair
+            .chunks_exact(8)
+            .map(|chunk| {
+                let ptr = u32::from_le_bytes(chunk[0..4].try_into().unwrap());
+                let len = u32::from_le_bytes(chunk[4..8].try_into().unwrap());
+                vlcwasm_read_string(&store, &instance, ptr, len as usize).unwrap_or_default()
+            }).collect();
+
         Ok(Description {
             title,
             version,
             author,
             shortdesc,
             description,
+            capabilities,
         })
     }
 
@@ -234,6 +280,7 @@ struct Description {
     author: String,
     shortdesc: String,
     description: String,
+    capabilities: Vec<String>,
 }
 
 impl<'a> WasmExtensionManager<'a> {
@@ -255,7 +302,7 @@ impl<'a> WasmExtensionManager<'a> {
         extension.set_name(file_name.to_str().expect("Should be a valid Utf-8"));
         extension.set_logger(self.logger);
 
-        let wasm_extension = WasmExtension::new(extension.clone(), 
+        let mut wasm_extension = WasmExtension::new(extension.clone(), 
             self.store.clone(), file_name, 
             self.variables.clone(), self.playlist.clone())
         .map_err(|e| {
@@ -267,6 +314,16 @@ impl<'a> WasmExtensionManager<'a> {
             error!(self.logger, "Can't get description: {}", e);
             error::CoreError::Unknown
         })?;
+
+        wasm_extension.capabilities = description.capabilities.iter()
+            .map(|c| {
+                Capabilities::try_from(c.as_str()).map_err(|_| {
+                    warn!(self.logger, "Extension capability '{}' unknown in script {}", c, file_name.display());
+                    error::CoreError::Unknown
+                })
+            })
+            .filter_map(Result::ok)
+            .fold(Capabilities::empty(), |acc, c| acc | c);
 
         extension.set_title(&description.title);
         extension.set_version(&description.version);
