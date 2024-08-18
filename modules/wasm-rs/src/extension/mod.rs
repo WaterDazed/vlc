@@ -393,18 +393,18 @@ impl<'a> ExtensionManagerControl for WasmExtensionManager<'a> {
         Ok(WasmExtensionState::Activated == sys.get_state()?)
     }
 
-    fn has_menu(&self, _extension: &mut Extension) -> bool {
-        false
-        //unimplemented!()
+    fn has_menu(&self, extension: &mut Extension) -> bool {
+        let sys: &WasmExtension = extension.get_sys();
+        sys.capabilities.contains(Capabilities::HAS_MENU)
     }
 
     fn get_menu(&self, _extension: &mut Extension) -> (Vec<String>, Vec<u16>) {
         unimplemented!()
     }
 
-    fn trigger_only(&self, _extension: &mut Extension) -> bool {
-        false
-        //unimplemented!()
+    fn trigger_only(&self, extension: &mut Extension) -> bool {
+        let sys: &WasmExtension = extension.get_sys();
+        sys.capabilities.contains(Capabilities::TRIGGER_ONLY)
     }
 
     fn trigger(&self, _extension: &mut Extension) -> Result<()> {
