@@ -172,6 +172,7 @@ public:
     QString m_artist;
     QString m_album;
     QUrl m_artwork;
+    QUrl m_url;
 };
 
 #endif /* QVLC_INPUT_MANAGER_P_H_ */
