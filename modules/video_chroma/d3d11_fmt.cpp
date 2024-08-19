@@ -483,15 +483,7 @@ static HRESULT CreateDevice(vlc_object_t *obj,
                 msg_Warn(obj, "can't get adapter description");
 
             D3D11_GetDriverVersion( obj, out );
-            /* we can work with legacy levels but only if forced */
-            if ( obj->force || out->feature_level >= D3D_FEATURE_LEVEL_11_0 )
-                break;
-            msg_Warn(obj, "Incompatible feature level %x", out->feature_level);
-            out->d3dcontext->Release();
-            out->d3ddevice->Release();
-            out->d3dcontext = NULL;
-            out->d3ddevice = NULL;
-            hr = E_NOTIMPL;
+            break;
         }
     }
 
@@ -548,22 +540,6 @@ d3d11_decoder_device_t *(D3D11_CreateDevice)(vlc_object_t *obj,
                   engineType == libvlc_video_engine_d3d11 )
         {
             /* internal decoder device */
-#if !BUILD_FOR_UAP
-            if (!forced)
-            {
-                /* Allow using D3D11 automatically starting from Windows 8.1 */
-                bool isWin81OrGreater = false;
-                HMODULE hKernel32 = GetModuleHandle(TEXT("kernel32.dll"));
-                if (likely(hKernel32 != NULL))
-                    isWin81OrGreater = GetProcAddress(hKernel32, "IsProcessCritical") != NULL;
-                if (!isWin81OrGreater)
-                {
-                    msg_Dbg(obj, "D3D11 not forced on Win7/8");
-                    goto error;
-                }
-            }
-#endif
-
             hr = CreateDevice( obj, adapter, hw_decoding, &sys->dec_device.d3d_dev );
         }
         else
