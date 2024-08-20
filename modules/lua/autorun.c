@@ -1,3 +1,25 @@
+/*****************************************************************************
+ * autorun.c autorun interface and extension data file handling
+ *****************************************************************************
+ * Copyright (C) 2024 Videolabs
+ *
+ * Authors: Nyima Tamang <nyimasubroutine@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
+ *****************************************************************************/
+
 #include "autorun.h"
 #include "vlc_threads.h"
 
@@ -24,6 +46,7 @@ char const * psz_vlsub_json = "{"
 "\"timestamp\": 1723670489"
 "}";
 
+//TODO: moved to shared file between extension.c  
 /** Watch timer callback
  * The timer expired, Lua may be stuck, ask the user what to do now
  **/
