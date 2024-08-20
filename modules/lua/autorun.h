@@ -57,22 +57,6 @@ void loadExtensionsIntoCache(vlc_object_t *obj, char * psz_json);
  */
 void init_use_state(vlc_object_t *obj);
 
-static int AutorunStart(vlc_object_t *obj){
-    msg_Dbg(obj,"running autorun");
-    vlc_mutex_lock(&extensions_cache.lock);
-    init_use_state(obj);
-    vlc_mutex_unlock(&extensions_cache.lock);
-    return VLC_SUCCESS;
-}
+int AutorunStart(vlc_object_t *obj);
 
-static void AutorunStop(vlc_object_t *obj){
-    if (vlc_atomic_rc_dec(&extensions_cache.rc)){
-        // free state
-    }
-}
-
-// vlc_module_begin ()
-//     set_capability("interface", 0)
-//     add_shortcut("exampleextension")
-//     set_callbacks(AutorunStart, AutorunStop)
-// vlc_module_end()
+void AutorunStop(vlc_object_t *obj);

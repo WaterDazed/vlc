@@ -3,14 +3,13 @@
 
 struct lua_state extensions_cache;
 struct ext_key{
-    void** ppsz;
+    char** ppsz;
     void* p_data;
     char const* name;
     json_type jtype;
 };
 
 char const * psz_vlsub_json = "{"
-"\"timestamp\": 0,"
 "\"autorun\": true,"
 "\"capabilites\": 5,"
 "\"name\": \"/home/nt/Documents/cleanvlc/share/lua/extensions/VLSub.lua\","
@@ -116,21 +115,21 @@ struct extension_t * createExtensionFromJson(vlc_object_t * obj, json_value* val
         {.p_data=&p_ext->i_icondata_size,.name="icondatasize",.jtype= json_integer },
         {.p_data=&sys->i_capabilities,.name="capabilites",.jtype=json_integer},
         {.p_data=&sys->b_autorun,.name="autorun",.jtype=json_boolean},
+        {.p_data=&sys->last_saved,.name="timestamp",.jtype=json_string},
     };
 
     for (size_t i = 0; i < ARRAY_SIZE(keys); i++){
-        if(strcmp(keys[i].name, "timestamp") == 0){
+        if (strcmp(keys[i].name, "timestamp") == 0){
             char *endptr;
-
-            char *psz_timestamp = json_dupstring(val, keys[i].name);
+            char *psz_timestamp = json_dupstring(val, "timestamp");
             assert(psz_timestamp != NULL);
 
             time_t timestamp = strtol(psz_timestamp, &endptr, 10);
-
             if (*endptr != '\0') {
                 msg_Dbg(obj, "autorun: failed creating extension from json, invalid time stamp '%s' \n", psz_timestamp);
                 return NULL;
             }
+            sys->last_saved = timestamp;
         } else if (strcmp(keys[i].name, "autorun") == 0){
             const json_value * key_val  = json_getbyname(val, keys[i].name);
             assert(key_val != NULL);
@@ -138,6 +137,7 @@ struct extension_t * createExtensionFromJson(vlc_object_t * obj, json_value* val
             vlc_mutex_lock(&sys->command_lock);
             *(bool*)keys[i].p_data = key_val->u.boolean;
             vlc_mutex_unlock(&sys->command_lock);
+        /* Default Operations */
         } else if (keys[i].jtype == json_string){
             *keys[i].ppsz = json_dupstring(val, keys[i].name);
         }else if (keys[i].jtype == json_integer){
@@ -161,7 +161,7 @@ int getCachedExtensionIdx(char const * ext_name){
     size_t i = 0;
 
     ARRAY_FOREACH(p_ext, extensions_cache.extensions){
-        if (p_ext->psz_name == ext_name)
+        if (strcmp(p_ext->psz_name, ext_name) == 0)
             return i;
         i++;
     }
@@ -197,10 +197,28 @@ void init_use_state(vlc_object_t *obj){
     assert(path != NULL);
 
     if (!extensions_cache.initialized){
+        vlc_atomic_rc_init(&extensions_cache.rc);
         // TODO: temporary, replace with file content string
         loadExtensionsCache(obj, psz_vlsub_json);
         extensions_cache.initialized = true; 
     }else {
         vlc_atomic_rc_inc(&extensions_cache.rc);
+    }
+}
+
+
+int AutorunStart(vlc_object_t *obj){
+    msg_Dbg(obj,"Starting Auto Run interface");
+
+    vlc_mutex_lock(&extensions_cache.lock);
+    init_use_state(obj);
+    vlc_mutex_unlock(&extensions_cache.lock);
+
+    return VLC_SUCCESS;
+}
+
+void AutorunStop(vlc_object_t *obj){
+    if (vlc_atomic_rc_dec(&extensions_cache.rc)){
+        // free state
     }
 }
