@@ -29,7 +29,11 @@
 
 #define VLC_IPC_VERSION "0.0.0"
 
-/* This function is used to check that both side of the IPC library use the same version */
+enum vlc_ipc_category {
+    VLC_IPC_CATEGORY_CUSTOM,
+    VLC_IPC_CATEGORY_MAX
+};
+
 const char *vlc_ipc_get_signature(void);
 
 int vlc_ipc_recv_data(int fd, struct iovec *iovec, int nmemb);
