@@ -1,5 +1,5 @@
 /*****************************************************************************
- * ipc.h
+ * logs.h
  *****************************************************************************
  * Copyright (C) 2024 the VideoLAN team
  *
@@ -17,41 +17,17 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  ****************************************************************************/
-#ifndef VLC_IPC_H
-#define VLC_IPC_H
+#ifndef VLC_IPC_LOGS_H
+#define VLC_IPC_LOGS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#endif
+#include <vlc_messages.h>
 
-#define VLC_IPC_VERSION "0.0.0"
+struct vlc_ipc_client;
+struct vlc_ipc_server;
 
-enum vlc_ipc_category {
-    VLC_IPC_CATEGORY_CUSTOM,
-    VLC_IPC_CATEGORY_LOGS,
-    VLC_IPC_CATEGORY_MAX
-};
+int vlc_ipc_client_log(struct vlc_ipc_client *client, enum vlc_log_type type, const char *msg);
 
-const char *vlc_ipc_get_signature(void);
+int vlc_ipc_server_register_logs(struct vlc_ipc_server *server);
+void vlc_ipc_server_unregister_logs(struct vlc_ipc_server *server);
 
-int vlc_ipc_recv_data(int fd, struct iovec *iovec, int nmemb);
-int vlc_ipc_send_data(int fd, struct iovec *iovec, int nmemb);
-
-static inline int vlc_ipc_recv_uint32(int fd, uint32_t *u32) {
-  struct iovec iov = { .iov_base = u32, .iov_len = sizeof(uint32_t) };
-  return vlc_ipc_recv_data(fd, &iov, 1);
-}
-
-static inline int vlc_ipc_send_uint32(int fd, uint32_t u32) {
-  struct iovec iov = { .iov_base = &u32, .iov_len = sizeof(uint32_t) };
-  return vlc_ipc_send_data(fd, &iov, 1);
-}
-
-int vlc_ipc_send_string(int fd, const char *str);
-int vlc_ipc_recv_string(int fd, char **string);
-
-
-#endif /*VLC_IPC_H */
+#endif /* VLC_IPC_LOGS_H */

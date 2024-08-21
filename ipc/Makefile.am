@@ -16,15 +16,23 @@ vlc-ipc-codegen$(BUILDEXEEXT): codegen/lexicon.l codegen/grammar.y
 
 MOSTLYCLEANFILES= vlc-ipc-codegen$(BUILDEXEEXT)
 
+protocoldir=protocol
+
+$(protocoldir)/%_ipc.c: $(protocoldir)/%.ipc vlc-ipc-codegen$(BUILDEXEEXT)
+	$(AM_V_GEN)./vlc-ipc-codegen$(BUILDEXEEXT) $< $@ $(patsubst %.c, %.h, $@)
+
 libvlc_ipc_la_SOURCES = \
 	ipc.h ipc.c \
 	client.h client.c \
-	server.h server.c
+	server.h server.c \
+	logs.h logs.c
 
-libvlc_ipc_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/ipc
+libvlc_ipc_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/ipc -I$(protocoldir)
 libvlc_ipc_la_LIBADD = ../src/libvlccore.la ../compat/libcompat.la
 libvlc_ipc_la_LDFLAGS = -static
 noinst_LTLIBRARIES = libvlc_ipc.la
+BUILT_SOURCES += $(protocoldir)/log_ipc.c
+libvlc_ipc_la_SOURCES += $(protocoldir)/log_ipc.c
 
 # Tests
 testdir=test
