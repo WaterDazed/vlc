@@ -3,6 +3,7 @@
 ###############################################################################
 
 AUTOMAKE_OPTIONS = subdir-objects
+BUILT_SOURCES=
 
 ###############################################################################
 # VLC IPC framework
@@ -24,3 +25,19 @@ libvlc_ipc_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/ipc
 libvlc_ipc_la_LIBADD = ../src/libvlccore.la ../compat/libcompat.la
 libvlc_ipc_la_LDFLAGS = -static
 noinst_LTLIBRARIES = libvlc_ipc.la
+
+# Tests
+testdir=test
+
+$(testdir)/test_ipc.c: $(testdir)/test.ipc vlc-ipc-codegen$(BUILDEXEEXT)
+	$(AM_V_GEN) ./vlc-ipc-codegen$(BUILDEXEEXT) $< $@ $(patsubst %.c, %.h, $@)
+
+BUILT_SOURCES += $(testdir)/test_ipc.c
+check_PROGRAMS = test_ipc
+
+test_ipc_SOURCES = test/test.c
+test_ipc_SOURCES += $(testdir)/test_ipc.c
+test_ipc_CPPFLAGS = $(AM_CPPFLAGS) -I../include -I$(srcdir) -I$(testdir)
+test_ipc_LDADD = ../lib/libvlc.la ../src/libvlccore.la ../compat/libcompat.la libvlc_ipc.la
+
+TESTS = test_ipc
