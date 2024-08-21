@@ -25,7 +25,8 @@ libvlc_ipc_la_SOURCES = \
 	ipc.h ipc.c \
 	client.h client.c \
 	server.h server.c \
-	logs.h logs.c
+	logs.h logs.c \
+	runner.h runner_internal.h runnerlib.c
 
 libvlc_ipc_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/ipc -I$(protocoldir)
 libvlc_ipc_la_LIBADD = ../src/libvlccore.la ../compat/libcompat.la
@@ -33,6 +34,17 @@ libvlc_ipc_la_LDFLAGS = -static
 noinst_LTLIBRARIES = libvlc_ipc.la
 BUILT_SOURCES += $(protocoldir)/log_ipc.c
 libvlc_ipc_la_SOURCES += $(protocoldir)/log_ipc.c
+
+# Runner
+pkglibexec_PROGRAMS= vlc-ipc-runner
+
+vlc_ipc_runner_SOURCES = \
+	runner.h \
+	runner_internal.h \
+	runner.c
+
+vlc_ipc_runner_CFLAGS = $(AM_CFLAGS) -I$(srcdir) -fPIC
+vlc_ipc_runner_LDADD = ../src/libvlccore.la ../lib/libvlc.la ../compat/libcompat.la libvlc_ipc.la
 
 # Tests
 testdir=test

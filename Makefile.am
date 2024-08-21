@@ -6,7 +6,7 @@
 # something. DIST_SUBDIRS stores the directories where nothing is built but
 # which have makefiles with distribution information.
 #  - src (libvlccore) is nedeed by modules
-SUBDIRS = compat po share src modules lib doc bin test ipc
+SUBDIRS = compat po share src lib ipc modules doc bin test
 DIST_SUBDIRS = m4 $(SUBDIRS)
 
 EXTRA_DIST = \
@@ -150,7 +150,7 @@ nvlc: make-alias Makefile
 	$(AM_V_GEN)$(MKALIAS) ncurses
 
 if BUILD_VLC
-noinst_SCRIPTS = vlc$(EXEEXT)
+noinst_SCRIPTS = vlc$(EXEEXT) vlc-ipc-runner$(EXEEXT)
 endif
 
 vlc$(EXEEXT):
@@ -159,6 +159,9 @@ if HAVE_DARWIN
 else
 	$(AM_V_GEN)$(LN_S) -f bin/vlc-static$(EXEEXT) vlc$(EXEEXT)
 endif
+
+vlc-ipc-runner$(EXEEXT):
+	$(AM_V_GEN)$(LN_S) -f ipc/vlc-ipc-runner$(EXEEXT) vlc-ipc-runner$(EXEEXT)
 
 TESTS = test/run_vlc.sh
 dist_noinst_SCRIPTS += test/run_vlc.sh
