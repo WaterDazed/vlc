@@ -1129,11 +1129,6 @@ bool libvlc_video_set_output_callbacks(libvlc_media_player_t *mp,
         var_SetString ( mp, "vout", "direct3d11" );
         var_SetString ( mp, "dec-dev", "d3d11" );
     }
-    else if ( engine == libvlc_video_engine_d3d9 )
-    {
-        var_SetString ( mp, "vout", "direct3d9" );
-        var_SetString ( mp, "dec-dev", "d3d9" );
-    }
     else if ( engine == libvlc_video_engine_disable )
     {
         // use the default display module

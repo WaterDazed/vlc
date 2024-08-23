@@ -14,7 +14,6 @@ LIBVLC_SAMPLES = \
 	libvlc/thumbnailer.c \
 	libvlc/wx_player.cpp \
 	libvlc/d3d11_player.cpp \
-	libvlc/d3d9_player.c \
 	libvlc/win_player.c \
 	libvlc/CMakeLists.txt \
 	libvlc/appkit_player.m \

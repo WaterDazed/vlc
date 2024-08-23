@@ -3702,7 +3702,7 @@ AS_IF([test "${enable_directx}" != "no"], [
   VLC_ADD_PLUGIN([direct3d11 direct3d11_filters])
 
   dnl Direct3D9
-  VLC_ADD_PLUGIN([direct3d9 direct3d9_filters])
+  VLC_ADD_PLUGIN([direct3d9_filters])
 ])
 
 dnl

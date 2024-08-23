@@ -181,26 +181,8 @@ d3d9_handle_t *hd3d = &sys->dec_device.hd3d;
     sys->cleanupDeviceCb = NULL;
     libvlc_video_engine_t engineType = var_InheritInteger( o, "vout-cb-type" );
     libvlc_video_output_setup_cb setupDeviceCb = NULL;
-    if (engineType == libvlc_video_engine_d3d9)
-        setupDeviceCb = var_InheritAddress( o, "vout-cb-setup" );
-    if ( setupDeviceCb != NULL)
-    {
-        /* external rendering */
-        libvlc_video_setup_device_info_t extern_out = { .d3d9.adapter = -1 };
-        sys->opaque          = var_InheritAddress( o, "vout-cb-opaque" );
-        sys->cleanupDeviceCb = var_InheritAddress( o, "vout-cb-cleanup" );
-        libvlc_video_setup_device_cfg_t cfg = {
-            .hardware_decoding = true, /* ignored anyway */
-        };
-        if (!setupDeviceCb( &sys->opaque, &cfg, &extern_out ))
-            goto error;
-
-        D3D9_CloneExternal( hd3d, (IDirect3D9 *) extern_out.d3d9.device );
-        AdapterToUse = extern_out.d3d9.adapter;
-    }
-    else if ( engineType == libvlc_video_engine_disable ||
-              engineType == libvlc_video_engine_d3d9 ||
-              engineType == libvlc_video_engine_opengl )
+    if ( engineType == libvlc_video_engine_disable ||
+         engineType == libvlc_video_engine_opengl )
     {
         /* internal rendering */
         if (D3D9_Create(o, hd3d) != VLC_SUCCESS)

@@ -34,16 +34,6 @@ vlc_modules += {
 }
 
 if have_win_desktop
-    # Direct3D9 video output
-    vlc_modules += {
-        'name' : 'direct3d9',
-        'sources' : files('direct3d9.c', 'common.c', 'events.c', 'sensors.cpp', 'win32touch.c'),
-        'link_with' : [ d3d9_common_lib, chroma_copy_lib ],
-        'dependencies' : [
-            cc.find_library('user32')
-        ]
-    }
-
     # GDI video output
     vlc_modules += {
         'name' : 'wingdi',

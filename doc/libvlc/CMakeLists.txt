@@ -28,9 +28,6 @@ endif ()
 
 if(WIN32)
 
-    add_executable(d3d9_player WIN32 d3d9_player.c)
-    target_link_libraries(d3d9_player libvlc d3d9)
-
     add_executable(d3d11_player WIN32 d3d11_player.cpp)
     target_compile_definitions(d3d11_player PRIVATE _WIN32_WINNT=0x0601)
     target_link_libraries(d3d11_player libvlc d3d11 d3dcompiler uuid)

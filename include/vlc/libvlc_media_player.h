@@ -537,10 +537,6 @@ typedef struct libvlc_video_setup_device_info_t
             void *device_context; /** ID3D11DeviceContext* */
             void *context_mutex; /** Windows Mutex HANDLE to protect ID3D11DeviceContext usage */
         } d3d11;
-        struct {
-            void *device;         /** IDirect3D9* */
-            int  adapter;         /** Adapter to use with the IDirect3D9* */
-        } d3d9;
     };
 } libvlc_video_setup_device_info_t;
 
@@ -555,10 +551,6 @@ typedef struct libvlc_video_setup_device_info_t
  * \param[out] out libvlc_video_setup_device_info_t* to fill
  * \return true on success
  * \version LibVLC 4.0.0 or later
- *
- * For \ref libvlc_video_engine_d3d9 the output must be a IDirect3D9*.
- * A reference to this object is held until the \ref libvlc_video_output_cleanup_cb is called.
- * the device must be created with D3DPRESENT_PARAMETERS.hDeviceWindow set to 0.
  *
  * For \ref libvlc_video_engine_d3d11 the output must be a ID3D11DeviceContext*.
  * A reference to this object is held until the \ref libvlc_video_output_cleanup_cb is called.
@@ -598,8 +590,6 @@ typedef struct libvlc_video_render_cfg_t
     libvlc_video_color_primaries_t primaries;
     /** video transfer function */
     libvlc_video_transfer_func_t transfer;
-    /** device used for rendering, IDirect3DDevice9* for D3D9 */
-    void *device;
 } libvlc_video_render_cfg_t;
 
 typedef struct libvlc_video_output_cfg_t
@@ -607,8 +597,6 @@ typedef struct libvlc_video_output_cfg_t
     union {
         /** The rendering DXGI_FORMAT for \ref libvlc_video_engine_d3d11. */
         int dxgi_format;
-        /** The rendering D3DFORMAT for \ref libvlc_video_engine_d3d9. */
-        uint32_t d3d9_format;
         /** The rendering GLint GL_RGBA or GL_RGB for
          * \ref libvlc_video_engine_opengl and for
          * \ref libvlc_video_engine_gles2. */
@@ -636,11 +624,6 @@ typedef struct libvlc_video_output_cfg_t
  * \param[in] cfg configuration of the video that will be rendered
  * \param[out] output configuration describing with how the rendering is setup
  * \version LibVLC 4.0.0 or later
- *
- * \note the configuration device for Direct3D9 is the IDirect3DDevice9 that VLC
- *       uses to render. The host must set a Render target and call Present()
- *       when it needs the drawing from VLC to be done. This object is not valid
- *       anymore after Cleanup is called.
  *
  * Tone mapping, range and color conversion will be done depending on the values
  * set in the output structure.
@@ -734,8 +717,6 @@ typedef enum libvlc_video_engine_t {
     libvlc_video_engine_gles2,
     /** Direct3D11 rendering engine */
     libvlc_video_engine_d3d11,
-    /** Direct3D9 rendering engine */
-    libvlc_video_engine_d3d9,
 } libvlc_video_engine_t;
 
 
