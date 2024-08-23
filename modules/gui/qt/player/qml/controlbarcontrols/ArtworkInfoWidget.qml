@@ -101,10 +101,6 @@ AbstractButton {
             }])
         }
 
-        onRequestInputItems: (indexes, data, resolve, reject) => {
-            resolve([MainPlaylistController.currentItem])
-        }
-
         indexes: [0]
     }
 

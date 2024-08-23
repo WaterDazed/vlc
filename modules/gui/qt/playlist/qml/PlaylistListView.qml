@@ -83,10 +83,6 @@ T.Pane {
                 }
             }))
         }
-
-        onRequestInputItems: (indexes, data, resolve, reject) => {
-            resolve(root.model.getItemsForIndexes(root.selectionModel.selectedIndexesFlat))
-        }
     }
 
     PlaylistContextMenu {
@@ -220,8 +216,6 @@ T.Pane {
             isDropAcceptableFunc: function(drop, index) {
                 if (drop.source === dragItem)
                     return Helpers.itemsMovable(selectionModel.sortedSelectedIndexesFlat, index)
-                else if (Helpers.isValidInstanceOf(drop.source, Widgets.DragItem))
-                    return true
                 else if (drop.hasUrls)
                     return true
                 else
@@ -235,16 +229,7 @@ T.Pane {
                 if (dragItem === item) {
                     model.moveItemsPre(root.selectionModel.sortedSelectedIndexesFlat, index);
                     listView.forceActiveFocus();
-                // NOTE: Dropping medialibrary content into the queue.
-                } else if (Helpers.isValidInstanceOf(item, Widgets.DragItem)) {
-                    return item.getSelectedInputItem().then((inputItems) => {
-                            if (!Helpers.isArray(inputItems) || inputItems.length === 0) {
-                                console.warn("can't convert items to input items");
-                                return
-                            }
-                            MainPlaylistController.insert(index, inputItems, false)
-                        }).then(() => { listView.forceActiveFocus(); })
-                // NOTE: Dropping an external item (i.e. filesystem) into the queue.
+                // NOTE: Dropping item from media library or from an external source (i.e. filesystem) into the queue.
                 } else if (drop.hasUrls) {
                     const urlList = [];
 

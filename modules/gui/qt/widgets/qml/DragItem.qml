@@ -63,26 +63,9 @@ Item {
     }
 
     signal requestData(var indexes, var resolve, var reject)
-    signal requestInputItems(var indexes, var data, var resolve, var reject)
 
     function coversXPos(index) {
         return VLCStyle.margin_small + (coverSize / 1.5) * index;
-    }
-
-    /**
-      * @return {Promise} Promise object of the input items
-      */
-    function getSelectedInputItem() {
-        if (_inputItems)
-            return Promise.resolve(dragItem._inputItems)
-        else if (dragItem._dropPromise)
-            return dragItem._dropPromise
-        else
-            dragItem._dropPromise = new Promise((resolve, reject) => {
-                dragItem._dropCallback = resolve
-                dragItem._dropFailedCallback = reject
-            })
-            return dragItem._dropPromise
     }
 
     //---------------------------------------------------------------------------------------------
@@ -93,8 +76,6 @@ Item {
     readonly property int _indexesSize: !!indexes ? indexes.length : 0
 
     readonly property int _displayedCoversCount: Math.min(_indexesSize, _maxCovers + 1)
-
-    property var _inputItems: []
 
     property var _data: []
 
@@ -186,16 +167,6 @@ Item {
         }
     }
 
-    function _setInputItems(inputItems) {
-        if (!Helpers.isArray(inputItems) || inputItems.length === 0) {
-            console.warn("can't convert items to input items");
-            dragItem._inputItems = null
-            return
-        }
-
-        dragItem._inputItems = inputItems
-    }
-
     function _getCover(index, data) {
         console.assert(dragItem.coverRole)
         if (!!dragItem.coverProvider)
@@ -273,14 +244,12 @@ Item {
 
         //internal signals
         signal resolveData(var requestId, var indexes)
-        signal resolveInputItems(var requestId, var indexes)
         signal resolveFailed()
 
         signalMap: ({
             startDrag: startDrag,
             stopDrag: stopDrag,
             resolveData: resolveData,
-            resolveInputItems: resolveInputItems,
             resolveFailed: resolveFailed
         })
 
@@ -344,30 +313,7 @@ Item {
                         action: (requestId, data) => {
                             dragItem._setData(data)
                         },
-                        target: fsmRequestInputItem
-                    },
-                    resolveFailed: fsmLoadingFailed
-                })
-            }
-
-            FSMState {
-                id: fsmRequestInputItem
-
-                function enter() {
-                    const requestId = ++dragItem._currentRequest
-                    dragItem.requestInputItems(
-                        dragItem.indexes, _data,
-                        (items) => { fsm.resolveInputItems(requestId, items) },
-                        fsm.resolveFailed)
-                }
-
-                transitions: ({
-                    resolveInputItems: {
-                        guard: (requestId, items) => requestId === dragItem._currentRequest,
-                        action: (requestId, items) => {
-                            dragItem._setInputItems(items)
-                        },
-                        target: fsmLoadingDone,
+                        target: fsmLoadingDone
                     },
                     resolveFailed: fsmLoadingFailed
                 })
@@ -379,9 +325,6 @@ Item {
                 function enter() {
                     dragItem._startNativeDrag()
 
-                    if (dragItem._dropCallback) {
-                        dragItem._dropCallback(dragItem._inputItems)
-                    }
                     dragItem._dropPromise = null
                     dragItem._dropCallback = null
                     dragItem._dropFailedCallback = null

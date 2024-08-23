@@ -38,10 +38,4 @@ DragItem {
         else
             mlModel.getData(indexes, resolve)
     }
-
-    onRequestInputItems: (indexes, data, resolve, reject) => {
-        console.assert(mlIDRole)
-        const inputIdList = data.map(o => o[root.mlIDRole])
-        MediaLib.mlInputItem(inputIdList, resolve)
-    }
 }

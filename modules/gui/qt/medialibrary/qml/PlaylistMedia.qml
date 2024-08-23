@@ -165,8 +165,6 @@ MainTableView {
     listView.isDropAcceptableFunc: function(drop, index) {
         if (drop.source === dragItem) {
             return Helpers.itemsMovable(selectionModel.sortedSelectedIndexesFlat, index)
-        } else if (Helpers.isValidInstanceOf(drop.source, Widgets.DragItem)) {
-            return true
         } else if (drop.hasUrls) {
             return true
         } else {
@@ -189,13 +187,6 @@ MainTableView {
             model.move(selectionModel.selectedRows(), destinationIndex)
             root.forceActiveFocus()
             root.hideLine(delegate)
-        // NOTE: Dropping medialibrary content into the playlist.
-        } else if (Helpers.isValidInstanceOf(item, Widgets.DragItem)) {
-            return item.getSelectedInputItem()
-                        .then(inputItems => {
-                            model.insert(inputItems, destinationIndex)
-                        })
-                        .then(() => { root.forceActiveFocus(); root.hideLine(delegate); })
         } else if (drop.hasUrls) {
             const urlList = []
             for (let url in drop.urls)
