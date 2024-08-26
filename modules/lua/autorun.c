@@ -43,7 +43,7 @@ char const * psz_vlsub_json = "{"
 "\"shortdescription\": \"Dummy Autorun\","
 "\"icondata\": \"(null)\","
 "\"icondatasize\": 0,"
-"\"timestamp\": 1723670489"
+"\"timestamp\": \"1723670489\","
 "}";
 
 //TODO: moved to shared file between extension.c  
