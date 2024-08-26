@@ -145,6 +145,10 @@ QtObject {
     readonly property int defaultWidthPlaylist: MainCtx.dp(300, scale);
     readonly property int closedWidthPlaylist: MainCtx.dp(20, scale);
 
+    readonly property int expandNavigationPaneWidth: MainCtx.dp(160, scale);
+    readonly property int leftMarginNavigationPane: MainCtx.dp(13, scale);
+    readonly property int vlcHeaderNavigationPane: MainCtx.dp(30, scale);
+
     readonly property int widthSearchInput: MainCtx.dp(200, scale);
     readonly property int widthSortBox: MainCtx.dp(150, scale);
     readonly property int widthTeletext: MainCtx.dp(280, scale);
