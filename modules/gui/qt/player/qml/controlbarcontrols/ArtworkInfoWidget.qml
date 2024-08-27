@@ -148,12 +148,7 @@ AbstractButton {
             Layout.fillHeight: true
             Layout.preferredWidth: height
 
-            source: {
-                if (!paintOnly && Player.artwork && Player.artwork.toString())
-                    return VLCAccessImage.uri(Player.artwork)
-                else
-                    return ""
-            }
+            source: Player.artwork
 
             fallbackImageSource: VLCStyle.noArtAlbumCover
 
