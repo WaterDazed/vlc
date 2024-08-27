@@ -154,8 +154,8 @@ AbstractButton {
 
             playCoverShowPlay: false
 
-            pictureWidth: root.width
-            pictureHeight: root.height
+            pictureWidth: width
+            pictureHeight: height
 
             Accessible.role: Accessible.Graphic
             Accessible.name: qsTr("Cover")
