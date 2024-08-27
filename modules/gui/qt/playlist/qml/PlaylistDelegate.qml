@@ -177,8 +177,6 @@ T.Control {
                     anchors.centerIn: parent
 
                     sourceItem: parent
-
-                    visible: (artwork.status === Image.Ready)
                 }
             }
 
