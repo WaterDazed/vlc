@@ -55,6 +55,9 @@ T.Control {
         return mapFromItem(d, p.x, p.y)
     }
 
+    required property var model
+    required property int index
+
 
     // Optional
     property var contextMenu
