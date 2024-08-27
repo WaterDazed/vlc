@@ -26,26 +26,18 @@
 
 #include "qt.hpp"
 
-#include "widgets/native/qvlcframe.hpp"
-#include "player/player_controller.hpp"
-#include "util/color_scheme_model.hpp"
-#include "medialibrary/medialib.hpp"
-#include <playlist/playlist_common.hpp>
-
 #include <QtQuick/QQuickView>
 #include <QApplication>
-
-#ifdef _WIN32
-# include <shobjidl.h>
-#endif
-
-#include <atomic>
+#include <QQuickItem>
 
 Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
 Q_MOC_INCLUDE( "playlist/playlist_controller.hpp" )
 Q_MOC_INCLUDE( "maininterface/mainctx_submodels.hpp" )
 Q_MOC_INCLUDE( "maininterface/videosurface.hpp" )
+Q_MOC_INCLUDE( "medialibrary/medialib.hpp" )
+Q_MOC_INCLUDE( "player/player_controller.hpp" )
+Q_MOC_INCLUDE( "util/color_scheme_model.hpp" )
 
 class CSDButtonModel;
 class QSettings;
@@ -69,6 +61,9 @@ class SearchCtx;
 class SortCtx;
 class WorkerThreadSet;
 class VLCSystray;
+class MediaLib;
+class ColorSchemeModel;
+class VLCVarChoiceModel;
 
 namespace vlc {
 namespace playlist {
