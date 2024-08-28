@@ -220,12 +220,29 @@ Item {
                         urls.push(url);
                     }
 
-                } else if (drop.hasText) {
-                    /* Browsers give content as text if you dnd the addressbar,
-                       so check if mimedata has valid url in text and use it
-                       if we didn't get any normal Urls()*/
+                } else {
+                    // If data is directly provided, craft an URL consisting
+                    // of Base64 encoded content:
+                    drop.formats.forEach(format => {
+                        if (format.startsWith("image") ||
+                            format.startsWith("audio") ||
+                            format.startsWith("video")) {
+                            const url = "data:%1;base64,%2".arg(format)
+                                                           .arg(MainCtx.byteArrayToBase64(drop.getDataAsArrayBuffer(format)))
+                            urls.push(url)
+                        }
+                    })
 
-                    urls.push(drop.text)
+                    if (urls.length === 0) {
+                        // Last resort
+                        if (drop.hasText) {
+                            /* Browsers give content as text if you dnd the addressbar,
+                               so check if mimedata has valid url in text and use it
+                               if we didn't get any normal Urls()*/
+
+                            urls.push(drop.text)
+                        }
+                    }
                 }
 
                 if (urls.length > 0) {
