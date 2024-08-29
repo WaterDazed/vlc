@@ -42,6 +42,7 @@
 #include "medialibrary/mlqmltypes.hpp"
 
 #include <QObject>
+#include <QWindow>
 #include <QStringList>
 
 #include <vlc_es.h>
@@ -71,23 +72,15 @@ class QEvent;
 class QSignalMapper;
 class VLCMenuBar;
 
-class DialogsProvider : public QObject, public Singleton<DialogsProvider>
+class DialogsProvider : public QObject, public QMLSingleton<DialogsProvider>
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
     friend class VLCMenuBar;
-    friend class Singleton<DialogsProvider>;
+    friend class QMLSingleton<DialogsProvider>;
 
 public:
-    static DialogsProvider *getInstance()
-    {
-        const auto instance = Singleton<DialogsProvider>::getInstance<false>();
-        assert( instance );
-        return instance;
-    }
-    static DialogsProvider *getInstance( qt_intf_t *p_intf )
-    {
-        return Singleton<DialogsProvider>::getInstance( p_intf );
-    }
     QStringList showSimpleOpen( const QString& help = QString(),
                                 int filters = EXT_FILTER_MEDIA |
                                 EXT_FILTER_VIDEO | EXT_FILTER_AUDIO |
@@ -106,6 +99,9 @@ public:
                                               const QString& label,
                                               const QString& placeholder,
                                               bool* ok = nullptr);
+
+    void openFileGenericDialog( intf_dialog_args_t * );
+
 
 protected:
     void customEvent( QEvent *);
@@ -157,8 +153,6 @@ public slots:
     void epgDialog();
     void setPopupMenu();
     void destroyPopupMenu();
-
-    void openFileGenericDialog( intf_dialog_args_t * );
 
     void simpleOpenDialog( bool start = true );
 

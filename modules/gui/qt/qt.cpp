@@ -983,7 +983,7 @@ static void *Thread( void *obj )
     DialogErrorModel::getInstance( p_intf );
 
     /* Initialize the Dialog Provider and the Main Input Manager */
-    DialogsProvider::getInstance( p_intf );
+    DialogsProvider::createInstance( p_intf );
     p_intf->p_mainPlayerController = new PlayerController(p_intf);
     p_intf->p_mainPlaylistController = vlc::playlist::PlaylistController::createInstance(p_intf->p_playlist);
 
