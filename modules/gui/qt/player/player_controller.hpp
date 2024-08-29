@@ -33,6 +33,7 @@
 #include "util/audio_device_model.hpp"
 #include "util/varchoicemodel.hpp"
 #include "util/vlctick.hpp"
+#include "util/singleton.hpp"
 
 
 using vlc_player_locker = vlc_locker<vlc_player_t, vlc_player_Lock, vlc_player_Unlock>;
@@ -42,39 +43,12 @@ using SharedAOut = vlc_shared_data_ptr_type(audio_output_t, aout_Hold, aout_Rele
 
 class QSignalMapper;
 
-class IMEvent : public QEvent
-{
-public:
-    enum event_types {
-        FullscreenControlToggle = QEvent::User + IMEventTypeOffset + 1,
-        FullscreenControlShow,
-        FullscreenControlHide,
-        FullscreenControlPlanHide,
-    };
-
-    IMEvent( event_types type, input_item_t *p_input = NULL )
-        : QEvent( (QEvent::Type)(type) )
-    {
-        if( (p_item = p_input) != NULL )
-            input_item_Hold( p_item );
-    }
-
-    virtual ~IMEvent()
-    {
-        if( p_item )
-            input_item_Release( p_item );
-    }
-
-    input_item_t *item() const { return p_item; }
-
-private:
-    input_item_t *p_item;
-};
-
 class PlayerControllerPrivate;
-class PlayerController : public QObject
+class PlayerController : public QObject, public QMLSingleton<PlayerController>
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(Player)
+    QML_SINGLETON
     friend class VLCMenuBar;
 
 public:
@@ -247,9 +221,10 @@ public slots:
     void requestAddSMPTETimer();
     void requestRemoveSMPTETimer();
 
-public:
+protected:
     PlayerController( qt_intf_t * );
     ~PlayerController();
+    friend class QMLSingleton<PlayerController>;
 
 public:
     using VOutThreadList = QVector<SharedVOutThread>;

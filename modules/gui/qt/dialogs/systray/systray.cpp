@@ -56,10 +56,10 @@ VLCSystray::VLCSystray(MainCtx* ctx, QObject* parent)
             this, &VLCSystray::handleClick );
 
     /* Connects on nameChanged() */
-    connect( m_intf->p_mainPlayerController, &PlayerController::nameChanged,
+    connect( THEMIM, &PlayerController::nameChanged,
             this, &VLCSystray::updateTooltipName );
     /* Connect PLAY_STATUS on the systray */
-    connect( m_intf->p_mainPlayerController, &PlayerController::playingStateChanged,
+    connect( THEMIM, &PlayerController::playingStateChanged,
             this, &VLCSystray::update );
 }
 

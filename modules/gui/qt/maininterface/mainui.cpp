@@ -122,9 +122,7 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
 
     SingletonRegisterHelper<MainCtx>::setInstance(mainCtx);
 
-    assert(m_intf->p_mainPlayerController);
-    SingletonRegisterHelper<PlayerController>::setInstance(m_intf->p_mainPlayerController);
-
+    assert(PlayerController::getInstance());
     assert(PlaylistController::getInstance());
 
     assert(DialogsProvider::getInstance());
@@ -283,7 +281,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterUncreatableType<TitleListModel>(uri, versionMajor, versionMinor, "TitleListModel", "available titles of a media" );
         qmlRegisterUncreatableType<ChapterListModel>(uri, versionMajor, versionMinor, "ChapterListModel", "available chapters of a media" );
         qmlRegisterUncreatableType<ProgramListModel>(uri, versionMajor, versionMinor, "ProgramListModel", "available programs of a media" );
-        qmlRegisterSingletonType<PlayerController>(uri, versionMajor, versionMinor, "Player", SingletonRegisterHelper<PlayerController>::callback);
+        qmlRegisterTypesAndRevisions<PlayerController>(uri, versionMajor);
 
         qmlRegisterType<QmlBookmarkMenu>( uri, versionMajor, versionMinor, "QmlBookmarkMenu" );
         qmlRegisterType<QmlProgramMenu>( uri, versionMajor, versionMinor, "QmlProgramMenu" );

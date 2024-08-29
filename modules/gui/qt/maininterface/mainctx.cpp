@@ -637,8 +637,8 @@ VideoSurfaceProvider* MainCtx::getVideoSurfaceProvider() const
 
 bool MainCtx::onWindowClose( QWindow* )
 {
-    PlaylistController* playlistController = p_intf->p_mainPlaylistController;
-    PlayerController* playerController = p_intf->p_mainPlayerController;
+    PlaylistController* playlistController = THEMPL;
+    PlayerController* playerController = THEMIM;
 
     if (m_videoSurfaceProvider)
         m_videoSurfaceProvider->onWindowClosed();
