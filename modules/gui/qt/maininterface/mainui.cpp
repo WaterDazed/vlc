@@ -127,7 +127,6 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(DialogsProvider::getInstance());
     assert(DialogErrorModel::getInstance());
 
-    SingletonRegisterHelper<NavigationHistory>::setInstance( new NavigationHistory(this) );
     SingletonRegisterHelper<SystemPalette>::setInstance( new SystemPalette(this) );
     SingletonRegisterHelper<QmlKeyHelper>::setInstance( new QmlKeyHelper(this) );
     SingletonRegisterHelper<SVGColorImage>::setInstance( new SVGColorImage(this) );
@@ -222,7 +221,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<MainCtx>(uri, versionMajor);
         qmlRegisterUncreatableType<SearchCtx>(uri, versionMajor, versionMinor, "SearchCtx", "");
         qmlRegisterUncreatableType<SortCtx>(uri, versionMajor, versionMinor, "SortCtx", "");
-        qmlRegisterSingletonType<NavigationHistory>(uri, versionMajor, versionMinor, "History", SingletonRegisterHelper<NavigationHistory>::callback);
+        qmlRegisterTypesAndRevisions<NavigationHistory>(uri, versionMajor);
         qmlRegisterUncreatableType<QAbstractItemModel>(uri, versionMajor, versionMinor, "QtAbstractItemModel", "");
         qmlRegisterUncreatableType<QWindow>(uri, versionMajor, versionMinor, "QtWindow", "");
         qmlRegisterUncreatableType<QScreen>(uri, versionMajor, versionMinor, "QtScreen", "");
