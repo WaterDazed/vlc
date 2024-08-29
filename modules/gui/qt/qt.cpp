@@ -980,7 +980,7 @@ static void *Thread( void *obj )
 
     app.setDesktopFileName( PACKAGE );
 
-    DialogErrorModel::getInstance( p_intf );
+    DialogErrorModel::createInstance( p_intf );
 
     /* Initialize the Dialog Provider and the Main Input Manager */
     DialogsProvider::createInstance( p_intf );

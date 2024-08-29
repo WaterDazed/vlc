@@ -128,9 +128,7 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(PlaylistController::getInstance());
 
     assert(DialogsProvider::getInstance());
-
-    assert(DialogErrorModel::getInstance<false>());
-    SingletonRegisterHelper<DialogErrorModel>::setInstance( DialogErrorModel::getInstance<false>() );
+    assert(DialogErrorModel::getInstance());
 
     SingletonRegisterHelper<NavigationHistory>::setInstance( new NavigationHistory(this) );
     SingletonRegisterHelper<SystemPalette>::setInstance( new SystemPalette(this) );
@@ -253,7 +251,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterType<DialogModel>(uri, versionMajor, versionMinor, "DialogModel");
         qmlRegisterUncreatableType<DialogId>( uri, versionMajor, versionMinor, "dialogId", "");
         qmlRegisterTypesAndRevisions<DialogsProvider>(uri, versionMajor);
-        qmlRegisterSingletonType<DialogErrorModel>(uri, versionMajor, versionMinor, "DialogErrorModel", SingletonRegisterHelper<DialogErrorModel>::callback);
+        qmlRegisterTypesAndRevisions<DialogErrorModel>(uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);

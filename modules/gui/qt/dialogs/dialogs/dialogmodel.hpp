@@ -55,9 +55,11 @@ public: // Variables
 };
 
 
-class DialogErrorModel : public QAbstractListModel, public Singleton<DialogErrorModel>
+class DialogErrorModel : public QAbstractListModel, public QMLSingleton<DialogErrorModel>
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
 
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(QString notificationText READ notificationText NOTIFY countChanged FINAL)
@@ -80,9 +82,10 @@ private:
     QString lastNotificationText;
     int repeatedNotificationCount = 0;
 
-public:
+protected:
     explicit DialogErrorModel(qt_intf_t* intf, QObject * parent = nullptr);
     virtual ~DialogErrorModel();
+    friend class QMLSingleton<DialogErrorModel>;
 
 public: // QAbstractItemModel implementation
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;

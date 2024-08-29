@@ -85,7 +85,7 @@ MessagesDialog::MessagesDialog( qt_intf_t *_p_intf)
                                          QDialogButtonBox::RejectRole );
 
     /* Error messages */
-    DialogErrorModel *errors = DialogErrorModel::getInstance<false>();
+    DialogErrorModel *errors = DialogErrorModel::getInstance();
     connect( errors, &DialogErrorModel::countChanged, this, &MessagesDialog::errorsCountChanged );
     for(int i=0; i<errors->count(); i++)
         addError(i);
@@ -171,7 +171,7 @@ void MessagesDialog::updateConfig()
 }
 
 void MessagesDialog::addError(int row){
-    DialogErrorModel *errors = DialogErrorModel::getInstance<false>();
+    DialogErrorModel *errors = DialogErrorModel::getInstance();
 
     QPlainTextEdit * errorsList = ui.errors;
 
@@ -206,7 +206,7 @@ void MessagesDialog::addError(int row){
 }
 
 void MessagesDialog::errorsCountChanged(){
-    DialogErrorModel *errors = DialogErrorModel::getInstance(p_intf);
+    DialogErrorModel *errors = DialogErrorModel::getInstance();
     addError(errors->count() - 1);
 }
 
