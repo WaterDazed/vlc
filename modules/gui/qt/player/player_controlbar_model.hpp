@@ -20,7 +20,7 @@
 #define PLAYERCONTROLBARMODEL_HPP
 
 #include <QObject>
-#include <QJSValue>
+#include <QQmlEngine>
 #include <QMap>
 
 #include <array>
@@ -64,9 +64,6 @@ public:
 
     static const QMap<PlayerIdentifier, const char*> playerIdentifierDictionary;
 
-    static QJSValue getPlaylistIdentifierListModel(class QQmlEngine *engine,
-                                                   class QJSEngine *scriptEngine);
-
     explicit PlayerControlbarModel(QObject *parent = nullptr);
     ~PlayerControlbarModel();
 
@@ -103,6 +100,23 @@ private:
 
 private slots:
     void contentChanged();
+};
+
+class PlayerListModel : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+
+    Q_PROPERTY(QVariantList model READ getModel CONSTANT FINAL)
+
+public:
+    PlayerListModel();
+
+    const QVariantList& getModel() const;
+
+private:
+    QVariantList m_model;
 };
 
 #endif
