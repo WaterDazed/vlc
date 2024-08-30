@@ -158,7 +158,7 @@ bool MainUI::setup(QQmlEngine* engine)
     engine->addImportPath(":/qt/qml");
 #endif
 
-    SingletonRegisterHelper<EffectsImageProvider>::setInstance(new EffectsImageProvider(engine));
+    engine->addImageProvider(EffectsImageProvider::providerId, new EffectsImageProvider());
     engine->addImageProvider(QStringLiteral("svgcolor"), new SVGColorImageImageProvider());
     engine->addImageProvider(QStringLiteral("vlcaccess"), new VLCAccessImageProvider());
 
@@ -364,7 +364,8 @@ void MainUI::registerQMLTypes()
 
         // @uri VLC.Util
         qmlRegisterTypesAndRevisions<QmlKeyHelper>(uri, versionMajor);
-        qmlRegisterSingletonType<EffectsImageProvider>(uri, versionMajor, versionMinor, "Effects", SingletonRegisterHelper<EffectsImageProvider>::callback);
+        qmlRegisterTypesAndRevisions<Effects>(uri, versionMajor);
+
         qmlRegisterUncreatableType<SVGColorImageBuilder>(uri, versionMajor, versionMinor, "SVGColorImageBuilder", "");
         qmlRegisterSingletonType<SVGColorImage>(uri, versionMajor, versionMinor, "SVGColorImage", SingletonRegisterHelper<SVGColorImage>::callback);
         qmlRegisterSingletonType<VLCAccessImage>(uri, versionMajor, versionMinor, "VLCAccessImage", SingletonRegisterHelper<VLCAccessImage>::callback);

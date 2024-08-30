@@ -212,7 +212,7 @@ QImage EffectsImageProvider::requestImage(const QString &id, QSize *size, const 
         if (requestedSize.isEmpty())
             return {};
 
-        static const auto effectMetaEnum = QMetaEnum::fromType<EffectsImageProvider::Effect>();
+        static const auto effectMetaEnum = QMetaEnum::fromType<Effects::Effect>();
 
         static const auto queryToVariantMap = [](const QUrlQuery& query) {
             QVariantMap map;
@@ -228,18 +228,18 @@ QImage EffectsImageProvider::requestImage(const QString &id, QSize *size, const 
         const QUrlQuery query(url);
 
         std::unique_ptr<IEffect> effect;
-        switch (static_cast<EffectsImageProvider::Effect>(effectMetaEnum.keyToValue(url.path().toLatin1())))
+        switch (static_cast<Effects::Effect>(effectMetaEnum.keyToValue(url.path().toLatin1())))
         {
-        case EffectsImageProvider::RectDropShadow:
+        case Effects::RectDropShadow:
             effect = std::make_unique<RectDropShadowEffect>(queryToVariantMap(query));
             break;
 
-        case EffectsImageProvider::RoundedRectDropShadow:
+        case Effects::RoundedRectDropShadow:
             effect = std::make_unique<RoundedRectDropShadowEffect>(queryToVariantMap(query));
             break;
 
 
-        case EffectsImageProvider::DoubleRoundedRectDropShadow:
+        case Effects::DoubleRoundedRectDropShadow:
             effect = std::make_unique<DoubleShadowEffect>(queryToVariantMap(query));
             break;
 
@@ -256,15 +256,15 @@ QImage EffectsImageProvider::requestImage(const QString &id, QSize *size, const 
     return effect;
 }
 
-QUrl EffectsImageProvider::url(Effect effect, const QVariantMap &properties)
+QUrl Effects::url(Effect effect, const QVariantMap &properties)
 {
-    static const auto effectMetaEnum = QMetaEnum::fromType<EffectsImageProvider::Effect>();
+    static const auto effectMetaEnum = QMetaEnum::fromType<Effect>();
 
     QUrl url;
     // image://
     url.setScheme(QStringLiteral("image"));
     // image://{id} -> image://effects
-    url.setAuthority(QLatin1String(providerId), QUrl::ParsingMode::StrictMode);
+    url.setAuthority(QLatin1String(EffectsImageProvider::providerId), QUrl::ParsingMode::StrictMode);
     // image://{id}/{effectType} -> image://effects/DropShadow
     url.setPath(QString("/%1").arg(effectMetaEnum.valueToKey(effect)), QUrl::ParsingMode::StrictMode);
 
