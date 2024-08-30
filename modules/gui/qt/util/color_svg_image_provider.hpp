@@ -78,6 +78,9 @@ private:
 
 class SVGColorImage : public QObject {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+
 public:
     SVGColorImage(QObject* parent = nullptr);
 

@@ -127,7 +127,6 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(DialogsProvider::getInstance());
     assert(DialogErrorModel::getInstance());
 
-    SingletonRegisterHelper<SVGColorImage>::setInstance( new SVGColorImage(this) );
     SingletonRegisterHelper<VLCAccessImage>::setInstance( new VLCAccessImage(this) );
 
     if (m_mainCtx->hasMediaLibrary())
@@ -366,7 +365,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<Effects>(uri, versionMajor);
 
         qmlRegisterUncreatableType<SVGColorImageBuilder>(uri, versionMajor, versionMinor, "SVGColorImageBuilder", "");
-        qmlRegisterSingletonType<SVGColorImage>(uri, versionMajor, versionMinor, "SVGColorImage", SingletonRegisterHelper<SVGColorImage>::callback);
+        qmlRegisterTypesAndRevisions<SVGColorImage>(uri, versionMajor);
         qmlRegisterSingletonType<VLCAccessImage>(uri, versionMajor, versionMinor, "VLCAccessImage", SingletonRegisterHelper<VLCAccessImage>::callback);
         qmlRegisterType<DelayEstimator>( uri, versionMajor, versionMinor, "DelayEstimator" );
 
