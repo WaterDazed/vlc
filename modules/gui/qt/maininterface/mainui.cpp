@@ -127,7 +127,6 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(DialogsProvider::getInstance());
     assert(DialogErrorModel::getInstance());
 
-    SingletonRegisterHelper<SystemPalette>::setInstance( new SystemPalette(this) );
     SingletonRegisterHelper<QmlKeyHelper>::setInstance( new QmlKeyHelper(this) );
     SingletonRegisterHelper<SVGColorImage>::setInstance( new SVGColorImage(this) );
     SingletonRegisterHelper<VLCAccessImage>::setInstance( new VLCAccessImage(this) );
