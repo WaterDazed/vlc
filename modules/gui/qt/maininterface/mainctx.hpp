@@ -29,6 +29,7 @@
 #include <QtQuick/QQuickView>
 #include <QApplication>
 #include <QQuickItem>
+#include "util/singleton.hpp"
 
 Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
@@ -85,9 +86,11 @@ public:
 
 };
 
-class MainCtx : public QObject
+class MainCtx : public QObject, public QMLSingleton<MainCtx>
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
 
     Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
     Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
@@ -139,11 +142,13 @@ class MainCtx : public QObject
     Q_PROPERTY(SearchCtx* search MEMBER m_search CONSTANT FINAL)
     Q_PROPERTY(SortCtx* sort MEMBER m_sort CONSTANT FINAL)
 
-public:
+protected:
     /* tors */
     MainCtx(qt_intf_t *);
     virtual ~MainCtx();
+    friend class QMLSingleton<MainCtx>;
 
+public:
     static const QEvent::Type ToolbarsNeedRebuild;
     static constexpr double MIN_INTF_USER_SCALE_FACTOR = 0.3;
     static constexpr double MAX_INTF_USER_SCALE_FACTOR = 3.0;

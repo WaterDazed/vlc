@@ -120,8 +120,7 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(m_mainCtx);
     assert(m_interfaceWindow);
 
-    SingletonRegisterHelper<MainCtx>::setInstance(mainCtx);
-
+    assert(MainCtx::getInstance());
     assert(PlayerController::getInstance());
     assert(PlaylistController::getInstance());
 
@@ -220,7 +219,7 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.MainInterface
-        qmlRegisterSingletonType<MainCtx>(uri, versionMajor, versionMinor, "MainCtx", SingletonRegisterHelper<MainCtx>::callback);
+        qmlRegisterTypesAndRevisions<MainCtx>(uri, versionMajor);
         qmlRegisterUncreatableType<SearchCtx>(uri, versionMajor, versionMinor, "SearchCtx", "");
         qmlRegisterUncreatableType<SortCtx>(uri, versionMajor, versionMinor, "SortCtx", "");
         qmlRegisterSingletonType<NavigationHistory>(uri, versionMajor, versionMinor, "History", SingletonRegisterHelper<NavigationHistory>::callback);

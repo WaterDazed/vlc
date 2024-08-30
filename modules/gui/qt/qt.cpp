@@ -989,9 +989,9 @@ static void *Thread( void *obj )
 
     /* Create the normal interface in non-DP mode */
 #ifdef _WIN32
-    p_intf->p_mi = new MainCtxWin32(p_intf);
+    p_intf->p_mi = MainCtx::createInstance<MainCtxWin32>(p_intf);
 #else
-    p_intf->p_mi = new MainCtx(p_intf);
+    p_intf->p_mi = MainCtx::createInstance(p_intf);
 #endif
 
     if( !p_intf->b_isDialogProvider )
@@ -1012,7 +1012,7 @@ static void *Thread( void *obj )
         if (!ret)
         {
             msg_Err(p_intf, "unable to create main interface");
-            delete p_intf->p_mi;
+            MainCtx::killInstance();
             p_intf->p_mi = nullptr;
             //process deleteLater events as the main loop will never run
             QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
@@ -1116,14 +1116,13 @@ static void *ThreadCleanup( qt_intf_t *p_intf, CleanupReason cleanupReason )
         if (cleanupReason == CLEANUP_INTF_CLOSED)
         {
             p_intf->p_compositor->unloadGUI();
-            delete p_intf->p_mi;
+            MainCtx::killInstance();
             p_intf->p_mi = nullptr;
         }
         else // CLEANUP_APP_TERMINATED
         {
             p_intf->p_compositor->destroyMainInterface();
-            delete p_intf->p_mi;
-            p_intf->p_mi = nullptr;
+            MainCtx::killInstance();
 
             delete p_intf->mainSettings;
             p_intf->mainSettings = nullptr;
