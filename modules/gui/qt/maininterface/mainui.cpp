@@ -127,7 +127,6 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(DialogsProvider::getInstance());
     assert(DialogErrorModel::getInstance());
 
-    SingletonRegisterHelper<QmlKeyHelper>::setInstance( new QmlKeyHelper(this) );
     SingletonRegisterHelper<SVGColorImage>::setInstance( new SVGColorImage(this) );
     SingletonRegisterHelper<VLCAccessImage>::setInstance( new VLCAccessImage(this) );
 
@@ -364,7 +363,7 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.Util
-        qmlRegisterSingletonType<QmlKeyHelper>(uri, versionMajor, versionMinor, "KeyHelper", SingletonRegisterHelper<QmlKeyHelper>::callback);
+        qmlRegisterTypesAndRevisions<QmlKeyHelper>(uri, versionMajor);
         qmlRegisterSingletonType<EffectsImageProvider>(uri, versionMajor, versionMinor, "Effects", SingletonRegisterHelper<EffectsImageProvider>::callback);
         qmlRegisterUncreatableType<SVGColorImageBuilder>(uri, versionMajor, versionMinor, "SVGColorImageBuilder", "");
         qmlRegisterSingletonType<SVGColorImage>(uri, versionMajor, versionMinor, "SVGColorImage", SingletonRegisterHelper<SVGColorImage>::callback);
