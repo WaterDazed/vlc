@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QMap>
 #include <QVector>
+#include <QQmlEngine>
 #include <array>
 
 Q_MOC_INCLUDE( "player/player_controlbar_model.hpp" )
@@ -30,6 +31,8 @@ class PlayerControlbarModel;
 class ControlbarProfile : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("need to be accessed though ControlbarProfileModel")
 
     Q_PROPERTY(bool dirty READ dirty RESET resetDirty NOTIFY dirtyChanged FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)

@@ -32,6 +32,8 @@ class ControlListModel;
 class PlayerControlbarModel : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("needs to be accesed through ControlbarProfile")
 
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged FINAL)
     Q_PROPERTY(bool empty READ empty NOTIFY emptyChanged FINAL)

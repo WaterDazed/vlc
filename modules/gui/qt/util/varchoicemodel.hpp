@@ -27,6 +27,7 @@
 #include <QAbstractListModel>
 #include <vlc_cxx_helpers.hpp>
 #include "varcommon_p.hpp"
+#include <QQmlEngine>
 
 extern "C" {
 int VLCVarChoiceModel_on_variable_callback( vlc_object_t * object, char const * , vlc_value_t oldvalue, vlc_value_t newvalue, void * data);
@@ -42,6 +43,8 @@ int VLCVarChoiceModel_on_variable_list_callback( vlc_object_t * object, char con
 class VLCVarChoiceModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("VLCVarChoiceModel is uncreatable")
 public:
     Q_PROPERTY(bool hasCurrent READ hasCurrent NOTIFY hasCurrentChanged FINAL)
 

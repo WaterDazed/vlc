@@ -21,6 +21,7 @@
 
 #include <QAbstractListModel>
 #include <QQmlParserStatus>
+#include <QQmlEngine>
 #include <QString>
 
 
@@ -29,6 +30,8 @@ class BaseModelPrivate;
 class BaseModel : public QAbstractListModel, public QQmlParserStatus
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("BaseModel must be inherited")
     Q_INTERFACES(QQmlParserStatus)
 
     Q_PROPERTY(QString searchPattern READ searchPattern WRITE setSearchPattern NOTIFY searchPatternChanged FINAL)

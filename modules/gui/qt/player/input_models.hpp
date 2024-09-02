@@ -30,6 +30,7 @@
 #include <vlc_cxx_helpers.hpp>
 #include <QAbstractListModel>
 #include <QList>
+#include <QQmlEngine>
 
 /**
  * @brief The TrackListModel class represent the
@@ -44,6 +45,9 @@
 class TrackListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("need to be accessed though the player controller")
+
     Q_PROPERTY(int count READ getCount NOTIFY countChanged FINAL)
     Q_PROPERTY(bool multiSelect READ getMultiSelect WRITE setMultiSelect NOTIFY multiSelectChanged FINAL)
 
@@ -110,6 +114,9 @@ private:
 class TitleListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("need to be accessed though the player controller")
+
     Q_PROPERTY(int count READ getCount NOTIFY countChanged FINAL)
 
 public:
@@ -159,6 +166,8 @@ private:
 class ChapterListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("need to be accessed though the player controller")
     Q_PROPERTY(int count READ getCount NOTIFY countChanged FINAL)
 
 public:
@@ -216,6 +225,8 @@ private:
 class ProgramListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("need to be accessed though the player controller")
     Q_PROPERTY(int count READ getCount NOTIFY countChanged FINAL)
 
 public:

@@ -20,6 +20,7 @@
 
 #include <QAbstractListModel>
 #include <QSettings>
+#include <QQmlEngine>
 #include <array>
 
 #include "controlbar_profile.hpp"
@@ -28,6 +29,8 @@
 class ControlbarProfileModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("need to be accessed though the main ctx")
 
     Q_PROPERTY(int selectedProfile READ selectedProfile WRITE setSelectedProfile NOTIFY selectedProfileChanged FINAL)
     Q_PROPERTY(ControlbarProfile* currentModel READ currentModel NOTIFY selectedProfileChanged FINAL)

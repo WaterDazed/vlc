@@ -49,6 +49,9 @@ class MLBaseModelPrivate;
 class MLBaseModel : public BaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("MLBaseModel must be inherited")
+
     Q_PROPERTY(MLItemId parentId READ parentId WRITE setParentId NOTIFY parentIdChanged
                RESET unsetParentId FINAL)
 

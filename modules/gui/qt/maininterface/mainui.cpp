@@ -175,17 +175,17 @@ void MainUI::registerQMLTypes()
 
         // @uri VLC.MainInterface
         qmlRegisterTypesAndRevisions<MainCtx>(uri, versionMajor);
-        qmlRegisterUncreatableType<SearchCtx>(uri, versionMajor, versionMinor, "SearchCtx", "");
-        qmlRegisterUncreatableType<SortCtx>(uri, versionMajor, versionMinor, "SortCtx", "");
+        qmlRegisterTypesAndRevisions<SearchCtx>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<SortCtx>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<NavigationHistory>(uri, versionMajor);
         qmlRegisterUncreatableType<QAbstractItemModel>(uri, versionMajor, versionMinor, "QtAbstractItemModel", "");
         qmlRegisterTypesAndRevisions<VLCTick>(uri, versionMajor);
         qmlRegisterType<VideoSurface>(uri, versionMajor, versionMinor, "VideoSurface");
-        qmlRegisterUncreatableType<BaseModel>( uri, versionMajor, versionMinor, "BaseModel", "Base Model is uncreatable." );
-        qmlRegisterUncreatableType<VLCVarChoiceModel>(uri, versionMajor, versionMinor, "VLCVarChoiceModel", "generic variable with choice model" );
-        qmlRegisterUncreatableType<CSDButton>(uri, versionMajor, versionMinor, "CSDButton", "");
-        qmlRegisterUncreatableType<CSDButtonModel>(uri, versionMajor, versionMinor, "CSDButtonModel", "has CSD buttons and provides for communicating CSD events between UI and backend");
-        qmlRegisterUncreatableType<NavigationAttached>( uri, versionMajor, versionMinor, "Navigation", "Navigation is only available via attached properties");
+        qmlRegisterTypesAndRevisions<BaseModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<VLCVarChoiceModel>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<CSDButton>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<CSDButtonModel>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<NavigationAttached>( uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
@@ -229,10 +229,10 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.Player
-        qmlRegisterUncreatableType<TrackListModel>(uri, versionMajor, versionMinor, "TrackListModel", "available tracks of a media (audio/video/sub)" );
-        qmlRegisterUncreatableType<TitleListModel>(uri, versionMajor, versionMinor, "TitleListModel", "available titles of a media" );
-        qmlRegisterUncreatableType<ChapterListModel>(uri, versionMajor, versionMinor, "ChapterListModel", "available chapters of a media" );
-        qmlRegisterUncreatableType<ProgramListModel>(uri, versionMajor, versionMinor, "ProgramListModel", "available programs of a media" );
+        qmlRegisterTypesAndRevisions<TrackListModel>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<TitleListModel>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<ChapterListModel>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<ProgramListModel>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<PlayerController>(uri, versionMajor);
 
         qmlRegisterType<QmlBookmarkMenu>( uri, versionMajor, versionMinor, "QmlBookmarkMenu" );
@@ -251,10 +251,10 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.PlayerControls
-        qmlRegisterUncreatableType<ControlbarProfileModel>(uri, versionMajor, versionMinor, "ControlbarProfileModel", "");
-        qmlRegisterUncreatableType<ControlbarProfile>(uri, versionMajor, versionMinor, "ControlbarProfile", "");
-        qmlRegisterUncreatableType<PlayerControlbarModel>(uri, versionMajor, versionMinor, "PlayerControlbarModel", "");
-        qmlRegisterUncreatableType<ControlListModel>( uri, versionMajor, versionMinor, "ControlListModel", "" );
+        qmlRegisterTypesAndRevisions<ControlbarProfileModel>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<ControlbarProfile>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<PlayerControlbarModel>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<ControlListModel>( uri, versionMajor);
         qmlRegisterType<ControlListFilter>(uri, versionMajor, versionMinor, "ControlListFilter");
         qmlRegisterTypesAndRevisions<PlayerListModel>(uri, versionMajor);
 
@@ -303,7 +303,7 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.Style
-        qmlRegisterUncreatableType<ColorSchemeModel>(uri, versionMajor, versionMinor, "ColorSchemeModel", "");
+        qmlRegisterTypesAndRevisions<ColorSchemeModel>(uri, versionMajor);
         qmlRegisterType<ColorContext>(uri, versionMajor, versionMinor, "ColorContext");
         qmlRegisterTypesAndRevisions<ColorProperty>(uri, versionMajor);
         qmlRegisterType<SystemPalette>(uri, versionMajor, versionMinor, "SystemPalette");
@@ -321,7 +321,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<QmlKeyHelper>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<Effects>(uri, versionMajor);
 
-        qmlRegisterUncreatableType<SVGColorImageBuilder>(uri, versionMajor, versionMinor, "SVGColorImageBuilder", "");
+        qmlRegisterTypesAndRevisions<SVGColorImageBuilder>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<SVGColorImage>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<VLCAccessImage>(uri, versionMajor);
         qmlRegisterType<DelayEstimator>( uri, versionMajor, versionMinor, "DelayEstimator" );
@@ -360,7 +360,7 @@ void MainUI::registerQMLTypes()
         // @uri VLC.MediaLibrary
         qmlRegisterTypesAndRevisions<MediaLib>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<MLItemId>( uri, versionMajor);
-        qmlRegisterUncreatableType<MLBaseModel>( uri, versionMajor, versionMinor, "MLBaseModel", "ML Base Model is uncreatable." );
+        qmlRegisterTypesAndRevisions<MLBaseModel>( uri, versionMajor);
         qmlRegisterType<MLAlbumModel>( uri, versionMajor, versionMinor, "MLAlbumModel" );
         qmlRegisterType<MLArtistModel>( uri, versionMajor, versionMinor, "MLArtistModel" );
         qmlRegisterType<MLAlbumTrackModel>( uri, versionMajor, versionMinor, "MLAlbumTrackModel" );

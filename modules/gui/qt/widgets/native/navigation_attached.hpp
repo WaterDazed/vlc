@@ -32,6 +32,9 @@ private: \
 class NavigationAttached : public QObject
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(Navigation)
+    QML_UNCREATABLE("Navigation is only available via attached properties.")
+    QML_ATTACHED(NavigationAttached)
 
     VLC_QT_SIMPLE_PROPERTY(bool, navigable, true)
 
@@ -51,10 +54,6 @@ class NavigationAttached : public QObject
 
     VLC_QT_SIMPLE_PROPERTY(QQuickItem*, cancelItem, nullptr)
     VLC_QT_SIMPLE_PROPERTY(QJSValue, cancelAction, QJSValue::UndefinedValue)
-
-    QML_NAMED_ELEMENT(Navigation)
-    QML_UNCREATABLE("Navigation is only available via attached properties.")
-    QML_ATTACHED(NavigationAttached)
 public:
     explicit NavigationAttached(QObject *parent = nullptr);
 

@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <QQuickAsyncImageProvider>
+#include <QQmlEngine>
 #include <QString>
 #include <QUrlQuery>
 
@@ -34,6 +35,9 @@ public:
 class SVGColorImageBuilder : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("use SVGColorImage")
+
 public:
     SVGColorImageBuilder(QString path, QObject* parent = nullptr);
 
