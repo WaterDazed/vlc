@@ -158,6 +158,34 @@ enum h266_slice_type_e
 };
 
 bool h266_get_slice_type(const h266_picture_header_t *, enum h266_slice_type_e *);
+
+/*
+ * POC computing
+ */
+typedef struct
+{
+    struct
+    {
+        int lsb;
+        int msb;
+    } prevTid0PicOrderCnt;
+
+    bool HandleCraAsClvsStartFlag;
+    bool first_picture; /* Must be set on start or on NAL_EOS */
+} h266_poc_ctx_t;
+
+static inline void h266_poc_ctx_init(h266_poc_ctx_t *p_ctx)
+{
+    p_ctx->prevTid0PicOrderCnt.lsb = 0;
+    p_ctx->prevTid0PicOrderCnt.msb = 0;
+    p_ctx->first_picture = true;
+    p_ctx->HandleCraAsClvsStartFlag = false;
+}
+
+int h266_compute_picture_order_count(const h266_sequence_parameter_set_t *p_sps,
+                                     const h266_picture_header_t *slice,
+                                     h266_poc_ctx_t *ctx);
+
 #ifdef __cplusplus
 }
 #endif

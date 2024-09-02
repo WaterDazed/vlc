@@ -30,6 +30,8 @@
 
 #include <math.h>
 
+//#define H266_POC_DEBUG
+
 #define H266_MAX_NUM_PTL_SUBLAYERS 7
 #define H266_MAX_NUM_LAYER_OLSS 257
 #define H266_MAX_NUM_DPB_PARAMS H266_MAX_NUM_LAYER_OLSS
@@ -193,6 +195,8 @@ struct h266_sequence_parameter_set_t
     nal_u3_t sps_max_sublayers_minus1;
     h266_profile_tier_level_t profile_tier_level[H266_MAX_NUM_PTL_SUBLAYERS];
 
+    nal_u4_t sps_num_extra_ph_bits;
+
     nal_u2_t chroma_format_idc;
     nal_u1_t sps_ptl_dpb_hrd_params_present_flag;
     nal_ue_t pic_width_max_in_luma_samples;
@@ -203,6 +207,8 @@ struct h266_sequence_parameter_set_t
 
     nal_ue_t sps_bitdepth_minus8;
     nal_u4_t sps_log2_max_pic_order_cnt_lsb_minus4;
+    nal_u1_t sps_poc_msb_cycle_flag;
+    nal_ue_t sps_poc_msb_cycle_len_minus1;
 
     h266_dpb_parameters_t dpb_parameters[H266_MAX_NUM_PTL_SUBLAYERS];
 
@@ -236,12 +242,15 @@ struct h266_decoding_capability_information_t
 
 struct h266_picture_header_t
 {
+    enum h266_nal_unit_type_e nal_type;
     nal_u1_t ph_gdr_or_irap_pic_flag;
     nal_u1_t ph_gdr_pic_flag;
     nal_u1_t ph_non_ref_pic_flag;
     nal_ue_t ph_pic_parameter_set_id;
     uint32_t ph_pic_order_cnt_lsb;
     nal_ue_t ph_recovery_poc_cnt;
+    nal_u1_t ph_poc_msb_cycle_present_flag;
+    nal_ue_t ph_poc_msb_cycle_val;
 };
 
 static bool h266_parse_general_hrd_parameters(bs_t *p_bs,
@@ -627,11 +636,16 @@ static bool h266_parse_sequence_parameter_set_rbsp(bs_t *p_bs,
     if(p_sps->sps_log2_max_pic_order_cnt_lsb_minus4 > 12)
         return false;
 
-    if(bs_read(p_bs, 1))
-        bs_read_ue(p_bs);
+    p_sps->sps_poc_msb_cycle_flag = bs_read(p_bs, 1);
+    if(p_sps->sps_poc_msb_cycle_flag)
+    {
+        p_sps->sps_poc_msb_cycle_len_minus1 = bs_read_ue(p_bs);
+        if(p_sps->sps_poc_msb_cycle_len_minus1 + p_sps->sps_log2_max_pic_order_cnt_lsb_minus4 + 5U > 32)
+            return false;
+    }
 
-    bs_skip(p_bs, bs_read(p_bs, 2) * 8); // sps_num_extra_ph_bytes
-
+    for(uint8_t sps_num_extra_ph_bytes = bs_read(p_bs, 2) * 8; sps_num_extra_ph_bytes; sps_num_extra_ph_bytes--)
+        p_sps->sps_num_extra_ph_bits += bs_read(p_bs, 1); // sps_extra_ph_bit_present_flag
     bs_skip(p_bs, bs_read(p_bs, 2) * 8); // sps_num_extra_sh_bytes
 
     if(p_sps->sps_ptl_dpb_hrd_params_present_flag)
@@ -640,9 +654,9 @@ static bool h266_parse_sequence_parameter_set_rbsp(bs_t *p_bs,
         if(p_sps->sps_max_sublayers_minus1)
             sps_sublayer_dpb_params_flag = bs_read(p_bs, 1);
         if(!h266_parse_dpb_parameters(p_bs,
-                                        p_sps->sps_max_sublayers_minus1,
-                                        sps_sublayer_dpb_params_flag,
-                                        p_sps->dpb_parameters))
+                                      p_sps->sps_max_sublayers_minus1,
+                                      sps_sublayer_dpb_params_flag,
+                                      p_sps->dpb_parameters))
             return false;
     }
 
@@ -960,6 +974,13 @@ static bool h266_parse_picture_header_rbsp(bs_t *p_bs,
     ph->ph_pic_order_cnt_lsb = bs_read(p_bs, p_sps->sps_log2_max_pic_order_cnt_lsb_minus4 + 4);
     if(ph->ph_gdr_pic_flag)
         ph->ph_pic_order_cnt_lsb = bs_read_ue(p_bs);
+    bs_read(p_bs, p_sps->sps_num_extra_ph_bits);
+    if(p_sps->sps_poc_msb_cycle_flag)
+    {
+        ph->ph_poc_msb_cycle_present_flag = bs_read(p_bs, 1);
+        if(ph->ph_poc_msb_cycle_present_flag)
+            ph->ph_poc_msb_cycle_val = bs_read(p_bs, p_sps->sps_poc_msb_cycle_len_minus1 + 1);
+    }
     return !bs_error(p_bs);
 }
 
@@ -982,7 +1003,9 @@ h266_picture_header_t * h266_decode_picture_header(const uint8_t *p_buf, size_t 
             bs_init_custom(&bs, p_buf, i_buf, &hxxx_bsfw_ep3b_callbacks, &bsctx);
         }
         else bs_init(&bs, p_buf, i_buf);
-        bs_skip(&bs, 16);
+        bs_skip(&bs, 8);
+        p_ph->nal_type = bs_read(&bs, 5);
+        bs_skip(&bs, 3);
         if(!h266_parse_picture_header_rbsp(&bs, get_matchedxps, priv, p_ph))
         {
             h266_rbsp_release_picture_header(p_ph);
@@ -1123,4 +1146,73 @@ bool h266_get_slice_type(const h266_picture_header_t *ph, enum h266_slice_type_e
     else
         *type = H266_SLICE_TYPE_P;
     return true;
+}
+
+/*
+ * 8.3.1 Decoding process for POC
+ */
+int h266_compute_picture_order_count(const h266_sequence_parameter_set_t *p_sps,
+                                     const h266_picture_header_t *p_ph,
+                                     h266_poc_ctx_t *p_ctx)
+{
+    struct
+    {
+        int lsb;
+        int msb;
+    } prevPicOrderCnt;
+    int PicOrderCntMsb;
+
+    // FIXME HandleCraAsClvsStartFlag
+    const bool NoOutputBeforeRecoveryFlag = p_ctx->first_picture ||
+                                            p_ph->nal_type == H266_NAL_IDR_W_RADL ||
+                                            p_ph->nal_type == H266_NAL_IDR_N_LP ||
+                                            p_ctx->HandleCraAsClvsStartFlag;
+    /* coded layer video sequence start */
+    const bool IsCLVSS = p_ph->nal_type >= H266_NAL_IDR_W_RADL &&
+                         p_ph->nal_type <= H266_NAL_RSV_IRAP_11 &&
+                         NoOutputBeforeRecoveryFlag;
+
+    const unsigned MaxPicOrderCntLsb = 1U << (p_sps->sps_log2_max_pic_order_cnt_lsb_minus4 + 4);
+
+#ifdef H266_POC_DEBUG
+    fprintf(stderr, "POC lsb=%"PRIu32" pocmsb %d CLVSS=%d nooutput=%d prevmsb=%d prevlsb=%d\n",
+            p_ph->ph_pic_order_cnt_lsb, p_ph->ph_poc_msb_cycle_present_flag,
+            IsCLVSS, NoOutputBeforeRecoveryFlag,
+            p_ctx->prevTid0PicOrderCnt.msb, p_ctx->prevTid0PicOrderCnt.lsb);
+#endif
+
+    if(!p_ph->ph_poc_msb_cycle_present_flag && !IsCLVSS)
+    {
+        prevPicOrderCnt.lsb = p_ctx->prevTid0PicOrderCnt.lsb;
+        prevPicOrderCnt.msb = p_ctx->prevTid0PicOrderCnt.msb;
+    }
+
+    if(p_ph->ph_poc_msb_cycle_present_flag)
+    {
+        PicOrderCntMsb = p_ph->ph_poc_msb_cycle_val * MaxPicOrderCntLsb;
+    }
+    else if(IsCLVSS)
+    {
+        PicOrderCntMsb = 0;
+    }
+    else
+    {
+        PicOrderCntMsb = prevPicOrderCnt.msb;
+        int64_t orderDiff = (int64_t)p_ph->ph_pic_order_cnt_lsb - prevPicOrderCnt.lsb;
+        if(orderDiff < 0 && -orderDiff >= MaxPicOrderCntLsb / 2)
+            PicOrderCntMsb += MaxPicOrderCntLsb;
+        else if(orderDiff > MaxPicOrderCntLsb / 2)
+            PicOrderCntMsb -= MaxPicOrderCntLsb;
+    }
+
+    p_ctx->prevTid0PicOrderCnt.msb = PicOrderCntMsb;
+    p_ctx->prevTid0PicOrderCnt.lsb = p_ph->ph_pic_order_cnt_lsb;
+
+    p_ctx->first_picture = false;
+
+#ifdef H266_POC_DEBUG
+    fprintf(stderr, " POC=%"PRIu32"\n", PicOrderCntMsb + p_ph->ph_pic_order_cnt_lsb);
+#endif
+
+    return PicOrderCntMsb + p_ph->ph_pic_order_cnt_lsb;
 }
