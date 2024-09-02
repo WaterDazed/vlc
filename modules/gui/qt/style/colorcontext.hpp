@@ -36,6 +36,7 @@ class ColorContextState;
 
 class ColorProperty {
     Q_GADGET
+    QML_VALUE_TYPE(colorProperty)
 
     Q_PROPERTY(QColor primary READ primary CONSTANT FINAL)
     Q_PROPERTY(QColor secondary READ secondary CONSTANT FINAL)

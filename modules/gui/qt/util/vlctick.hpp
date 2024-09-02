@@ -23,12 +23,15 @@
 #endif
 
 #include <QObject>
+#include <QQmlEngine>
 #include <vlc_common.h>
 #include <vlc_tick.h>
 
 class VLCTick
 {
     Q_GADGET
+    QML_VALUE_TYPE(dialogId)
+
 public:
     VLCTick();
     VLCTick(vlc_tick_t ticks);

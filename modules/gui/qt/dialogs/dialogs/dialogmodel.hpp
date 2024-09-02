@@ -31,6 +31,7 @@
 
 // Qt includes
 #include <QAbstractListModel>
+#include <QQmlEngine>
 
 #include "qt.hpp"
 #include "util/singleton.hpp"
@@ -40,6 +41,7 @@ Q_MOC_INCLUDE("maininterface/mainctx.hpp")
 class DialogId
 {
     Q_GADGET
+    QML_VALUE_TYPE(dialogId)
 
 public:
     DialogId(vlc_dialog_id * id = nullptr) : m_id(id) {}
