@@ -185,8 +185,6 @@ void MainUI::registerQMLTypes()
         qmlRegisterUncreatableType<SortCtx>(uri, versionMajor, versionMinor, "SortCtx", "");
         qmlRegisterTypesAndRevisions<NavigationHistory>(uri, versionMajor);
         qmlRegisterUncreatableType<QAbstractItemModel>(uri, versionMajor, versionMinor, "QtAbstractItemModel", "");
-        qmlRegisterUncreatableType<QWindow>(uri, versionMajor, versionMinor, "QtWindow", "");
-        qmlRegisterUncreatableType<QScreen>(uri, versionMajor, versionMinor, "QtScreen", "");
         qmlRegisterUncreatableType<VLCTick>(uri, versionMajor, versionMinor, "vlcTick", "");
         qmlRegisterType<VideoSurface>(uri, versionMajor, versionMinor, "VideoSurface");
         qmlRegisterUncreatableType<BaseModel>( uri, versionMajor, versionMinor, "BaseModel", "Base Model is uncreatable." );
