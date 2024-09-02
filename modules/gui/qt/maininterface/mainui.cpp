@@ -78,38 +78,6 @@
 
 using  namespace vlc::playlist;
 
-namespace {
-
-template<class T>
-class SingletonRegisterHelper
-{
-    static QPointer<T> m_instance;
-
-public:
-    static QObject* callback(QQmlEngine *engine, QJSEngine *)
-    {
-        assert(m_instance);
-        engine->setObjectOwnership(m_instance, QQmlEngine::ObjectOwnership::CppOwnership);
-        return m_instance;
-    }
-
-    static void setInstance(T* instance)
-    {
-        assert(!m_instance);
-        m_instance = instance;
-    }
-
-    static T* getInstance()
-    {
-        return m_instance;
-    }
-};
-template<class T>
-QPointer<T> SingletonRegisterHelper<T>::m_instance = nullptr;
-
-} // anonymous namespace
-
-
 MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  QObject *parent)
     : QObject(parent)
     , m_intf(p_intf)
