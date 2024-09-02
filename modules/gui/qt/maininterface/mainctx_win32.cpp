@@ -780,8 +780,8 @@ void WinTaskbarWidget::changeThumbbarButtons( PlayerController::PlayingState i_s
 
 // MainInterface
 
-MainCtxWin32::MainCtxWin32(qt_intf_t * _p_intf )
-    : MainCtx( _p_intf )
+MainCtxWin32::MainCtxWin32(qt_intf_t * _p_intf , MediaLib* medialib)
+    : MainCtx( _p_intf, medialib )
 {
     /* Volume keys */
     p_intf->disable_volume_keys = var_InheritBool( _p_intf, "qt-disable-volume-keys" );

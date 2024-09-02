@@ -87,7 +87,7 @@ extern "C" char **environ;
 #include "playlist/playlist_common.hpp"
 #include "playlist/playlist_item.hpp"
 #include "dialogs/dialogs/dialogmodel.hpp"
-#include "medialibrary/mlqmltypes.hpp"
+#include "medialibrary/medialib.hpp"
 
 #include <QVector>
 #include "playlist/playlist_item.hpp"
@@ -987,11 +987,17 @@ static void *Thread( void *obj )
     p_intf->p_mainPlayerController = PlayerController::createInstance(p_intf);
     p_intf->p_mainPlaylistController = vlc::playlist::PlaylistController::createInstance(p_intf->p_playlist);
 
+    MediaLib* medialib = nullptr;
+    vlc_medialibrary_t* ml = vlc_ml_instance_get( p_intf );
+    if (ml) {
+        medialib = MediaLib::createInstance(p_intf, p_intf->p_mainPlaylistController);
+    }
+
     /* Create the normal interface in non-DP mode */
 #ifdef _WIN32
-    p_intf->p_mi = MainCtx::createInstance<MainCtxWin32>(p_intf);
+    p_intf->p_mi = MainCtx::createInstance<MainCtxWin32>(p_intf, medialib);
 #else
-    p_intf->p_mi = MainCtx::createInstance(p_intf);
+    p_intf->p_mi = MainCtx::createInstance(p_intf, medialib);
 #endif
 
     if( !p_intf->b_isDialogProvider )
@@ -1130,6 +1136,8 @@ static void *ThreadCleanup( qt_intf_t *p_intf, CleanupReason cleanupReason )
             p_intf->p_compositor.reset();
         }
     }
+
+    MediaLib::killInstance();
 
     /* */
     ExtensionsManager::killInstance();

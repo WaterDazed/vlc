@@ -129,8 +129,7 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
 
     if (m_mainCtx->hasMediaLibrary())
     {
-        assert(m_mainCtx->getMediaLibrary());
-        SingletonRegisterHelper<MediaLib>::setInstance(m_mainCtx->getMediaLibrary());
+        assert(MediaLib::getInstance());
     }
 
     registerQMLTypes();
@@ -399,8 +398,7 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.MediaLibrary
-        qmlRegisterSingletonType<MediaLib>(uri, versionMajor, versionMinor, "MediaLib", SingletonRegisterHelper<MediaLib>::callback);
-
+        qmlRegisterTypesAndRevisions<MediaLib>(uri, versionMajor);
         qmlRegisterUncreatableType<MLItemId>( uri, versionMajor, versionMinor, "mediaId", "");
         qmlRegisterUncreatableType<MLBaseModel>( uri, versionMajor, versionMinor, "MLBaseModel", "ML Base Model is uncreatable." );
         qmlRegisterType<MLAlbumModel>( uri, versionMajor, versionMinor, "MLAlbumModel" );

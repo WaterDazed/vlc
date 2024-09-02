@@ -144,7 +144,7 @@ class MainCtx : public QObject, public QMLSingleton<MainCtx>
 
 protected:
     /* tors */
-    MainCtx(qt_intf_t *);
+    MainCtx(qt_intf_t *, MediaLib* medialib);
     virtual ~MainCtx();
     friend class QMLSingleton<MainCtx>;
 
@@ -202,7 +202,7 @@ public:
     inline int CSDBorderSize() const { return 5 * getIntfScaleFactor(); }
     inline double getMinIntfUserScaleFactor() const { return MIN_INTF_USER_SCALE_FACTOR; }
     inline double getMaxIntfUserScaleFactor() const { return MAX_INTF_USER_SCALE_FACTOR; }
-    inline bool hasMediaLibrary() const { return b_hasMedialibrary; }
+    inline bool hasMediaLibrary() const { return m_medialib != nullptr; }
     inline MediaLib* getMediaLibrary() const { return m_medialib; }
     inline bool hasGridView() const { return m_gridView; }
     inline Grouping grouping() const { return m_grouping; }
@@ -320,7 +320,6 @@ protected:
     QWindow::Visibility  m_windowVisibility = QWindow::Windowed;
     bool                 b_interfaceOnTop = false;      ///keep UI on top
     bool                 b_hasWayland = false;
-    bool                 b_hasMedialibrary = false;
     MediaLib*            m_medialib = nullptr;
     bool                 m_gridView = false;
     bool                 m_hasGridListMode = false;

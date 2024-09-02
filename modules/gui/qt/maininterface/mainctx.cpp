@@ -122,8 +122,9 @@ bool loadVLCOption<bool>(vlc_object_t *obj, const char *name)
 
 }
 
-MainCtx::MainCtx(qt_intf_t *_p_intf)
+MainCtx::MainCtx(qt_intf_t *_p_intf, MediaLib* medialib)
     : p_intf(_p_intf)
+    , m_medialib(medialib)
     , m_csdButtonModel {std::make_unique<CSDButtonModel>(this, this)}
 {
     /**
@@ -156,11 +157,6 @@ MainCtx::MainCtx(qt_intf_t *_p_intf)
     /* Get the available interfaces */
     m_extraInterfaces = new VLCVarChoiceModel(VLC_OBJECT(p_intf->intf), "intf-add", this);
 
-    vlc_medialibrary_t* ml = vlc_ml_instance_get( p_intf );
-    b_hasMedialibrary = (ml != NULL);
-    if (b_hasMedialibrary) {
-        m_medialib = new MediaLib(p_intf, p_intf->p_mainPlaylistController);
-    }
 
     /* Controlbar Profile Model Creation */
     m_controlbarProfileModel = new ControlbarProfileModel(p_intf->mainSettings, this);
@@ -257,9 +253,6 @@ MainCtx::~MainCtx()
     var_DelCallback( libvlc, "intf-show", IntfRaiseMainCB, p_intf );
     var_DelCallback( libvlc, "intf-toggle-fscontrol", IntfShowCB, p_intf );
     var_DelCallback( libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
-
-    if (m_medialib)
-        delete m_medialib;
 
     p_intf->p_mi = NULL;
 }

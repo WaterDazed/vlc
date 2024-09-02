@@ -26,6 +26,7 @@
 #include "qt.hpp"
 #include "mlthreadpool.hpp"
 #include "mlqmltypes.hpp"
+#include "util/singleton.hpp"
 
 namespace vlc {
 namespace playlist {
@@ -38,9 +39,16 @@ struct vlc_medialibrary_t;
 class MLThreadRunner;
 class RunOnMLThreadBaseRunner;
 
-class MediaLib : public QObject
+class MediaLib : public QObject, public QMLSingleton<MediaLib>
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+
+protected:
+    MediaLib(qt_intf_t* _intf, vlc::playlist::PlaylistController* playlistController, QObject* _parent = nullptr );
+    ~MediaLib();
+    friend class QMLSingleton<MediaLib>;
 
 public:
     Q_PROPERTY(bool discoveryPending READ discoveryPending NOTIFY discoveryPendingChanged FINAL)
@@ -48,9 +56,6 @@ public:
     Q_PROPERTY(QString discoveryEntryPoint READ discoveryEntryPoint NOTIFY discoveryEntryPointChanged FINAL)
     Q_PROPERTY(bool idle READ idle NOTIFY idleChanged FINAL)
 
-public:
-    MediaLib(qt_intf_t* _intf, vlc::playlist::PlaylistController* playlistController, QObject* _parent = nullptr );
-    ~MediaLib();
 
     Q_INVOKABLE void addToPlaylist(const MLItemId &itemId, const QStringList &options = {});
     Q_INVOKABLE void addToPlaylist(const QString& mrl, const QStringList &options = {});
