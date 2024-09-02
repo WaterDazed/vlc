@@ -41,6 +41,7 @@ class NetworkDeviceModelPrivate;
 class NetworkDeviceModel : public NetworkBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(MainCtx* ctx READ getCtx WRITE setCtx NOTIFY ctxChanged FINAL)
     Q_PROPERTY(SDCatType sd_source READ getSdSource WRITE setSdSource NOTIFY sdSourceChanged FINAL)

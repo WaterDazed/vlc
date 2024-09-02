@@ -60,6 +60,7 @@ class PlaylistListModel;
 class StringListMenu : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 
@@ -76,6 +77,7 @@ signals:
 class SortMenu : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 
@@ -105,6 +107,7 @@ private:
 class SortMenuVideo : public SortMenu
 {
     Q_OBJECT
+    QML_ELEMENT
 
 protected: // SortMenu reimplementation
     void onPopup(QMenu * menu) override;
@@ -117,6 +120,8 @@ signals:
 class QmlGlobalMenu : public VLCMenuBar
 {
     Q_OBJECT
+    QML_ELEMENT
+
     SIMPLE_MENU_PROPERTY(MainCtx*, ctx, nullptr)
     SIMPLE_MENU_PROPERTY(bool, playerViewVisible, false)
 
@@ -144,6 +149,8 @@ class QmlMenuBarMenu;
 class QmlMenuBar : public VLCMenuBar
 {
     Q_OBJECT
+    QML_ELEMENT
+
     SIMPLE_MENU_PROPERTY(MainCtx*, ctx, nullptr)
     SIMPLE_MENU_PROPERTY(QQuickItem*, menubar, nullptr)
     SIMPLE_MENU_PROPERTY(bool, openMenuOnHover, false)
@@ -183,6 +190,7 @@ private:
 class QmlMenuBarMenu : public QMenu
 {
     Q_OBJECT
+
 public:
     QmlMenuBarMenu(QmlMenuBar* menubar, QWidget* parent = nullptr);
     ~QmlMenuBarMenu();
@@ -212,6 +220,7 @@ private:
 class QmlBookmarkMenu : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 
@@ -236,6 +245,7 @@ private:
 class QmlProgramMenu : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
     SIMPLE_MENU_PROPERTY(PlayerController *, player, nullptr)
@@ -259,6 +269,7 @@ private:
 class QmlRendererMenu : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 
@@ -283,6 +294,7 @@ private:
 class QmlTrackMenu : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 
@@ -315,6 +327,7 @@ private:
 class QmlSubtitleMenu : public QmlTrackMenu
 {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(PlayerController *, player, nullptr)
 
@@ -328,6 +341,7 @@ protected: // QmlTrackMenu implementation
 class QmlAudioMenu : public QmlTrackMenu
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     QmlAudioMenu(QObject * parent = nullptr);
@@ -338,6 +352,7 @@ protected: // QmlTrackMenu implementation
 
 class PlaylistListContextMenu : public QObject {
     Q_OBJECT
+    QML_ELEMENT
 
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
     SIMPLE_MENU_PROPERTY(MLPlaylistListModel *, model, nullptr)
@@ -352,6 +367,8 @@ private:
 
 class PlaylistMediaContextMenu : public QObject {
     Q_OBJECT
+    QML_ELEMENT
+
     SIMPLE_MENU_PROPERTY(MLPlaylistModel *, model, nullptr)
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 public:
@@ -367,6 +384,7 @@ private:
 
 class NetworkMediaContextMenu : public QObject {
     Q_OBJECT
+    QML_ELEMENT
     SIMPLE_MENU_PROPERTY(NetworkMediaModel*, model, nullptr)
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 public:
@@ -380,6 +398,7 @@ private:
 
 class NetworkDeviceContextMenu : public QObject {
     Q_OBJECT
+    QML_ELEMENT
     SIMPLE_MENU_PROPERTY(NetworkDeviceModel*, model, nullptr)
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 public:
@@ -392,6 +411,7 @@ private:
 
 class PlaylistContextMenu : public QObject {
     Q_OBJECT
+    QML_ELEMENT
     SIMPLE_MENU_PROPERTY(vlc::playlist::PlaylistListModel*, model, nullptr)
     SIMPLE_MENU_PROPERTY(vlc::playlist::PlaylistController*, controler, nullptr)
     SIMPLE_MENU_PROPERTY(ListSelectionModel*, selectionModel, nullptr)

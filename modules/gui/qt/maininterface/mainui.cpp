@@ -180,7 +180,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<NavigationHistory>(uri, versionMajor);
         qmlRegisterUncreatableType<QAbstractItemModel>(uri, versionMajor, versionMinor, "QtAbstractItemModel", "");
         qmlRegisterTypesAndRevisions<VLCTick>(uri, versionMajor);
-        qmlRegisterType<VideoSurface>(uri, versionMajor, versionMinor, "VideoSurface");
+        qmlRegisterTypesAndRevisions<VideoSurface>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<BaseModel>( uri, versionMajor);
         qmlRegisterTypesAndRevisions<VLCVarChoiceModel>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<CSDButton>(uri, versionMajor);
@@ -197,8 +197,8 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.Dialogs
-        qmlRegisterType<AboutModel>( uri, versionMajor, versionMinor, "AboutModel" );
-        qmlRegisterType<DialogModel>(uri, versionMajor, versionMinor, "DialogModel");
+        qmlRegisterTypesAndRevisions<AboutModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<DialogModel>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<DialogId>( uri, versionMajor);
         qmlRegisterTypesAndRevisions<DialogsProvider>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<DialogErrorModel>(uri, versionMajor);
@@ -213,11 +213,11 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.Menus
-        qmlRegisterType<StringListMenu>( uri, versionMajor, versionMinor, "StringListMenu" );
-        qmlRegisterType<SortMenu>( uri, versionMajor, versionMinor, "SortMenu" );
-        qmlRegisterType<SortMenuVideo>( uri, versionMajor, versionMinor, "SortMenuVideo" );
-        qmlRegisterType<QmlGlobalMenu>( uri, versionMajor, versionMinor, "QmlGlobalMenu" );
-        qmlRegisterType<QmlMenuBar>( uri, versionMajor, versionMinor, "QmlMenuBar" );
+        qmlRegisterTypesAndRevisions<StringListMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<SortMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<SortMenuVideo>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<QmlGlobalMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<QmlMenuBar>( uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
@@ -235,11 +235,11 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<ProgramListModel>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<PlayerController>(uri, versionMajor);
 
-        qmlRegisterType<QmlBookmarkMenu>( uri, versionMajor, versionMinor, "QmlBookmarkMenu" );
-        qmlRegisterType<QmlProgramMenu>( uri, versionMajor, versionMinor, "QmlProgramMenu" );
-        qmlRegisterType<QmlRendererMenu>( uri, versionMajor, versionMinor, "QmlRendererMenu" );
-        qmlRegisterType<QmlSubtitleMenu>( uri, versionMajor, versionMinor, "QmlSubtitleMenu" );
-        qmlRegisterType<QmlAudioMenu>( uri, versionMajor, versionMinor, "QmlAudioMenu" );
+        qmlRegisterTypesAndRevisions<QmlBookmarkMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<QmlProgramMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<QmlRendererMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<QmlSubtitleMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<QmlAudioMenu>( uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
@@ -255,7 +255,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<ControlbarProfile>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<PlayerControlbarModel>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<ControlListModel>( uri, versionMajor);
-        qmlRegisterType<ControlListFilter>(uri, versionMajor, versionMinor, "ControlListFilter");
+        qmlRegisterTypesAndRevisions<ControlListFilter>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<PlayerListModel>(uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
@@ -269,9 +269,9 @@ void MainUI::registerQMLTypes()
 
         // @uri VLC.Playlist
         qmlRegisterTypesAndRevisions<PlaylistItem>(uri, versionMajor);
-        qmlRegisterType<PlaylistListModel>( uri, versionMajor, versionMinor, "PlaylistListModel" );
-        qmlRegisterType<PlaylistContextMenu>( uri, versionMajor, versionMinor, "PlaylistContextMenu" );
-        qmlRegisterTypesAndRevisions<PlaylistController>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<PlaylistListModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<PlaylistController>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<PlaylistContextMenu>( uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
@@ -283,15 +283,15 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.Network
-        qmlRegisterType<NetworkMediaModel>( uri, versionMajor, versionMinor, "NetworkMediaModel");
-        qmlRegisterType<NetworkDeviceModel>( uri, versionMajor, versionMinor, "NetworkDeviceModel");
-        qmlRegisterType<NetworkSourcesModel>( uri, versionMajor, versionMinor, "NetworkSourcesModel");
-        qmlRegisterType<ServicesDiscoveryModel>( uri, versionMajor, versionMinor, "ServicesDiscoveryModel");
-        qmlRegisterType<StandardPathModel>( uri, versionMajor, versionMinor, "StandardPathModel");
-        qmlRegisterType<MLFoldersModel>( uri, versionMajor, versionMinor, "MLFolderModel");
+        qmlRegisterTypesAndRevisions<NetworkMediaModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<NetworkDeviceModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<NetworkSourcesModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<ServicesDiscoveryModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<StandardPathModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLFoldersModel>( uri, versionMajor);
 
-        qmlRegisterType<NetworkMediaContextMenu>( uri, versionMajor, versionMinor, "NetworkMediaContextMenu" );
-        qmlRegisterType<NetworkDeviceContextMenu>( uri, versionMajor, versionMinor, "NetworkDeviceContextMenu" );
+        qmlRegisterTypesAndRevisions<NetworkMediaContextMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<NetworkDeviceContextMenu>( uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
@@ -304,9 +304,9 @@ void MainUI::registerQMLTypes()
 
         // @uri VLC.Style
         qmlRegisterTypesAndRevisions<ColorSchemeModel>(uri, versionMajor);
-        qmlRegisterType<ColorContext>(uri, versionMajor, versionMinor, "ColorContext");
+        qmlRegisterTypesAndRevisions<ColorContext>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<ColorProperty>(uri, versionMajor);
-        qmlRegisterType<SystemPalette>(uri, versionMajor, versionMinor, "SystemPalette");
+        qmlRegisterTypesAndRevisions<SystemPalette>(uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
@@ -324,13 +324,13 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<SVGColorImageBuilder>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<SVGColorImage>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<VLCAccessImage>(uri, versionMajor);
-        qmlRegisterType<DelayEstimator>( uri, versionMajor, versionMinor, "DelayEstimator" );
+        qmlRegisterTypesAndRevisions<DelayEstimator>( uri, versionMajor );
 
-        qmlRegisterType<ImageLuminanceExtractor>( uri, versionMajor, versionMinor, "ImageLuminanceExtractor");
+        qmlRegisterTypesAndRevisions<ImageLuminanceExtractor>( uri, versionMajor);
 
-        qmlRegisterType<ItemKeyEventFilter>( uri, versionMajor, versionMinor, "KeyEventFilter" );
-        qmlRegisterType<FlickableScrollHandler>( uri, versionMajor, versionMinor, "FlickableScrollHandler" );
-        qmlRegisterType<ListSelectionModel>( uri, versionMajor, versionMinor, "ListSelectionModel" );
+        qmlRegisterTypesAndRevisions<ItemKeyEventFilter>( uri, versionMajor );
+        qmlRegisterTypesAndRevisions<FlickableScrollHandler>( uri, versionMajor );
+        qmlRegisterTypesAndRevisions<ListSelectionModel>( uri, versionMajor );
         qmlRegisterTypesAndRevisions<DoubleClickIgnoringItem>( uri, versionMajor );
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
@@ -343,9 +343,9 @@ void MainUI::registerQMLTypes()
         const int versionMinor = 0;
 
         // @uri VLC.Widgets
-        qmlRegisterType<RoundImage>( uri, versionMajor, versionMinor, "RoundImage" );
-        qmlRegisterType<CSDThemeImage>(uri, versionMajor, versionMinor, "CSDThemeImage");
-        qmlRegisterType<ViewBlockingRectangle>( uri, versionMajor, versionMinor, "ViewBlockingRectangle" );
+        qmlRegisterTypesAndRevisions<RoundImage>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<CSDThemeImage>(uri, versionMajor);
+        qmlRegisterTypesAndRevisions<ViewBlockingRectangle>( uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
@@ -361,22 +361,22 @@ void MainUI::registerQMLTypes()
         qmlRegisterTypesAndRevisions<MediaLib>(uri, versionMajor);
         qmlRegisterTypesAndRevisions<MLItemId>( uri, versionMajor);
         qmlRegisterTypesAndRevisions<MLBaseModel>( uri, versionMajor);
-        qmlRegisterType<MLAlbumModel>( uri, versionMajor, versionMinor, "MLAlbumModel" );
-        qmlRegisterType<MLArtistModel>( uri, versionMajor, versionMinor, "MLArtistModel" );
-        qmlRegisterType<MLAlbumTrackModel>( uri, versionMajor, versionMinor, "MLAlbumTrackModel" );
-        qmlRegisterType<MLGenreModel>( uri, versionMajor, versionMinor, "MLGenreModel" );
-        qmlRegisterType<MLUrlModel>( uri, versionMajor, versionMinor, "MLUrlModel" );
-        qmlRegisterType<MLVideoModel>( uri, versionMajor, versionMinor, "MLVideoModel" );
-        qmlRegisterType<MLRecentsVideoModel>( uri, versionMajor, versionMinor, "MLRecentsVideoModel" );
-        qmlRegisterType<MLVideoGroupsModel>( uri, versionMajor, versionMinor, "MLVideoGroupsModel" );
-        qmlRegisterType<MLVideoFoldersModel>( uri, versionMajor, versionMinor, "MLVideoFoldersModel" );
-        qmlRegisterType<MLPlaylistListModel>( uri, versionMajor, versionMinor, "MLPlaylistListModel" );
-        qmlRegisterType<MLPlaylistModel>( uri, versionMajor, versionMinor, "MLPlaylistModel" );
-        qmlRegisterType<MLBookmarkModel>( uri, versionMajor, versionMinor, "MLBookmarkModel" );
-        qmlRegisterType<MLRecentsModel>( uri, versionMajor, versionMinor, "MLRecentsModel" );
+        qmlRegisterTypesAndRevisions<MLAlbumModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLArtistModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLAlbumTrackModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLGenreModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLUrlModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLVideoModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLRecentsVideoModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLVideoGroupsModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLVideoFoldersModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLPlaylistListModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLPlaylistModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLBookmarkModel>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<MLRecentsModel>( uri, versionMajor);
 
-        qmlRegisterType<PlaylistListContextMenu>( uri, versionMajor, versionMinor, "PlaylistListContextMenu" );
-        qmlRegisterType<PlaylistMediaContextMenu>( uri, versionMajor, versionMinor, "PlaylistMediaContextMenu" );
+        qmlRegisterTypesAndRevisions<PlaylistListContextMenu>( uri, versionMajor);
+        qmlRegisterTypesAndRevisions<PlaylistMediaContextMenu>( uri, versionMajor);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);

@@ -30,6 +30,7 @@ class MLFolder;
 class MLVideoFoldersModel : public MLBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum Roles

@@ -20,12 +20,15 @@
 #define IMAGELUMINANCEXTRACTOR_HPP
 
 #include <QUrl>
+#include <QQmlEngine>
 
 #include "util/asynctask.hpp"
 
 class ImageLuminanceExtractor : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged FINAL)
     Q_PROPERTY(int luminance READ luminance NOTIFY luminanceChanged FINAL)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setIsEnabled NOTIFY enabledChanged FINAL)

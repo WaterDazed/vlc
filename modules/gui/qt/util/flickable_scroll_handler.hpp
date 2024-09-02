@@ -27,6 +27,7 @@
 class FlickableScrollHandler : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(QObject* parent READ parent NOTIFY initialized FINAL)
 

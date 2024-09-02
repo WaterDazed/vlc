@@ -44,6 +44,8 @@
 class ItemKeyEventFilter : public QQuickItem
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(KeyEventFilter)
+
 public:
     Q_PROPERTY(QObject * target MEMBER m_target WRITE setTarget FINAL)
     Q_PROPERTY(bool enabled MEMBER m_enabled FINAL)

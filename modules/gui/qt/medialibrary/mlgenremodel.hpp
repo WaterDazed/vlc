@@ -30,6 +30,7 @@
 class MLGenreModel : public MLBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(QString coverDefault READ getCoverDefault WRITE setCoverDefault
                NOTIFY coverDefaultChanged FINAL)

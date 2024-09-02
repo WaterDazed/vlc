@@ -25,6 +25,7 @@
 class ViewBlockingRectangle : public QQuickItem
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(QColor color MEMBER m_color NOTIFY colorChanged FINAL)
 

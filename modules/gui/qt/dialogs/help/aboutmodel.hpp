@@ -19,10 +19,12 @@
 #define ABOUTMODEL_HPP
 
 #include <QObject>
+#include <QQmlEngine>
 
 class AboutModel : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(QString license READ getLicense CONSTANT FINAL)
     Q_PROPERTY(QString authors READ getAuthors CONSTANT FINAL)

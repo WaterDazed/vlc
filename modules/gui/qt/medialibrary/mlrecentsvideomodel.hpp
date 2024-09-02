@@ -28,6 +28,7 @@
 class MLRecentsVideoModel : public MLVideoModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     explicit MLRecentsVideoModel(QObject * parent = nullptr);

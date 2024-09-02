@@ -30,6 +30,7 @@
 class MLAlbumModel : public MLBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum Roles

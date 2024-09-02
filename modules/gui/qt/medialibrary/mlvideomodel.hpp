@@ -34,6 +34,7 @@
 class MLVideoModel : public MLBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum Role {

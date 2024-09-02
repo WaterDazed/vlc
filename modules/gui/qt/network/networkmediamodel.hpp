@@ -104,6 +104,7 @@ class NetworkMediaModelPrivate;
 class NetworkMediaModel : public NetworkBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum Role {

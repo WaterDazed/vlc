@@ -22,6 +22,7 @@
 
 #include <QObject>
 #include <QEvent>
+#include <QQmlEngine>
 #include "qt.hpp"
 #include "util/vlctick.hpp"
 
@@ -30,6 +31,8 @@ class VLCTick;
 class DelayEstimator : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+
     Q_PROPERTY(bool isHeardTimeMarked READ isHeardTimeMarked NOTIFY heardTimeChanged FINAL)
     Q_PROPERTY(bool isSpottedTimeMarked READ isSpottedTimeMarked NOTIFY spottedTimeChanged FINAL)
     Q_PROPERTY(VLCTick delay READ getDelay NOTIFY delayChanged FINAL)

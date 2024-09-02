@@ -102,6 +102,8 @@ private: \
 class SystemPalette : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+
 public:
     Q_PROPERTY(MainCtx* ctx READ getCtx WRITE setCtx NOTIFY ctxChanged FINAL)
     Q_PROPERTY(ColorSchemeModel::ColorScheme  source READ source WRITE setSource NOTIFY sourceChanged FINAL)

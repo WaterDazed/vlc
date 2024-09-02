@@ -32,6 +32,7 @@ class StandardPathModelPrivate;
 class StandardPathModel : public NetworkBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public: // Enums
     // NOTE: Roles should be aligned with the NetworkDeviceModel.

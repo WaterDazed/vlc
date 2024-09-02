@@ -7,6 +7,7 @@
 class CSDThemeImage : public QQuickItem
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum ButtonType {

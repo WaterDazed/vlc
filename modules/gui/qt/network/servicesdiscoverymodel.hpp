@@ -30,6 +30,7 @@ class ServicesDiscoveryModelPrivate;
 class ServicesDiscoveryModel : public BaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
 

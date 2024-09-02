@@ -25,6 +25,7 @@
 class MLPlaylistModel : public MLBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(bool transactionPending READ transactionPending NOTIFY transactionPendingChanged FINAL)
 

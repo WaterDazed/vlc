@@ -21,6 +21,7 @@
 #include <QItemSelectionModel>
 #include <QVector>
 #include <QPointer>
+#include <QQmlEngine>
 
 class ListSelectionModel : public QItemSelectionModel
 {
@@ -32,6 +33,8 @@ class ListSelectionModel : public QItemSelectionModel
     // for easier integration.
 
     Q_OBJECT
+    QML_ELEMENT
+
 
     // TODO: Use size_t when Qt switches from int in its abstract models.
 

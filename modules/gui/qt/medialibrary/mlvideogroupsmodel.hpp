@@ -30,6 +30,7 @@ class MLGroup;
 class MLVideoGroupsModel : public MLVideoModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum Roles
