@@ -334,6 +334,8 @@ libqt_plugin_la_SOURCES = \
 	util/model_recovery_agent.hpp \
 	util/vlcqtmessagehandler.cpp \
 	util/vlcqtmessagehandler.hpp \
+	util/helpers.cpp \
+	util/helpers.hpp \
 	widgets/native/animators.cpp \
 	widgets/native/animators.hpp \
 	widgets/native/customwidgets.cpp widgets/native/customwidgets.hpp \
@@ -489,6 +491,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	util/vlctick.moc.cpp \
 	util/dismiss_popup_event_filter.moc.cpp \
 	util/list_selection_model.moc.cpp \
+	util/helpers.moc.cpp \
 	widgets/native/animators.moc.cpp \
 	widgets/native/csdthemeimage.moc.cpp \
 	widgets/native/customwidgets.moc.cpp \
@@ -1198,11 +1201,9 @@ libqml_module_util_a_QML = \
 	util/qml/MLContextMenu.qml \
 	util/qml/FadeControllerStateGroup.qml \
 	util/qml/GridSizeHelper.qml
-libqml_module_util_a_Singleton_QML = \
-	util/qml/Helpers.qml
 nodist_libqml_module_util_a_SOURCES = util_qmlassets.cpp
-$(libqml_module_util_a_QML:.qml=.cpp) $(libqml_module_util_a_Singleton_QML:.qml=.cpp) : $(builddir)/util/res.qrc
-$(libqml_module_util_a_QML:.qml=.cpp) $(libqml_module_util_a_Singleton_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/util/res.qrc
+$(libqml_module_util_a_QML:.qml=.cpp) : $(builddir)/util/res.qrc
+$(libqml_module_util_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/util/res.qrc
 
 libqml_module_widgets_a_Module = VLC.Widgets
 libqml_module_widgets_a_ModulePath = VLC/Widgets
@@ -1328,7 +1329,6 @@ libqt_plugin_la_ALL_QML = \
 	$(libqml_module_style_a_QML) \
 	$(libqml_module_style_a_Singleton_QML) \
 	$(libqml_module_util_a_QML) \
-	$(libqml_module_util_a_Singleton_QML) \
 	$(libqml_module_widgets_a_QML)
 
 # Shaders:
@@ -1474,7 +1474,7 @@ libqml_module_player_a_SOURCES = $(libqml_module_player_a_QML) $(libqml_module_p
 libqml_module_playercontrols_a_SOURCES = $(libqml_module_playercontrols_a_QML)
 libqml_module_playlist_a_SOURCES = $(libqml_module_playlist_a_QML)
 libqml_module_style_a_SOURCES = $(libqml_module_style_a_QML) $(libqml_module_style_a_Singleton_QML)
-libqml_module_util_a_SOURCES = $(libqml_module_util_a_QML) $(libqml_module_util_a_Singleton_QML)
+libqml_module_util_a_SOURCES = $(libqml_module_util_a_QML)
 libqml_module_widgets_a_SOURCES = $(libqml_module_widgets_a_QML)
 
 cachegen_verbose = $(cachegen_verbose_$(V))

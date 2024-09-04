@@ -144,6 +144,7 @@ moc_headers = files(
     'util/vlctick.hpp',
     'util/dismiss_popup_event_filter.hpp',
     'util/list_selection_model.hpp',
+    'util/helpers.hpp',
     'widgets/native/animators.hpp',
     'widgets/native/csdthemeimage.hpp',
     'widgets/native/customwidgets.hpp',
@@ -483,6 +484,8 @@ some_sources = files(
     'util/model_recovery_agent.hpp',
     'util/vlcqtmessagehandler.cpp',
     'util/vlcqtmessagehandler.hpp',
+    'util/helpers.cpp',
+    'util/helpers.hpp',
     'widgets/native/animators.cpp',
     'widgets/native/animators.hpp',
     'widgets/native/customwidgets.cpp',
@@ -801,10 +804,7 @@ qml_modules += {
         'util/qml/NativeMenu.qml',
         'util/qml/MLContextMenu.qml',
         'util/qml/FadeControllerStateGroup.qml'
-    ),
-    'singletons': files(
-        'util/qml/Helpers.qml',
-    ),
+    )
 }
 
 if qt6_dep.version().version_compare('>=6.5.0')
