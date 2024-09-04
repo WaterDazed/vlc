@@ -143,7 +143,7 @@ MainViewLoader {
             return
         }
 
-        if (drag.source !== dragItemPlaylist && Helpers.isValidInstanceOf(drag.source, Widgets.DragItem))
+        if (drag.source !== dragItemPlaylist && drag.source instanceof Widgets.DragItem)
             drag.accepted = true
         else if (drag.hasUrls)
             drag.accepted = true
@@ -154,7 +154,7 @@ MainViewLoader {
 
     function _dropAction(drop, index) {
         const item = drop.source
-        if (Helpers.isValidInstanceOf(item, Widgets.DragItem)) {
+        if (item instanceof Widgets.DragItem) {
             item.getSelectedInputItem().then(inputItems => {
                 if (index === undefined)
                     DialogsProvider.playlistsDialog(inputItems)
