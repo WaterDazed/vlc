@@ -78,7 +78,7 @@ ColumnLayout {
         value = Math.round(value * 100) / 100
 
         for (let i = 0; i < _model.length; i++) {
-            if (Helpers.compareFloat(_model[i].value, value) === false)
+            if (Math.abs(_model[i].value - value) < Number.EPSILON === false)
                 continue
 
             comboBox.currentIndex = i
