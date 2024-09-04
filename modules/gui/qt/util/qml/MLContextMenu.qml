@@ -149,7 +149,7 @@ NativeMenu {
 
     function showInformationAvailable(dataList, options, indexes) {
         return indexes.length === 1
-                && Helpers.isInteger(options?.["information"] ?? null)
+                && Number.isInteger(options?.["information"] ?? null)
     }
 
     // Private
@@ -190,7 +190,7 @@ NativeMenu {
 
     function _signalShowInformation(dataList, options) {
         const index = options?.["information"] ?? null
-        console.assert(Helpers.isInteger(index))
+        console.assert(Number.isInteger(index))
         showMediaInformation(index)
     }
 
