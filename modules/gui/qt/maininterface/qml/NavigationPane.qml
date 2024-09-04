@@ -29,11 +29,9 @@ T.Pane {
     topPadding: VLCStyle.margin_normal
     bottomPadding: VLCStyle.margin_normal
 
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            contentWidth + leftPadding + rightPadding) * 2
+    implicitWidth: VLCStyle.expandNavigationPaneWidth
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              contentHeight + topPadding + bottomPadding)
-
     signal itemClicked(sectionUri : string, modelUri: string)
 
     readonly property ColorContext colorContext: ColorContext {
@@ -45,6 +43,11 @@ T.Pane {
         Expanded,
         Collapsed,
         Unexpandable
+    }
+
+    //TODO: update background properties accordingly
+    background: Widgets.AcrylicBackground {
+        tintColor: theme.bg.primary
     }
 
     // TODO: replace this with a C++ model
@@ -277,98 +280,60 @@ T.Pane {
         }
     }
 
-    background: Widgets.AcrylicBackground {
-        tintColor: theme.bg.primary
-    }
-
     contentItem: ColumnLayout {
+        spacing: 2
         RowLayout {
             id: vlcBanner
-
             Layout.fillWidth: true
-            Layout.fillHeight: true
 
             Widgets.BannerCone {
+                id: logo
+                Layout.leftMargin: VLCStyle.margin_normal
+                sourceSize.width: VLCStyle.icon_banner
+                sourceSize.height: VLCStyle.icon_banner
                 color: theme.accent
             }
 
             Widgets.SubtitleLabel {
-                Layout.fillWidth: true
-
                 text: qsTr("VLC")
-            }           
-        }   
+                font.pixelSize: VLCStyle.vlcHeaderNavigationPane
+                color: theme.fg.primary
+            }
+        }
 
         Widgets.ListViewExt {
             id: listView
 
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumWidth: VLCStyle.expandNavigationPaneWidth
+            Layout.leftMargin: VLCStyle.leftMarginNavigationPane
 
             clip: true
 
             model: displayModel
-            
-            delegate: T.ItemDelegate {
-                id: sidebarDelegate
 
-                rightPadding: VLCStyle.margin_xxxsmall
-                leftPadding: VLCStyle.margin_xxxsmall
-                topPadding: 0
-                bottomPadding: 0
+            spacing: VLCStyle.margin_small
 
-                implicitWidth: Math.max(implicitBackgroundWidth + leftInset +rightInset,
-                                        contentWidth + leftPadding + rightPadding)
-                implicitHeight: Math.max(implicitBackgroundHeight + topInset + rightInset,
-                                         contentHeight + topPadding + bottomPadding)
+            delegate: Widgets.BannerTabButton {
+                centerContent: false
+                topPadding: model.group != "root" ? VLCStyle.margin_xxsmall : 0
+                bottomPadding: model.group != "root" ? VLCStyle.margin_xxsmall : 0
 
-                background: Widgets.AcrylicBackground {
-                    tintColor: theme.bg.primary
+                iconTxt: model.group === "root" ? model.icon : ""
+                text: model.name
+
+                onClicked: {
+                    itemClicked(model.sectionUri, model.uri)
+                    displayModel.toggleSection(model.name)
                 }
 
-                Component {
-                    id: parentComponent
-
-                    Widgets.BannerTabButton {
-                        id: sectionButton
-                        iconTxt: model.icon   
-                        text: model.name
-
-                        onClicked: {
-                            itemClicked(model.sectionUri, model.uri)
-                            displayModel.toggleSection(model.name)
-                        }
-                    }
-                }
-
-                Component {
-                    id: childComponent
-
-                    Widgets.BannerTabButton {
-                        text: model.name
-
-                        onClicked: {
-                            itemClicked(model.sectionUri, model.uri)
-                            displayModel.toggleSection(model.name)
-                        }
-                    }
-                }
-
-                contentItem: Item {
-                    Layout.fillWidth: true
-
-                    Loader {
-                        id: loader
-                        sourceComponent: (model.group === "root" ? parentComponent : childComponent)
-                    }
-                }
             }
         }
     }
 
     // Loader {}
     //
-    // state:
     // states: []
     //
     // transitions: []

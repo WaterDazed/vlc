@@ -48,7 +48,7 @@ Widgets.PageLoader {
         guard: function (prop) { return !!prop.tree }
     }]
 
-    localMenuDelegate: (pageName !== "home") ? componentBar : null
+    menuDelegate: (pageName !== "home") ? componentBar : null
 
     Accessible.role: Accessible.Client
     Accessible.name: qsTr("Browse view")

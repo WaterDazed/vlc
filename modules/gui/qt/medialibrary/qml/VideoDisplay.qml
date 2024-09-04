@@ -46,7 +46,7 @@ Widgets.PageLoader {
         }
     }
 
-    localMenuDelegate: Widgets.LocalTabBar {
+    menuDelegate: Widgets.LocalTabBar {
         currentView: root.pageName
 
         model: tabModel

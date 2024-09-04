@@ -42,7 +42,7 @@ Widgets.PageLoader {
         }
     ]
 
-    localMenuDelegate: menuDelegate
+    menuDelegate: menuDelegate
 
     Accessible.role: Accessible.Client
     Accessible.name: qsTr("Discover view")

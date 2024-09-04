@@ -37,6 +37,8 @@ T.TabButton {
     property bool showText: true
     property bool showCurrentIndicator: true
 
+    property bool centerContent: true
+
     // Settings
 
     width: control.showText ? VLCStyle.bannerTabButton_width_large
@@ -107,6 +109,7 @@ T.TabButton {
 
         Item {
             Layout.fillWidth: true
+            visible: control.centerContent
         }
 
         Widgets.IconLabel {
@@ -125,8 +128,10 @@ T.TabButton {
 
             font.pixelSize: VLCStyle.icon_banner
 
-            Layout.fillWidth: !label.visible
+            Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.maximumWidth: control.centerContent ? (implicitWidth + 1) : -1
+            Layout.leftMargin: iconLabel.visible ? VLCStyle.margin_xsmall : 0
         }
 
         T.Label {
@@ -168,6 +173,7 @@ T.TabButton {
 
         Item {
             Layout.fillWidth: true
+            visible: control.centerContent
         }
     }
 }

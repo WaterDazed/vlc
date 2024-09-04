@@ -64,13 +64,13 @@ FocusScope {
 
         const item = stackView.currentItem
 
-        sourcesBanner.localMenuDelegate = Qt.binding(function () {
-            return item.localMenuDelegate ?? null
+        globalTopbar.menuDelegate = Qt.binding(function () {
+            return item.menuDelegate ?? null
         })
 
         // NOTE: sortMenu is declared with the SortMenu type, so when it's undefined we have to
         //       return null to avoid a QML warning.
-        sourcesBanner.sortMenu = Qt.binding(function () {
+        globalTopbar.sortMenu = Qt.binding(function () {
             return item.sortMenu ?? null
         })
 
@@ -186,7 +186,7 @@ FocusScope {
         ColumnLayout {
             spacing: 0
             Topbar {
-                id: globalTopBar
+                id: globalTopbar
                 z: 2
                 Layout.preferredHeight: height
                 Layout.minimumHeight: height
