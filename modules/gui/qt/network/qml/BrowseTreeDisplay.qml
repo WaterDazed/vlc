@@ -111,12 +111,6 @@ MainViewLoader {
                 indexes.map(x => model.getDataAt(x.row))
             )
         }
-
-        onRequestInputItems: (indexes, data, resolve, reject) => {
-            resolve(
-                model.getItemsForIndexes(indexes)
-            )
-        }
     }
 
     Component{

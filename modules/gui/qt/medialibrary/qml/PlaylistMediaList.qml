@@ -141,9 +141,7 @@ MainViewLoader {
             return
         }
 
-        if (drag.source !== dragItemPlaylist && Helpers.isValidInstanceOf(drag.source, Widgets.DragItem))
-            drag.accepted = true
-        else if (drag.hasUrls)
+        if (drag.hasUrls)
             drag.accepted = true
         else {
             drag.accepted = false
@@ -152,20 +150,12 @@ MainViewLoader {
 
     function _dropAction(drop, index) {
         const item = drop.source
-        if (Helpers.isValidInstanceOf(item, Widgets.DragItem)) {
-            item.getSelectedInputItem().then(inputItems => {
-                if (index === undefined)
-                    DialogsProvider.playlistsDialog(inputItems)
-                else
-                    root.model.append(root.model.getItemId(index), inputItems)
-            })
-            drop.accepted = true
-        } else if (drop.hasUrls) {
+        if ((item !== dragItemPlaylist) && drop.hasUrls) {
             const urlList = []
             for (let url in drop.urls)
                 urlList.push(drop.urls[url])
             if (index === undefined)
-                DialogsProvider.playlistsDialog(inputItems)
+                DialogsProvider.playlistsDialog(urlList)
             else
                 root.model.append(root.model.getItemId(index), urlList)
             drop.accepted = true

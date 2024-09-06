@@ -63,26 +63,9 @@ Item {
     }
 
     signal requestData(var indexes, var resolve, var reject)
-    signal requestInputItems(var indexes, var data, var resolve, var reject)
 
     function coversXPos(index) {
         return VLCStyle.margin_small + (coverSize / 1.5) * index;
-    }
-
-    /**
-      * @return {Promise} Promise object of the input items
-      */
-    function getSelectedInputItem() {
-        if (_inputItems)
-            return Promise.resolve(dragItem._inputItems)
-        else if (dragItem._dropPromise)
-            return dragItem._dropPromise
-        else
-            dragItem._dropPromise = new Promise((resolve, reject) => {
-                dragItem._dropCallback = resolve
-                dragItem._dropFailedCallback = reject
-            })
-            return dragItem._dropPromise
     }
 
     //---------------------------------------------------------------------------------------------
@@ -93,8 +76,6 @@ Item {
     readonly property int _indexesSize: !!indexes ? indexes.length : 0
 
     readonly property int _displayedCoversCount: Math.min(_indexesSize, _maxCovers + 1)
-
-    property var _inputItems: []
 
     property var _data: []
 
@@ -141,6 +122,7 @@ Item {
         _data = data
 
         const covers = []
+        let mimeData = ""
 
         for (let i in indexes) {
             if (covers.length === _maxCovers)
@@ -151,6 +133,10 @@ Item {
                 continue
 
             covers.push(cover)
+
+            const url = data[i]?.url
+            if (url)
+                mimeData += "%1\r\n".arg(url)
         }
 
         if (covers.length === 0)
@@ -160,16 +146,25 @@ Item {
             })
 
         _covers = covers
-    }
 
-    function _setInputItems(inputItems) {
-        if (!Helpers.isArray(inputItems) || inputItems.length === 0) {
-            console.warn("can't convert items to input items");
-            dragItem._inputItems = null
-            return
+        if (mimeData.length > 0) {
+            // Trim the trailing CRLF pair:
+            mimeData = mimeData.slice(0, -2)
+
+            // NOTE: Due to a Qt regression since 17318c4
+            //       (Nov 11, 2022), it is not possible to
+            //       use RFC-2483 compliant string here.
+            //       This regression was later corrected by
+            //       c25f53b (Jul 31, 2024).
+            // NOTE: Due to Qt bug, use QByteArray here,
+            //       which is used as is by Qt:
+            if ((MainCtx.qtVersion() >= MainCtx.qtVersionCheck(6, 5, 0)) &&
+                (MainCtx.qtVersion() < MainCtx.qtVersionCheck(6, 8, 0))) {
+                mimeData = MainCtx.stringToUTF8ByteArray(mimeData)
+            }
+
+            Drag.mimeData = { "text/uri-list": mimeData }
         }
-
-        dragItem._inputItems = inputItems
     }
 
     function _getCover(index, data) {
@@ -249,14 +244,12 @@ Item {
 
         //internal signals
         signal resolveData(var requestId, var indexes)
-        signal resolveInputItems(var requestId, var indexes)
         signal resolveFailed()
 
         signalMap: ({
             startDrag: startDrag,
             stopDrag: stopDrag,
             resolveData: resolveData,
-            resolveInputItems: resolveInputItems,
             resolveFailed: resolveFailed
         })
 
@@ -320,30 +313,7 @@ Item {
                         action: (requestId, data) => {
                             dragItem._setData(data)
                         },
-                        target: fsmRequestInputItem
-                    },
-                    resolveFailed: fsmLoadingFailed
-                })
-            }
-
-            FSMState {
-                id: fsmRequestInputItem
-
-                function enter() {
-                    const requestId = ++dragItem._currentRequest
-                    dragItem.requestInputItems(
-                        dragItem.indexes, _data,
-                        (items) => { fsm.resolveInputItems(requestId, items) },
-                        fsm.resolveFailed)
-                }
-
-                transitions: ({
-                    resolveInputItems: {
-                        guard: (requestId, items) => requestId === dragItem._currentRequest,
-                        action: (requestId, items) => {
-                            dragItem._setInputItems(items)
-                        },
-                        target: fsmLoadingDone,
+                        target: fsmLoadingDone
                     },
                     resolveFailed: fsmLoadingFailed
                 })
@@ -355,9 +325,6 @@ Item {
                 function enter() {
                     dragItem._startNativeDrag()
 
-                    if (dragItem._dropCallback) {
-                        dragItem._dropCallback(dragItem._inputItems)
-                    }
                     dragItem._dropPromise = null
                     dragItem._dropCallback = null
                     dragItem._dropFailedCallback = null

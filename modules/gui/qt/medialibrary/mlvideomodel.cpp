@@ -163,6 +163,7 @@ QHash<int, QByteArray> MLVideoModel::roleNames() const
         { VIDEO_RESOLUTION, "resolution_name" },
         { VIDEO_CHANNEL, "channel" },
         { VIDEO_MRL, "mrl" },
+        { VIDEO_MRL, "url" },
         { VIDEO_DISPLAY_MRL, "display_mrl" },
         { VIDEO_AUDIO_TRACK, "audioDesc" },
         { VIDEO_VIDEO_TRACK, "videoDesc" },

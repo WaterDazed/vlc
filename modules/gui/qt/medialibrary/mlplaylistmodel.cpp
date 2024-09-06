@@ -310,6 +310,7 @@ QHash<int, QByteArray> MLPlaylistModel::roleNames() const /* override */
         { MEDIA_RESOLUTION,         "resolution_name"    },
         { MEDIA_CHANNEL,            "channel"            },
         { MEDIA_MRL,                "mrl"                },
+        { MEDIA_MRL,                "url"                },
         { MEDIA_DISPLAY_MRL,        "display_mrl"        },
         { MEDIA_AUDIO_TRACK,        "audioDesc"          },
         { MEDIA_VIDEO_TRACK,        "videoDesc"          },

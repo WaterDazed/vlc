@@ -26,6 +26,8 @@
 #include "mlbasemodel.hpp"
 #include "mlhelper.hpp"
 
+#include <QTimer>
+
 #include "util/base_model_p.hpp"
 #include "util/asynctask.hpp"
 
@@ -177,8 +179,71 @@ void MLBaseModel::getDataFlat(const QVector<int> &indexes, QJSValue callback)
             QMap<QString, QVariant> dataDict;
 
             if (item) // item may fail to load
+            {
                 for (int role: roles.keys())
                     dataDict[roles[role]] = itemRoleData(item.get(), role);
+
+                if (item->getId().type != VLC_ML_PARENT_UNKNOWN && !dataDict.contains(QLatin1String("url")))
+                {
+                    // Collection of media, in this case, there won't
+                    // be any URL supplied from the model, so do it here.
+
+                    // Doing it synchronously here should not matter, because
+                    // `MLBaseModel::getDataFlat()` is asynchronous anyway.
+
+                    QEventLoop eventLoop;
+
+                    struct Context {
+                        QString uriList;
+                    };
+
+                    QString uriList;
+
+                    m_mediaLib->runOnMLThread<Context>(this,
+                        //ML thread
+                        [media = item->getId()](vlc_medialibrary_t* ml, Context& ctx) {
+                            ml_unique_ptr<vlc_ml_media_list_t> list;
+                            vlc_ml_query_params_t query = vlc_ml_query_params_create();
+                            list.reset(vlc_ml_list_media_of(ml, &query, media.type, media.id));
+                            if (!list)
+                                return;
+
+                            for (const vlc_ml_media_t& media : ml_range_iterate<vlc_ml_media_t>(list))
+                            {
+                                for (const vlc_ml_file_t& file : ml_range_iterate<vlc_ml_file_t>(media.p_files))
+                                {
+                                    if (file.i_type == VLC_ML_FILE_TYPE_MAIN)
+                                    {
+                                        ctx.uriList += QString::asprintf("%s\r\n", file.psz_mrl);
+                                    }
+                                }
+                            }
+                        },
+                        //UI thread
+                        [eventLoop = QPointer(&eventLoop), &uriList](quint64, Context& ctx) {
+                            // Use weak pointer here to probe the validity of the event loop.
+                            // If watchdog timer triggers exiting from the inner event loop,
+                            // eventLoop would be likely already gone.
+                            if (Q_LIKELY(eventLoop))
+                            {
+                                uriList = std::move(ctx.uriList);
+                                eventLoop->quit();
+                            }
+                        });
+
+                    // Enter inner event loop, which will be exited
+                    // when URI list is set. Also have a watchdog
+                    // timer in case something goes wrong with the
+                    // medialibrary fetching URLs. Note that the
+                    // application continues processing the events
+                    // within the inner event loop:
+                    QTimer::singleShot(5000, &eventLoop, &QEventLoop::quit);
+                    eventLoop.exec();
+
+                    if (!uriList.isEmpty())
+                        dataDict[QStringLiteral("url")] = std::move(uriList);
+                }
+            }
 
             jsArray.setProperty(i, jsEngine->toScriptValue(dataDict));
         }

@@ -97,12 +97,9 @@ AbstractButton {
             resolve([{
                 "title": Player.title,
                 "cover": (!!Player.artwork && Player.artwork.toString() !== "") ? Player.artwork
-                                                                                : VLCStyle.noArtAlbumCover
+                                                                                : VLCStyle.noArtAlbumCover,
+                "url": Player.url
             }])
-        }
-
-        onRequestInputItems: (indexes, data, resolve, reject) => {
-            resolve([MainPlaylistController.currentItem])
         }
 
         indexes: [0]
