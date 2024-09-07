@@ -492,7 +492,8 @@ nodist_libqt_plugin_la_SOURCES = \
 	widgets/native/roundimage.moc.cpp \
 	widgets/native/roundimage_p.moc.cpp \
 	widgets/native/searchlineedit.moc.cpp \
-	widgets/native/viewblockingrectangle.moc.cpp
+	widgets/native/viewblockingrectangle.moc.cpp \
+	widgets/native/doubleclickignoringitem.moc.cpp
 
 nodist_libqt_plugin_la_SOURCES += \
 	dialogs/extended/ui_equalizer.h \

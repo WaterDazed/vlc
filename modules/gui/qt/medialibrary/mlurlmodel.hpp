@@ -45,6 +45,7 @@ private:
 class MLUrlModel : public MLBaseModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum Roles {

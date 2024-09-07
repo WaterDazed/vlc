@@ -32,6 +32,7 @@
 #include "media.hpp"
 #include "playlist_common.hpp"
 #include "playlist_item.hpp"
+#include "util/singleton.hpp"
 
 namespace vlc {
 namespace playlist {
@@ -41,9 +42,13 @@ QVector<vlc::playlist::Media> toMediaList(const QVariantList &sources);
 using vlc_playlist_locker = vlc_locker<vlc_playlist_t, vlc_playlist_Lock, vlc_playlist_Unlock>;
 
 class PlaylistControllerPrivate;
-class PlaylistController : public QObject
+
+//PlaylistController is a singleton in Qml, but there is no strong reason for this
+class PlaylistController : public QObject, public QMLSingleton<PlaylistController>
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(MainPlaylistController)
+    QML_SINGLETON
     Q_DISABLE_COPY(PlaylistController)
 
 public:
@@ -90,9 +95,10 @@ public:
     };
     Q_ENUM(MediaStopAction)
 
+    Q_PROPERTY(bool initialized READ isInitialized NOTIFY initializedChanged FINAL)
     Q_PROPERTY(QVariantList sortKeyTitleList READ getSortKeyTitleList CONSTANT FINAL)
 
-    Q_PROPERTY(Playlist playlist READ getPlaylist WRITE setPlaylist NOTIFY playlistChanged FINAL)
+    Q_PROPERTY(Playlist playlist READ getPlaylist CONSTANT FINAL)
 
     Q_PROPERTY(PlaylistItem currentItem READ getCurrentItem NOTIFY currentItemChanged FINAL)
 
@@ -141,46 +147,39 @@ public:
     Q_INVOKABLE void explore(const PlaylistItem& pItem);
 
 public:
-    PlaylistController(QObject *parent = nullptr);
     PlaylistController(vlc_playlist_t *playlist, QObject *parent = nullptr);
     virtual ~PlaylistController();
 
 
-public slots:
-    PlaylistItem getCurrentItem() const;
-
+public:
+    SortKey getSortKey() const;
     bool hasNext() const;
     bool hasPrev() const;
 
     bool isRandom() const;
-    void setRandom( bool );
-
     MediaStopAction getMediaStopAction() const;
-    void setMediaStopAction(MediaStopAction );
-
     PlaybackRepeat getRepeatMode() const;
-    void setRepeatMode( PlaybackRepeat mode );
-
     bool isEmpty() const;
     int count() const;
     int currentIndex() const;
-
-    SortKey getSortKey() const;
-    void setSortKey(SortKey sortKey);
     SortOrder getSortOrder() const;
+    bool isInitialized() const;
+
+public slots:
+    PlaylistItem getCurrentItem() const;
+
+    void setRandom( bool );
+    void setMediaStopAction(MediaStopAction );
+    void setRepeatMode( PlaybackRepeat mode );
+    void setSortKey(SortKey sortKey);
     void setSortOrder(SortOrder sortOrder);
     void switchSortOrder();
 
     QVariantList getSortKeyTitleList() const;
     Playlist getPlaylist() const;
-    void setPlaylist(const Playlist& playlist);
-    void setPlaylist(vlc_playlist_t* newPlaylist);
-
     void resetSortKey();
 
 signals:
-    void playlistChanged( Playlist );
-
     void currentItemChanged( );
 
     void hasNextChanged( bool );
@@ -201,7 +200,7 @@ signals:
     void itemsRemoved(size_t index, size_t count);
     void itemsUpdated(size_t index, QVector<PlaylistItem>);
 
-    void playlistInitialized();
+    void initializedChanged();
 
 private:
     Q_DECLARE_PRIVATE(PlaylistController)

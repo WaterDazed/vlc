@@ -31,40 +31,35 @@ decltype (PlayerControlbarModel::playerIdentifierDictionary)
         {Miniplayer,  N_("Mini player")}
     };
 
-QJSValue PlayerControlbarModel::getPlaylistIdentifierListModel(QQmlEngine *engine, QJSEngine *scriptEngine)
+PlayerListModel::PlayerListModel()
 {
-    Q_UNUSED(engine)
-
-    static const QMetaEnum metaEnum = QMetaEnum::fromType<PlayerIdentifier>();
-
-    QJSValue array = scriptEngine->newArray();
+    static const QMetaEnum metaEnum = QMetaEnum::fromType<PlayerControlbarModel::PlayerIdentifier>();
 
     for (int i = 0; i < metaEnum.keyCount(); ++i)
     {
-       QJSValue obj = scriptEngine->newObject();
+        QVariantMap obj;
 
-       const int val = metaEnum.value(i);
-       obj.setProperty("identifier", val);
+        const int val = metaEnum.value(i);
+        obj["identifier"] = val;
 
-       QString key;
-       if ( playerIdentifierDictionary.contains(static_cast<PlayerControlbarModel::PlayerIdentifier>(i)) )
-       {
-           key = qfut( playerIdentifierDictionary[static_cast<PlayerControlbarModel::PlayerIdentifier>(i)] );
-       }
-       else
-       {
-           key = metaEnum.key(i);
-       }
+        QString key;
+        if ( PlayerControlbarModel::playerIdentifierDictionary.contains(static_cast<PlayerControlbarModel::PlayerIdentifier>(i)) )
+        {
+            key = qfut( PlayerControlbarModel::playerIdentifierDictionary[static_cast<PlayerControlbarModel::PlayerIdentifier>(i)] );
+        }
+        else
+        {
+            key = metaEnum.key(i);
+        }
 
-       obj.setProperty("name", key);
-
-       array.setProperty(i, obj);
+        obj["name"] = key;
+        m_model.push_back(obj);
     }
+}
 
-    QJSValue value = scriptEngine->newObject();
-    value.setProperty("model", array);
-
-    return value;
+const QVariantList& PlayerListModel::getModel() const
+{
+    return m_model;
 }
 
 PlayerControlbarModel::PlayerControlbarModel(QObject *parent) : QObject(parent)

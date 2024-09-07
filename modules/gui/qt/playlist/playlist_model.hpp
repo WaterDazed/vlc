@@ -28,6 +28,7 @@
 #include "util/vlctick.hpp"
 
 #include <QAbstractListModel>
+#include <QQmlEngine>
 
 namespace vlc {
 namespace playlist {
@@ -36,6 +37,8 @@ class PlaylistListModelPrivate;
 class PlaylistListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+
     Q_PROPERTY(Playlist playlist READ getPlaylist WRITE setPlaylist NOTIFY playlistChanged FINAL)
     Q_PROPERTY(int currentIndex READ getCurrentIndex NOTIFY currentIndexChanged FINAL)
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged FINAL)
@@ -73,10 +76,11 @@ public:
 
     Q_INVOKABLE QVariantList getItemsForIndexes(const QVector<int> & indexes) const;
 
+    void setPlaylist(vlc_playlist_t* playlist);
+
 public slots:
     Playlist getPlaylist() const;
     void setPlaylist(const Playlist& playlist);
-    void setPlaylist(vlc_playlist_t* playlist);
 
 signals:
     void playlistChanged(const Playlist&);

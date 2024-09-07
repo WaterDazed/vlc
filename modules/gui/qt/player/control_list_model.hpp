@@ -21,10 +21,12 @@
 
 #include <QAbstractListModel>
 #include <QVector>
+#include <QQmlEngine>
 
 class ControlListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged FINAL)
 
 public:

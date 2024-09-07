@@ -49,6 +49,8 @@ public:
     void UpdateTrackSelection(vlc_es_id_t *trackid, bool selected);
     void UpdateSpuOrder(vlc_es_id_t *es_id, enum vlc_vout_order spu_order);
     int interpolateTime(vlc_tick_t system_now);
+    bool isCurrentItemSynced();
+    void onArtFetchEnded(input_item_t *, bool fetched);
 
     // SMPTE Timer
     void addSMPTETimer();

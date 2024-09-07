@@ -28,12 +28,15 @@
 #include <QUrl>
 #include <memory>
 
+Q_MOC_INCLUDE(<QQuickWindow>)
+
 class QQuickImageResponse;
 class RoundImageRequest;
 
 class RoundImage : public QQuickItem
 {
     Q_OBJECT
+    QML_ELEMENT
 
     // url of the image
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged FINAL)

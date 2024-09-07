@@ -129,8 +129,8 @@ public:
 };
 
 #define THEDP DialogsProvider::getInstance()
-#define THEMIM p_intf->p_mainPlayerController
-#define THEMPL p_intf->p_mainPlaylistController
+#define THEMIM PlayerController::getInstance()
+#define THEMPL vlc::playlist::PlaylistController::getInstance()
 
 #define qfu( i ) QString::fromUtf8( i )
 #define qfue( i ) QString::fromUtf8( i ).replace( "&", "&&" ) /* for actions/buttons */

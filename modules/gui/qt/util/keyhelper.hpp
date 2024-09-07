@@ -19,6 +19,7 @@
 #define KEYHELPER_HPP
 
 #include <QKeyEvent>
+#include <QQmlEngine>
 
 class QJSEngine;
 class QQmlEngine;
@@ -97,6 +98,9 @@ private:
 class QmlKeyHelper : public QObject
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(KeyHelper)
+    QML_SINGLETON
+
 public:
     QmlKeyHelper(QObject* parent = nullptr);
 

@@ -63,16 +63,13 @@ PlayerControllerPrivate::~PlayerControllerPrivate()
     vlc_player_RemoveTimer( m_player, m_player_timer );
 }
 
-bool PlayerController::isCurrentItemSynced()
+bool PlayerControllerPrivate::isCurrentItemSynced()
 {
-    Q_D(PlayerController);
-
     /* The media can change before the UI gets updated and thus a player
      * request can be submitted on the wrong media or worse, no media at
      * all. Here d->m_currentItem is read and modified under the player
      * lock. */
-
-    return d->m_currentItem.get() == vlc_player_GetCurrentMedia( d->m_player );
+    return m_currentItem.get() == vlc_player_GetCurrentMedia( m_player );
 }
 
 
@@ -1017,6 +1014,15 @@ static void on_player_timer_smpte_update(const struct vlc_player_timer_smpte_tim
     });
 }
 
+
+static void on_art_fetch_ended_callback(input_item_t *p_item, bool fetched,
+                                     void *userdata)
+{
+    PlayerControllerPrivate *me = reinterpret_cast<PlayerControllerPrivate *>(userdata);
+    me->onArtFetchEnded(p_item, fetched);
+}
+
+
 } //extern "C"
 
 static const struct vlc_player_cbs player_cbs = {
@@ -1082,6 +1088,15 @@ static const vlc_player_timer_cbs player_timer_cbs = []{
 static const struct vlc_player_timer_smpte_cbs player_timer_smpte_cbs = {
     on_player_timer_smpte_update
 };
+
+// art fetcher callbacks
+
+static const struct vlc_metadata_cbs art_fetcher_cbs  = []{
+    struct vlc_metadata_cbs cbs{};
+    cbs.on_art_fetch_ended = on_art_fetch_ended_callback;
+    return cbs;
+}();
+
 
 PlayerControllerPrivate::PlayerControllerPrivate(PlayerController *playercontroller, qt_intf_t *p_intf)
     : q_ptr(playercontroller)
@@ -1153,8 +1168,6 @@ PlayerController::PlayerController( qt_intf_t *_p_intf )
              this, &PlayerController::menusUpdateAudio );
     connect( &d_ptr->m_position_timer, &QTimer::timeout, this, &PlayerController::updatePositionFromTimer );
     connect( &d_ptr->m_time_timer, &QTimer::timeout, this, &PlayerController::updateTimeFromTimer );
-
-    input_preparser_cbs.on_art_fetch_ended = onArtFetchEnded_callback;
 }
 
 PlayerController::~PlayerController()
@@ -1256,7 +1269,7 @@ void PlayerController::setTime(VLCTick new_time)
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_SetTime( d->m_player, new_time );
 }
@@ -1268,7 +1281,7 @@ void PlayerController::setPosition(double position)
         return;
 
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_SetPosition( d->m_player, position );
 }
@@ -1279,7 +1292,7 @@ void PlayerController::jumpFwd()
     msg_Dbg( d->p_intf, "jumpFwd");
     int i_interval = var_InheritInteger( d->p_intf, "short-jump-size" );
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_JumpTime( d->m_player, vlc_tick_from_sec( i_interval ) );
 }
@@ -1290,7 +1303,7 @@ void PlayerController::jumpBwd()
     msg_Dbg( d->p_intf, "jumpBwd");
     int i_interval = var_InheritInteger( d->p_intf, "short-jump-size" );
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_JumpTime( d->m_player, vlc_tick_from_sec( -i_interval ) );
 }
@@ -1300,7 +1313,7 @@ void PlayerController::jumpToTime(VLCTick i_time)
     Q_D(PlayerController);
     msg_Dbg( d->p_intf, "jumpToTime");
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_JumpTime( d->m_player, i_time );
 }
@@ -1310,7 +1323,7 @@ void PlayerController::jumpToPos( double new_pos )
     Q_D(PlayerController);
     {
         vlc_player_locker lock{ d->m_player };
-        if( !isCurrentItemSynced() )
+        if( !d->isCurrentItemSynced() )
             return;
         if( vlc_player_IsStarted( d->m_player ) )
             vlc_player_SetPosition( d->m_player, new_pos );
@@ -1322,7 +1335,7 @@ void PlayerController::frameNext()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_NextVideoFrame( d->m_player );
 }
@@ -1333,7 +1346,7 @@ void PlayerController::setAudioDelay(VLCTick delay)
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_SetAudioDelay( d->m_player, delay, VLC_PLAYER_WHENCE_ABSOLUTE );
 }
@@ -1350,7 +1363,7 @@ void PlayerController::setSubtitleDelay(VLCTick delay)
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if(!isCurrentItemSynced() )
+    if(!d->isCurrentItemSynced() )
         return;
     vlc_player_SetSubtitleDelay( d->m_player, delay, VLC_PLAYER_WHENCE_ABSOLUTE );
 }
@@ -1367,7 +1380,7 @@ void PlayerController::setSecondarySubtitleDelay(VLCTick delay)
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (d->m_secondarySpuEsId.get() != NULL)
         vlc_player_SetEsIdDelay(d->m_player, d->m_secondarySpuEsId.get(),
@@ -1419,7 +1432,7 @@ void PlayerController::setSubtitleFPS(float fps)
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     vlc_player_SetAssociatedSubsFPS( d->m_player, fps );
 }
@@ -1430,7 +1443,7 @@ void PlayerController::sectionPrev()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
     {
@@ -1445,7 +1458,7 @@ void PlayerController::sectionNext()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
     {
@@ -1460,7 +1473,7 @@ void PlayerController::sectionMenu()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
         vlc_player_Navigate( d->m_player, VLC_PLAYER_NAV_MENU );
@@ -1470,7 +1483,7 @@ void PlayerController::navigateUp()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
         vlc_player_Navigate( d->m_player, VLC_PLAYER_NAV_UP);
@@ -1480,7 +1493,7 @@ void PlayerController::navigateDown()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
         vlc_player_Navigate( d->m_player, VLC_PLAYER_NAV_DOWN);
@@ -1490,7 +1503,7 @@ void PlayerController::navigateLeft()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
         vlc_player_Navigate( d->m_player, VLC_PLAYER_NAV_LEFT);
@@ -1500,7 +1513,7 @@ void PlayerController::navigateRight()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
         vlc_player_Navigate( d->m_player, VLC_PLAYER_NAV_RIGHT);
@@ -1510,7 +1523,7 @@ void PlayerController::navigateActivate()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
         vlc_player_Navigate( d->m_player, VLC_PLAYER_NAV_ACTIVATE);
@@ -1520,7 +1533,7 @@ void PlayerController::chapterNext()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (vlc_player_IsStarted(d->m_player ))
         vlc_player_SelectNextChapter( d->m_player );
@@ -1530,7 +1543,7 @@ void PlayerController::chapterPrev()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (vlc_player_IsStarted(d->m_player ))
         vlc_player_SelectPrevChapter( d->m_player );
@@ -1540,7 +1553,7 @@ void PlayerController::titleNext()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (vlc_player_IsStarted(d->m_player ))
         vlc_player_SelectNextTitle( d->m_player );
@@ -1550,7 +1563,7 @@ void PlayerController::titlePrev()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (vlc_player_IsStarted(d->m_player ))
         vlc_player_SelectPrevTitle( d->m_player );
@@ -1562,7 +1575,7 @@ void PlayerController::changeProgram( int program )
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if( vlc_player_IsStarted( d->m_player ) )
         vlc_player_SelectProgram( d->m_player, program );
@@ -1575,7 +1588,7 @@ void PlayerController::enableTeletext( bool enable )
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (vlc_player_IsStarted(d->m_player ))
         vlc_player_SetTeletextEnabled( d->m_player, enable );
@@ -1585,7 +1598,7 @@ void PlayerController::setTeletextPage(int page)
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (vlc_player_IsTeletextEnabled( d->m_player ))
         vlc_player_SelectTeletextPage( d->m_player, page );
@@ -1595,7 +1608,7 @@ void PlayerController::setTeletextTransparency( bool transparent )
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if( !isCurrentItemSynced() )
+    if( !d->isCurrentItemSynced() )
         return;
     if (vlc_player_IsTeletextEnabled( d->m_player ))
         vlc_player_SetTeletextTransparency( d->m_player, transparent );
@@ -1812,7 +1825,7 @@ void PlayerController::restorePlaybackPos()
 {
     Q_D(PlayerController);
     vlc_player_locker lock{ d->m_player };
-    if (!isCurrentItemSynced())
+    if (!d->isCurrentItemSynced())
         return;
     vlc_player_RestorePlaybackPos( d->m_player );
 }
@@ -1960,29 +1973,22 @@ void PlayerController::requestArtUpdate( input_item_t *p_item, bool b_forced )
         libvlc_MetadataRequest( vlc_object_instance(d->p_intf), p_item,
                                 (b_forced) ? META_REQUEST_OPTION_FETCH_ANY
                                            : META_REQUEST_OPTION_FETCH_LOCAL,
-                                &input_preparser_cbs, this, 0, NULL );
+                               &art_fetcher_cbs, d, 0, NULL );
     }
 }
 
-void PlayerController::onArtFetchEnded_callback(input_item_t *p_item, bool fetched,
-                                                void *userdata)
+void PlayerControllerPrivate::onArtFetchEnded(input_item_t *p_item, bool)
 {
-    PlayerController *me = reinterpret_cast<PlayerController *>(userdata);
-    me->onArtFetchEnded(p_item, fetched);
-}
+    Q_Q(PlayerController);
 
-void PlayerController::onArtFetchEnded(input_item_t *p_item, bool)
-{
-    Q_D(PlayerController);
-
-    vlc_player_locker lock{ d->m_player };
-    bool b_current_item = (p_item == vlc_player_GetCurrentMedia( d->m_player ));
+    vlc_player_locker lock{ m_player };
+    bool b_current_item = (p_item == vlc_player_GetCurrentMedia( m_player ));
     /* No input will signal the cover art to update,
          * let's do it ourself */
     if ( b_current_item )
-        d->UpdateArt( p_item );
+        UpdateArt( p_item );
     else
-        emit artChanged( p_item );
+        emit q->artChanged( p_item );
 }
 
 const QString PlayerController::decodeArtURL( input_item_t *p_item )

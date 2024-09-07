@@ -19,14 +19,18 @@
 #define CONTROLBARPROFILEMODEL_H
 
 #include <QAbstractListModel>
+#include <QSettings>
+#include <QQmlEngine>
 #include <array>
 
 #include "controlbar_profile.hpp"
-#include "qt.hpp"
+
 
 class ControlbarProfileModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("need to be accessed though the main ctx")
 
     Q_PROPERTY(int selectedProfile READ selectedProfile WRITE setSelectedProfile NOTIFY selectedProfileChanged FINAL)
     Q_PROPERTY(ControlbarProfile* currentModel READ currentModel NOTIFY selectedProfileChanged FINAL)
@@ -34,7 +38,7 @@ class ControlbarProfileModel : public QAbstractListModel
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged FINAL)
 
 public:
-    explicit ControlbarProfileModel(qt_intf_t *p_intf, QObject *parent = nullptr);
+    explicit ControlbarProfileModel(QSettings* settings, QObject *parent = nullptr);
 
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -123,7 +127,7 @@ private:
     QString generateUniqueName(const QString& name);
 
 protected:
-    qt_intf_t *m_intf = nullptr;
+    QSettings* m_settings = nullptr;
 };
 
 #endif // CONTROLBARPROFILEMODEL_H

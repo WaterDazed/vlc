@@ -23,6 +23,7 @@
 
 #include <QObject>
 #include <QRect>
+#include <QQmlEngine>
 #include <memory>
 
 Q_MOC_INCLUDE("maininterface/mainctx.hpp")
@@ -30,6 +31,8 @@ Q_MOC_INCLUDE("maininterface/mainctx.hpp")
 class CSDButton : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(ButtonType type READ type CONSTANT)
     Q_PROPERTY(bool showHovered READ showHovered WRITE setShowHovered NOTIFY showHoveredChanged)
     Q_PROPERTY(QRect rect READ rect WRITE setRect NOTIFY rectChanged)
@@ -102,6 +105,8 @@ class MainCtx;
 class CSDButtonModel : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QList<CSDButton *> windowCSDButtons READ windowCSDButtons CONSTANT)
 
     Q_PROPERTY(CSDButton *systemMenuButton READ systemMenuButton CONSTANT)

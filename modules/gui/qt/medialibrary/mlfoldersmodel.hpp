@@ -107,6 +107,9 @@ protected:
 
 class MLFoldersModel : public MLFoldersBaseModel
 {
+    Q_OBJECT
+    QML_ELEMENT
+
 public:
     using MLFoldersBaseModel::MLFoldersBaseModel;
 

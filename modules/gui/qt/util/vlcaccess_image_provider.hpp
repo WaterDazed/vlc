@@ -79,6 +79,9 @@ private:
 
 class VLCAccessImage : public QObject {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+
 public:
     VLCAccessImage(QObject* parent = nullptr);
 

@@ -29,6 +29,7 @@
 #include <QExplicitlySharedDataPointer>
 #include <QUrl>
 #include <QMetaType>
+#include <QQmlEngine>
 
 
 //namespace vlc {
@@ -48,6 +49,8 @@ using SharedPlaylistItem = vlc_shared_data_ptr_type(vlc_playlist_item_t,
 class PlaylistItem
 {
     Q_GADGET
+    QML_VALUE_TYPE(playlistItem)
+
 public:
     Q_PROPERTY(QString title READ getTitle CONSTANT  FINAL)
     Q_PROPERTY(QString artist READ getArtist CONSTANT  FINAL)

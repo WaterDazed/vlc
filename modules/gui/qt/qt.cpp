@@ -87,7 +87,7 @@ extern "C" char **environ;
 #include "playlist/playlist_common.hpp"
 #include "playlist/playlist_item.hpp"
 #include "dialogs/dialogs/dialogmodel.hpp"
-#include "medialibrary/mlqmltypes.hpp"
+#include "medialibrary/medialib.hpp"
 
 #include <QVector>
 #include "playlist/playlist_item.hpp"
@@ -980,18 +980,24 @@ static void *Thread( void *obj )
 
     app.setDesktopFileName( PACKAGE );
 
-    DialogErrorModel::getInstance( p_intf );
+    DialogErrorModel::createInstance( p_intf );
 
     /* Initialize the Dialog Provider and the Main Input Manager */
-    DialogsProvider::getInstance( p_intf );
-    p_intf->p_mainPlayerController = new PlayerController(p_intf);
-    p_intf->p_mainPlaylistController = new vlc::playlist::PlaylistController(p_intf->p_playlist);
+    DialogsProvider::createInstance( p_intf );
+    p_intf->p_mainPlayerController = PlayerController::createInstance(p_intf);
+    p_intf->p_mainPlaylistController = vlc::playlist::PlaylistController::createInstance(p_intf->p_playlist);
+
+    MediaLib* medialib = nullptr;
+    vlc_medialibrary_t* ml = vlc_ml_instance_get( p_intf );
+    if (ml) {
+        medialib = MediaLib::createInstance(p_intf, p_intf->p_mainPlaylistController);
+    }
 
     /* Create the normal interface in non-DP mode */
 #ifdef _WIN32
-    p_intf->p_mi = new MainCtxWin32(p_intf);
+    p_intf->p_mi = MainCtx::createInstance<MainCtxWin32>(p_intf, medialib);
 #else
-    p_intf->p_mi = new MainCtx(p_intf);
+    p_intf->p_mi = MainCtx::createInstance(p_intf, medialib);
 #endif
 
     if( !p_intf->b_isDialogProvider )
@@ -1012,7 +1018,7 @@ static void *Thread( void *obj )
         if (!ret)
         {
             msg_Err(p_intf, "unable to create main interface");
-            delete p_intf->p_mi;
+            MainCtx::killInstance();
             p_intf->p_mi = nullptr;
             //process deleteLater events as the main loop will never run
             QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
@@ -1116,14 +1122,13 @@ static void *ThreadCleanup( qt_intf_t *p_intf, CleanupReason cleanupReason )
         if (cleanupReason == CLEANUP_INTF_CLOSED)
         {
             p_intf->p_compositor->unloadGUI();
-            delete p_intf->p_mi;
+            MainCtx::killInstance();
             p_intf->p_mi = nullptr;
         }
         else // CLEANUP_APP_TERMINATED
         {
             p_intf->p_compositor->destroyMainInterface();
-            delete p_intf->p_mi;
-            p_intf->p_mi = nullptr;
+            MainCtx::killInstance();
 
             delete p_intf->mainSettings;
             p_intf->mainSettings = nullptr;
@@ -1131,6 +1136,8 @@ static void *ThreadCleanup( qt_intf_t *p_intf, CleanupReason cleanupReason )
             p_intf->p_compositor.reset();
         }
     }
+
+    MediaLib::killInstance();
 
     /* */
     ExtensionsManager::killInstance();
@@ -1146,18 +1153,9 @@ static void *ThreadCleanup( qt_intf_t *p_intf, CleanupReason cleanupReason )
     DialogErrorModel::killInstance();
 
     /* Destroy the main playlist controller */
-    if (p_intf->p_mainPlaylistController)
-    {
-        delete p_intf->p_mainPlaylistController;
-        p_intf->p_mainPlaylistController = nullptr;
-    }
-
-    /* Destroy the main InputManager */
-    if (p_intf->p_mainPlayerController)
-    {
-        delete p_intf->p_mainPlayerController;
-        p_intf->p_mainPlayerController = nullptr;
-    }
+    vlc::playlist::PlaylistController::killInstance();
+    PlayerController::killInstance();
+    p_intf->p_mainPlayerController = nullptr;
 
     /* Delete the application automatically */
     return NULL;

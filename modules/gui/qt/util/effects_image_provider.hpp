@@ -28,7 +28,24 @@ class EffectsImageProvider : public QQuickImageProvider
 {
     Q_OBJECT
 
+public:
     static constexpr const char * providerId = "effects";
+
+    explicit EffectsImageProvider()
+        : QQuickImageProvider(QQuickImageProvider::ImageType::Image,
+                              QQmlImageProviderBase::ForceAsynchronousImageLoading)
+    {
+    }
+
+    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
+
+};
+
+class Effects : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
 
 public:
     enum Effect
@@ -38,18 +55,6 @@ public:
         DoubleRoundedRectDropShadow
     };
     Q_ENUM(Effect)
-
-    explicit EffectsImageProvider(QQmlEngine *engine)
-        : QQuickImageProvider(QQuickImageProvider::ImageType::Image,
-                              QQmlImageProviderBase::ForceAsynchronousImageLoading)
-    {
-        assert(engine);
-
-        // Engine will take the ownership; no need to set parent in constructor
-        engine->addImageProvider(QLatin1String(providerId), this);
-    }
-
-    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
 
     Q_INVOKABLE static QUrl url(Effect effect, const QVariantMap& properties);
 };

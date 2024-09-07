@@ -24,8 +24,8 @@ import VLC.Playlist
 
 Widgets.IconToolButton {
     id: repeatBtn
-    checked: MainPlaylistController.repeatMode !== PlaylistController.PLAYBACK_REPEAT_NONE
-    text: (MainPlaylistController.repeatMode === PlaylistController.PLAYBACK_REPEAT_CURRENT)
+    checked: MainPlaylistController.repeatMode !== MainPlaylistController.PLAYBACK_REPEAT_NONE
+    text: (MainPlaylistController.repeatMode === MainPlaylistController.PLAYBACK_REPEAT_CURRENT)
           ? VLCIcons.repeat_one
           : VLCIcons.repeat_all
     onClicked: MainPlaylistController.toggleRepeatMode()

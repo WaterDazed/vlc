@@ -98,6 +98,7 @@ protected:
 class VideoSurface : public ViewBlockingRectangle
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ videoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY videoSurfaceProviderChanged FINAL)
     Q_PROPERTY(Qt::CursorShape cursorShape READ getCursorShape WRITE setCursorShape RESET unsetCursor FINAL)
 

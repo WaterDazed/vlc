@@ -26,6 +26,8 @@
 #include "config.h"
 #endif
 
+#include <QQmlEngine>
+
 #include <vlc_common.h>
 #include <vlc_threads.h>
 #include <vlc_input_item.h>
@@ -43,6 +45,7 @@ class MediaLib;
 class MLBookmarkModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(PlayerController * player READ playerController WRITE setPlayer FINAL)
 

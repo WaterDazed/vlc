@@ -49,10 +49,10 @@ RowLayout {
 
             font.pixelSize: VLCStyle.icon_playlist
             description: qsTr("Loop")
-            text: (MainPlaylistController.repeatMode === PlaylistController.PLAYBACK_REPEAT_CURRENT)
+            text: (MainPlaylistController.repeatMode === MainPlaylistController.PLAYBACK_REPEAT_CURRENT)
                       ? VLCIcons.repeat_one
                       : VLCIcons.repeat_all
-            checked: MainPlaylistController.repeatMode !== PlaylistController.PLAYBACK_REPEAT_NONE
+            checked: MainPlaylistController.repeatMode !== MainPlaylistController.PLAYBACK_REPEAT_NONE
             onClicked: MainPlaylistController.toggleRepeatMode()
             focusPolicy: Qt.NoFocus
         }
@@ -96,7 +96,7 @@ RowLayout {
 
             enabled: MainPlaylistController.count > 1
 
-            checked: MainPlaylistController.sortKey !== PlaylistController.SORT_KEY_NONE
+            checked: MainPlaylistController.sortKey !== MainPlaylistController.SORT_KEY_NONE
 
             popupAbove: true
 
@@ -110,18 +110,18 @@ RowLayout {
 
             onSortOrderSelected: type => {
                 if (type === Qt.AscendingOrder)
-                    MainPlaylistController.sortOrder = PlaylistController.SORT_ORDER_ASC
+                    MainPlaylistController.sortOrder = MainPlaylistController.SORT_ORDER_ASC
                 else if (type === Qt.DescendingOrder)
-                    MainPlaylistController.sortOrder = PlaylistController.SORT_ORDER_DESC
+                    MainPlaylistController.sortOrder = MainPlaylistController.SORT_ORDER_DESC
 
                 MainPlaylistController.sort()
             }
 
             sortOrder: {
-                if (MainPlaylistController.sortOrder === PlaylistController.SORT_ORDER_ASC) {
+                if (MainPlaylistController.sortOrder === MainPlaylistController.SORT_ORDER_ASC) {
                     Qt.AscendingOrder
                 }
-                else if (MainPlaylistController.sortOrder === PlaylistController.SORT_ORDER_DESC) {
+                else if (MainPlaylistController.sortOrder === MainPlaylistController.SORT_ORDER_DESC) {
                     Qt.DescendingOrder
                 }
             }

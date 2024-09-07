@@ -23,6 +23,7 @@
 
 // Qt includes
 #include <QSortFilterProxyModel>
+#include <QQmlEngine>
 
 Q_MOC_INCLUDE("maininterface/mainctx.hpp")
 Q_MOC_INCLUDE("player/player_controller.hpp")
@@ -38,6 +39,7 @@ class ControlListFilter : public QSortFilterProxyModel
     using QSortFilterProxyModel::setSourceModel;
 
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(ControlListModel* sourceModel READ sourceModel WRITE setSourceModel NOTIFY sourceModelChanged1 FINAL)
     Q_PROPERTY(PlayerController * player READ player WRITE setPlayer NOTIFY playerChanged FINAL)

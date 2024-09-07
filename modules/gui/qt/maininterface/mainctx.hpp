@@ -26,26 +26,19 @@
 
 #include "qt.hpp"
 
-#include "widgets/native/qvlcframe.hpp"
-#include "player/player_controller.hpp"
-#include "util/color_scheme_model.hpp"
-#include "medialibrary/medialib.hpp"
-#include <playlist/playlist_common.hpp>
-
 #include <QtQuick/QQuickView>
 #include <QApplication>
-
-#ifdef _WIN32
-# include <shobjidl.h>
-#endif
-
-#include <atomic>
+#include <QQuickItem>
+#include "util/singleton.hpp"
 
 Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
 Q_MOC_INCLUDE( "playlist/playlist_controller.hpp" )
 Q_MOC_INCLUDE( "maininterface/mainctx_submodels.hpp" )
 Q_MOC_INCLUDE( "maininterface/videosurface.hpp" )
+Q_MOC_INCLUDE( "medialibrary/medialib.hpp" )
+Q_MOC_INCLUDE( "player/player_controller.hpp" )
+Q_MOC_INCLUDE( "util/color_scheme_model.hpp" )
 
 class CSDButtonModel;
 class QSettings;
@@ -69,6 +62,9 @@ class SearchCtx;
 class SortCtx;
 class WorkerThreadSet;
 class VLCSystray;
+class MediaLib;
+class ColorSchemeModel;
+class VLCVarChoiceModel;
 
 namespace vlc {
 namespace playlist {
@@ -90,9 +86,11 @@ public:
 
 };
 
-class MainCtx : public QObject
+class MainCtx : public QObject, public QMLSingleton<MainCtx>
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
 
     Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
     Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
@@ -144,11 +142,13 @@ class MainCtx : public QObject
     Q_PROPERTY(SearchCtx* search MEMBER m_search CONSTANT FINAL)
     Q_PROPERTY(SortCtx* sort MEMBER m_sort CONSTANT FINAL)
 
-public:
+protected:
     /* tors */
-    MainCtx(qt_intf_t *);
+    MainCtx(qt_intf_t *, MediaLib* medialib);
     virtual ~MainCtx();
+    friend class QMLSingleton<MainCtx>;
 
+public:
     static const QEvent::Type ToolbarsNeedRebuild;
     static constexpr double MIN_INTF_USER_SCALE_FACTOR = 0.3;
     static constexpr double MAX_INTF_USER_SCALE_FACTOR = 3.0;
@@ -202,7 +202,7 @@ public:
     inline int CSDBorderSize() const { return 5 * getIntfScaleFactor(); }
     inline double getMinIntfUserScaleFactor() const { return MIN_INTF_USER_SCALE_FACTOR; }
     inline double getMaxIntfUserScaleFactor() const { return MAX_INTF_USER_SCALE_FACTOR; }
-    inline bool hasMediaLibrary() const { return b_hasMedialibrary; }
+    inline bool hasMediaLibrary() const { return m_medialib != nullptr; }
     inline MediaLib* getMediaLibrary() const { return m_medialib; }
     inline bool hasGridView() const { return m_gridView; }
     inline Grouping grouping() const { return m_grouping; }
@@ -320,7 +320,6 @@ protected:
     QWindow::Visibility  m_windowVisibility = QWindow::Windowed;
     bool                 b_interfaceOnTop = false;      ///keep UI on top
     bool                 b_hasWayland = false;
-    bool                 b_hasMedialibrary = false;
     MediaLib*            m_medialib = nullptr;
     bool                 m_gridView = false;
     bool                 m_hasGridListMode = false;

@@ -20,12 +20,15 @@
 #define COLORSCHEMEMODEL_HPP
 
 #include <QAbstractListModel>
+#include <QQmlEngine>
 
 #include <memory>
 
 class ColorSchemeModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("uncreatable")
     Q_PROPERTY(QString current READ currentText NOTIFY currentChanged FINAL)
     Q_PROPERTY(ColorScheme scheme READ currentScheme NOTIFY currentChanged FINAL)
 

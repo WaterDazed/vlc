@@ -31,6 +31,7 @@
 
 // Qt includes
 #include <QAbstractListModel>
+#include <QQmlEngine>
 
 #include "qt.hpp"
 #include "util/singleton.hpp"
@@ -40,6 +41,7 @@ Q_MOC_INCLUDE("maininterface/mainctx.hpp")
 class DialogId
 {
     Q_GADGET
+    QML_VALUE_TYPE(dialogId)
 
 public:
     DialogId(vlc_dialog_id * id = nullptr) : m_id(id) {}
@@ -55,9 +57,11 @@ public: // Variables
 };
 
 
-class DialogErrorModel : public QAbstractListModel, public Singleton<DialogErrorModel>
+class DialogErrorModel : public QAbstractListModel, public QMLSingleton<DialogErrorModel>
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
 
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(QString notificationText READ notificationText NOTIFY countChanged FINAL)
@@ -80,9 +84,10 @@ private:
     QString lastNotificationText;
     int repeatedNotificationCount = 0;
 
-public:
+protected:
     explicit DialogErrorModel(qt_intf_t* intf, QObject * parent = nullptr);
     virtual ~DialogErrorModel();
+    friend class QMLSingleton<DialogErrorModel>;
 
 public: // QAbstractItemModel implementation
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
@@ -118,6 +123,7 @@ private: // Variables
 class DialogModel : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(MainCtx* ctx READ getCtx WRITE setCtx NOTIFY ctxChanged FINAL)
 

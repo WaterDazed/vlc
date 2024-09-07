@@ -36,6 +36,7 @@ class ColorContextState;
 
 class ColorProperty {
     Q_GADGET
+    QML_VALUE_TYPE(colorProperty)
 
     Q_PROPERTY(QColor primary READ primary CONSTANT FINAL)
     Q_PROPERTY(QColor secondary READ secondary CONSTANT FINAL)
@@ -67,6 +68,7 @@ Q_DECLARE_METATYPE(ColorProperty)
 
 class ColorContext : public QObject, public QQmlParserStatus {
     Q_OBJECT
+    QML_ELEMENT
     Q_INTERFACES(QQmlParserStatus)
 
 public:

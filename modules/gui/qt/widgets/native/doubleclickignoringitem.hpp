@@ -24,7 +24,8 @@
 //       413522: QQuickItem: ignore double-clicks by default; remove allowDoubleClick
 class DoubleClickIgnoringItem : public QQuickItem
 {
-    // Q_OBJECT
+    Q_OBJECT
+    QML_ELEMENT
 
 public:
     DoubleClickIgnoringItem(QQuickItem *parent = nullptr) : QQuickItem(parent) { }

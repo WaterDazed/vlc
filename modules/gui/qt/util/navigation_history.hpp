@@ -5,10 +5,14 @@
 
 #include <QObject>
 #include <QtQml/QQmlPropertyMap>
+#include <QQmlEngine>
 
 class NavigationHistory : public QObject
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(History)
+    QML_SINGLETON
+
 public:
     Q_PROPERTY(bool previousEmpty READ isPreviousEmpty NOTIFY previousEmptyChanged FINAL)
     /**

@@ -78,7 +78,7 @@ class MainCtxWin32 : public MainCtx
 {
     Q_OBJECT
 public:
-    explicit MainCtxWin32(qt_intf_t *);
+    explicit MainCtxWin32(qt_intf_t *, MediaLib* medialib);
     virtual ~MainCtxWin32() = default;
 
 public slots:
