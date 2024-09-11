@@ -112,7 +112,28 @@ void SortMenu::popup(const QPoint &point, const bool popupAbovePoint, const QVar
         action->setChecked(checked);
 
         if (checked)
-            action->setIcon(sortIcon(m_menu.get(), obj.value("order").toInt()));
+        {
+            QIcon icon;
+
+            static const QString ascending = QStringLiteral("view-sort-ascending");
+            static const QString descending = QStringLiteral("view-sort-descending");
+            static bool themeHasIcon = QIcon::hasThemeIcon(ascending) && QIcon::hasThemeIcon(descending);
+
+            const auto order = obj.value("order").toInt();
+            if (themeHasIcon)
+            {
+                if (order == Qt::AscendingOrder)
+                    icon = QIcon::fromTheme(ascending);
+                else if (order == Qt::DescendingOrder)
+                    icon = QIcon::fromTheme(descending);
+                else
+                    Q_UNREACHABLE();
+            }
+            else
+                icon = sortIcon(m_menu.get(), order);
+
+            action->setIcon(icon);
+        }
 
         connect(action, &QAction::triggered, this, [this, i]()
         {
