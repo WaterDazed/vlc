@@ -998,34 +998,8 @@ void PlaylistContextMenu::popup(int selectedIndex, QPoint pos )
 
         m_menu->addSeparator();
 
-        using namespace vlc::playlist;
-        PlaylistController::SortKey currentKey = m_controler->getSortKey();
-        PlaylistController::SortOrder currentOrder = m_controler->getSortOrder();
-
-        QMenu* sortMenu = m_menu->addMenu(qtr("Sort by"));
-        QActionGroup * group = new QActionGroup(sortMenu);
-
-        auto addSortAction = [&](const QString& label, PlaylistController::SortKey key, PlaylistController::SortOrder order) {
-            QAction* action = sortMenu->addAction(label);
-            connect(action, &QAction::triggered, this, [this, key, order]( ) {
-                m_controler->sort(key, order);
-            });
-            action->setCheckable(true);
-            action->setActionGroup(group);
-            if (key == currentKey && currentOrder == order)
-                action->setChecked(true);
-        };
-
-        for (const QVariant& it: m_controler->getSortKeyTitleList())
-        {
-            const QVariantMap varmap = it.toMap();
-
-            auto key = static_cast<PlaylistController::SortKey>(varmap.value("key").toInt());
-            QString label = varmap.value("text").toString();
-
-            addSortAction(qtr("%1 Ascending").arg(label), key, PlaylistController::SORT_ORDER_ASC);
-            addSortAction(qtr("%1 Descending").arg(label), key, PlaylistController::SORT_ORDER_DESC);
-        }
+        action = m_menu->addAction( qtr("Sort menu...") );
+        connect(action, &QAction::triggered, this, &PlaylistContextMenu::requestOpenSortMenu);
 
         action = m_menu->addAction( qtr("Shuffle the playlist") );
         action->setIcon(QIcon(":/menu/ic_fluent_arrow_shuffle_on.svg"));

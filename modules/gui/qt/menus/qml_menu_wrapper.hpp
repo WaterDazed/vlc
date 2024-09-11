@@ -400,6 +400,7 @@ public:
 
 signals:
     void jumpToCurrentPlaying();
+    void requestOpenSortMenu();
 
 public slots:
     void popup(int currentIndex, QPoint pos );
