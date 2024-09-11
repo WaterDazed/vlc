@@ -38,19 +38,18 @@ T.ToolBar {
 
     property int selectedIndex: 0
     property alias sortMenu: sortControl.menu
-    property alias menuDelegate: browseAddressbar.sourceComponent
+    property var menuDelegate: undefined
 
     // For now, used for d&d functionality
     // Not strictly necessary to set
     property PlaylistListView plListView: null
 
     property bool _showCSD: MainCtx.clientSideDecoration && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
-
-    height: VLCStyle.applicationVerticalMargin
-            + (menubar.visible ? menubar.height : 0)
-            + VLCStyle.globalToolbar_height
+    property bool _csdOnToolbarLine: _showCSD && !MainCtx.hasToolbarMenu
 
     hoverEnabled: true
+    implicitHeight: implicitContentHeight
+    implicitWidth: implicitContentWidth
 
     ColorContext {
         id: theme
@@ -71,213 +70,190 @@ T.ToolBar {
     }
 
     background: Widgets.AcrylicBackground {
-        tintColor: theme.bg.primary
+        tintColor: theme.bg.secondary
         alternativeColor: theme.bg.secondary
     }
 
-    Menus.Menubar {
-        id: menubar
-        width: parent.width
-        height: implicitHeight
-        visible: MainCtx.hasToolbarMenu
-        enabled: visible
-    }
-
     contentItem:  Item {
-        id: globalToolbar
-        clip: true
+        implicitHeight: (MainCtx.hasToolbarMenu ? menubar.height : 0)
+                        + (menuDelegateSmallScreen.visible ? menuDelegateSmallScreen.height : 0)
+                        + globalToolbarContent.implicitHeight
+                        + VLCStyle.applicationVerticalMargin
 
-        anchors {
-            fill: parent
-            topMargin: VLCStyle.applicationVerticalMargin
+        //drag and dbl click the titlebar in CSD mode
+        Loader {
+            z:-1
+            anchors.fill: parent
+            active: root._showCSD
+            source: "qrc:///qt/qml/VLC/Widgets/CSDTitlebarTapNDrapHandler.qml"
+        }
+
+        Menus.Menubar {
+            id: menubar
+            height: root._showCSD ? Math.max(implicitHeight, csdButtons.height) : implicitHeight
+
+            anchors {
+                left: parent.left
+                right: root._showCSD ? csdButtons.left : parent.right
+                top: parent.top
+                topMargin: VLCStyle.applicationVerticalMargin
+                rightMargin: root._showCSD ? 0 : VLCStyle.applicationHorizontalMargin
+            }
+            visible: MainCtx.hasToolbarMenu
+            enabled: visible
+
+            Navigation.parentItem: root
+            Navigation.downItem: globalToolbarContent
         }
 
         Item {
             id: globalToolbarContent
-            implicitWidth: parent.width
-            height: VLCStyle.globalToolbar_height
-                    + (menubar.visible ? menubar.height : 0)
+            implicitHeight: VLCStyle.globalToolbar_height
 
             anchors {
-                right: globalToolbarRight.left
-                rightMargin: VLCStyle.applicationHorizontalMargin
+                right: root._csdOnToolbarLine ? csdButtons.left : parent.right
                 left: parent.left
+                top: menubar.visible ? menubar.bottom : parent.top
+                topMargin: menubar.visible ? 0 : VLCStyle.applicationVerticalMargin
+                rightMargin: root._csdOnToolbarLine ? 0 : VLCStyle.applicationHorizontalMargin
             }
 
-            //drag and dbl click the titlebar in CSD mode
-            Loader {
-                anchors.fill: parent
-                active: root._showCSD
-                source: "qrc:///qt/qml/VLC/Widgets/CSDTitlebarTapNDrapHandler.qml"
-            }
+            Navigation.parentItem: root
+            Navigation.upItem: menubar.visible ? menubar : null
+            Navigation.downItem: menuDelegateSmallScreen.visible ? menuDelegateSmallScreen : null
 
-            Item {
+            Row {
                 id: globalToolbarLeft
-                width: parent.width
-                height: VLCStyle.globalToolbar_height
+                spacing: VLCStyle.margin_normal
 
-                Accessible.role: Accessible.ToolBar
+                height: VLCStyle.globalToolbar_height
 
                 anchors {
                     left: parent.left
                     verticalCenter: parent.verticalCenter
                     leftMargin: VLCStyle.margin_xsmall
-                    right: networkAddressbar.visible ? networkAddressbar.right : globalToolbarRightContextGroup.left
                 }
 
-                Row {
-                    anchors.fill: parent
+                Accessible.role: Accessible.ToolBar
+
+                Widgets.IconToolButton {
+                     id: history_back
+
+                     anchors.verticalCenter: parent.verticalCenter
+
+                     font.pixelSize: VLCStyle.icon_banner
+                     text: VLCIcons.back
+                     description: qsTr("Previous")
+                     height: VLCStyle.bannerButton_height
+                     width: VLCStyle.bannerButton_width
+                     onClicked: History.previous()
+                     enabled: !History.previousEmpty
+
+                     onEnabledChanged: {
+                        if (!enabled && focus)
+                            globalToolbarLeftContextGroup.focus = true
+                     }
+
+                     Navigation.parentItem: globalToolbarContent
+                     Navigation.rightItem: globalToolbarLeftContextGroup
+                }
+
+                Widgets.NavigableRow {
+                    id: globalToolbarLeftContextGroup
+
+                    anchors.verticalCenter: parent.verticalCenter
+
                     spacing: VLCStyle.margin_normal
+                    enabled: list_grid_btn.visible || sortControl.visible
 
-                    Widgets.IconToolButton {
-                         id: history_back
-
-                         anchors.verticalCenter: parent.verticalCenter
-
-                         font.pixelSize: VLCStyle.icon_banner
-                         text: VLCIcons.back
-                         description: qsTr("Previous")
-                         height: VLCStyle.bannerButton_height
-                         width: VLCStyle.bannerButton_width
-                         onClicked: History.previous()
-                         enabled: !History.previousEmpty
-
-                         onEnabledChanged: {
-                            if (!enabled && focus)
-                                globalToolbarLeftContextGroup.focus = true
-                         }
-
-                         Navigation.parentItem: root
-                         Navigation.rightItem: globalToolbarLeftContextGroup
+                    onEnabledChanged: {
+                        if (!enabled && focus) {
+                            networkAddressbar = true
+                        }
                     }
 
-                    Widgets.NavigableRow {
-                        id: globalToolbarLeftContextGroup
+                    //TODO: visible value of MainCtx.sort.available and MainCtx.hasGridListMode is initialised correctly but on first load still shows up
+                    model: ObjectModel {
+                        Widgets.IconToolButton {
+                            id: list_grid_btn
 
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        spacing: VLCStyle.margin_normal
-                        enabled: list_grid_btn.visible || sortControl.visible
-
-                        onEnabledChanged: {
-                            if (!enabled && focus) {
-                                networkAddressbar = true
-                            }
+                            visible: MainCtx.hasGridListMode
+                            // visible: true
+                            enabled: visible
+                            width: VLCStyle.bannerButton_width
+                            height: VLCStyle.bannerButton_height
+                            font.pixelSize: VLCStyle.icon_banner
+                            text: MainCtx.gridView ? VLCIcons.list : VLCIcons.grid
+                            description: qsTr("List/Grid")
+                            onClicked: MainCtx.gridView = !MainCtx.gridView
                         }
 
-                        //TODO: visible value of MainCtx.sort.available and MainCtx.hasGridListMode is initialised correctly but on first load still shows up 
-                        model: ObjectModel {
-                            Widgets.IconToolButton {
-                                id: list_grid_btn
+                        Widgets.SortControl {
+                            id: sortControl
 
-                                visible: MainCtx.hasGridListMode
-                                // visible: true
-                                enabled: visible
-                                width: VLCStyle.bannerButton_width
-                                height: VLCStyle.bannerButton_height
-                                font.pixelSize: VLCStyle.icon_banner
-                                text: MainCtx.gridView ? VLCIcons.list : VLCIcons.grid
-                                description: qsTr("List/Grid")
-                                onClicked: MainCtx.gridView = !MainCtx.gridView
+                            visible: MainCtx.sort.available
+                            enabled: visible
+                            width: VLCStyle.bannerButton_width
+                            height: VLCStyle.bannerButton_height
+                            font.pixelSize: VLCStyle.icon_banner
+                            description: qsTr("Sort")
+
+                            model: MainCtx.sort.model
+
+                            sortKey:  MainCtx.sort.criteria
+                            sortOrder: MainCtx.sort.order
+
+                            onSortSelected: (key) => {
+                                MainCtx.sort.criteria = key
                             }
-
-                            Widgets.SortControl {
-                                id: sortControl
-
-                                visible: MainCtx.sort.available
-                                enabled: visible
-                                width: VLCStyle.bannerButton_width
-                                height: VLCStyle.bannerButton_height
-                                font.pixelSize: VLCStyle.icon_banner
-                                description: qsTr("Sort")
-
-                                model: MainCtx.sort.model
-
-                                sortKey:  MainCtx.sort.criteria
-                                sortOrder: MainCtx.sort.order
-
-                                onSortSelected: (key) => {
-                                    MainCtx.sort.criteria = key
-                                }
-                                onSortOrderSelected: (type) => {
-                                    MainCtx.sort.order = type
-                                }
+                            onSortOrderSelected: (type) => {
+                                MainCtx.sort.order = type
                             }
                         }
-
-                        Navigation.parentItem: root
-                        Navigation.leftItem: history_back 
-                        Navigation.rightItem: globalToolbarRightContextGroup
                     }
+
+                    Navigation.parentItem: globalToolbarContent
+                    Navigation.leftItem: history_back
+                    Navigation.rightItem: menuDelegateLargeScreen
                 }
             }
 
-            T.Pane {
-                id: networkAddressbar
+            MenuDelegateLoader {
+                id: menuDelegateLargeScreen
 
-                property int _availableWidth: parent.width
-                                              - (globalToolbarLeft.width + globalToolbarRightContextGroup.width)
-                                              - (VLCStyle.applicationHorizontalMargin * 2)
-                                              - (VLCStyle.margin_xsmall * 2)
-                                              - (VLCStyle.margin_xxsmall * 2)
-
-                width: Math.min(contentItem.contentWidth, _availableWidth)
+                //component is centered in globalToolbarContent, taking symetrically space up to the closet toolbar
+                readonly property int _availableLeft: (parent.width / 2) - (globalToolbarLeft.x + globalToolbarLeft.width)
+                readonly property int _availableRight: globalToolbarRight.x - (parent.width / 2)
+                width: Math.max(0, 2 * Math.min(_availableLeft, _availableRight))
                 height: VLCStyle.globalToolbar_height
-                enabled: browseAddressbar.sourceComponent !== null
+                enabled: sourceComponent !== null
                 visible: enabled
-
+                sourceComponent: VLCStyle.isScreenSmall ? null : root.menuDelegate
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     verticalCenter: parent.verticalCenter
-                    rightMargin: VLCStyle.margin_xxsmall 
+                    rightMargin: VLCStyle.margin_xxsmall
+                    leftMargin: VLCStyle.margin_xxsmall
                 }
 
                 onEnabledChanged: {
                     if (!enabled && focus) {
-                        globalToolbarRightContextGroup.focus = true
+                        globalToolbarRight.focus = true
                     }
                 }
 
-                Navigation.parentItem: root
+                Navigation.parentItem: globalToolbarContent
                 Navigation.leftItem: sortControl
-                Navigation.rightItem: globalToolbarRightContextGroup
-
-                contentItem: Flickable {
-
-                    clip: contentWidth > width
-
-                    contentWidth: browseAddressbar.width
-                    contentHeight: VLCStyle.globalToolbar_height // don't allow vertical flickering
-
-                    Loader {
-                        id: browseAddressbar
-
-                        focus: true
-
-                        enabled: status === Loader.Ready
-                        y: status === Loader.Ready ? (VLCStyle.globalToolbar_height - item.height) / 2 : 0
-                        width: !!item
-                               ? Helpers.clamp(networkAddressbar._availableWidth,
-                                               browseAddressbar.item.minimumWidth || browseAddressbar.item.implicitWidth,
-                                               browseAddressbar.item.maximumWidth || browseAddressbar.item.implicitWidth)
-                               : 0
-
-                        onItemChanged: {
-                            if (!item)
-                                return
-                            item.Navigation.parentItem = networkAddressbar
-                        }
-                    }
-                }
+                Navigation.rightItem: globalToolbarRight
             }
 
             Widgets.NavigableRow {
-                id: globalToolbarRightContextGroup
+                id: globalToolbarRight
 
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
-                    rightMargin: VLCStyle.applicationHorizontalMargin + VLCStyle.margin_xsmall
+                    rightMargin: VLCStyle.margin_xsmall
                 }
                 
                 spacing: VLCStyle.margin_normal
@@ -289,9 +265,9 @@ T.ToolBar {
                         // set max width so that search field not overflows with small screens
                         // assumes all other sibling is a button of 'VLCStyle.bannerButton_width' width
                         maxSearchFieldWidth: root.width
-                                             - (VLCStyle.bannerButton_width * globalToolbarRightContextGroup.count)
-                                             - (globalToolbarRightContextGroup.spacing * (globalToolbarRightContextGroup.count - 1))
-                                             - globalToolbarRightContextGroup.anchors.rightMargin
+                                             - (VLCStyle.bannerButton_width * globalToolbarRight.count)
+                                             - (globalToolbarRight.spacing * (globalToolbarRight.count - 1))
+                                             - globalToolbarRight.anchors.rightMargin
                                              - VLCStyle.margin_small // padding to left
 
                         //TODO: initialise visible value with MainCtx
@@ -385,18 +361,39 @@ T.ToolBar {
                     }
                 }
 
-                Navigation.parentItem: root
-                Navigation.leftItem: globalToolbarLeftContextGroup
-                Navigation.rightItem: globalToolbarRight
+                Navigation.parentItem: globalToolbarContent
+                Navigation.leftItem: menuDelegateLargeScreen
             }
+
+        }
+
+
+        MenuDelegateLoader {
+            id: menuDelegateSmallScreen
+
+            height: VLCStyle.globalToolbar_height
+            enabled: sourceComponent !== null
+            visible: enabled
+            sourceComponent: VLCStyle.isScreenSmall ? root.menuDelegate : null
+            anchors {
+                left: parent.left
+                right: parent.right
+                bottom: parent.bottom
+            }
+
+            onEnabledChanged: {
+                if (!enabled && focus) {
+                    globalToolbarRight.focus = true
+                }
+            }
+
+            Navigation.parentItem: root
+            Navigation.upItem: globalToolbarContent
         }
 
         Loader {
-            id: globalToolbarRight
-            anchors {
-                right: parent.right
-                rightMargin: VLCStyle.applicationHorizontalMargin
-            }
+            id: csdButtons
+            anchors.right: parent.right
             height: VLCStyle.globalToolbar_height
             active: root._showCSD
             source: VLCStyle.palette.hasCSDImage
@@ -406,5 +403,42 @@ T.ToolBar {
 
         Keys.priority: Keys.AfterItem
         Keys.onPressed: (event) => root.Navigation.defaultKeyAction(event)
+    }
+
+
+    component MenuDelegateLoader : T.Pane {
+        id: menuDelegate
+
+        property alias sourceComponent: menuDelegateLoader.sourceComponent
+
+        contentItem: Flickable {
+            id: menuDelegateFlickable
+            clip: contentWidth > width
+
+            contentWidth: Math.max(menuDelegateLoader.width, menuDelegateFlickable.width)
+            contentHeight: menuDelegateFlickable.height // don't allow vertical flickering
+
+            Loader {
+                id: menuDelegateLoader
+
+                focus: true
+
+                enabled: status === Loader.Ready
+                //ensure the component is centered in the view
+                y: status === Loader.Ready ? ((menuDelegateFlickable.contentHeight - item.height) / 2) : 0
+                x: status === Loader.Ready ? ((menuDelegateFlickable.contentWidth - item.width) / 2) : 0
+                width: !!item
+                       ? Helpers.clamp(menuDelegateFlickable.width,
+                                       item.minimumWidth || item.implicitWidth,
+                                       item.maximumWidth || item.implicitWidth)
+                       : 0
+
+                onItemChanged: {
+                    if (!item)
+                        return
+                    item.Navigation.parentItem = menuDelegate
+                }
+            }
+        }
     }
 }

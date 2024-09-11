@@ -188,9 +188,8 @@ FocusScope {
             Topbar {
                 id: globalTopbar
                 z: 2
-                Layout.preferredHeight: height
-                Layout.minimumHeight: height
-                Layout.maximumHeight: height
+                Layout.preferredHeight: implicitHeight
+                Layout.minimumHeight: implicitHeight
                 Layout.fillWidth: true
 
                 plListView: playlistLoader.active ? playlistLoader.item
@@ -270,8 +269,8 @@ FocusScope {
                                       : VLCStyle.applicationHorizontalMargin
 
 
-                        Navigation.parentItem: mainColumn
-                        Navigation.upItem: sourcesBanner
+                        Navigation.parentItem: mainRow
+                        Navigation.upItem: globalTopbar
                         Navigation.rightItem: playlistLoader
                         Navigation.downItem:  miniPlayer.visible ? miniPlayer : null
                     }
@@ -365,8 +364,8 @@ FocusScope {
                         topPadding: VLCStyle.layoutTitle_top_padding
                         bottomPadding: VLCStyle.margin_normal + Math.max(VLCStyle.applicationVerticalMargin - g_mainDisplay.displayMargin, 0)
 
-                        Navigation.parentItem: mainColumn
-                        Navigation.upItem: sourcesBanner
+                        Navigation.parentItem: mainRow
+                        Navigation.upItem: globalTopbar
                         Navigation.downItem: miniPlayer.visible ? miniPlayer : null
 
                         Navigation.leftAction: function() {
@@ -484,7 +483,7 @@ FocusScope {
 
             dragXMin: 0
             dragXMax: g_mainDisplay.width - playerPip.width
-            dragYMin: sourcesBanner.y + sourcesBanner.height
+            dragYMin: globalTopbar.y + globalTopbar.height
             dragYMax: miniPlayer.y - playerPip.height
 
             //keep the player visible on resize
@@ -527,9 +526,9 @@ FocusScope {
 
         background.visible: !stackViewParent.layer.enabled
 
-        Navigation.parentItem: mainColumn
+        Navigation.parentItem: mainRow
         Navigation.upItem: stackView
-        Navigation.cancelItem:sourcesBanner
+        Navigation.cancelItem:globalTopbar
         onVisibleChanged: {
             if (!visible && miniPlayer.activeFocus)
                 stackView.forceActiveFocus()
