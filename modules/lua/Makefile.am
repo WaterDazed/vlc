@@ -43,3 +43,5 @@ liblua_plugin_la_LIBADD = $(LUA_LIBS) $(SOCKET_LIBS) $(LIBDL) $(LIBM)
 if BUILD_LUA
 lua_LTLIBRARIES = liblua_plugin.la
 endif
+
+include lua/ipc/Makefile.am

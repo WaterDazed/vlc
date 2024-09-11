@@ -1,0 +1,16 @@
+message lua_scan {
+  string filename;
+}
+
+message lua_descriptor {
+  string filename;
+  bool valid;
+  uint32 capabilities;
+  string title;
+  string author;
+  string version;
+  string url;
+  string description;
+  string short_description;
+  buffer icon;
+}
