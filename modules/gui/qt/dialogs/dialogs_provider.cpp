@@ -323,7 +323,8 @@ void DialogsProvider::mediaInfoDialog( const SharedInputItem& inputItem )
 {
     assert(inputItem.get());
 
-    MediaInfoDialog * const mid = new MediaInfoDialog( p_intf, inputItem );
+    QList<SharedInputItem> inputList = { inputItem };
+    MediaInfoDialog * const mid = new MediaInfoDialog( p_intf, inputList );
     mid->setWindowFlag( Qt::Dialog );
     mid->setAttribute( Qt::WA_DeleteOnClose );
     mid->showTab( MediaInfoDialog::META_PANEL );
@@ -332,21 +333,22 @@ void DialogsProvider::mediaInfoDialog( const SharedInputItem& inputItem )
 void DialogsProvider::mediaInfoDialog( const QVariantList& itemIdList ) {
     QList<SharedInputItem> inputItems;
 
-    for ( const auto &variant : itemIdList )
-    {
+    for ( const auto &variant : itemIdList ) {
         MLItemId itemId = variant.value<MLItemId>();  // Convert QVariant to MLItemId
         vlc_medialibrary_t* const ml = vlc_ml_instance_get( p_intf );
         input_item_t* const inputItem = vlc_ml_get_input_item( ml, itemId.id );
         
-        if ( inputItem )
-        {
+        if ( inputItem ) {
             inputItems.append( SharedInputItem{ inputItem, false } );
         }
     }
 
-    if ( !inputItems.isEmpty() )
-    {
-        mediaInfoDialog( inputItems );  // Pass the list of items to the new overloaded method
+    if ( !inputItems.isEmpty() ) {
+        MediaInfoDialog * const mid = new MediaInfoDialog( p_intf, inputItems );
+        mid->setWindowFlag( Qt::Dialog );
+        mid->setAttribute( Qt::WA_DeleteOnClose );
+        mid->showTab( MediaInfoDialog::META_PANEL );
+        mid->show();  // Ensure dialog is shown after configuration
     }
 }
 

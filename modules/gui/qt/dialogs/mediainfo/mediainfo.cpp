@@ -42,101 +42,11 @@
    Please be Careful of not breaking one the modes behaviour... */
 
 MediaInfoDialog::MediaInfoDialog(qt_intf_t *_p_intf,
-                                 SharedInputItem p_item )
-    : QVLCFrame( _p_intf )
-{
-    isMainInputInfo = ( p_item == NULL );
-
-    if ( isMainInputInfo )
-        setWindowTitle( qtr( "Current Media Information" ) );
-    else
-        setWindowTitle( qtr( "Media Information" ) );
-    setWindowRole( "vlc-media-info" );
-
-    setWindowFlags( Qt::Window | Qt::CustomizeWindowHint |
-                    Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint );
-
-    /* TabWidgets and Tabs creation */
-    infoTabW = new QTabWidget;
-
-    MP = new MetaPanel( infoTabW, p_intf );
-    infoTabW->insertTab( META_PANEL, MP, qtr( "&General" ) );
-    EMP = new ExtraMetaPanel( infoTabW );
-    infoTabW->insertTab( EXTRAMETA_PANEL, EMP, qtr( "&Metadata" ) );
-    IP = new InfoPanel( infoTabW );
-    infoTabW->insertTab( INFO_PANEL, IP, qtr( "Co&dec" ) );
-    if( isMainInputInfo )
-    {
-        ISP = new InputStatsPanel( infoTabW );
-        infoTabW->insertTab( INPUTSTATS_PANEL, ISP, qtr( "S&tatistics" ) );
-    }
-
-    QGridLayout *layout = new QGridLayout( this );
-
-    /* No need to use a QDialogButtonBox here */
-    saveMetaButton = new QPushButton( qtr( "&Save Metadata" ) );
-    saveMetaButton->hide();
-    QPushButton *closeButton = new QPushButton( qtr( "&Close" ) );
-    closeButton->setDefault( true );
-
-    QLabel *uriLabel = new QLabel( qtr( "Location:" ) );
-    uriLine = new QLineEdit;
-    uriLine->setReadOnly( true );
-
-    layout->addWidget( infoTabW, 0, 0, 1, 8 );
-    layout->addWidget( uriLabel, 1, 0, 1, 1 );
-    layout->addWidget( uriLine, 1, 1, 1, 7 );
-    layout->addWidget( saveMetaButton, 2, 6 );
-    layout->addWidget( closeButton, 2, 7 );
-
-    BUTTONACT( closeButton, &MediaInfoDialog::close );
-
-    /* The tabs buttons are shown in the main dialog for space and cosmetics */
-    BUTTONACT( saveMetaButton, &MediaInfoDialog::saveMeta );
-
-    /* Let the MetaData Panel update the URI */
-    connect( MP, &MetaPanel::uriSet, this, &MediaInfoDialog::updateURI );
-    connect( MP, &MetaPanel::editing, saveMetaButton, &QPushButton::show );
-
-    /* Display the buttonBar according to the Tab selected */
-    connect( infoTabW, &QTabWidget::currentChanged, this, &MediaInfoDialog::updateButtons );
-
-    /* If using the General Mode */
-    if( isMainInputInfo )
-    {
-        msg_Dbg( p_intf, "Using a general info windows" );
-        /**
-         * Connects on the various signals of input_Manager
-         * For the currently playing element
-         **/
-        connect( THEMIM, &PlayerController::infoChanged,
-                  IP, &InfoPanel::update, Qt::DirectConnection  );
-        connect( THEMIM, &PlayerController::currentMetaChanged,
-            MP, [this](input_item_t* const inputItem) {
-                MP->update( SharedInputItem { inputItem } );
-            }, Qt::DirectConnection  );
-        connect( THEMIM, &PlayerController::currentMetaChanged,
-                  EMP, &ExtraMetaPanel::update, Qt::DirectConnection );
-        connect( THEMIM, &PlayerController::statisticsUpdated,
-                  ISP, &InputStatsPanel::update, Qt::DirectConnection);
-
-        p_item = SharedInputItem{ THEMIM->getInput() };
-    }
-    else
-        msg_Dbg( p_intf, "Using an item specific info windows" );
-
-    /* Call update at start, so info is filled up at beginning */
-    if( p_item )
-        updateAllTabs( p_item );
-
-    restoreWidgetPosition( "Mediainfo", QSize( 600 , 480 ) );
-}
-
-MediaInfoDialog::MediaInfoDialog(qt_intf_t *_p_intf,
                                  const QList<SharedInputItem>& inputList )
     : QVLCFrame( _p_intf )
 {
-    SharedInputItem p_item = inputList.isEmpty() ? nullptr : inputList.first();
+    //for testing rn
+    SharedInputItem p_item = inputList.isEmpty() ? nullptr : inputList.at(1);
 
     isMainInputInfo = ( p_item == NULL );
 
