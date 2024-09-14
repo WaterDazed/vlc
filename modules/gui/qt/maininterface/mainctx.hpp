@@ -267,6 +267,10 @@ public:
                (QT_VERSION >= QT_VERSION_CHECK(6, 4, 0));
     }
 
+    Q_INVOKABLE static QString byteArrayToBase64(const QByteArray& data) {
+        return QString::fromLatin1(data.toBase64(QByteArray::Base64Encoding));
+    }
+
     /**
      * @brief ask for the application to terminate
      * @return true if the application can be close right away, false if it will be delayed
