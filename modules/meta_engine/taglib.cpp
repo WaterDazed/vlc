@@ -125,7 +125,11 @@ VLCTagLib::ExtResolver<T>::ExtResolver(const std::string & ext) : FileTypeResolv
 template <class T>
 File *VLCTagLib::ExtResolver<T>::createFile(FileName fileName, bool, AudioProperties::ReadStyle) const
 {
+#if defined(_WIN32) && TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    std::string filename = fileName.toString().to8Bit(true);
+#else
     std::string filename = std::string(fileName);
+#endif
     std::size_t namesize = filename.size();
 
     if (namesize > ext.length())
@@ -180,7 +184,11 @@ public:
         return m_stream->psz_location;
     }
 
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    ByteVector readBlock(size_t length)
+#else
     ByteVector readBlock(ulong length)
+#endif
     {
         ByteVector res(length, 0);
         ssize_t i_read = vlc_stream_Read( m_stream, res.data(), length);
@@ -196,11 +204,19 @@ public:
         // Let's stay Read-Only for now
     }
 
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    void insert(const ByteVector&, offset_t, size_t)
+#else
     void insert(const ByteVector&, ulong, ulong)
+#endif
     {
     }
 
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    void removeBlock(offset_t, size_t)
+#else
     void removeBlock(ulong, ulong)
+#endif
     {
     }
 
@@ -214,7 +230,11 @@ public:
         return true;
     }
 
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    void seek(offset_t offset, Position p)
+#else
     void seek(long offset, Position p)
+#endif
     {
         uint64_t pos = 0;
         switch (p)
@@ -237,12 +257,20 @@ public:
         return;
     }
 
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    offset_t tell() const
+#else
     long tell() const
+#endif
     {
         return m_previousPos;
     }
 
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    offset_t length()
+#else
     long length()
+#endif
     {
         uint64_t i_size;
         if (vlc_stream_GetSize( m_stream, &i_size ) != VLC_SUCCESS)
@@ -250,7 +278,11 @@ public:
         return i_size;
     }
 
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+    void truncate(offset_t)
+#else
     void truncate(long)
+#endif
     {
     }
 
@@ -1337,7 +1369,11 @@ static int WriteMeta( vlc_object_t *p_this )
         if( RIFF::AIFF::File* riff_aiff = dynamic_cast<RIFF::AIFF::File*>(f.file()) )
             WriteMetaToId3v2( riff_aiff->tag(), p_item );
         else if( RIFF::WAV::File* riff_wav = dynamic_cast<RIFF::WAV::File*>(f.file()) )
+#if TAGLIB_VERSION >= VERSION_INT(2, 0, 0)
+            WriteMetaToId3v2( riff_wav->ID3v2Tag(), p_item );
+#else
             WriteMetaToId3v2( riff_wav->tag(), p_item );
+#endif
     }
     else if( TrueAudio::File* trueaudio = dynamic_cast<TrueAudio::File*>(f.file()) )
     {
