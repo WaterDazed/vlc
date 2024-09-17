@@ -56,9 +56,16 @@ class choice_button;
 class choice_palette
 {
     bool requires_update = true;
-    unsigned video_width;
+    unsigned video_width, video_height;
     std::vector<choice_button*> button_list;
     virtual_segment_c *sys;
+
+    es_out_id_t *es_out_id;
+    es_out_t *es_out;
+    size_t channel_id;
+
+    bool is_overlay_shown = false;
+
 
 
     static void UpdateChoice(subpicture_t *p_subpic,
@@ -69,10 +76,11 @@ class choice_palette
         me->update();
     }
 
+
 public:
     video_palette_t button_bg_palette;
     video_format_t bg_fmt;
-    chapter_codec_vm::choices &choice_map;
+    chapter_codec_vm::choices *choice_map;
 
     int width;
     int height;
@@ -88,52 +96,11 @@ public:
 
     choice_palette(unsigned video_height,
                    unsigned video_width,
-                   chapter_codec_vm::choices &choice,
-                   unsigned n_buttons
-                   )
-    :choice_map(choice),
-     evh(video_height, video_width)
-    {
-        this->video_width = video_width;
-        this->width = video_width/n_buttons;
-        this->height = video_height/10;
-        static const struct vlc_spu_updater_ops spu_ops =
-        {
-            UpdateChoice, nullptr
-        };
-
-        updater = {
-                .sys = this,
-                .ops = &spu_ops
-        };
-
-        subpic = subpicture_New(&updater);
-
-        subpic->i_original_picture_height = video_height;
-        subpic->i_original_picture_width = video_width;
-
-        button_bg_palette.palette[0][0] = 0x10; // R
-        button_bg_palette.palette[0][1] = 0x10; // G
-        button_bg_palette.palette[0][2] = 0x10; // B
-        button_bg_palette.palette[0][3] = 0x00; // A
-        button_bg_palette.i_entries = 1;
-
-        video_format_Init(&bg_fmt, VLC_CODEC_RGBP);
-        bg_fmt.i_width          =
-        bg_fmt.i_visible_width  = width;
-        bg_fmt.i_height         =
-        bg_fmt.i_visible_height = height;
-        bg_fmt.i_sar_num        = 1;
-        bg_fmt.i_sar_den        = 1;
-        bg_fmt.p_palette        = &button_bg_palette;
-    }
-
-    void display_overlay(es_out_t *out, es_out_id_t *id)
-    {
-        update();
-        size_t channel_id; // TODO keep for removal
-        es_out_Control( out, ES_OUT_VOUT_ADD_OVERLAY, id, subpic, &channel_id );
-    }
+                   es_out_t *es_out, es_out_id_t *es_out_id
+                   );
+    void setChoices(chapter_codec_vm::choices *chapter_choices);
+    void display_overlay();
+    void hide_overlay();
 
     void create_button (const chapter_codec_vm::choice_uid &uid, const chapter_codec_vm::chapter_choice &choice);
     void clear_buttons();
@@ -146,12 +113,7 @@ public:
 
     bool IsChoiceSelected(const chapter_codec_vm::choice_uid &uid, const chapter_codec_vm::choice_group &group);
 
-    ~choice_palette()
-    {
-        subpicture_Delete(subpic);
-        clear_buttons();
-    }
-
+    ~choice_palette();
 };
 
 class choice_button: public mouse_operable

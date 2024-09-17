@@ -367,6 +367,11 @@ void demux_sys_t::AddChoices( const choices & choices )
     p_current_vsegment->AddChoices( choices );
 }
 
+void demux_sys_t::ClearChoices()
+{
+    p_current_vsegment->ClearChoices();
+}
+
 void demux_sys_t::HandleMouseClicked(unsigned x, unsigned y)
 {
     p_current_vsegment->HandleMouseClick(x, y);

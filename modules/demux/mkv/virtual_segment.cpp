@@ -428,6 +428,16 @@ void virtual_segment_c::AddChoices( const chapter_codec_vm::choices & choices )
     choices_changed = true; // handled indirectly as it may take some time and the JS call has limited time
 }
 
+void virtual_segment_c::ClearChoices()
+{
+    chapter_choices.clear();
+    if (palette == nullptr)
+        return;
+
+    palette->hide_overlay();
+    palette->clear_buttons();
+}
+
 void virtual_segment_c::HandleMouseClick (unsigned x, unsigned y)
 {
     if (palette == NULL)
@@ -447,9 +457,11 @@ void virtual_segment_c::UpdateChoices()
     if (!choices_changed)
         return;
 
+
     auto seg = CurrentSegment();
     if (unlikely(!seg))
         return;
+
 
     mkv_track_t *video_track = nullptr;
     for (const auto & it : seg->tracks)
@@ -465,7 +477,6 @@ void virtual_segment_c::UpdateChoices()
     if (unlikely(!video_track))
         return;
 
-
     unsigned n_buttons = 0;
     for (auto & choice : chapter_choices)
     {
@@ -479,9 +490,10 @@ void virtual_segment_c::UpdateChoices()
     const unsigned video_width = video_track->fmt.video.i_visible_width;
     const unsigned video_height =video_track->fmt.video.i_visible_height;
 
-
     if (palette == nullptr)
-        palette = new choice_palette(video_height, video_width, chapter_choices, n_buttons);
+        palette = new choice_palette(video_height, video_width, seg->sys.demuxer.out, video_track->p_es);
+
+    palette->setChoices(&chapter_choices);
 
 
     for (auto & choice : chapter_choices)
@@ -489,10 +501,9 @@ void virtual_segment_c::UpdateChoices()
         if (choice.second.per_language_text.empty())
             continue;
         palette->create_button(choice.first, choice.second);
-
     }
 
-    palette->display_overlay(seg->sys.demuxer.out, video_track->p_es);
+    palette->display_overlay();
     choices_changed = false;
 }
 

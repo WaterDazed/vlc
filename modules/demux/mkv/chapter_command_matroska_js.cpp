@@ -72,6 +72,7 @@ bool matroska_js_interpreter_c:: gotoChapter(chapter_uid i_chapter_uid)
 bool matroska_js_interpreter_c::execute_GotoAndPlay(const std::string &arg)
 {
     chapter_uid i_chapter_uid = atoll( arg.c_str() );
+    vm.ClearChoices();
     bool b_result = gotoChapter(i_chapter_uid);
 
     return b_result;
@@ -434,6 +435,12 @@ bool matroska_js_interpreter_c::Interpret( const binary * p_command, size_t i_si
     vlc_debug(l, "duktape:: Evaluation complete");
 
     return true;
+}
+
+
+void matroska_js_interpreter_c::doAfterChapterInterpretation()
+{
+   vm.ClearChoices();
 }
 
 } // namespace

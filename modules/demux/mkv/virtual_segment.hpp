@@ -155,6 +155,7 @@ public:
     bool Seek( demux_t & demuxer, vlc_tick_t i_mk_date, virtual_chapter_c *p_vchapter, bool b_precise = true );
 
     void AddChoices( const chapter_codec_vm::choices & );
+    void ClearChoices();
     void HandleMouseClick(unsigned x, unsigned y);
     std::optional<chapter_codec_vm::choice_uid> GetChoice( const chapter_codec_vm::choice_group & ) const;
 

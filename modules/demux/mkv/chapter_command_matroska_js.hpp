@@ -61,6 +61,8 @@ public:
         ctx = ms_setup();
     }
 
+    void doAfterChapterInterpretation() override;
+
     bool Interpret( const binary * p_command, size_t i_size ) override;
     void HandleMousePressed (unsigned x, unsigned y)
         {

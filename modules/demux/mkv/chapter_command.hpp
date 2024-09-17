@@ -69,6 +69,7 @@ public:
     };
 
     virtual void AddChoices( const choices & ) = 0;
+    virtual void ClearChoices() = 0;
     virtual event_thread_t GetEventManager() = 0;
     virtual std::optional<choice_uid> GetChoice( const choice_group & ) const = 0;
     virtual void HandleMouseClicked( unsigned x, unsigned y ) = 0;

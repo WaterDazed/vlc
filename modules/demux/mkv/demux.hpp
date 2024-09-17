@@ -107,6 +107,7 @@ public:
     void SetHighlight( vlc_spu_highlight_t & ) override;
 
     void AddChoices( const choices & ) override;
+    void ClearChoices() override;
     void HandleMouseClicked( unsigned x, unsigned y ) override;
     std::optional<choice_uid> GetChoice( const choice_group & ) const override;
 

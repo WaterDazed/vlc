@@ -61,6 +61,39 @@ void mouse_event_handler::update() const {
     }
 }
 
+
+choice_palette::choice_palette(unsigned video_height,
+                   unsigned video_width,
+                   es_out_t *es_out, es_out_id_t *es_out_id
+                   )
+:evh(video_height, video_width)
+{
+    this->video_width = video_width;
+    this->video_height = video_height;
+    this->height = video_height/10;
+
+    this->es_out_id = es_out_id;
+    this->es_out = es_out;
+
+    video_format_Init(&bg_fmt, VLC_CODEC_RGBP);
+
+    static const struct vlc_spu_updater_ops spu_ops =
+    {
+        UpdateChoice, nullptr
+    };
+
+    updater = {
+            .sys = this,
+            .ops = &spu_ops
+    };
+
+}
+
+choice_palette::~choice_palette()
+{
+    hide_overlay();
+}
+
 void choice_palette::create_button (const chapter_codec_vm::choice_uid &uid, const chapter_codec_vm::chapter_choice &choice)
 {
     unsigned button_no = button_list.size();
@@ -69,12 +102,68 @@ void choice_palette::create_button (const chapter_codec_vm::choice_uid &uid, con
     evh.addMouseOperable(btn);
 }
 
+void choice_palette::setChoices(chapter_codec_vm::choices *chapter_choices)
+{
+    choice_map = chapter_choices;
+    unsigned n_buttons = 0;
+    for (auto & choice : *chapter_choices)
+    {
+        if (choice.second.per_language_text.empty())
+            continue;
+        n_buttons++;
+    }
+    btn_count = n_buttons;
+    this->width = video_width/btn_count;
+
+}
+
+void choice_palette::display_overlay()
+{
+    subpic = subpicture_New(&updater);
+
+    subpic->i_original_picture_height = video_height;
+    subpic->i_original_picture_width = video_width;
+
+    button_bg_palette.palette[0][0] = 0x10; // R
+    button_bg_palette.palette[0][1] = 0x10; // G
+    button_bg_palette.palette[0][2] = 0x10; // B
+    button_bg_palette.palette[0][3] = 0x00; // A
+    button_bg_palette.i_entries = 1;
+
+    bg_fmt.i_height         =
+    bg_fmt.i_visible_height = height;
+    bg_fmt.i_sar_num        = 1;
+    bg_fmt.i_sar_den        = 1;
+    bg_fmt.p_palette        = &button_bg_palette;
+    bg_fmt.i_width          =
+    bg_fmt.i_visible_width  = width;
+
+    update();
+    es_out_Control( es_out, ES_OUT_VOUT_ADD_OVERLAY, es_out_id, subpic, &channel_id );
+    is_overlay_shown = true;
+}
+
+void choice_palette::hide_overlay()
+{
+    if (!is_overlay_shown)
+        return;
+
+    es_out_Control( es_out, ES_OUT_VOUT_DEL_OVERLAY, es_out_id, channel_id );
+    is_overlay_shown = false;
+}
+
 void choice_palette::clear_buttons()
 {
+    if (btn_count == 0)
+        return;
+
+    btn_count = 0;
     for (auto *b : button_list)
         delete b;
 
     button_list.clear();
+    evh.clearMouseOperables();
+    requires_update = true;
 }
 
 void choice_palette::update()
@@ -97,13 +186,13 @@ void choice_palette::try_mouse_over(const unsigned x, const unsigned y)
 
 void choice_palette::MarkGroupChoiceSelected(const chapter_codec_vm::choice_uid &uid, const chapter_codec_vm::choice_group &group)
 {
-    choice_map.SetSelected(uid, group);
+    choice_map->SetSelected(uid, group);
 }
 
 
 bool choice_palette::IsChoiceSelected(const chapter_codec_vm::choice_uid &uid, const chapter_codec_vm::choice_group &group)
 {
-    bool selected = choice_map.GetSelected(group) == uid;
+    bool selected = choice_map->GetSelected(group) == uid;
     return selected;
 }
 
