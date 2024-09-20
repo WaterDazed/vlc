@@ -630,6 +630,18 @@ static bool IsSegmentReady(enum hls_playlist_type type,
     return buffer->length >= seglen;
 }
 
+static int PlaylistWriteMuxedOutput(hls_playlist_t *playlist,
+                                    block_t *blocks,
+                                    vlc_tick_t output_duration)
+{
+    block_ChainLastAppend(&playlist->muxed_output.end, blocks);
+    playlist->muxed_output.length += output_duration;
+
+    if (blocks->i_flags & VLC_FRAME_FLAG_RANDOM_ACCESS)
+        playlist->muxed_output.segment_start = blocks;
+    return VLC_SUCCESS;
+}
+
 static ssize_t AccessOutWrite(sout_access_out_t *access, block_t *block)
 {
     sout_stream_sys_t *sys = access->p_sys;
@@ -660,10 +672,8 @@ static ssize_t AccessOutWrite(sout_access_out_t *access, block_t *block)
         /* Append the muxed output to the playlist tied to this access call. */
         if (it->access == access)
         {
-            block_ChainLastAppend(&it->muxed_output.end, block);
-            it->muxed_output.length += length;
-            if (block->i_flags & VLC_FRAME_FLAG_RANDOM_ACCESS)
-                it->muxed_output.segment_start = block;
+            if (PlaylistWriteMuxedOutput(it, block, length) != VLC_SUCCESS)
+                return -1;
         }
 
         if (!IsSegmentReady(
