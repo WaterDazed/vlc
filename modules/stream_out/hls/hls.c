@@ -637,8 +637,11 @@ static int PlaylistWriteMuxedOutput(hls_playlist_t *playlist,
     block_ChainLastAppend(&playlist->muxed_output.end, blocks);
     playlist->muxed_output.length += output_duration;
 
-    if (blocks->i_flags & VLC_FRAME_FLAG_RANDOM_ACCESS)
-        playlist->muxed_output.segment_start = blocks;
+    for (block_t *it = blocks; blocks != NULL; blocks = blocks->p_next)
+    {
+        if (it->i_flags & VLC_FRAME_FLAG_RANDOM_ACCESS)
+            playlist->muxed_output.segment_start = it;
+    }
     return VLC_SUCCESS;
 }
 
