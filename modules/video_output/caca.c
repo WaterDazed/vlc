@@ -200,7 +200,6 @@ static int Control(vout_display_t *vd, int query)
         sys->update_dither = true;
         return VLC_SUCCESS;
     case VOUT_DISPLAY_CHANGE_DISPLAY_SIZE:
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
         return VLC_SUCCESS;
 
     default:
