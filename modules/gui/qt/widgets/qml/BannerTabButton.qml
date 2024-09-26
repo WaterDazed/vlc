@@ -128,10 +128,8 @@ T.TabButton {
 
             font.pixelSize: VLCStyle.icon_banner
 
-            Layout.fillWidth: true
+            Layout.fillWidth: !label.visible 
             Layout.fillHeight: true
-            Layout.maximumWidth: control.centerContent ? (implicitWidth + 1) : -1
-            Layout.leftMargin: iconLabel.visible ? VLCStyle.margin_xsmall : 0
         }
 
         T.Label {
@@ -159,7 +157,7 @@ T.TabButton {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.maximumWidth: implicitWidth + 1
+            Layout.maximumWidth: control.centerContent ? (implicitWidth + 1) : -1
             Layout.leftMargin: iconLabel.visible ? VLCStyle.margin_xsmall : 0
 
             Behavior on color {

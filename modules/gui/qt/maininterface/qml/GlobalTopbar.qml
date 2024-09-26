@@ -35,7 +35,6 @@ import VLC.Util
 T.ToolBar {
     id: root
 
-
     property int selectedIndex: 0
     property alias sortMenu: sortControl.menu
     property var menuDelegate: undefined

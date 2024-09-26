@@ -183,7 +183,7 @@ FocusScope {
         }
     }
 
-    Topbar {
+    GlobalTopbar {
         id: globalTopbar
         z: 2
 

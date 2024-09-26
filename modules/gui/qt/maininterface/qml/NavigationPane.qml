@@ -28,6 +28,7 @@ T.Pane {
 
     topPadding: VLCStyle.margin_normal
     bottomPadding: VLCStyle.margin_normal
+    leftPadding: 0
 
     implicitWidth: VLCStyle.expandNavigationPaneWidth
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
@@ -61,12 +62,26 @@ T.Pane {
             group: "root"
         },
         {
-            name: qsTr("Browse"),
-            icon: VLCIcons.topbar_network,
-            uri: "network",
+            name: qsTr("Videos"),
+            icon: VLCIcons.topbar_video,
+            uri: "video",
             sectionUri: "undefined",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            isExpanded: NavigationPane.ExpansionState.Collapsed,
             group: "root"
+        },
+        {
+            name: qsTr("All"),
+            uri: "all",
+            sectionUri: "video",
+            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            group: "Videos"
+        },
+        {
+            name: qsTr("Playlists"),
+            uri: "playlists",
+            sectionUri: "video",
+            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            group: "Videos"
         },
         {
             name: qsTr("Music"),
@@ -112,26 +127,12 @@ T.Pane {
             group: "Music"
         },
         {
-            name: qsTr("Videos"),
-            icon: VLCIcons.topbar_video,
-            uri: "video",
+            name: qsTr("Browse"),
+            icon: VLCIcons.topbar_network,
+            uri: "network",
             sectionUri: "undefined",
-            isExpanded: NavigationPane.ExpansionState.Collapsed,
+            isExpanded: NavigationPane.ExpansionState.Unexpandable,
             group: "root"
-        },
-        {
-            name: qsTr("All"),
-            uri: "all",
-            sectionUri: "video",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
-            group: "Videos"
-        },
-        {
-            name: qsTr("Playlists"),
-            uri: "playlists",
-            sectionUri: "video",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
-            group: "Videos"
         },
         {
             name: qsTr("Discover"),
@@ -285,18 +286,21 @@ T.Pane {
         RowLayout {
             id: vlcBanner
             Layout.fillWidth: true
+            Layout.bottomMargin: VLCStyle.margin_normal
 
             Widgets.BannerCone {
                 id: logo
-                Layout.leftMargin: VLCStyle.margin_normal
-                sourceSize.width: VLCStyle.icon_banner
-                sourceSize.height: VLCStyle.icon_banner
+                Layout.leftMargin: VLCStyle.vlcIconLeftMarginNavigationPane
+
+                sourceSize.width: VLCStyle.vlcHeaderIconNavigationPane
+                sourceSize.height: VLCStyle.vlcHeaderIconNavigationPane
                 color: theme.accent
             }
 
             Widgets.SubtitleLabel {
+                topPadding: VLCStyle.margin_small 
                 text: qsTr("VLC")
-                font.pixelSize: VLCStyle.vlcHeaderNavigationPane
+                font.pixelSize: VLCStyle.vlcHeaderTextNavigationPane
                 color: theme.fg.primary
             }
         }
@@ -307,21 +311,19 @@ T.Pane {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: VLCStyle.expandNavigationPaneWidth
-            Layout.leftMargin: VLCStyle.leftMarginNavigationPane
 
             clip: true
 
             model: displayModel
 
-            spacing: VLCStyle.margin_small
-
             delegate: Widgets.BannerTabButton {
                 centerContent: false
-                topPadding: model.group != "root" ? VLCStyle.margin_xxsmall : 0
-                bottomPadding: model.group != "root" ? VLCStyle.margin_xxsmall : 0
+                width: ListView.view.contentWidth
+                height: VLCStyle.buttonHeightNavigationPane
 
                 iconTxt: model.group === "root" ? model.icon : ""
                 text: model.name
+                leftPadding: model.group === "root" ? VLCStyle.leftPaddingRootNavigationPane : VLCStyle.leftPaddingChildNavigationPane 
 
                 onClicked: {
                     itemClicked(model.sectionUri, model.uri)

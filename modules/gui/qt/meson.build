@@ -588,12 +588,13 @@ qml_modules += {
     'target' : 'maininterface',
     'outdir' : 'VLC/MainInterface',
     'sources': files(
-        'maininterface/qml/BannerSources.qml',
+        'maininterface/qml/GlobalTopbar.qml',
         'maininterface/qml/MainInterface.qml',
         'maininterface/qml/MainViewLoader.qml',
         'maininterface/qml/MainDisplay.qml',
         'maininterface/qml/MainGridView.qml',
         'maininterface/qml/MainTableView.qml',
+        'maininterface/qml/NavigationPane.qml',
         'maininterface/qml/NoMedialibHome.qml'
     ),
 }
