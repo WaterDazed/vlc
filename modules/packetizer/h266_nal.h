@@ -46,6 +46,8 @@ enum h266_general_profile_idc_e
 #define H266_CONSTRAINT_BYTES(bits) (((bits)+7)/8)
 #define H266_MAX_CONSTRAINT_BYTES H266_CONSTRAINT_BYTES(H266_MIN_CONSTRAINT_BITS + \
                                                         H266_MAX_CONSTRAINT_ADDITIONAL_BITS)
+#define H266_MAX_NUM_PTL_SUBLAYERS 7
+#define H266_MAX_NUM_SUBLAYERS (1+H266_MAX_NUM_PTL_SUBLAYERS)
 
 enum h266_nal_unit_type_e
 {
@@ -185,6 +187,84 @@ static inline void h266_poc_ctx_init(h266_poc_ctx_t *p_ctx)
 int h266_compute_picture_order_count(const h266_sequence_parameter_set_t *p_sps,
                                      const h266_picture_header_t *slice,
                                      h266_poc_ctx_t *ctx);
+
+/* VVCDecoderConfigurationRecord */
+
+static inline bool h266_isvvcC(const uint8_t *p_buf, size_t i_buf)
+{
+    return ( i_buf >= 1 && (p_buf[0] & 0xF8) == 0xF8 );
+}
+
+typedef struct
+{
+    uint8_t general_profile_idc;
+    uint8_t general_tier_flag;
+    uint8_t general_level_idc;
+    uint8_t ptl_frame_only_constraint_flag;
+    uint8_t ptl_multilayer_enabled_flag;
+    uint8_t ptl_sublayer_level_present_flag[H266_MAX_NUM_PTL_SUBLAYERS];
+    uint8_t ptl_sublayer_level_idc[H266_MAX_NUM_PTL_SUBLAYERS];
+    uint8_t ptl_num_sub_profiles;
+    uint32_t ptl_general_sub_profile_idc[H266_MAX_NUM_PTL_SUBLAYERS];
+    struct
+    {
+        uint8_t gci_present;
+        uint8_t gci_num_additional_bits;
+        uint8_t constraint_bytes[H266_MAX_CONSTRAINT_BYTES];
+    } constraints_info;
+} h266_profile_tier_level_t;
+
+static inline uint8_t h266_gci_num_constraint_bytes(const h266_profile_tier_level_t *ptl)
+{
+    if(!ptl->constraints_info.gci_present)
+        return 0;
+    return H266_CONSTRAINT_BYTES(H266_MIN_CONSTRAINT_BITS +
+                                 ptl->constraints_info.gci_num_additional_bits);
+}
+
+struct h266_dcr_values
+{
+    uint8_t nal_length_size;
+    uint8_t ptl_present_flag;
+    uint16_t ols_idx;
+    uint8_t num_sublayers;
+    uint8_t constant_frame_rate;
+    uint8_t chroma_format_idc;
+    uint8_t bit_depth_minus8;
+    h266_profile_tier_level_t ptl;
+    uint16_t max_picture_width;
+    uint16_t max_picture_height;
+    uint16_t avg_frame_rate;
+};
+
+#define H266_MAX_NUM_SEI 16
+struct h266_dcr_params
+{
+    const uint8_t *p_vps[H266_MAX_NUM_VPS],
+        *p_sps[H266_MAX_NUM_SPS],
+        *p_pps[H266_MAX_NUM_PPS],
+        *p_seipref[H266_MAX_NUM_SEI],
+        *p_seisuff[H266_MAX_NUM_SEI],
+        *p_dci, *p_opi;
+    uint16_t rgi_vps[H266_MAX_NUM_VPS],
+        rgi_sps[H266_MAX_NUM_SPS],
+        rgi_pps[H266_MAX_NUM_PPS],
+        rgi_seipref[H266_MAX_NUM_SEI],
+        rgi_seisuff[H266_MAX_NUM_SEI],
+        i_dci, i_opi;
+    uint8_t i_vps_count, i_sps_count, i_pps_count;
+    uint8_t i_seipref_count, i_seisuff_count;
+    struct h266_dcr_values *p_values;
+};
+
+void h266_add_NALtoParams(const uint8_t *p_nal, size_t i_nal,
+                          struct h266_dcr_params *p_params);
+
+uint8_t * h266_create_DecoderConfigurationRecord(const struct h266_dcr_params *p_params,
+                                                 bool b_completeness, size_t *pi_size);
+bool h266_parse_DecoderConfigurationRecord(const uint8_t *p_buf, size_t i_buf,
+                                           struct h266_dcr_params *);
+uint8_t * h266_create_AnnexbExtradataFromParams(const struct h266_dcr_params *p_params, size_t *pi_size);
 
 #ifdef __cplusplus
 }

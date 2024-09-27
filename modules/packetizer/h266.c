@@ -102,10 +102,15 @@ typedef struct
 } decoder_sys_t;
 
 static block_t *PacketizeAnnexB(decoder_t *, block_t **);
+static block_t *PacketizeVVC1(decoder_t *, block_t **);
 static void PacketizeFlush(decoder_t *);
 static void PacketizeReset(void *p_private, bool b_flush);
 static block_t *PacketizeParse(void *p_private, bool *pb_ts_used, block_t *);
 static block_t *ParseNALBlock(decoder_t *, bool *pb_ts_used, block_t *);
+static inline block_t *ParseNALBlockW(void *opaque, bool *pb_ts_used, block_t *p_frag)
+{
+    return ParseNALBlock((decoder_t *) opaque, pb_ts_used, p_frag);
+}
 static int PacketizeValidate(void *p_private, block_t *);
 static block_t * PacketizeDrain(void *);
 static block_t *GetCc(decoder_t *p_dec, decoder_cc_desc_t *p_desc);
@@ -234,8 +239,33 @@ static int Open(vlc_object_t *p_this)
     p_sys->b_need_ts = true;
     p_sys->sets = MISSING;
 
-    p_dec->pf_packetize = PacketizeAnnexB;
+    /* Set callbacks */
+    const uint8_t *p_extra = p_dec->fmt_in->p_extra;
+    const size_t i_extra = p_dec->fmt_in->i_extra;
+    /* Check if we have hvcC as extradata */
+    if(h266_isvvcC(p_extra, i_extra))
+    {
+        p_dec->pf_packetize = PacketizeVVC1;
 
+        struct h266_dcr_values values = {0};
+        struct h266_dcr_params params = {0};
+        params.p_values = &values;
+        if(h266_parse_DecoderConfigurationRecord(p_extra, i_extra, &params))
+        {
+            /* Clear vvcC/VVC1 extra, to be replaced with AnnexB */
+            free(p_dec->fmt_out.p_extra);
+            p_dec->fmt_out.i_extra = 0;
+
+            size_t i_new_extra = 0;
+            p_dec->fmt_out.p_extra = h266_create_AnnexbExtradataFromParams(&params, &i_new_extra);
+            if(p_dec->fmt_out.p_extra)
+                p_dec->fmt_out.i_extra = i_new_extra;
+        }
+    }
+    else
+    {
+        p_dec->pf_packetize = PacketizeAnnexB;
+    }
     p_dec->pf_flush = PacketizeFlush;
     p_dec->pf_get_cc = GetCc;
 
@@ -294,6 +324,13 @@ static void Close(vlc_object_t *p_this)
 /****************************************************************************
  * Packetize
  ****************************************************************************/
+static block_t *PacketizeVVC1(decoder_t *p_dec, block_t **pp_block)
+{
+    return PacketizeXXC1(p_dec, p_dec->obj.logger,
+                         4, pp_block,
+                         ParseNALBlockW, PacketizeDrain);
+}
+
 static block_t *PacketizeAnnexB(decoder_t *p_dec, block_t **pp_block)
 {
     decoder_sys_t *p_sys = p_dec->p_sys;

@@ -29,33 +29,14 @@
 #include <vlc_bits.h>
 
 #include <math.h>
+#include <assert.h>
 
 //#define H266_POC_DEBUG
 
-#define H266_MAX_NUM_PTL_SUBLAYERS 7
 #define H266_MAX_NUM_LAYER_OLSS 257
 #define H266_MAX_NUM_DPB_PARAMS H266_MAX_NUM_LAYER_OLSS
 #define H266_VPS_MAX_NUM_PTLS_MINUS1 (H266_MAX_NUM_LAYER_OLSS-1) /* < TotalNumOlss */
 #define H266_DCI_MAX_NUM_PTLS_MINUS1 14
-
-typedef struct
-{
-    nal_u7_t general_profile_idc;
-    nal_u1_t general_tier_flag;
-    nal_u8_t general_level_idc;
-    nal_u1_t ptl_frame_only_constraint_flag;
-    nal_u1_t ptl_multilayer_enabled_flag;
-    nal_u1_t ptl_sublayer_level_present_flag[H266_MAX_NUM_PTL_SUBLAYERS];
-    nal_u8_t ptl_sublayer_level_idc[H266_MAX_NUM_PTL_SUBLAYERS];
-    nal_u8_t ptl_num_sub_profiles;
-    uint32_t ptl_general_sub_profile_idc[H266_MAX_NUM_PTL_SUBLAYERS];
-    struct
-    {
-        nal_u1_t gci_present;
-        nal_u8_t gci_num_additional_bits;
-        uint8_t constraint_bytes[H266_MAX_CONSTRAINT_BYTES];
-    } constraints_info;
-} h266_profile_tier_level_t;
 
 static bool h266_parse_general_constraint_info(bs_t *p_bs, h266_profile_tier_level_t *ptl)
 {
@@ -808,19 +789,19 @@ static bool h266_parse_sequence_parameter_set_rbsp(bs_t *p_bs,
         }
     }
 
-    if( bs_read1(p_bs)) // sps_explicit_scaling_list_enabled_flag
+    if(bs_read1(p_bs)) // sps_explicit_scaling_list_enabled_flag
     {
         if(sps_lfnst_enabled_flag)
             bs_skip(p_bs, 1);
         if(sps_act_enabled_flag)
-            if( bs_read1(p_bs)) // sps_scaling_matrix_for_alternative_colour_space_disabled_flag
+            if(bs_read1(p_bs)) // sps_scaling_matrix_for_alternative_colour_space_disabled_flag
                 bs_skip(p_bs, 1);
     }
 
     bs_skip(p_bs, 2);
-    if( bs_read1(p_bs)) // sps_virtual_boundaries_enabled_flag
+    if(bs_read1(p_bs)) // sps_virtual_boundaries_enabled_flag
     {
-        if( bs_read1(p_bs)) // sps_virtual_boundaries_present_flag
+        if(bs_read1(p_bs)) // sps_virtual_boundaries_present_flag
         {
             nal_ue_t sps_num_ver_virtual_boundaries = bs_read_ue(p_bs);
             for(nal_ue_t i=0; i<sps_num_ver_virtual_boundaries; i++)
@@ -834,7 +815,7 @@ static bool h266_parse_sequence_parameter_set_rbsp(bs_t *p_bs,
     /* TIMINGS ! FINALLY !!! */
     if(p_sps->sps_ptl_dpb_hrd_params_present_flag)
     {
-        if( bs_read1(p_bs)) // sps_timing_hrd_params_present_flag
+        if(bs_read1(p_bs)) // sps_timing_hrd_params_present_flag
         {
             if(!h266_parse_general_hrd_parameters(p_bs, &p_sps->general_hrd_parameters))
                 return false;
@@ -1215,4 +1196,404 @@ int h266_compute_picture_order_count(const h266_sequence_parameter_set_t *p_sps,
 #endif
 
     return PicOrderCntMsb + p_ph->ph_pic_order_cnt_lsb;
+}
+
+/* VVCDecoderConfigurationRecord */
+
+#define H266_DCR_ADD_NALS(type, count, buffers, sizes) \
+for (uint8_t i = 0; i < count; i++) \
+    { \
+        if(i ==0) \
+        { \
+                *p++ = (type | (b_completeness ? 0x80 : 0)); \
+                SetWBE(p, count); p += 2; \
+        } \
+            SetWBE(p, sizes[i]); p += 2; \
+            memcpy(p, buffers[i], sizes[i]); p += sizes[i];\
+    }
+
+#define H266_DCR_ADD_SIZES(count, sizes) \
+if(count > 0) \
+    {\
+            i_total_size += 3;\
+            for(uint8_t i=0; i<count; i++)\
+            i_total_size += 2 + sizes[i];\
+    }
+
+uint8_t * h266_create_DecoderConfigurationRecord(const struct h266_dcr_params *p_params,
+                                                 bool b_completeness, size_t *pi_size)
+{
+    *pi_size = 0;
+
+    struct h266_dcr_values values =
+    {
+        .nal_length_size = 4,
+        .ptl_present_flag = 0,
+        .constant_frame_rate = 1,
+        .avg_frame_rate = 0,
+    };
+
+    if(p_params->p_values != NULL)
+    {
+        values = *p_params->p_values;
+    }
+    else /* extract from SPS */
+    {
+        if(p_params->i_sps_count == 0)
+            return NULL; /* required to extract info */
+
+        h266_sequence_parameter_set_t *p_sps =
+            h266_decode_sps(p_params->p_sps[0], p_params->rgi_sps[0], true);
+        if(p_sps)
+        {
+            values.ptl_present_flag = p_sps->sps_ptl_dpb_hrd_params_present_flag;
+            values.ols_idx = 0; //spec ? FIXME
+            values.num_sublayers = p_sps->sps_max_sublayers_minus1 + 1;
+            values.constant_frame_rate = 1;
+            values.chroma_format_idc = p_sps->chroma_format_idc;
+            values.bit_depth_minus8 = p_sps->sps_bitdepth_minus8;
+            values.ptl = p_sps->profile_tier_level[0];
+
+            unsigned sz[6] = {0};
+            h266_get_picture_size(p_sps, &sz[0], &sz[1], &sz[2], &sz[3], &sz[4], &sz[5]);
+            values.max_picture_width = sz[4];
+            values.max_picture_height = sz[5];
+            values.avg_frame_rate = 0;
+
+            h266_rbsp_release_sps(p_sps);
+        }
+    }
+
+    if(values.nal_length_size != 1 &&
+       values.nal_length_size != 2 &&
+       values.nal_length_size != 4)
+        return NULL;
+
+    const uint8_t num_bytes_constraint_info = h266_gci_num_constraint_bytes(&values.ptl);
+    size_t i_total_size = 1;
+
+    size_t i_ptl_size;
+    if(values.ptl_present_flag)
+    {
+        i_ptl_size = 6 + __MAX(1, num_bytes_constraint_info);
+        if(values.num_sublayers > 1)
+        {
+            i_ptl_size += 1;
+            for(uint8_t i=0; i<values.num_sublayers - 1; i++)
+                i_ptl_size += !!values.ptl.ptl_sublayer_level_present_flag[i];
+        }
+        i_ptl_size += 1 + values.ptl.ptl_num_sub_profiles * 4;
+        i_ptl_size += 6;
+        i_total_size += i_ptl_size;
+    }
+    else i_ptl_size = 0;
+
+    i_total_size += 1;
+
+    if(p_params->i_dci)
+        i_total_size += 1 + p_params->i_dci;
+    if(p_params->i_opi)
+        i_total_size += 1 + p_params->i_opi;
+    H266_DCR_ADD_SIZES(p_params->i_vps_count, p_params->rgi_vps);
+    H266_DCR_ADD_SIZES(p_params->i_sps_count, p_params->rgi_sps);
+    H266_DCR_ADD_SIZES(p_params->i_pps_count, p_params->rgi_pps);
+    H266_DCR_ADD_SIZES(p_params->i_seipref_count, p_params->rgi_seipref);
+    H266_DCR_ADD_SIZES(p_params->i_seisuff_count, p_params->rgi_seisuff);
+
+    uint8_t *p_data = calloc(1, i_total_size);
+    if(p_data == NULL)
+        return NULL;
+
+    *pi_size = i_total_size;
+    uint8_t *p = p_data;
+
+    p[0] = 0xF8 | (values.nal_length_size - 1) << 1 | values.ptl_present_flag;
+    if(values.ptl_present_flag)
+    {
+        bs_t bs;
+        bs_write_init(&bs, &p_data[1], i_ptl_size);
+        bs_write(&bs, 9, values.ols_idx);
+        bs_write(&bs, 3, values.num_sublayers);
+        bs_write(&bs, 2, values.constant_frame_rate);
+        bs_write(&bs, 2, values.chroma_format_idc);
+        bs_write(&bs, 3, values.bit_depth_minus8);
+        bs_write(&bs, 5, 0xff); // reserved
+        /* PTL */
+        bs_write(&bs, 2, 0x00); // reserved
+        bs_write(&bs, 6, num_bytes_constraint_info);
+        bs_write(&bs, 7, values.ptl.general_profile_idc);
+        bs_write(&bs, 1, values.ptl.general_tier_flag);
+        bs_write(&bs, 8, values.ptl.general_level_idc);
+
+        bs_write(&bs, 1, values.ptl.ptl_frame_only_constraint_flag);
+        bs_write(&bs, 1, values.ptl.ptl_multilayer_enabled_flag);
+        if(num_bytes_constraint_info)
+        {
+            for (int i = 0; i < num_bytes_constraint_info; i++)
+                bs_write(&bs,
+                         (i + 1 < num_bytes_constraint_info) ? 8 : 6,
+                         values.ptl.constraints_info.constraint_bytes[i]);
+        }
+        else bs_write(&bs, 6, 0);
+        assert(bs_aligned(&bs));
+
+        if(values.num_sublayers > 1)
+        {
+            bs_write(&bs, 8 - (values.num_sublayers - 1), 0x00);
+            for (int i = 0; i < values.num_sublayers - 1; i++)
+                bs_write(&bs, 1, values.ptl.ptl_sublayer_level_present_flag[i]);
+        }
+
+        for (int i = 0; i < values.num_sublayers - 1; i++)
+            if(values.ptl.ptl_sublayer_level_present_flag[i])
+                bs_write(&bs, 8, values.ptl.ptl_sublayer_level_idc[i]);
+        assert(bs_aligned(&bs));
+
+        bs_write(&bs, 8, values.ptl.ptl_num_sub_profiles);
+
+        /* unsigned int(32) general_sub_profile_idc[j]; */
+        for (int i = 0; i < values.ptl.ptl_num_sub_profiles; i++)
+            bs_write(&bs, 32, values.ptl.ptl_general_sub_profile_idc[i]);
+
+        bs_write(&bs, 16, values.max_picture_width);
+        bs_write(&bs, 16, values.max_picture_height);
+        bs_write(&bs, 16, values.avg_frame_rate);
+    }
+
+    p += 1 + i_ptl_size;
+
+    /* num arrays */
+    *p++ = !!p_params->i_opi + !!p_params->i_dci +
+           !!p_params->i_vps_count + !!p_params->i_sps_count + !!p_params->i_pps_count +
+           !!p_params->i_seipref_count + !!p_params->i_seisuff_count;
+
+    /* Write NAL arrays */
+    if(p_params->i_opi)
+    {
+        p[0] = (H266_NAL_OPI | (b_completeness ? 0x80 : 0));
+        SetWBE(&p[1], p_params->i_opi);
+        memcpy(&p[3], p_params->p_opi, p_params->i_opi);
+        p += 3 + p_params->i_opi;
+    }
+    if(p_params->i_dci)
+    {
+        p[0] = (H266_NAL_DCI | (b_completeness ? 0x80 : 0));
+        SetWBE(&p[1], p_params->i_dci);
+        memcpy(&p[3], p_params->p_dci, p_params->i_dci);
+        p += 3 + p_params->i_dci;
+    }
+    H266_DCR_ADD_NALS(H266_NAL_VPS, p_params->i_vps_count,
+                      p_params->p_vps, p_params->rgi_vps);
+    H266_DCR_ADD_NALS(H266_NAL_SPS, p_params->i_sps_count,
+                      p_params->p_sps, p_params->rgi_sps);
+    H266_DCR_ADD_NALS(H266_NAL_PPS, p_params->i_pps_count,
+                      p_params->p_pps, p_params->rgi_pps);
+    H266_DCR_ADD_NALS(H266_NAL_PREFIX_SEI, p_params->i_seipref_count,
+                      p_params->p_seipref, p_params->rgi_seipref);
+    H266_DCR_ADD_NALS(H266_NAL_SUFFIX_SEI, p_params->i_seisuff_count,
+                      p_params->p_seisuff, p_params->rgi_seisuff);
+
+    return p_data;
+}
+
+void h266_add_NALtoParams(const uint8_t *p_nal, size_t i_nal,
+                          struct h266_dcr_params *p_params)
+{
+    if(i_nal < 2 || i_nal > UINT16_MAX)
+        return;
+
+    switch (h266_getNALType(p_nal))
+    {
+    case H266_NAL_OPI:
+        p_params->p_opi = p_nal;
+        p_params->i_opi = i_nal;
+        break;
+    case H266_NAL_DCI:
+        p_params->p_dci = p_nal;
+        p_params->i_dci = i_nal;
+        break;
+    case H266_NAL_VPS:
+        if(p_params->i_vps_count != H266_MAX_NUM_VPS)
+        {
+            p_params->p_vps[p_params->i_vps_count] = p_nal;
+            p_params->rgi_vps[p_params->i_vps_count++] = i_nal;
+        }
+        break;
+    case H266_NAL_SPS:
+        if(p_params->i_sps_count != H266_MAX_NUM_SPS)
+        {
+            p_params->p_sps[p_params->i_sps_count] = p_nal;
+            p_params->rgi_sps[p_params->i_sps_count++] = i_nal;
+        }
+        break;
+    case H266_NAL_PPS:
+        if(p_params->i_pps_count != H266_MAX_NUM_PPS)
+        {
+            p_params->p_pps[p_params->i_pps_count] = p_nal;
+            p_params->rgi_pps[p_params->i_pps_count++] = i_nal;
+        }
+        break;
+    case H266_NAL_PREFIX_SEI:
+        if(p_params->i_seipref_count != H266_MAX_NUM_SEI)
+        {
+            p_params->p_seipref[p_params->i_seipref_count] = p_nal;
+            p_params->rgi_seipref[p_params->i_seipref_count++] = i_nal;
+        }
+        break;
+    case H266_NAL_SUFFIX_SEI:
+        if(p_params->i_seisuff_count != H266_MAX_NUM_SEI)
+        {
+            p_params->p_seisuff[p_params->i_seisuff_count] = p_nal;
+            p_params->rgi_seisuff[p_params->i_seisuff_count++] = i_nal;
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+bool h266_parse_DecoderConfigurationRecord(const uint8_t *p_buf, size_t i_buf,
+                                           struct h266_dcr_params *p_params)
+{
+    struct h266_dcr_values *p_values = p_params->p_values;
+    if(!p_values)
+        return false;
+    { // force bs unscoping
+        bs_t bs;
+        bs_init(&bs, p_buf, i_buf);
+        bs_skip(&bs, 5);
+        p_values->nal_length_size = bs_read(&bs, 2) + 1;
+        if(p_values->nal_length_size == 3)
+            return false;
+
+        p_values->ptl_present_flag = bs_read(&bs, 1);
+        if(p_values->ptl_present_flag)
+        {
+            h266_profile_tier_level_t *ptl = &p_values->ptl;
+            p_values->ols_idx = bs_read(&bs, 9);
+            p_values->num_sublayers = bs_read(&bs, 3);
+            p_values->constant_frame_rate = bs_read(&bs, 2);
+            p_values->chroma_format_idc = bs_read(&bs, 2);
+            p_values->bit_depth_minus8 = bs_read(&bs, 3);
+            bs_skip(&bs, 5); // reserved
+
+            bs_skip(&bs, 2); // reserved
+            uint8_t num_bytes_constraint_info = bs_read(&bs, 6);
+            /* Spec ? Is there any zero bits compression ? (<H266_MIN_CONSTRAINT_BITS) */
+            ptl->constraints_info.gci_present = !!num_bytes_constraint_info;
+            if(num_bytes_constraint_info * 8U > H266_MIN_CONSTRAINT_BITS)
+                ptl->constraints_info.gci_num_additional_bits = num_bytes_constraint_info * 8U - H266_MIN_CONSTRAINT_BITS;
+            else
+                ptl->constraints_info.gci_num_additional_bits = 0;
+            ptl->general_profile_idc = bs_read(&bs, 7);
+            ptl->general_tier_flag = bs_read(&bs, 1);
+            ptl->general_level_idc = bs_read(&bs, 8);
+
+            ptl->ptl_frame_only_constraint_flag = bs_read(&bs, 1);
+            ptl->ptl_multilayer_enabled_flag = bs_read(&bs, 1);
+            if(num_bytes_constraint_info)
+            {
+                for(uint8_t i=0; i<num_bytes_constraint_info - 1; i++)
+                    ptl->constraints_info.constraint_bytes[i] = bs_read(&bs, 8);
+                ptl->constraints_info.constraint_bytes[num_bytes_constraint_info - 1] = bs_read(&bs, 6);
+            }
+            else bs_skip(&bs, 6);
+
+            assert(bs_aligned(&bs));
+            if(p_values->num_sublayers > 1)
+            {
+                bs_skip(&bs, 8 - (p_values->num_sublayers-1));
+                for(uint8_t i=0; i<p_values->num_sublayers - 1; i++)
+                    ptl->ptl_sublayer_level_present_flag[i] = bs_read(&bs, 1);
+                for(uint8_t i=0; i<p_values->num_sublayers - 1; i++)
+                    if(ptl->ptl_sublayer_level_present_flag[i])
+                        ptl->ptl_sublayer_level_idc[i] = bs_read(&bs, 8);
+                assert(bs_aligned(&bs));
+            }
+            ptl->ptl_num_sub_profiles = bs_read(&bs, 8);
+            for(uint8_t i=0; i<ptl->ptl_num_sub_profiles; i++)
+                ptl->ptl_general_sub_profile_idc[i] = bs_read(&bs, 32);
+            p_values->max_picture_width = bs_read(&bs, 16);
+            p_values->max_picture_height = bs_read(&bs, 16);
+            p_values->avg_frame_rate = bs_read(&bs, 16);
+        }
+        if(!bs_aligned(&bs) || bs_eof(&bs))
+            return false;
+        p_buf += bs_pos(&bs) / 8;
+        i_buf -= bs_pos(&bs) / 8;
+    }
+
+    const uint8_t i_num_array = p_buf[0];
+    p_buf++; i_buf--;
+    for(uint8_t i = 0; i < i_num_array; i++)
+    {
+        if(i_buf < 3)
+            return false;
+
+        enum h266_nal_unit_type_e type = *p_buf & 0x1f;
+        uint16_t num_nal = 1;
+        p_buf += 1; i_buf -= 1;
+        if(type != H266_NAL_OPI && type != H266_NAL_DCI)
+        {
+            if(i_buf < 3)
+                return false;
+            num_nal = GetWBE(p_buf);
+            p_buf += 2; i_buf -= 2;
+        }
+
+        for(uint16_t j=0; j<num_nal; j++)
+        {
+            if(i_buf < 2)
+                return false;
+
+            const uint16_t i_nalu_length = GetWBE(p_buf);
+            if(i_buf < (size_t)i_nalu_length + 2)
+                return false;
+
+            h266_add_NALtoParams(&p_buf[2], i_nalu_length, p_params);
+
+            p_buf += i_nalu_length + 2;
+            i_buf -= i_nalu_length + 2;
+        }
+    }
+
+    return true;
+}
+
+uint8_t * h266_create_AnnexbExtradataFromParams(const struct h266_dcr_params *p_params, size_t *pi_size)
+{
+    size_t i_total_size = p_params->i_dci + p_params->i_opi;
+    struct
+    {
+        const uint8_t * const *pp_xps;
+        const uint16_t *p_sizes;
+        uint8_t i_count;
+    } const xps[] = {
+        { p_params->p_vps, p_params->rgi_vps, p_params->i_vps_count },
+        { p_params->p_sps, p_params->rgi_sps, p_params->i_sps_count },
+        { p_params->p_pps, p_params->rgi_pps, p_params->i_pps_count },
+        { p_params->p_seipref, p_params->rgi_seipref, p_params->i_seipref_count },
+        { p_params->p_seisuff, p_params->rgi_seisuff, p_params->i_seisuff_count },
+    };
+
+    for(unsigned i=0; i<ARRAY_SIZE(xps); i++)
+        for(uint8_t j=0; j<xps[i].i_count; j++)
+            i_total_size += 4 + xps[i].p_sizes[j];
+
+    uint8_t *p = malloc(i_total_size), *w = p;
+    if(!p)
+        return NULL;
+
+    for(unsigned i=0; i<ARRAY_SIZE(xps); i++)
+    {
+        for(uint8_t j=0; j<xps[i].i_count; j++)
+        {
+            SetDWBE(w, 1);
+            memcpy(&w[4], xps[i].pp_xps[j], xps[i].p_sizes[j]);
+            w += 4 + xps[i].p_sizes[j];
+        }
+    }
+    *pi_size = i_total_size;
+    return p;
 }
