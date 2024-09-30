@@ -190,9 +190,9 @@ libvlc_thumbnailer_request_set_picture_type( libvlc_thumbnailer_request_t *req,
 
 void
 libvlc_thumbnailer_request_set_timeout( libvlc_thumbnailer_request_t *req,
-                                        libvlc_time_t timeout )
+                                        int timeout )
 {
-    req->timeout = timeout > 0 ? vlc_tick_from_libvlc_time( timeout )
+    req->timeout = timeout > 0 ? VLC_TICK_FROM_MS( timeout )
                                : VLC_TICK_INVALID;
 }
 

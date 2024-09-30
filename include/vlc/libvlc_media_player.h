@@ -66,7 +66,7 @@ enum
 
 typedef struct libvlc_title_description_t
 {
-    int64_t i_duration; /**< duration in milliseconds */
+    libvlc_time_t i_duration; /**< duration in microseconds (us) */
     char *psz_name; /**< title name */
     unsigned i_flags; /**< info if item was recognized as a menu, interactive or plain content by the demuxer */
 } libvlc_title_description_t;
@@ -76,8 +76,8 @@ typedef struct libvlc_title_description_t
  */
 typedef struct libvlc_chapter_description_t
 {
-    int64_t i_time_offset; /**< time-offset of the chapter in milliseconds */
-    int64_t i_duration; /**< duration of the chapter in milliseconds, 0 if unknown */
+    libvlc_time_t i_time_offset; /**< time-offset of the chapter in microseconds (us)*/
+    libvlc_time_t i_duration; /**< duration of the chapter in microseconds (us), 0 if unknown */
     char *psz_name; /**< chapter name */
 } libvlc_chapter_description_t;
 
@@ -3386,9 +3386,9 @@ typedef struct libvlc_media_player_time_point_t
     /** Rate of the player */
     double rate;
     /** Valid time, in us >= 0 or -1 */
-    int64_t ts_us;
+    libvlc_time_t ts_us;
     /** Valid length, in us >= 1 or 0 */
-    int64_t length_us;
+    libvlc_time_t length_us;
     /**
      * System date, in us, of this record (always valid).
      * Based on libvlc_clock(). This date can be in the future or in the past.
@@ -3397,7 +3397,7 @@ typedef struct libvlc_media_player_time_point_t
      * libvlc_media_player_time_point_interpolate() will return the current
      * ts/pos of this point (there is nothing to interpolate).
      * */
-    int64_t system_date_us;
+    libvlc_time_t system_date_us;
 } libvlc_media_player_time_point_t;
 
 /**
@@ -3493,7 +3493,7 @@ struct libvlc_media_player_watch_time_cbs {
  */
 LIBVLC_API int
 libvlc_media_player_watch_time(libvlc_media_player_t *p_mi,
-                               int64_t min_period_us,
+                               libvlc_time_t min_period_us,
                                unsigned cbs_version,
                                const struct libvlc_media_player_watch_time_cbs *cbs,
                                void *cbs_opaque);
@@ -3521,8 +3521,8 @@ libvlc_media_player_unwatch_time(libvlc_media_player_t *p_mi);
  */
 LIBVLC_API int
 libvlc_media_player_time_point_interpolate(const libvlc_media_player_time_point_t *point,
-                                           int64_t system_now_us,
-                                           int64_t *out_ts_us, double *out_pos);
+                                           libvlc_time_t system_now_us,
+                                           libvlc_time_t *out_ts_us, double *out_pos);
 
 /**
  * Get the date of the next interval
@@ -3547,9 +3547,9 @@ libvlc_media_player_time_point_interpolate(const libvlc_media_player_time_point_
  */
 LIBVLC_API int64_t
 libvlc_media_player_time_point_get_next_date(const libvlc_media_player_time_point_t *point,
-                                             int64_t system_now_us,
-                                             int64_t interpolated_ts_us,
-                                             int64_t next_interval_us);
+                                             libvlc_time_t system_now_us,
+                                             libvlc_time_t interpolated_ts_us,
+                                             libvlc_time_t next_interval_us);
 
 /** @} libvlc_media_player_watch_time */
 

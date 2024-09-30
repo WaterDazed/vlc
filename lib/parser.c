@@ -196,7 +196,7 @@ libvlc_parser_request_destroy( libvlc_parser_request_t *req )
 
 void
 libvlc_parser_request_set_timeout( libvlc_parser_request_t *req,
-                                   libvlc_time_t timeout )
+                                   int timeout )
 {
     req->timeout_ms = timeout;
 }

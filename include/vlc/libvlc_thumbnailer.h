@@ -236,7 +236,7 @@ libvlc_thumbnailer_request_set_picture_type( libvlc_thumbnailer_request_t *req,
  */
 LIBVLC_API void
 libvlc_thumbnailer_request_set_timeout( libvlc_thumbnailer_request_t *req,
-                                        libvlc_time_t timeout );
+                                        int timeout );
 
 /**
  * Get the media associated with the request

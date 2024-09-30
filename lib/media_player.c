@@ -213,7 +213,7 @@ on_position_changed(vlc_player_t *player, vlc_tick_t new_time, double new_pos,
     if (mp->cbs == NULL || mp->cbs->on_position_changed == NULL)
         return;
 
-    mp->cbs->on_position_changed(mp->cbs_opaque, MS_FROM_VLC_TICK(new_time),
+    mp->cbs->on_position_changed(mp->cbs_opaque, libvlc_time_from_vlc_tick(new_time),
                                  new_pos);
 }
 
@@ -343,13 +343,13 @@ on_titles_changed(vlc_player_t *player,
 }
 
 #define LIBVLC_TITLE_FROM_VLC(title) { \
-    .i_duration = MS_FROM_VLC_TICK(title->length), \
+    .i_duration = libvlc_time_from_vlc_tick(title->length), \
     .psz_name = (char *) title->name, \
     .i_flags = title->flags, \
 }
 
 #define LIBVLC_CHAPTER_FROM_VLC(chapter) { \
-    .i_time_offset = MS_FROM_VLC_TICK(chapter->time), \
+    .i_time_offset = libvlc_time_from_vlc_tick(chapter->time), \
     .i_duration = 0, \
     .psz_name = (char *) chapter->name, \
 }
@@ -1551,7 +1551,7 @@ int libvlc_media_player_get_full_title_descriptions( libvlc_media_player_t *p_mi
         descs[i] = desc;
 
         /* we want to return milliseconds to match the rest of the API */
-        desc->i_duration = MS_FROM_VLC_TICK(title->length);
+        desc->i_duration = libvlc_time_from_vlc_tick(title->length);
         desc->i_flags = title->flags;
         desc->psz_name = title->name ? strdup(title->name) : NULL;
     }
@@ -1638,9 +1638,9 @@ int libvlc_media_player_get_full_chapter_descriptions( libvlc_media_player_t *p_
         vlc_tick_t chapter_end = i < i_chapter_count - 1
                                ? title->chapters[i + 1].time
                                : title->length;
-        desc->i_time_offset = MS_FROM_VLC_TICK(chapter->time);
+        desc->i_time_offset = libvlc_time_from_vlc_tick(chapter->time);
         desc->psz_name = chapter->name ? strdup(chapter->name) : NULL;
-        desc->i_duration = MS_FROM_VLC_TICK(chapter_end) - desc->i_time_offset;
+        desc->i_duration = libvlc_time_from_vlc_tick(chapter_end) - desc->i_time_offset;
     }
 
     ret = i_chapter_count;
