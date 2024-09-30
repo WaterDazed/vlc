@@ -24,46 +24,34 @@
 #include "media_player.h"
 #include <vlc_common.h>
 
-static void play_and_wait(libvlc_media_player_t *mp)
+static const struct libvlc_media_player_cbs state_cbs = {
+    .on_state_changed = mp_on_state_changed,
+};
+
+static const struct libvlc_media_player_cbs tracks_cbs = {
+    .on_track_list_changed = mp_on_track_list_changed,
+    .on_track_selection_changed = mp_on_track_selection_changed,
+};
+
+static const struct libvlc_media_player_cbs programs_cbs = {
+    .on_program_list_changed = mp_on_program_list_changed,
+    .on_program_selection_changed = mp_on_program_selection_changed,
+};
+
+static void play_and_wait(libvlc_media_player_t *mp, struct mp_event_ctx *ctx)
 {
-    libvlc_event_manager_t *em = libvlc_media_player_event_manager(mp);
-
-    struct mp_event_ctx ctx;
-    mp_event_ctx_init(&ctx);
-
-    int res;
-    res = libvlc_event_attach(em, libvlc_MediaPlayerPlaying, mp_event_ctx_on_event, &ctx);
-    assert(!res);
-
     libvlc_media_player_play(mp);
 
     test_log("Waiting for playing\n");
-    mp_event_ctx_wait(&ctx);
-
-    libvlc_event_detach(em, libvlc_MediaPlayerPlaying, mp_event_ctx_on_event, &ctx);
+    mp_event_ctx_wait_state(ctx, libvlc_Playing);
 }
 
-static void pause_and_wait(libvlc_media_player_t *mp)
+static void pause_and_wait(libvlc_media_player_t *mp, struct mp_event_ctx *ctx)
 {
-    libvlc_event_manager_t *em = libvlc_media_player_event_manager(mp);
-
-    struct mp_event_ctx ctx;
-    mp_event_ctx_init(&ctx);
-
-    int res;
-    res = libvlc_event_attach(em, libvlc_MediaPlayerPaused, mp_event_ctx_on_event, &ctx);
-    assert(!res);
-
-    assert(libvlc_media_player_get_state(mp) == libvlc_Playing);
-
     libvlc_media_player_set_pause(mp, true);
 
     test_log("Waiting for pause\n");
-    mp_event_ctx_wait(&ctx);
-
-    assert(libvlc_media_player_get_state(mp) == libvlc_Paused);
-
-    libvlc_event_detach(em, libvlc_MediaPlayerPaused, mp_event_ctx_on_event, &ctx);
+    mp_event_ctx_wait_state(ctx, libvlc_Paused);
 }
 
 /* Test a bunch of A/V properties. This most does nothing since the current
@@ -123,18 +111,25 @@ static void test_media_player_set_media(const char** argv, int argc)
     libvlc_media_t *md = libvlc_media_new_location(file);
     assert (md != NULL);
 
-    libvlc_media_player_t *mp = libvlc_media_player_new (vlc);
+    struct mp_event_ctx ctx;
+    mp_event_ctx_init(&ctx);
+    libvlc_media_player_t *mp =
+        libvlc_media_player_new (vlc, LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                 &state_cbs, &ctx);
     assert (mp != NULL);
+    mp_event_ctx_set_mp(&ctx, mp);
 
     libvlc_media_player_set_media (mp, md);
 
     libvlc_media_release (md);
 
-    play_and_wait(mp);
+    play_and_wait(mp, &ctx);
 
     libvlc_media_player_stop_async (mp);
     libvlc_media_player_release (mp);
     libvlc_release (vlc);
+
+    mp_event_ctx_destroy(&ctx);
 }
 
 static void test_media_player_play_stop(const char** argv, int argc)
@@ -152,16 +147,23 @@ static void test_media_player_play_stop(const char** argv, int argc)
     md = libvlc_media_new_location(file);
     assert (md != NULL);
 
-    mi = libvlc_media_player_new_from_media (vlc, md);
+    struct mp_event_ctx ctx;
+    mp_event_ctx_init(&ctx);
+    mi = libvlc_media_player_new_from_media (vlc, md,
+                                             LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                             &state_cbs, &ctx);
     assert (mi != NULL);
+    mp_event_ctx_set_mp(&ctx, mi);
 
     libvlc_media_release (md);
 
-    play_and_wait(mi);
+    play_and_wait(mi, &ctx);
 
     libvlc_media_player_stop_async (mi);
     libvlc_media_player_release (mi);
     libvlc_release (vlc);
+
+    mp_event_ctx_destroy(&ctx);
 }
 
 static void test_media_player_pause_stop(const char** argv, int argc)
@@ -179,18 +181,23 @@ static void test_media_player_pause_stop(const char** argv, int argc)
     md = libvlc_media_new_location(file);
     assert (md != NULL);
 
-    mi = libvlc_media_player_new_from_media (vlc, md);
+    struct mp_event_ctx ctx;
+    mp_event_ctx_init(&ctx);
+    mi = libvlc_media_player_new_from_media (vlc, md,
+                                             LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                             &state_cbs, &ctx);
     assert (mi != NULL);
+    mp_event_ctx_set_mp(&ctx, mi);
 
     libvlc_media_release (md);
 
     test_audio_video(mi);
     test_role(mi);
 
-    play_and_wait(mi);
+    play_and_wait(mi, &ctx);
     test_audio_video(mi);
 
-    pause_and_wait(mi);
+    pause_and_wait(mi, &ctx);
     test_audio_video(mi);
 
     libvlc_media_player_stop_async (mi);
@@ -198,6 +205,8 @@ static void test_media_player_pause_stop(const char** argv, int argc)
 
     libvlc_media_player_release (mi);
     libvlc_release (vlc);
+
+    mp_event_ctx_destroy(&ctx);
 }
 
 struct track
@@ -301,8 +310,15 @@ static void test_media_player_tracks(const char** argv, int argc)
     assert (vlc != NULL);
     libvlc_media_t *md = libvlc_media_new_location(file);
     assert (md != NULL);
-    libvlc_media_player_t *mp = libvlc_media_player_new (vlc);
+
+    struct mp_event_ctx ctx;
+    mp_event_ctx_init(&ctx);
+
+    libvlc_media_player_t *mp =
+        libvlc_media_player_new (vlc, LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                 &tracks_cbs, &ctx);
     assert (mp != NULL);
+    mp_event_ctx_set_mp(&ctx, mp);
     libvlc_media_player_set_media (mp, md);
     libvlc_media_release (md);
 
@@ -312,17 +328,6 @@ static void test_media_player_tracks(const char** argv, int argc)
     libvlc_media_player_select_tracks_by_ids(mp, libvlc_track_text, stracks_ids);
 
     libvlc_media_track_t *libtrack;
-    libvlc_event_manager_t *em = libvlc_media_player_event_manager(mp);
-    struct mp_event_ctx ctx;
-    mp_event_ctx_init(&ctx);
-
-    int res;
-    res = libvlc_event_attach(em, libvlc_MediaPlayerESAdded, mp_event_ctx_on_event, &ctx);
-    assert(!res);
-    res = libvlc_event_attach(em, libvlc_MediaPlayerESDeleted, mp_event_ctx_on_event, &ctx);
-    assert(!res);
-    res = libvlc_event_attach(em, libvlc_MediaPlayerESSelected, mp_event_ctx_on_event, &ctx);
-    assert(!res);
 
     libvlc_media_player_play (mp);
 
@@ -330,26 +335,24 @@ static void test_media_player_tracks(const char** argv, int argc)
      * libvlc_media_player_select_tracks_by_ids */
     while (!tracks_check_all_events(alltracks, false))
     {
-        const struct libvlc_event_t *ev = mp_event_ctx_wait_event(&ctx);
+        struct mp_event *ev = mp_event_ctx_wait_event(&ctx);
         switch (ev->type)
         {
-            case libvlc_MediaPlayerESAdded:
+            case EVENT_TYPE_TRACK_LIST:
             {
-                libvlc_track_type_t type = ev->u.media_player_es_changed.i_type;
+                assert(ev->track_list.action == libvlc_list_action_added);
+                libvlc_track_type_t type = ev->track_list.type;
                 struct track *track =
-                    get_track_from_id(alltracks[type],
-                                      ev->u.media_player_es_changed.psz_id);
+                    get_track_from_id(alltracks[type], ev->track_list.id);
                 assert(track);
                 track->added = true;
                 break;
             }
-            case libvlc_MediaPlayerESSelected:
+            case EVENT_TYPE_TRACK_SELECTION:
             {
-                libvlc_track_type_t type = ev->u.media_player_es_selection_changed.i_type;
-                const char *selected_id =
-                    ev->u.media_player_es_selection_changed.psz_selected_id;
-                const char *unselected_id =
-                    ev->u.media_player_es_selection_changed.psz_unselected_id;
+                libvlc_track_type_t type = ev->track_selection.type;
+                const char *selected_id = ev->track_selection.selected_id;
+                const char *unselected_id = ev->track_selection.unselected_id;
 
                 assert(selected_id);
                 assert(!unselected_id);
@@ -364,8 +367,7 @@ static void test_media_player_tracks(const char** argv, int argc)
             default:
                 assert(!"Event not expected");
         }
-
-        mp_event_ctx_release(&ctx);
+        mp_event_delete(ev);
     }
 
     /* Compare with the tracklists */
@@ -417,9 +419,9 @@ static void test_media_player_tracks(const char** argv, int argc)
     assert(tracklist);
 
     libvlc_media_track_t *vtrack1 =
-        libvlc_media_track_hold(libvlc_media_tracklist_at(tracklist, 1));
+        libvlc_media_track_retain(libvlc_media_tracklist_at(tracklist, 1));
     libvlc_media_track_t *vtrack2 =
-        libvlc_media_track_hold(libvlc_media_tracklist_at(tracklist, 2));
+        libvlc_media_track_retain(libvlc_media_tracklist_at(tracklist, 2));
     libvlc_media_tracklist_delete(tracklist);
 
     const libvlc_media_track_t *selecttracks[] = {
@@ -442,14 +444,12 @@ static void test_media_player_tracks(const char** argv, int argc)
      * changes. */
     while (!tracks_check_all_events(alltracks, false))
     {
-        const struct libvlc_event_t *ev = mp_event_ctx_wait_event(&ctx);
-        assert(ev->type == libvlc_MediaPlayerESSelected);
+        struct mp_event *ev = mp_event_ctx_wait_event(&ctx);
+        assert(ev->type == EVENT_TYPE_TRACK_SELECTION);
 
-        libvlc_track_type_t type = ev->u.media_player_es_selection_changed.i_type;
-        const char *selected_id =
-            ev->u.media_player_es_selection_changed.psz_selected_id;
-        const char *unselected_id =
-            ev->u.media_player_es_selection_changed.psz_unselected_id;
+        libvlc_track_type_t type = ev->track_selection.type;
+        const char *selected_id = ev->track_selection.selected_id;
+        const char *unselected_id = ev->track_selection.unselected_id;
 
         if (unselected_id)
         {
@@ -469,7 +469,7 @@ static void test_media_player_tracks(const char** argv, int argc)
             track->selected = true;
         }
 
-        mp_event_ctx_release(&ctx);
+        mp_event_delete(ev);
     }
 
     libvlc_media_player_stop_async (mp);
@@ -477,26 +477,24 @@ static void test_media_player_tracks(const char** argv, int argc)
     /* Check that all tracks are removed */
     while (!tracks_check_all_events(alltracks, true))
     {
-        const struct libvlc_event_t *ev = mp_event_ctx_wait_event(&ctx);
+        struct mp_event *ev = mp_event_ctx_wait_event(&ctx);
 
-        if (ev->type == libvlc_MediaPlayerESDeleted)
+        if (ev->type == EVENT_TYPE_TRACK_LIST
+         && ev->track_list.action == libvlc_list_action_removed)
         {
-            libvlc_track_type_t type = ev->u.media_player_es_changed.i_type;
+            libvlc_track_type_t type = ev->track_list.type;
             struct track *track =
-                get_track_from_id(alltracks[type],
-                                  ev->u.media_player_es_changed.psz_id);
+                get_track_from_id(alltracks[type], ev->track_list.id);
             assert(track);
             track->removed = true;
         }
-        mp_event_ctx_release(&ctx);
+        mp_event_delete(ev);
     }
-
-    libvlc_event_detach(em, libvlc_MediaPlayerESAdded, mp_event_ctx_on_event, &ctx);
-    libvlc_event_detach(em, libvlc_MediaPlayerESDeleted, mp_event_ctx_on_event, &ctx);
-    libvlc_event_detach(em, libvlc_MediaPlayerESSelected, mp_event_ctx_on_event, &ctx);
 
     libvlc_media_player_release (mp);
     libvlc_release (vlc);
+
+    mp_event_ctx_destroy(&ctx);
 }
 
 static void test_media_player_programs(const char** argv, int argc)
@@ -518,22 +516,17 @@ static void test_media_player_programs(const char** argv, int argc)
     assert (vlc != NULL);
     libvlc_media_t *md = libvlc_media_new_location(file);
     assert (md != NULL);
-    libvlc_media_player_t *mp = libvlc_media_player_new (vlc);
-    assert (mp != NULL);
-    libvlc_media_player_set_media (mp, md);
-    libvlc_media_release (md);
 
-    libvlc_event_manager_t *em = libvlc_media_player_event_manager(mp);
     struct mp_event_ctx ctx;
     mp_event_ctx_init(&ctx);
 
-    int res;
-    res = libvlc_event_attach(em, libvlc_MediaPlayerProgramAdded, mp_event_ctx_on_event, &ctx);
-    assert(!res);
-    res = libvlc_event_attach(em, libvlc_MediaPlayerProgramDeleted, mp_event_ctx_on_event, &ctx);
-    assert(!res);
-    res = libvlc_event_attach(em, libvlc_MediaPlayerProgramSelected, mp_event_ctx_on_event, &ctx);
-    assert(!res);
+    libvlc_media_player_t *mp =
+        libvlc_media_player_new (vlc, LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                 &programs_cbs, &ctx);
+    assert (mp != NULL);
+    mp_event_ctx_set_mp(&ctx, mp);
+    libvlc_media_player_set_media (mp, md);
+    libvlc_media_release (md);
 
     libvlc_media_player_select_program_id(mp, 2);
 
@@ -543,23 +536,29 @@ static void test_media_player_programs(const char** argv, int argc)
     for (int nb_added = 0, nb_selected = 0;
          nb_added != PROGRAM_COUNT || nb_selected != 1;)
     {
-        const struct libvlc_event_t *ev = mp_event_ctx_wait_event(&ctx);
+        struct mp_event *ev = mp_event_ctx_wait_event(&ctx);
         switch (ev->type)
         {
-            case libvlc_MediaPlayerProgramAdded:
-                assert(ev->u.media_player_program_changed.i_id == nb_added);
-                nb_added++;
+            case EVENT_TYPE_PROGRAM_LIST:
+
+                assert(ev->program_list.action == libvlc_list_action_added
+                    || ev->program_list.action == libvlc_list_action_updated);
+                if (ev->program_list.action == libvlc_list_action_added)
+                {
+                    assert(ev->program_list.group_id == nb_added);
+                    nb_added++;
+                }
                 break;
-            case libvlc_MediaPlayerProgramSelected:
+            case EVENT_TYPE_PROGRAM_SELECTION:
                 assert(nb_selected == 0);
-                assert(ev->u.media_player_program_selection_changed.i_unselected_id == -1);
-                assert(ev->u.media_player_program_selection_changed.i_selected_id != -1);
+                assert(ev->program_selection.unselected_group_id == -1);
+                assert(ev->program_selection.selected_group_id != -1);
                 nb_selected++;
                 break;
             default:
                 assert(!"Event not expected");
         }
-        mp_event_ctx_release(&ctx);
+        mp_event_delete(ev);
     }
 
     libvlc_player_program_t *program;
@@ -574,11 +573,11 @@ static void test_media_player_programs(const char** argv, int argc)
 
     /* Wait for the program selection event */
     {
-        const struct libvlc_event_t *ev = mp_event_ctx_wait_event(&ctx);
-        assert(ev->type == libvlc_MediaPlayerProgramSelected);
-        assert(ev->u.media_player_program_selection_changed.i_unselected_id == 2);
-        assert(ev->u.media_player_program_selection_changed.i_selected_id == 8);
-        mp_event_ctx_release(&ctx);
+        struct mp_event *ev = mp_event_ctx_wait_event(&ctx);
+        assert(ev->type == EVENT_TYPE_PROGRAM_SELECTION);
+        assert(ev->program_selection.unselected_group_id == 2);
+        assert(ev->program_selection.selected_group_id == 8);
+        mp_event_delete(ev);
     }
 
     /* Ensure that the new program was selected */
@@ -610,25 +609,27 @@ static void test_media_player_programs(const char** argv, int argc)
     /* Check that all programs are removed and unselected */
     for (int nb_deleted = 0; nb_deleted != PROGRAM_COUNT;)
     {
-        const struct libvlc_event_t *ev = mp_event_ctx_wait_event(&ctx);
+        struct mp_event *ev = mp_event_ctx_wait_event(&ctx);
         switch (ev->type)
         {
-            case libvlc_MediaPlayerProgramDeleted:
-                assert(ev->u.media_player_program_changed.i_id == nb_deleted);
+            case EVENT_TYPE_PROGRAM_LIST:
+                if (ev->program_list.action == libvlc_list_action_updated)
+                    break;
+
+                assert(ev->program_list.action == libvlc_list_action_removed);
+                assert(ev->program_list.group_id == nb_deleted);
                 nb_deleted++;
                 break;
             default:
                 assert(!"Event not expected");
         }
-        mp_event_ctx_release(&ctx);
+        mp_event_delete(ev);
     }
-
-    libvlc_event_detach(em, libvlc_MediaPlayerProgramAdded, mp_event_ctx_on_event, &ctx);
-    libvlc_event_detach(em, libvlc_MediaPlayerProgramDeleted, mp_event_ctx_on_event, &ctx);
-    libvlc_event_detach(em, libvlc_MediaPlayerProgramSelected, mp_event_ctx_on_event, &ctx);
 
     libvlc_media_player_release (mp);
     libvlc_release (vlc);
+
+    mp_event_ctx_destroy(&ctx);
 }
 
 /* Regression test when having multiple libvlc instances */
@@ -640,7 +641,9 @@ static void test_media_player_multiple_instance(const char** argv, int argc)
 
     /* ...with the media and the player being on different instances */
     libvlc_media_t *media1 = libvlc_media_new_path("foo");
-    libvlc_media_player_t *player1 = libvlc_media_player_new(instance1);
+    libvlc_media_player_t *player1 =
+        libvlc_media_player_new(instance1, LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                NULL, NULL);
     libvlc_media_player_set_media(player1, media1);
 
     /* ...and both being released */
@@ -649,7 +652,9 @@ static void test_media_player_multiple_instance(const char** argv, int argc)
 
     /* There is no use-after-free when creating a player on the media instance,
      * meaning that the player1 did release the correct libvlc instance.*/
-    libvlc_media_player_t *player2 = libvlc_media_player_new(instance2);
+    libvlc_media_player_t *player2 =
+        libvlc_media_player_new(instance2, LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                NULL, NULL);
 
     /* And the libvlc nstances can be released without breaking the
      * instance inside the player. */

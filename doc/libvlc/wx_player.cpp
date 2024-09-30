@@ -28,8 +28,8 @@ DECLARE_EVENT_TYPE(vlcEVT_POS, -1)
 DEFINE_EVENT_TYPE(vlcEVT_END)
 DEFINE_EVENT_TYPE(vlcEVT_POS)
 
-void OnPositionChanged_VLC(const libvlc_event_t *event, void *data);
-void OnEndReached_VLC(const libvlc_event_t *event, void *data);
+void OnPositionChanged_VLC(void *opaque, libvlc_time_t time, double pos );
+void OnEndReached_VLC(void *opaque, libvlc_state_t state);
 
 class MainWindow : public wxFrame {
     public:
@@ -63,7 +63,6 @@ class MainWindow : public wxFrame {
 
         libvlc_media_player_t *media_player;
         libvlc_instance_t *vlc_inst;
-        libvlc_event_manager_t *vlc_evt_man;
 };
 
 MainWindow *mainWindow;
@@ -118,12 +117,14 @@ MainWindow::MainWindow(const wxString& title) : wxFrame(NULL, wxID_ANY, title, w
     Connect(myID_VOLUME, wxEVT_COMMAND_SLIDER_UPDATED, wxCommandEventHandler(MainWindow::OnVolumeChanged));
     volume_slider->Connect(myID_VOLUME, wxEVT_LEFT_UP, wxMouseEventHandler(MainWindow::OnVolumeClicked));
 
+    static const struct libvlc_media_player_cbs cbs = {
+        .on_state_changed = ::OnEndReached_VLC,
+        .on_position_changed = ::OnPositionChanged_VLC,
+    };
     //setup vlc
     vlc_inst = libvlc_new(0, NULL);
-    media_player = libvlc_media_player_new(vlc_inst);
-    vlc_evt_man = libvlc_media_player_event_manager(media_player);
-    libvlc_event_attach(vlc_evt_man, libvlc_MediaPlayerStopped, ::OnEndReached_VLC, NULL);
-    libvlc_event_attach(vlc_evt_man, libvlc_MediaPlayerPositionChanged, ::OnPositionChanged_VLC, NULL);
+    media_player = libvlc_media_player_new(vlc_inst, LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+                                           &cbs, NULL);
     Connect(wxID_ANY, vlcEVT_END, wxCommandEventHandler(MainWindow::OnEndReached_VLC));
     Connect(wxID_ANY, vlcEVT_POS, wxCommandEventHandler(MainWindow::OnPositionChanged_VLC));
 
@@ -178,7 +179,7 @@ void MainWindow::OnStop(wxCommandEvent& event) {
 }
 
 void MainWindow::OnPositionChanged_USR(wxCommandEvent& event) {
-    libvlc_media_player_set_position(media_player, (float) event.GetInt() / (float) TIMELINE_MAX);
+    libvlc_media_player_set_position(media_player, (float) event.GetInt() / (float) TIMELINE_MAX, false);
 }
 
 void MainWindow::OnPositionChanged_VLC(wxCommandEvent& event) {
@@ -205,7 +206,7 @@ void MainWindow::OnVolumeClicked(wxMouseEvent& event) {
 void MainWindow::OnTimelineClicked(wxMouseEvent& event) {
     wxSize size = mainWindow->timeline->GetSize();
     float position = (float) event.GetX() / (float) size.GetWidth();
-    libvlc_media_player_set_position(mainWindow->media_player, position);
+    libvlc_media_player_set_position(mainWindow->media_player, position, false);
     mainWindow->setTimeline(position);
     event.Skip();
 }
@@ -248,14 +249,17 @@ class MyApp : public wxApp {
         virtual bool OnInit();
 };
 
-void OnPositionChanged_VLC(const libvlc_event_t *event, void *data) {
+void OnPositionChanged_VLC(void *opaque, libvlc_time_t time, double pos ) {
     wxCommandEvent evt(vlcEVT_POS, wxID_ANY);
     mainWindow->GetEventHandler()->AddPendingEvent(evt);
 }
 
-void OnEndReached_VLC(const libvlc_event_t *event, void *data) {
-    wxCommandEvent evt(vlcEVT_END, wxID_ANY);
-    mainWindow->GetEventHandler()->AddPendingEvent(evt);
+void OnEndReached_VLC(void *opaque, libvlc_state_t state) {
+    if (state == libvlc_Stopped || state == libvlc_Error)
+    {
+        wxCommandEvent evt(vlcEVT_END, wxID_ANY);
+        mainWindow->GetEventHandler()->AddPendingEvent(evt);
+    }
 }
 
 bool MyApp::OnInit() {

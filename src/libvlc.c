@@ -221,10 +221,6 @@ int libvlc_InternalInit( libvlc_int_t *p_libvlc, int i_argc,
             msg_Warn( p_libvlc, "Media library initialization failed" );
     }
 
-    priv->p_thumbnailer = vlc_thumbnailer_Create( VLC_OBJECT( p_libvlc ) );
-    if ( priv->p_thumbnailer == NULL )
-        msg_Warn( p_libvlc, "Failed to instantiate thumbnailer" );
-
     /*
      * Initialize hotkey handling
      */
@@ -352,9 +348,6 @@ void libvlc_InternalCleanup( libvlc_int_t *p_libvlc )
     /* Ask the interfaces to stop and destroy them */
     msg_Dbg( p_libvlc, "removing all interfaces" );
     intf_DestroyAll( p_libvlc );
-
-    if ( priv->p_thumbnailer )
-        vlc_thumbnailer_Release( priv->p_thumbnailer );
 
 #ifdef ENABLE_VLM
     /* Destroy VLM if created in libvlc_InternalInit */

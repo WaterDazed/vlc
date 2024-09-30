@@ -29,7 +29,6 @@
 #include <vlc/libvlc.h>
 #include <vlc/libvlc_picture.h>
 #include <vlc/libvlc_media.h>
-#include <vlc/libvlc_events.h>
 
 #include "libvlc_internal.h"
 #include "media_internal.h"
@@ -146,7 +145,7 @@ static void libvlc_media_track_clean( libvlc_media_track_t *track )
 }
 
 libvlc_media_track_t *
-libvlc_media_track_hold( libvlc_media_track_t *track )
+libvlc_media_track_retain( libvlc_media_track_t *track )
 {
     libvlc_media_trackpriv_t *trackpriv =
         container_of( track, libvlc_media_trackpriv_t, t );
