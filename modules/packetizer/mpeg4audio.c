@@ -505,7 +505,7 @@ static int Mpeg4GAProgramConfigElement(bs_t *s)
     /* TODO compute channels count ? */
     int i_tag = bs_read(s, 4);
     if (i_tag != 0x05)
-        return -1;
+        return VLC_EGENERIC;
     bs_skip(s, 2 + 4); // object type + sampling index
     int i_num_front = bs_read(s, 4);
     int i_num_side = bs_read(s, 4);
@@ -530,7 +530,7 @@ static int Mpeg4GAProgramConfigElement(bs_t *s)
     bs_align(s);
     int i_comment = bs_read(s, 8);
     bs_skip(s, i_comment * 8);
-    return 0;
+    return bs_error(s) ? VLC_EGENERIC : VLC_SUCCESS;
 }
 
 static int Mpeg4GASpecificConfig(mpeg4_asc_t *p_cfg, bs_t *s)
@@ -562,7 +562,7 @@ static int Mpeg4GASpecificConfig(mpeg4_asc_t *p_cfg, bs_t *s)
         if (bs_read1(s))     // extension 3
             fprintf(stderr, "Mpeg4GASpecificConfig: error 1\n");
     }
-    return 0;
+    return bs_error(s) ? VLC_EGENERIC : VLC_SUCCESS;
 }
 
 static int Mpeg4ELDSpecificConfig(mpeg4_asc_t *p_cfg, bs_t *s)
@@ -626,7 +626,7 @@ static int Mpeg4ELDSpecificConfig(mpeg4_asc_t *p_cfg, bs_t *s)
             bs_skip(s, 8);
     }
 
-    return 0;
+    return bs_error(s) ? VLC_EGENERIC : VLC_SUCCESS;
 }
 
 static enum mpeg4_audioObjectType Mpeg4ReadAudioObjectType(bs_t *s)
