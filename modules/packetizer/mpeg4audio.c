@@ -711,12 +711,14 @@ static int Mpeg4ReadAudioSpecificConfig(bs_t *s, mpeg4_asc_t *p_cfg, bool b_with
     case AOT_SLS:
     case AOT_SLS_NON_CORE:
         // SLSSpecificConfig();
+        break;
     case AOT_ER_AAC_ELD:
         Mpeg4ELDSpecificConfig(p_cfg, s);
         break;
     case AOT_SMR_SIMPLE:
     case AOT_SMR_MAIN:
         // SymbolicMusicSpecificConfig();
+        break;
     default:
         // error
         return VLC_EGENERIC;
