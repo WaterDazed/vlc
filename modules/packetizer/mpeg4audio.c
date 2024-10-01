@@ -545,8 +545,9 @@ static int Mpeg4GASpecificConfig(mpeg4_asc_t *p_cfg, bs_t *s)
         bs_skip(s, 14);   // core coder delay
 
     int i_extension_flag = bs_read1(s);
-    if (p_cfg->i_channel_configuration == 0)
-        Mpeg4GAProgramConfigElement(s);
+    if (p_cfg->i_channel_configuration == 0 &&
+        Mpeg4GAProgramConfigElement(s))
+        return VLC_EGENERIC;
     if (p_cfg->i_object_type == AOT_AAC_SC ||
         p_cfg->i_object_type == AOT_ER_AAC_SC)
         bs_skip(s, 3);    // layer
