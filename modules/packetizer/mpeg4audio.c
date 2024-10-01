@@ -671,6 +671,7 @@ static int Mpeg4ReadAudioSpecificConfig(bs_t *s, mpeg4_asc_t *p_cfg, bool b_with
             p_cfg->extension.i_channel_configuration = bs_read(s, 4);
     }
 
+    int ret = VLC_EINVAL;
     switch(p_cfg->i_object_type)
     {
     case AOT_AAC_MAIN:
@@ -685,7 +686,7 @@ static int Mpeg4ReadAudioSpecificConfig(bs_t *s, mpeg4_asc_t *p_cfg, bool b_with
     case AOT_ER_TWINVQ:
     case AOT_ER_BSAC:
     case AOT_ER_AAC_LD:
-        Mpeg4GASpecificConfig(p_cfg, s);
+        ret = Mpeg4GASpecificConfig(p_cfg, s);
         break;
     case AOT_CELP:
         // CelpSpecificConfig();
@@ -720,7 +721,7 @@ static int Mpeg4ReadAudioSpecificConfig(bs_t *s, mpeg4_asc_t *p_cfg, bool b_with
         // SLSSpecificConfig();
         break;
     case AOT_ER_AAC_ELD:
-        Mpeg4ELDSpecificConfig(p_cfg, s);
+        ret = Mpeg4ELDSpecificConfig(p_cfg, s);
         break;
     case AOT_SMR_SIMPLE:
     case AOT_SMR_MAIN:
@@ -730,6 +731,11 @@ static int Mpeg4ReadAudioSpecificConfig(bs_t *s, mpeg4_asc_t *p_cfg, bool b_with
         // error
         return VLC_EGENERIC;
     }
+
+    if(ret == VLC_EGENERIC)
+        return ret;
+    else if(ret == VLC_EINVAL)
+        return VLC_SUCCESS;
 
     switch(p_cfg->i_object_type)
     {
