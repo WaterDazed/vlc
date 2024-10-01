@@ -625,7 +625,7 @@ static int Mpeg4ELDSpecificConfig(mpeg4_asc_t *p_cfg, bs_t *s)
 static enum mpeg4_audioObjectType Mpeg4ReadAudioObjectType(bs_t *s)
 {
     int i_type = bs_read(s, 5);
-    if (i_type == 31)
+    if (i_type == AOT_ESCAPE)
         i_type = 32 + bs_read(s, 6);
     return i_type;
 }
