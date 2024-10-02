@@ -163,13 +163,27 @@ FocusScope {
         colorSet: ColorContext.View
     }
 
-
     NavigationPane {
         id: sidebar
         anchors {
             top: VLCStyle.isScreenSmall ? globalTopbar.bottom : parent.top
             left: parent.left
             bottom: miniPlayer.top
+        }
+
+        Rectangle {
+            id: globalTopbarRightBorder
+
+            parent: sidebar
+
+            anchors {
+                top: parent.top
+                bottom: parent.bottom
+                right: parent.right
+            }
+
+            width: VLCStyle.border
+            color: theme.separator
         }
 
         onItemClicked: (sectionUri, modelUri) => {
