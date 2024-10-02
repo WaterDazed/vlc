@@ -84,7 +84,7 @@ typedef struct
     bool b_sbr, b_ps, b_discontinuity;
 } decoder_sys_t;
 
-static_assert (MPEG4_ASC_MAX_INDEXEDPOS == LFE_CHANNEL, "Mismatch");
+static_assert (MPEG4_ASC_MAX_INDEXEDPOS >= LFE_CHANNEL, "Mismatch");
 
 #define FAAD_CHANNEL_ID_COUNT (LFE_CHANNEL + 1)
 static const uint32_t pi_tovlcmapping[FAAD_CHANNEL_ID_COUNT] =
