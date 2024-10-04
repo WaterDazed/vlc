@@ -190,13 +190,20 @@ static const int pi_sample_rates[16] =
 };
 
 
-static int ChannelConfigurationToVLC(uint8_t i_channel)
+static uint8_t ChannelConfigurationToVLC(const mpeg4_asc_core_t *asc)
 {
-    if (i_channel == 7)
-        return 8; // 7.1
-    if (i_channel >= 8)
-        return -1;
-    return i_channel;
+    if(asc->i_channel_configuration != 0)
+    {
+        if (asc->i_channel_configuration == 7)
+            return 8; // 7.1
+        if (asc->i_channel_configuration >= MPEG4_ASC_MAX_INDEXEDPOS)
+            return -1;
+        if (asc->i_channel_configuration == 13) // remove when we don't hit AOUT_MAX_CHANNELS
+            return 24;
+        uint32_t mask = mpeg4_asc_channelsbyindex[asc->i_channel_configuration];
+        return vlc_popcount(mask);
+    }
+    return asc->i_num_channels;
 }
 
 static int AOTtoAACProfile(uint8_t i_object_type)
@@ -324,8 +331,7 @@ static int OpenPacketizer(vlc_object_t *p_this)
         {
             p_dec->fmt_out.audio.i_rate = asc.base.i_samplerate;
             p_dec->fmt_out.audio.i_frame_length = asc.i_frame_length;
-            p_dec->fmt_out.audio.i_channels =
-                    ChannelConfigurationToVLC(asc.base.i_channel_configuration);
+            p_dec->fmt_out.audio.i_channels = ChannelConfigurationToVLC(&asc.base);
             if(p_dec->fmt_out.i_profile != -1)
                 p_dec->fmt_out.i_profile = AOTtoAACProfile(asc.base.i_object_type);
 
@@ -1009,10 +1015,10 @@ static int LOASParse(decoder_t *p_dec, uint8_t *p_buffer, int i_buffer)
         const latm_stream_t *st = &p_sys->latm.stream[0];
 
         if(st->cfg.base.i_samplerate == 0 || st->cfg.i_frame_length == 0 ||
-           ChannelConfigurationToVLC(st->cfg.base.i_channel_configuration) == 0)
+           ChannelConfigurationToVLC(&st->cfg.base) == 0)
             return 0;
 
-        p_sys->i_channels = ChannelConfigurationToVLC(st->cfg.base.i_channel_configuration);
+        p_sys->i_channels = ChannelConfigurationToVLC(&st->cfg.base);
         p_sys->i_rate = st->cfg.base.i_samplerate;
         p_sys->i_frame_length = st->cfg.i_frame_length;
         p_sys->i_aac_profile = AOTtoAACProfile(st->cfg.base.i_object_type);
