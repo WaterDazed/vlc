@@ -70,6 +70,7 @@ typedef struct
     unsigned i_samplerate;
     uint8_t i_channel_configuration;
     enum feature_e sbr, ps;
+    uint8_t i_num_channels;
 } mpeg4_asc_core_t;
 
 typedef struct
@@ -511,9 +512,9 @@ static int LOASSyncInfo(uint8_t p_header[LOAS_HEADER_SIZE], unsigned int *pi_hea
     return ((p_header[1] & 0x1f) << 8) + p_header[2];
 }
 
-static int Mpeg4GAProgramConfigElement(bs_t *s)
+static int Mpeg4GAProgramConfigElement(mpeg4_asc_core_t *p_cfg, bs_t *s)
 {
-    /* TODO compute channels count ? */
+    p_cfg->i_num_channels = 0;
     int i_tag = bs_read(s, 4);
     if (i_tag != 0x05)
         return VLC_EGENERIC;
@@ -532,9 +533,12 @@ static int Mpeg4GAProgramConfigElement(bs_t *s)
     if (bs_read1(s))
         bs_skip(s, 2+1); // matrix downmix + pseudo_surround
 
-    bs_skip(s, i_num_front * (1+4));
-    bs_skip(s, i_num_side * (1+4));
-    bs_skip(s, i_num_back * (1+4));
+    for(int i=0; i<(i_num_front + i_num_side + i_num_back); i++)
+    {
+        p_cfg->i_num_channels += 1 + bs_read(s, 1); // SCE vs CPE
+        bs_skip(s, 4);
+    }
+    p_cfg->i_num_channels += i_num_lfe;
     bs_skip(s, i_num_lfe * (4));
     bs_skip(s, i_num_assoc_data * (4));
     bs_skip(s, i_num_valid_cc * (5));
@@ -557,7 +561,7 @@ static int Mpeg4GASpecificConfig(mpeg4_asc_t *p_cfg, bs_t *s)
 
     int i_extension_flag = bs_read1(s);
     if (p_cfg->base.i_channel_configuration == 0 &&
-        Mpeg4GAProgramConfigElement(s))
+        Mpeg4GAProgramConfigElement(&p_cfg->base, s))
         return VLC_EGENERIC;
     if (p_cfg->base.i_object_type == AOT_AAC_SC ||
         p_cfg->base.i_object_type == AOT_ER_AAC_SC)
