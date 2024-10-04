@@ -59,7 +59,7 @@
  *****************************************************************************/
 enum feature_e
 {
-    FEAT_UNKNOWN,
+    FEAT_UNKNOWN = 0,
     FEAT_MISSING,
     FEAT_PRESENT,
 };
@@ -82,6 +82,11 @@ typedef struct
     unsigned i_frame_length;   // 1024 or 960
 
 } mpeg4_asc_t;
+
+static inline void mpeg4_asc_Init(mpeg4_asc_t *asc)
+{
+    memset(asc, 0, sizeof(*asc));
+}
 
 #define LATM_MAX_EXTRA_SIZE 64
 typedef struct
@@ -119,6 +124,11 @@ typedef struct
     uint32_t i_other_data;
     int16_t  i_crc;  /* -1 if not set */
 } latm_mux_t;
+
+static inline void latm_mux_Init(latm_mux_t *mux)
+{
+    memset(mux, 0, sizeof(*mux));
+}
 
 typedef struct
 {
@@ -257,6 +267,7 @@ static int OpenPacketizer(vlc_object_t *p_this)
     block_BytestreamInit(&p_sys->bytestream);
     p_sys->i_aac_profile = -1;
     p_sys->b_latm_cfg = false;
+    latm_mux_Init(&p_sys->latm);
     p_sys->i_warnings = 0;
 
     /* Set output properties */
@@ -306,6 +317,7 @@ static int OpenPacketizer(vlc_object_t *p_this)
     if(p_dec->fmt_in->i_extra)
     {
         mpeg4_asc_t asc;
+        mpeg4_asc_Init(&asc);
         bs_t s;
         bs_init(&s, p_dec->fmt_in->p_extra, p_dec->fmt_in->i_extra);
         if(Mpeg4ReadAudioSpecificConfig(&s, &asc, true) == VLC_SUCCESS)
@@ -651,13 +663,6 @@ static int Mpeg4ReadAudioSpecificConfig(bs_t *s, mpeg4_asc_t *p_cfg, bool b_with
     p_cfg->i_object_type = Mpeg4ReadAudioObjectType(s);
     p_cfg->i_samplerate = Mpeg4ReadAudioSamplerate(s);
     p_cfg->i_channel_configuration = bs_read(s, 4);
-
-    p_cfg->sbr = FEAT_UNKNOWN;
-    p_cfg->ps  = FEAT_UNKNOWN;
-    p_cfg->extension.i_object_type = 0;
-    p_cfg->extension.i_samplerate = 0;
-    p_cfg->extension.i_channel_configuration = 0;
-    p_cfg->i_frame_length = 0;
 
     if (p_cfg->i_object_type == AOT_AAC_SBR ||
         p_cfg->i_object_type == AOT_AAC_PS) {
