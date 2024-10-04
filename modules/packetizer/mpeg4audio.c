@@ -747,7 +747,48 @@ static int Mpeg4ReadAudioSpecificConfig(bs_t *s, mpeg4_asc_t *p_cfg, bool b_with
     {
         int epConfig = bs_read(s, 2);
         if (epConfig == 2 || epConfig == 3)
-            //ErrorProtectionSpecificConfig();
+        {
+            // ErrorProtectionSpecificConfig();
+            uint8_t number_of_predefined_set = bs_read(s, 8);
+            uint8_t interleave_type = bs_read(s, 2);
+            bs_skip(s, 3);
+            uint8_t number_of_concatenated_frame = bs_read(s, 3);
+            for(uint8_t i=0; i<number_of_predefined_set; i++)
+            {
+                uint8_t number_of_class = bs_read(s, 6);
+                for(uint8_t j=0; j<number_of_class; j++)
+                {
+                    uint8_t length_escape = bs_read(s, 1);
+                    uint8_t rate_escape = bs_read(s, 1);
+                    uint8_t crclen_escape = bs_read(s, 1);
+                    if(number_of_concatenated_frame != 1)
+                        bs_skip(s, 1);
+                    uint8_t fec_type = bs_read(s, 2);
+                    if(fec_type == 0)
+                        bs_skip(s, 1);
+                    if(interleave_type == 2)
+                        bs_skip(s, 2);
+                    bs_skip(s, 1);
+                    if(length_escape == 1)
+                        bs_skip(s, 4);
+                    else
+                        bs_skip(s, 16);
+                    if(rate_escape != 1)
+                    {
+                        if(fec_type)
+                            bs_skip(s, 7);
+                        else
+                            bs_skip(s, 5);
+                    }
+                    if(crclen_escape)
+                        bs_skip(s, 5);
+                }
+                if(bs_read(s, 1)) // class_reordered_output
+                    bs_skip(s, 6 * number_of_class);
+            }
+            if(bs_read(s, 1)) // header_protection
+                bs_skip(s, 10);
+        }
         if (epConfig == 3)
             if (bs_read1(s)) {
                 // TODO : directMapping
