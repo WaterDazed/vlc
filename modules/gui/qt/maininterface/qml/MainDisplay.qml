@@ -165,6 +165,8 @@ FocusScope {
 
     NavigationPane {
         id: sidebar
+        z: 99
+
         anchors {
             top: VLCStyle.isScreenSmall ? globalTopbar.bottom : parent.top
             left: parent.left
@@ -452,6 +454,21 @@ FocusScope {
                         function onPlaylistWidthFactorChanged() {
                             resizeHandle._updateFromMainInterface()
                         }
+                    }
+                }
+            }
+
+            Connections {
+                target: VLCStyle
+
+                function onAppWidthChanged() { 
+                    if (VLCStyle.isScreenSmall && MainCtx.playlistVisible) {
+                        MainCtx.playlistVisible = false
+                    }
+                }
+                function onAppHeightChanged() {
+                    if (VLCStyle.isScreenSmall && MainCtx.playlistVisible ) {
+                        MainCtx.playlistVisible = false
                     }
                 }
             }
