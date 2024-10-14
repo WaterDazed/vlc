@@ -38,6 +38,7 @@ T.TabButton {
     property bool showCurrentIndicator: true
 
     property bool centerContent: true
+    property alias underlineIndicator: currentIndicator.visible
 
     // Settings
 
@@ -92,6 +93,7 @@ T.TabButton {
         border.color: visualFocus ? theme.visualFocus : "transparent"
 
         Widgets.CurrentIndicator {
+            id: currentIndicator
             anchors {
                 bottom: parent.bottom
                 bottomMargin: VLCStyle.margin_xxxsmall

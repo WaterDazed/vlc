@@ -40,12 +40,14 @@ T.Pane {
         colorSet: ColorContext.View
     }
 
-    enum ExpansionState {
-        Expanded,
-        Collapsed,
-        Unexpandable
+    enum SidebarButtonState {
+        Expanded = 1,
+        Collapsed = 2,
+        Unexpandable = 4,
+        Inactive = 8,
+        Active = 16
     }
-
+    
     //TODO: update background properties accordingly
     background: Widgets.AcrylicBackground {
         tintColor: theme.bg.primary
@@ -58,7 +60,7 @@ T.Pane {
             icon: VLCIcons.home,
             uri: "home",
             sectionUri: "undefined",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "root"
         },
         {
@@ -66,21 +68,21 @@ T.Pane {
             icon: VLCIcons.topbar_video,
             uri: "video",
             sectionUri: "undefined",
-            isExpanded: NavigationPane.ExpansionState.Collapsed,
+            state: NavigationPane.SidebarButtonState.Collapsed | NavigationPane.SidebarButtonState.Inactive,
             group: "root"
         },
         {
             name: qsTr("All"),
             uri: "all",
             sectionUri: "video",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Videos"
         },
         {
             name: qsTr("Playlists"),
             uri: "playlists",
             sectionUri: "video",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Videos"
         },
         {
@@ -88,42 +90,42 @@ T.Pane {
             icon: VLCIcons.topbar_music,
             uri: "music",
             sectionUri: "undefined",
-            isExpanded: NavigationPane.ExpansionState.Collapsed,
+            state: NavigationPane.SidebarButtonState.Collapsed | NavigationPane.SidebarButtonState.Inactive,
             group: "root"
         },
         {
             name: qsTr("Artists"),
             uri: "artists",
             sectionUri: "music",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Music"
         },
         {
             name: qsTr("Albums"),
             uri: "albums",
             sectionUri: "music",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Music"
         },
         {
             name: qsTr("Tracks"),
             uri: "tracks",
             sectionUri: "music",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Music"
         },
         {
             name: qsTr("Genres"),
             uri: "genres",
             sectionUri: "music",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Music"
         },
         {
             name: qsTr("Playlists"),
             uri: "playlists",
             sectionUri: "music",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Music"
         },
         {
@@ -131,7 +133,7 @@ T.Pane {
             icon: VLCIcons.topbar_network,
             uri: "network",
             sectionUri: "undefined",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "root"
         },
         {
@@ -139,21 +141,21 @@ T.Pane {
             icon: VLCIcons.topbar_discover,
             uri: "discover",
             sectionUri: "undefined",
-            isExpanded: NavigationPane.ExpansionState.Collapsed,
+            state: NavigationPane.SidebarButtonState.Collapsed | NavigationPane.SidebarButtonState.Inactive,
             group: "root"
         },
         {
             name: qsTr("Services"),
             uri: "services",
             sectionUri: "discover",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Discover"
         },
         {
             name: qsTr("URL"),
             uri: "url",
             sectionUri: "discover",
-            isExpanded: NavigationPane.ExpansionState.Unexpandable,
+            state: NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive,
             group: "Discover"
         }
     ]
@@ -170,35 +172,37 @@ T.Pane {
                         uri: obj.uri,
                         sectionUri: obj.sectionUri,
                         icon: obj.icon,
-                        isExpanded: obj.isExpanded
+                        state: obj.state
                     })
                 }
             })
         }
 
         function expandSection(name, parentIndex) {
-            // displayModel.setProperty(parentIndex, "isExpanded", "true")
-            displayModel.setProperty(parentIndex, "isExpanded", NavigationPane.ExpansionState.Expanded)
+            displayModel.setProperty(parentIndex, "state", NavigationPane.SidebarButtonState.Expanded | NavigationPane.SidebarButtonState.Active)
 
-            // Retract previously expanded elements
+            // Retract and deselect previously expanded and unexpandable elements
             let removalName = ""
             let removalIndex = -1
             let removalCount = 0
             let initialSize = displayModel.count
             for (let index = 0; index < initialSize; index++) {
                 let obj = displayModel.get(index)
-                // if (obj.name !== name && obj.isExpanded === "true") {
-                if (obj.name !== name && obj.isExpanded === NavigationPane.ExpansionState.Expanded) {
-                    // displayModel.setProperty(index, "isExpanded", "false")
-                    displayModel.setProperty(index, "isExpanded", NavigationPane.ExpansionState.Collapsed)
+                if (obj.name !== name && obj.state & NavigationPane.SidebarButtonState.Expanded) {
+                    displayModel.setProperty(index, "state", NavigationPane.SidebarButtonState.Collapsed | NavigationPane.SidebarButtonState.Inactive)
                     removalName = obj.name
                     removalIndex = index+1
                 }
                 else if (obj.group === removalName) {
+                    displayModel.setProperty(index, "state", NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive)
                     removalCount++
                 }
+
+                if (obj.name !== name && obj.state & NavigationPane.SidebarButtonState.Active) {
+                    displayModel.setProperty(index, "state", NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive)
+                }
             }
-            if (removalCount > 0 && removalIndex !== -1)
+            if (removalCount > 0 && removalIndex !== -1) 
                 displayModel.remove(removalIndex, removalCount)
 
             // Expand new elements
@@ -222,14 +226,16 @@ T.Pane {
         }
 
         function retractSection(name, parentIndex) {
-            // displayModel.setProperty(parentIndex, "isExpanded", "false")
-            displayModel.setProperty(parentIndex, "isExpanded", NavigationPane.ExpansionState.Collapsed)
+            displayModel.setProperty(parentIndex, "state", NavigationPane.SidebarButtonState.Collapsed | NavigationPane.SidebarButtonState.Inactive)
             let size = displayModel.count
             let count = 0
-            for (let index = parentIndex; index < size; index++) {
+            for (let index = parentIndex+1; index < size; index++) {
                 let obj = displayModel.get(index)
                 if (obj.group === name) {
                     count++
+                }
+                else {
+                    break
                 }
             }
             displayModel.remove(parentIndex+1, count)
@@ -237,21 +243,42 @@ T.Pane {
 
         function autoUnexpandSection(name, parentIndex) {
             let size = displayModel.count
-            for (let index = parentIndex; index < size; index++) {
+            for (let index = 0; index < size; index++) {
                 let obj = displayModel.get(index)
                 let count = 0
-                // if (obj.isExpanded === "true" && obj.group === "root") {
-                if (obj.isExpanded === NavigationPane.ExpansionState.Expanded && obj.group === "root") {
+
+                // Collapses expandable buttons
+                if (obj.name !== name && obj.state & NavigationPane.SidebarButtonState.Expanded) {
                     for (let subIndex = index+1; subIndex < size; subIndex++) {
                         let subObj = displayModel.get(subIndex)
-                        if (subObj.group !== "root")
+                        if (subObj.group === obj.name) {
+                            if (subObj.state & NavigationPane.SidebarButtonState.Active) {
+                                displayModel.setProperty(subIndex, "state", NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive)
+                            }
                             count++
+                        }
                         else
                             break;
                     }
-                    // displayModel.setProperty(index, "isExpanded", "false")
-                    displayModel.setProperty(index, "isExpanded", NavigationPane.ExpansionState.Collapsed)
+                    
+                    displayModel.setProperty(index, "state", NavigationPane.SidebarButtonState.Collapsed | NavigationPane.SidebarButtonState.Inactive)
                     displayModel.remove(index+1, count)
+                    break;
+                }
+
+                // Deselects unexpandable buttons
+                if (obj.name !== name && obj.state & NavigationPane.SidebarButtonState.Active && obj.state & NavigationPane.SidebarButtonState.Unexpandable) {
+                    displayModel.setProperty(index, "state", NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive)
+                    break;
+                }
+            }
+
+            // Sets the selected button as active
+            size = displayModel.count
+            for (let index = 0; index < size; index++) {
+                let obj = displayModel.get(index)
+                if (obj.name === name) {
+                    displayModel.setProperty(index, "state", NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Active)
                     break;
                 }
             }
@@ -261,16 +288,30 @@ T.Pane {
             let size = displayModel.count
             for (let index = 0; index < size; index++) {
                 let obj = displayModel.get(index)
-                if (obj.name === name && obj.isExpanded === NavigationPane.ExpansionState.Collapsed) {
+
+                if (obj.name === name && obj.state & NavigationPane.SidebarButtonState.Collapsed && obj.group === "root") {
                     displayModel.expandSection(name, index)
                     return
                 }
-                else if (obj.name === name && obj.isExpanded === NavigationPane.ExpansionState.Expanded) {
+                else if (obj.name === name && obj.state & NavigationPane.SidebarButtonState.Expanded && obj.group === "root") {
                     displayModel.retractSection(name, index)
                     return
                 }
-                else if (obj.name === name && obj.isExpanded === NavigationPane.ExpansionState.Unexpandable) {
+                else if (obj.name === name && obj.state & NavigationPane.SidebarButtonState.Unexpandable && obj.group === "root") {
                     displayModel.autoUnexpandSection(name, index)
+                    return
+                }
+
+                //handles child buttons of collapsible sections
+                else if (obj.name === name && obj.state & NavigationPane.SidebarButtonState.Unexpandable && obj.group !== "root") {
+                    for (let subIndex = 0; subIndex < size; subIndex++) {
+                        let obj = displayModel.get(subIndex)
+                        if (obj.name !== name && obj.state & NavigationPane.SidebarButtonState.Active && obj.group !== "root") {
+                            displayModel.setProperty(subIndex, "state", NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Inactive)
+                            break;
+                        }
+                    }
+                    displayModel.setProperty(index, "state", NavigationPane.SidebarButtonState.Unexpandable | NavigationPane.SidebarButtonState.Active)
                     return
                 }
             }
@@ -324,6 +365,8 @@ T.Pane {
                 iconTxt: model.group === "root" ? model.icon : ""
                 text: model.name
                 leftPadding: model.group === "root" ? VLCStyle.leftPaddingRootNavigationPane : VLCStyle.leftPaddingChildNavigationPane 
+                selected: model.state & NavigationPane.SidebarButtonState.Active
+                underlineIndicator: false
 
                 onClicked: {
                     itemClicked(model.sectionUri, model.uri)
