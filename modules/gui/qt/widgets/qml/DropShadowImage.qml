@@ -17,6 +17,7 @@
  *****************************************************************************/
 
 import QtQuick
+import QtQuick.Window
 
 import VLC.Util
 
@@ -46,8 +47,10 @@ ScaledImage {
     fillMode: Image.Stretch
 
     onSourceSizeChanged: {
+        const screenDpr = Screen.devicePixelRatio
+
         // Do not load the image when size is not valid:
-        if (sourceSize.width > 0 && sourceSize.height > 0)
+        if (sourceSize.width > 0 && sourceSize.height > 0 && (screenDpr > 0.0))
             source = Qt.binding(function() {
                 return Effects.url((xRadius > 0 || yRadius > 0) ? Effects.RoundedRectDropShadow
                                                                 : Effects.RectDropShadow,
@@ -55,14 +58,14 @@ ScaledImage {
                                     "viewportWidth" : viewportWidth,
                                     "viewportHeight" :viewportHeight,
 
-                                    "blurRadius": blurRadius,
+                                    "blurRadius": blurRadius * screenDpr,
                                     "color": color,
                                     "rectWidth": rectWidth,
                                     "rectHeight": rectHeight,
-                                    "xOffset": xOffset,
-                                    "yOffset": yOffset,
-                                    "xRadius": xRadius,
-                                    "yRadius": yRadius})
+                                    "xOffset": xOffset * screenDpr,
+                                    "yOffset": yOffset * screenDpr,
+                                    "xRadius": xRadius * screenDpr,
+                                    "yRadius": yRadius * screenDpr})
             })
         else
             source = ""

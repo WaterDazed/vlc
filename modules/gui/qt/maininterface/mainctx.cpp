@@ -470,15 +470,6 @@ void MainCtx::sendHotkey(Qt::Key key , Qt::KeyboardModifiers modifiers)
 void MainCtx::updateIntfScaleFactor()
 {
     m_intfScaleFactor = m_intfUserScaleFactor;
-    if (QWindow* window = p_intf->p_compositor ? p_intf->p_compositor->interfaceMainWindow() : nullptr)
-    {
-        QScreen* screen = window->screen();
-        if (screen)
-        {
-            qreal dpi = screen->logicalDotsPerInch();
-            m_intfScaleFactor = m_intfUserScaleFactor * dpi / VLC_REFERENCE_SCALE_FACTOR;
-        }
-    }
     emit intfScaleFactorChanged();
 }
 

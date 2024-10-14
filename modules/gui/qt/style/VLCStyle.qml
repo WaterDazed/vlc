@@ -17,6 +17,7 @@
  *****************************************************************************/
 pragma Singleton
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import VLC.MainInterface
 import VLC.Style
@@ -258,7 +259,7 @@ QtObject {
 
     // Drag and drop
 
-    readonly property int dragDelta: MainCtx.dp(12, scale)
+    readonly property int dragDelta: MainCtx.dp(12, scale) * Screen.devicePixelRatio
 
     // durations. Values are aligned on Kirigami
 

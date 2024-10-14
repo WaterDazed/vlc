@@ -63,8 +63,9 @@ ScaledImage {
     z: -1
 
     onSourceSizeChanged: {
+        const screenDpr = Screen.devicePixelRatio
         // Do not load the image when size is not valid:
-        if (sourceSize.width > 0 && sourceSize.height > 0)
+        if (sourceSize.width > 0 && sourceSize.height > 0 && (screenDpr > 0.0))
             source = Qt.binding(() => {
                 return Effects.url(
                     Effects.DoubleRoundedRectDropShadow,
@@ -74,18 +75,18 @@ ScaledImage {
 
                         "rectWidth": rectWidth,
                         "rectHeight": rectHeight,
-                        "xRadius": xRadius,
-                        "yRadius": yRadius,
+                        "xRadius": xRadius * screenDpr,
+                        "yRadius": yRadius * screenDpr,
 
                         "primaryColor": primaryColor,
-                        "primaryBlurRadius": primaryBlurRadius,
-                        "primaryXOffset": primaryHorizontalOffset,
-                        "primaryYOffset": primaryVerticalOffset,
+                        "primaryBlurRadius": primaryBlurRadius * screenDpr,
+                        "primaryXOffset": primaryHorizontalOffset * screenDpr,
+                        "primaryYOffset": primaryVerticalOffset * screenDpr,
 
                         "secondaryColor": secondaryColor,
-                        "secondaryBlurRadius": secondaryBlurRadius,
-                        "secondaryXOffset": secondaryHorizontalOffset,
-                        "secondaryYOffset": secondaryVerticalOffset,
+                        "secondaryBlurRadius": secondaryBlurRadius * screenDpr,
+                        "secondaryXOffset": secondaryHorizontalOffset * screenDpr,
+                        "secondaryYOffset": secondaryVerticalOffset * screenDpr,
                     })
             })
         else
