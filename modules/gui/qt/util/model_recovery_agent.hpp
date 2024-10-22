@@ -28,6 +28,7 @@
 #include <QTemporaryFile>
 #include <QAbstractItemModel>
 
+#include <filesystem>
 #include <cstdio>
 
 #include "qt.hpp"
@@ -97,13 +98,22 @@ public:
 
             assert(!m_recoveryFileName.isEmpty());
 
-            const char* tmpFileName = (m_recoveryFileName + QStringLiteral(".part")).toLatin1();
-            const char* recoveryFileName = m_recoveryFileName.toLatin1();
+            const QString tmpFileName = m_recoveryFileName + QStringLiteral(".part");
+            const std::filesystem::path tmpFilePath = tmpFileName.toStdU16String();
+            const std::filesystem::path recoveryFilePath = m_recoveryFileName.toStdU16String();
 
             model->serialize(tmpFileName);
 
-            remove(recoveryFileName);
-            if (!rename(tmpFileName, recoveryFileName))
+            // NOTE: QFile::rename() is not used because it is more expensive and tries
+            //       to copy the file if rename fails. Copying a file is not an atomic
+            //       operation, so it is not used.
+            // NOTE: std::filesystem::rename() is noted to be POSIX compliant, so it is
+            //       not necessary to remove the file before, unlike `rename()` in libc
+            //       where the behavior is reportedly implementation defined if the new
+            //       file already exists.
+            std::error_code ec;
+            std::filesystem::rename(tmpFilePath, recoveryFilePath, ec);
+            if (!ec)
             {
                 assert(m_settings);
                 m_settings->sync();
