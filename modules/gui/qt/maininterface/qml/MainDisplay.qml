@@ -163,63 +163,12 @@ FocusScope {
         colorSet: ColorContext.View
     }
 
-    NavigationPane {
-        id: sidebar
-        z: 99
-
-        anchors {
-            top: VLCStyle.isScreenSmall ? globalTopbar.bottom : parent.top
-            left: parent.left
-            bottom: miniPlayer.top
-        }
-
-        Rectangle {
-            id: globalTopbarRightBorder
-
-            parent: sidebar
-
-            anchors {
-                top: parent.top
-                bottom: parent.bottom
-                right: parent.right
-            }
-
-            width: VLCStyle.border
-            color: theme.separator
-        }
-
-        onItemClicked: (sectionUri, modelUri) => {
-            if (stackView.isDefaulLoadedForPath([modelUri]))
-                return;
-
-            if (sectionUri === "undefined")
-                History.push(["mc", modelUri])
-            else
-                History.push(["mc", sectionUri, modelUri])
-        }
-    }
-
-    GlobalTopbar {
-        id: globalTopbar
-        z: 2
+    Item {
 
         anchors {
             top: parent.top
             right: parent.right
-            left: VLCStyle.isScreenSmall ? parent.left : sidebar.right
-        }
-
-        plListView: playlistLoader.active ? playlistLoader.item
-            : (playlistWindowLoader.status === Loader.Ready ? playlistWindowLoader.item.playlistView
-            : null)
-    }
-
-    Item {
-
-        anchors {
-            top: globalTopbar.bottom
-            right: parent.right
-            left: sidebar.right
+            left: parent.left
             bottom: parent.bottom
         }
 
@@ -270,12 +219,68 @@ FocusScope {
                 }
             }
 
+            GlobalTopbar {
+                id: globalTopbar
+                z: 2
+
+                anchors {
+                    top: stackViewParent.top
+                    right: stackViewParent.right
+                    left: VLCStyle.isScreenSmall ? stackViewParent.left : sidebar.right
+                }
+
+                plListView: playlistLoader.active ? playlistLoader.item
+                    : (playlistWindowLoader.status === Loader.Ready ? playlistWindowLoader.item.playlistView
+                    : null)
+            }
+
+            NavigationPane {
+                id: sidebar
+                z: 99
+
+                anchors {
+                    top: VLCStyle.isScreenSmall ? globalTopbar.bottom : stackViewParent.top
+                    left: stackViewParent.left
+                    bottom: stackViewParent.bottom
+                }
+
+                Rectangle {
+                    id: sidebarRightBorder
+
+                    parent: sidebar
+
+                    anchors {
+                        top: parent.top
+                        bottom: parent.bottom
+                        right: parent.right
+                    }
+
+                    width: VLCStyle.border
+                    color: theme.separator
+                }
+
+                onItemClicked: (sectionUri, modelUri) => {
+                    if (stackView.isDefaulLoadedForPath([modelUri]))
+                        return;
+
+                    if (sectionUri === "undefined")
+                        History.push(["mc", modelUri])
+                    else
+                        History.push(["mc", sectionUri, modelUri])
+                }
+            }
+
             Widgets.PageLoader {
                 id: stackView
 
                 focus: true
 
-                anchors.fill: parent
+                anchors  {
+                    top: globalTopbar.bottom
+                    bottom: parent.bottom
+                    left: sidebar.right
+                    right: parent.right
+                }
                 anchors.rightMargin: (playlistLoader.shown && !VLCStyle.isScreenSmall)
                                      ? playlistLoader.width
                                      : 0
@@ -299,7 +304,13 @@ FocusScope {
             Rectangle {
                 // overlay for smallscreens
 
-                anchors.fill: parent
+                anchors  {
+                    //top: VLCStyle.isScreenSmall ? globalTopbar.bottom : parent.top 
+                    top: globalTopbar.bottom
+                    bottom: parent.bottom
+                    left: sidebar.right
+                    right: parent.right
+                }
                 visible: VLCStyle.isScreenSmall && playlistLoader.shown
                 color: "black"
                 opacity: 0.4
@@ -317,158 +328,159 @@ FocusScope {
                     }
                 }
             }
-        }
 
-        Loader {
-            id: playlistLoader
+            Loader {
+                id: playlistLoader
 
-            anchors {
-                top: parent.top
-                right: parent.right
-            }
-
-            width: 0
-            height: parent.height - g_mainDisplay.displayMargin
-
-            visible: false
-
-            active: MainCtx.playlistDocked
-
-            state: ((status === Loader.Ready) && MainCtx.playlistVisible) ? "expanded" : ""
-
-            readonly property bool shown: (status === Loader.Ready) && item.visible
-
-            Component.onCompleted: {
-                Qt.callLater(() => { playlistTransition.enabled = true; })
-            }
-
-            states: State {
-                name: "expanded"
-                PropertyChanges {
-                    target: playlistLoader
-                    width: Math.round(playlistLoader.implicitWidth)
-                    visible: true
-                }
-            }
-
-            transitions: Transition {
-                id: playlistTransition
-                enabled: false
-
-                from: ""; to: "expanded";
-                reversible: true
-
-                SequentialAnimation {
-                    PropertyAction { property: "visible" }
-
-                    NumberAnimation {
-                        property: "width"
-                        duration: VLCStyle.duration_short
-                        easing.type: Easing.InOutSine
-                    }
-                }
-            }
-
-            sourceComponent: PlaylistListView {
-                id: playlist
-
-                implicitWidth: VLCStyle.isScreenSmall
-                               ? g_mainDisplay.width * 0.8
-                               : Helpers.clamp(g_mainDisplay.width / resizeHandle.widthFactor,
-                                               minimumWidth,
-                                               g_mainDisplay.width / 2 + playlistLeftBorder.width / 2)
-
-                focus: true
-
-                leftPadding: playlistLeftBorder.width
-                rightPadding: VLCStyle.applicationHorizontalMargin
-                topPadding: VLCStyle.layoutTitle_top_padding
-                bottomPadding: VLCStyle.margin_normal + Math.max(VLCStyle.applicationVerticalMargin - g_mainDisplay.displayMargin, 0)
-
-                Navigation.parentItem: g_mainDisplay
-                Navigation.upItem: globalTopbar
-                Navigation.downItem: miniPlayer.visible ? miniPlayer : null
-
-                Navigation.leftAction: function() {
-                    stackView.currentItem.setCurrentItemFocus(Qt.TabFocusReason);
+                anchors {
+                    top: globalTopbar.bottom
+                    right: parent.right
+                    bottom: miniPlayer.visible ? miniPlayer.top : null
                 }
 
-                Navigation.cancelAction: function() {
-                    MainCtx.playlistVisible = false
-                    stackView.forceActiveFocus()
+                width: 0
+                height: parent.height - g_mainDisplay.displayMargin
+
+                visible: false
+
+                active: MainCtx.playlistDocked
+
+                state: ((status === Loader.Ready) && MainCtx.playlistVisible) ? "expanded" : ""
+
+                readonly property bool shown: (status === Loader.Ready) && item.visible
+
+                Component.onCompleted: {
+                    Qt.callLater(() => { playlistTransition.enabled = true; })
                 }
 
-                Rectangle {
-                    id: playlistLeftBorder
-
-                    parent: playlist
-
-                    anchors {
-                        top: parent.top
-                        bottom: parent.bottom
-                        left: parent.left
+                states: State {
+                    name: "expanded"
+                    PropertyChanges {
+                        target: playlistLoader
+                        width: Math.round(playlistLoader.implicitWidth)
+                        visible: true
                     }
-
-                    width: VLCStyle.border
-                    color: theme.separator
-
-                    visible: playlistLoader.shown
                 }
 
-                Widgets.HorizontalResizeHandle {
-                    id: resizeHandle
+                transitions: Transition {
+                    id: playlistTransition
+                    enabled: false
 
-                    property bool _inhibitMainInterfaceUpdate: false
+                    from: ""; to: "expanded";
+                    reversible: true
 
-                    parent: playlist
+                    SequentialAnimation {
+                        PropertyAction { property: "visible" }
 
-                    anchors {
-                        top: parent.top
-                        bottom: parent.bottom
-                        left: parent.left
-                    }
-
-                    atRight: false
-                    targetWidth: parent.width
-                    sourceWidth: g_mainDisplay.width
-
-                    onWidthFactorChanged: {
-                        if (!_inhibitMainInterfaceUpdate)
-                            MainCtx.setPlaylistWidthFactor(widthFactor)
-                    }
-
-                    Component.onCompleted:  _updateFromMainInterface()
-
-                    function _updateFromMainInterface() {
-                        if (widthFactor == MainCtx.playlistWidthFactor)
-                            return
-
-                        _inhibitMainInterfaceUpdate = true
-                        widthFactor = MainCtx.playlistWidthFactor
-                        _inhibitMainInterfaceUpdate = false
-                    }
-
-                    Connections {
-                        target: MainCtx
-
-                        function onPlaylistWidthFactorChanged() {
-                            resizeHandle._updateFromMainInterface()
+                        NumberAnimation {
+                            property: "width"
+                            duration: VLCStyle.duration_short
+                            easing.type: Easing.InOutSine
                         }
                     }
                 }
-            }
 
-            Connections {
-                target: VLCStyle
+                sourceComponent: PlaylistListView {
+                    id: playlist
 
-                function onAppWidthChanged() { 
-                    if (VLCStyle.isScreenSmall && MainCtx.playlistVisible) {
+                    implicitWidth: VLCStyle.isScreenSmall
+                                   ? g_mainDisplay.width * 0.8
+                                   : Helpers.clamp(g_mainDisplay.width / resizeHandle.widthFactor,
+                                                   minimumWidth,
+                                                   g_mainDisplay.width / 2 + playlistLeftBorder.width / 2)
+
+                    focus: true
+
+                    leftPadding: playlistLeftBorder.width
+                    rightPadding: VLCStyle.applicationHorizontalMargin
+                    topPadding: VLCStyle.layoutTitle_top_padding
+                    bottomPadding: VLCStyle.margin_normal + Math.max(VLCStyle.applicationVerticalMargin - g_mainDisplay.displayMargin, 0)
+
+                    Navigation.parentItem: g_mainDisplay
+                    Navigation.upItem: globalTopbar
+                    Navigation.downItem: miniPlayer.visible ? miniPlayer : null
+
+                    Navigation.leftAction: function() {
+                        stackView.currentItem.setCurrentItemFocus(Qt.TabFocusReason);
+                    }
+
+                    Navigation.cancelAction: function() {
                         MainCtx.playlistVisible = false
+                        stackView.forceActiveFocus()
+                    }
+
+                    Rectangle {
+                        id: playlistLeftBorder
+
+                        parent: playlist
+
+                        anchors {
+                            top: parent.top
+                            bottom: parent.bottom
+                            left: parent.left
+                        }
+
+                        width: VLCStyle.border
+                        color: theme.separator
+
+                        visible: playlistLoader.shown
+                    }
+
+                    Widgets.HorizontalResizeHandle {
+                        id: resizeHandle
+
+                        property bool _inhibitMainInterfaceUpdate: false
+
+                        parent: playlist
+
+                        anchors {
+                            top: parent.top
+                            bottom: parent.bottom
+                            left: parent.left
+                        }
+
+                        atRight: false
+                        targetWidth: parent.width
+                        sourceWidth: g_mainDisplay.width
+
+                        onWidthFactorChanged: {
+                            if (!_inhibitMainInterfaceUpdate)
+                                MainCtx.setPlaylistWidthFactor(widthFactor)
+                        }
+
+                        Component.onCompleted:  _updateFromMainInterface()
+
+                        function _updateFromMainInterface() {
+                            if (widthFactor == MainCtx.playlistWidthFactor)
+                                return
+
+                            _inhibitMainInterfaceUpdate = true
+                            widthFactor = MainCtx.playlistWidthFactor
+                            _inhibitMainInterfaceUpdate = false
+                        }
+
+                        Connections {
+                            target: MainCtx
+
+                            function onPlaylistWidthFactorChanged() {
+                                resizeHandle._updateFromMainInterface()
+                            }
+                        }
                     }
                 }
-                function onAppHeightChanged() {
-                    if (VLCStyle.isScreenSmall && MainCtx.playlistVisible ) {
-                        MainCtx.playlistVisible = false
+
+                Connections {
+                    target: VLCStyle
+
+                    function onAppWidthChanged() { 
+                        if (VLCStyle.isScreenSmall && MainCtx.playlistVisible) {
+                            MainCtx.playlistVisible = false
+                        }
+                    }
+                    function onAppHeightChanged() {
+                        if (VLCStyle.isScreenSmall && MainCtx.playlistVisible ) {
+                            MainCtx.playlistVisible = false
+                        }
                     }
                 }
             }
