@@ -184,11 +184,15 @@ RunnableRun(void *userdata)
         goto error;
 
     if (task->seek_target.type == VLC_THUMBNAILER_SEEK_TIME)
-        input_SetTime(input, task->seek_target.time, task->fast_seek);
+    {
+        if (task->seek_target.time != VLC_TICK_0)
+            input_SetTime(input, task->seek_target.time, task->fast_seek);
+    }
     else
     {
         assert(task->seek_target.type == VLC_THUMBNAILER_SEEK_POS);
-        input_SetPosition(input, task->seek_target.pos, task->fast_seek);
+        if (task->seek_target.pos != 0.f)
+            input_SetPosition(input, task->seek_target.pos, task->fast_seek);
     }
 
     int ret = input_Start(input);
@@ -266,7 +270,7 @@ vlc_thumbnailer_RequestByTime( vlc_thumbnailer_t *thumbnailer,
 {
     struct seek_target seek_target = {
         .type = VLC_THUMBNAILER_SEEK_TIME,
-        .time = time,
+        .time = VLC_TICK_0 + time,
     };
     return RequestCommon(thumbnailer, seek_target, speed, item, timeout, cb,
                          userdata);
