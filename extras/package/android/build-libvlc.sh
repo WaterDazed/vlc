@@ -105,8 +105,8 @@ VLC_SRC_DIR="$( cd "${SCRIPT_PATH}/../../.." ; pwd -P )"
 VLC_BUILD_DIR="${VLC_SRC_DIR}/build-android-${TARGET_TUPLE}"
 
 # Fix path if the script is sourced from vlc-android
-if [ -d $VLC_SRC_DIR/../../libvlcjni/libvlc ];then
-    LIBVLC_PREFIX="$(cd $VLC_SRC_DIR/../../libvlcjni/libvlc; pwd -P )"
+if [ -d $VLC_SRC_DIR/../../libvlcjni/libvlc/jni ];then
+    LIBVLC_PREFIX="$(cd $VLC_SRC_DIR/../../libvlcjni/libvlc/jni; pwd -P )"
 else
     LIBVLC_PREFIX="${VLC_BUILD_DIR}"
 fi
@@ -697,16 +697,16 @@ $NDK_BUILD -C $LIBVLC_PREFIX \
     APP_BUILD_SCRIPT="${SCRIPT_PATH}/libvlc.mk" \
     APP_PLATFORM=android-${ANDROID_API} \
     APP_ABI=${ANDROID_ABI} \
-    NDK_PROJECT_PATH=jni \
+    NDK_PROJECT_PATH="${LIBVLC_PREFIX}" \
     NDK_TOOLCHAIN_VERSION=clang \
     NDK_DEBUG=${NDK_DEBUG}
 avlc_checkfail "ndk-build libvlc failed"
 
-libvlc_pc_dir="$LIBVLC_PREFIX/jni/pkgconfig/${ANDROID_ABI}"
+libvlc_pc_dir="$LIBVLC_PREFIX/pkgconfig/${ANDROID_ABI}"
 mkdir -p "${libvlc_pc_dir}"
 
-PC_PREFIX="$(cd $LIBVLC_PREFIX/jni/; pwd -P)" \
-PC_LIBDIR="$(cd $LIBVLC_PREFIX/jni/libs/${ANDROID_ABI}; pwd -P)" \
+PC_PREFIX="$LIBVLC_PREFIX" \
+PC_LIBDIR="$LIBVLC_PREFIX/libs/${ANDROID_ABI}" \
 PC_INCLUDEDIR="$(cd $VLC_SRC_DIR/include/; pwd -P)" \
 PC_CFLAGS="-I\${includedir}" \
 PC_LIBS="-L\${libdir}" \
