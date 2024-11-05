@@ -191,8 +191,7 @@ FocusScope {
 
             color: theme.bg.primary
 
-            layer.enabled: (GraphicsInfo.shaderType === GraphicsInfo.RhiShader) &&
-                           (miniPlayer.visible || (loaderProgress.active && loaderProgress.item.visible))
+            layer.enabled: false
 
             layer.effect: Widgets.PartialEffect {
                 id: stackViewParentLayerEffect

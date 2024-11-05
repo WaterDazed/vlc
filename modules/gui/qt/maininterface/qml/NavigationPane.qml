@@ -27,7 +27,6 @@ T.Pane {
     id: root
 
     topPadding: VLCStyle.margin_normal
-    bottomPadding: VLCStyle.margin_normal
     leftPadding: 0
 
     implicitWidth: VLCStyle.expandNavigationPaneWidth
@@ -324,6 +323,7 @@ T.Pane {
 
     contentItem: ColumnLayout {
         spacing: 2
+
         RowLayout {
             id: vlcBanner
             Layout.fillWidth: true
