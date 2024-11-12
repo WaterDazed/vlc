@@ -7,6 +7,14 @@ vlc_tests += {
 }
 
 vlc_tests += {
+    'name' : 'test_modules_wasm_extension',
+    'sources' : files('wasm/extension.c'),
+    'suite' : ['modules', 'test_modules'],
+    'link_with' : [libvlc, libvlccore],
+    'module_depends' : vlc_plugins_targets.keys()
+}
+
+vlc_tests += {
     'name' : 'test_modules_misc_medialibrary',
     'sources' : files('misc/medialibrary.c'),
     'suite' : ['modules', 'test_modules'],

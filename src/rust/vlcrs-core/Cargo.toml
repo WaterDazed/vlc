@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+libc = "0.2"
+thiserror = "1.0"
 vlcrs-messages = { path = "../vlcrs-messages" }

@@ -1,0 +1,15 @@
+[package]
+name = "wasm-rs"
+version = "0.1.0"
+license = "LGPL-2.1-or-later"
+edition = "2021"
+
+[dependencies]
+vlcrs-core = { workspace = true }
+vlcrs-macros = { workspace = true }
+vlcrs-messages = { workspace = true }
+vlcrs-utils = { workspace = true }
+vlcrs-plugin = { workspace = true }
+vlcrs-submodules = { workspace = true }
+wasmer = "4.3.2"
+bitflags = "2.6.0"

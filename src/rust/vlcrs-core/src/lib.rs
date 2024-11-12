@@ -1,3 +1,5 @@
+#![feature(extern_types)]
+
 #![deny(unsafe_op_in_unsafe_fn)]
 
 //! The `vlcrs-core` crate.
@@ -8,4 +10,17 @@
 //! If you need a vlc core C API that is not ported or wrapped yet here,
 //! then do so first instead of bypassing this crate.
 
+pub mod configuration;
+pub mod error;
+pub mod es;
+pub mod extension;
+pub mod input_item;
+pub mod interface;
+pub mod meta;
 pub mod object;
+pub mod player;
+pub mod playlist;
+pub mod threads;
+pub mod tick;
+pub mod url;
+pub mod variables;

@@ -304,6 +304,9 @@ subdir('visualization')
 # lua module
 subdir('lua')
 
+# wasm module
+subdir('wasm-rs')
+
 # Qt check executable
 # This has to be declared here as it needs to end up
 # in the modules folder, not in gui/qt/ subfolder as
