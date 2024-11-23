@@ -47,7 +47,10 @@ case $1 in
     wasm*)
         VLC_CONTRIB_REBUILD_PATHS+=( "extras/package/wasm-emscripten" )
         ;;
-    debian*|android*)
+    android*)
+        VLC_CONTRIB_REBUILD_PATHS+=( "extras/package/android" )
+        ;;
+    debian*)
         ;;
     *)
         VLC_CONTRIB_REBUILD_PATHS+=( "extras/package" )
