@@ -21,15 +21,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-# import <TargetConditionals.h>
-# if TARGET_OS_OSX
-#     import <Cocoa/Cocoa.h>
-#     define VLCView NSView
-# else
-#     import <Foundation/Foundation.h>
-#     import <UIKit/UIKit.h>
-#     define VLCView UIView
-# endif
+#import "VLCView.h"
 
 /**
  * Protocol used by the picture in picture to control playback or gather media
@@ -94,6 +86,10 @@
 /// Get the display view's parent's frame bounds
 /// - Returns Must return the display view's parent's frame bounds
 - (CGRect)bounds;
+
+/// Get the display view's parent's frame
+/// - Returns Must return the display view's parent's frame
+- (CGRect)frame;
 @end
 
 /**

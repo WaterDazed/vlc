@@ -424,4 +424,17 @@
     f_cumulated_magnification = 0.0;
 }
 
+#pragma mark - protocol VLCVoutWindow
+
+- (void)view:(void(^)(id))completion {
+    __block VLCVoutView *window = self;
+    dispatch_block_t block = ^{
+        if (!window)
+            return;
+        completion(window);
+        window = nil;
+    };
+    dispatch_async(dispatch_get_main_queue(), block);
+}
+
 @end

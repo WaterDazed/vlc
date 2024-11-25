@@ -34,6 +34,7 @@
 #include <vlc_modules.h>
 
 #import "VLCDrawable.h"
+#import "VLCVoutWindow.h"
 
 #import <AVFoundation/AVFoundation.h>
 #import <AVKit/AVKit.h>
@@ -645,7 +646,7 @@ shouldInheritContentsScale:(CGFloat)newScale
     vout_display_place_t place;
     filter_t *converter;
 }
-    @property (nonatomic, readonly, weak) VLCView *window;
+    @property (nonatomic, readonly, weak) id<VLCVoutWindow> window;
     @property (nonatomic, readonly, weak) id drawable;
     @property (nonatomic, readonly) vout_display_t *vd;
     @property (nonatomic) VLCSampleBufferDisplayView *displayView;
@@ -686,7 +687,7 @@ shouldInheritContentsScale:(CGFloat)newScale
     if (vd->cfg->window->type != VLC_WINDOW_TYPE_NSOBJECT)
         return nil;
     
-    VLCView *window = (__bridge VLCView *)vd->cfg->window->handle.nsobject;
+    id<VLCVoutWindow> window = (__bridge id<VLCVoutWindow>)vd->cfg->window->handle.nsobject;
     if (!window) {
         msg_Err(vd, "No window found!");
         return nil;
@@ -729,21 +730,21 @@ shouldInheritContentsScale:(CGFloat)newScale
     }
 
     VLCSampleBufferDisplay *sys = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
+    id<VLCVoutWindow> window = sys.window;
+    [window view:^(id<VLCVoutWindowView> windowView) {
         if (sys.displayView)
             return;
 
         VLCSampleBufferDisplayView *displayView;
         VLCSampleBufferSubpictureView *spuView;
-        VLCView *window = sys.window;
         
         displayView = 
             [[VLCSampleBufferDisplayView alloc] initWithVoutDisplay:sys.vd];
         spuView = [VLCSampleBufferSubpictureView new];
-        [window addSubview:displayView];
-        [window addSubview:spuView];
-        [displayView setFrame:[window bounds]];
-        [spuView setFrame:[window bounds]];
+        [windowView addSubview:displayView];
+        [windowView addSubview:spuView];
+        [displayView setFrame:[windowView bounds]];
+        [spuView setFrame:[windowView bounds]];
 
         sys->place = *sys.vd->place;
 
@@ -753,7 +754,7 @@ shouldInheritContentsScale:(CGFloat)newScale
             sys.displayLayer = displayView.displayLayer;
         }
         [sys preparePictureInPicture];
-    });
+    }];
 }
 
 - (void)close {
