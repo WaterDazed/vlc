@@ -44,7 +44,7 @@ MouseArea {
     preventStealing: true
 
     onPressed: (mouse) => {
-        MainCtx.setCursor(cursorShape)
+        MainCtx.setAppOverrideCursor(cursorShape)
         _previousX = mouseX
     }
 
