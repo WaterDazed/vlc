@@ -49,11 +49,11 @@ MouseArea {
     }
 
     onReleased:(mouse) => {
-        MainCtx.restoreCursor()
+        MainCtx.restoreAppOverrideCursor()
     }
 
     onCanceled: {
-        MainCtx.restoreCursor()
+        MainCtx.restoreAppOverrideCursor()
     }
 
     onPositionChanged: {

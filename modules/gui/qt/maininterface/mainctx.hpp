@@ -256,7 +256,7 @@ public:
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
     Q_INVOKABLE static inline void setAppOverrideCursor(Qt::CursorShape cursor) { QApplication::setOverrideCursor(QCursor(cursor)); }
-    Q_INVOKABLE static inline void restoreCursor(void) { QApplication::restoreOverrideCursor(); }
+    Q_INVOKABLE static inline void restoreAppOverrideCursor(void) { QApplication::restoreOverrideCursor(); }
 
     Q_INVOKABLE static inline void setCursor(QQuickItem* item, Qt::CursorShape cursor) { assert(item); item->setCursor(cursor); }
     Q_INVOKABLE static inline void unsetCursor(QQuickItem* item) { assert(item); item->unsetCursor(); };
