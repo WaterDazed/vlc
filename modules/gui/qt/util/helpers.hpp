@@ -50,6 +50,8 @@ public:
                (QT_VERSION >= QT_VERSION_CHECK(6, 4, 0));
     }
 
+    Q_INVOKABLE QJSValue urlListToMimeData(const QJSValue& array) const;
+
     Q_INVOKABLE static double clamp(double number, double min, double max);
     Q_INVOKABLE static int clamp(int number, int min, int max);
 

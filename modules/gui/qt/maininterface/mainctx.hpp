@@ -255,8 +255,6 @@ public:
     VideoSurfaceProvider* getVideoSurfaceProvider() const;
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
-    Q_INVOKABLE QJSValue urlListToMimeData(const QJSValue& array);
-
     /**
      * @brief ask for the application to terminate
      */
