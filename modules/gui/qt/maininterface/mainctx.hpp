@@ -255,9 +255,6 @@ public:
     VideoSurfaceProvider* getVideoSurfaceProvider() const;
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
-    Q_INVOKABLE static inline void setCursor(QQuickItem* item, Qt::CursorShape cursor) { assert(item); item->setCursor(cursor); }
-    Q_INVOKABLE static inline void unsetCursor(QQuickItem* item) { assert(item); item->unsetCursor(); };
-
     Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersion() { return QT_VERSION; }
     Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersionCheck(unsigned char major,
                                                                         unsigned char minor,

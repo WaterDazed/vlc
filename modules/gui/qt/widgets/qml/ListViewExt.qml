@@ -138,12 +138,12 @@ ListView {
         function commonDrop(targetIndex, drop) {
             const promise = acceptDrop(targetIndex, drop)
             if (view) {
-                MainCtx.setCursor(view, Qt.BusyCursor)
+                Helpers.setCursor(view, Qt.BusyCursor)
                 promise.then(() => {
                     // NOTE: check view again for the unlikely case it is
                     //       gone by the time the promise is resolved:
                     if (view)
-                        MainCtx.unsetCursor(view)
+                        Helpers.unsetCursor(view)
                 })
             }
         }
@@ -265,9 +265,9 @@ ListView {
 
                 onDropOperationOngoingChanged: {
                     if (dropOperationOngoing)
-                        MainCtx.setCursor(root, Qt.BusyCursor)
+                        Helpers.setCursor(root, Qt.BusyCursor)
                     else
-                        MainCtx.unsetCursor(root)
+                        Helpers.unsetCursor(root)
                 }
 
                 onEntered: function(drag) {

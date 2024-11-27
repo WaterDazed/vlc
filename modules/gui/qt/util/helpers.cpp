@@ -162,3 +162,14 @@ double Helpers::flickablePositionContaining(const QQuickItem *flickable, double 
     return newContentY;
 }
 
+void Helpers::setCursor(QQuickItem *item, Qt::CursorShape cursor)
+{
+    assert(item);
+    item->setCursor(cursor);
+}
+
+void Helpers::unsetCursor(QQuickItem *item)
+{
+    assert(item);
+    item->unsetCursor();
+};

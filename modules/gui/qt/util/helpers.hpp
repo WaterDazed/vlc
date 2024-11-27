@@ -40,6 +40,9 @@ public:
     Q_INVOKABLE static void setAppOverrideCursor(Qt::CursorShape cursor);
     Q_INVOKABLE static void restoreAppOverrideCursor(void);
 
+    Q_INVOKABLE static void setCursor(QQuickItem *item, Qt::CursorShape cursor);
+    Q_INVOKABLE static void unsetCursor(QQuickItem *item);
+
     Q_INVOKABLE static double clamp(double number, double min, double max);
     Q_INVOKABLE static int clamp(int number, int min, int max);
 

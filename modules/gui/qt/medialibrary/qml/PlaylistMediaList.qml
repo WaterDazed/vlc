@@ -108,12 +108,12 @@ MainViewLoader {
 
         onTransactionPendingChanged: {
             if (transactionPending) {
-                MainCtx.setCursor(root, Qt.BusyCursor)
+                Helpers.setCursor(root, Qt.BusyCursor)
                 visibilityTimer.start()
             } else {
                 visibilityTimer.stop()
                 progressIndicator.visible = false
-                MainCtx.unsetCursor(root)
+                Helpers.unsetCursor(root)
             }
         }
     }
