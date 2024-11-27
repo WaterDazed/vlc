@@ -17,7 +17,7 @@
  *****************************************************************************/
 import QtQuick
 import QtQuick.Controls
-import VLC.MainInterface
+import VLC.Util
 import VLC.Style
 
 // targetWidth: concerned widget's current width
@@ -44,16 +44,16 @@ MouseArea {
     preventStealing: true
 
     onPressed: (mouse) => {
-        MainCtx.setAppOverrideCursor(cursorShape)
+        Helpers.setAppOverrideCursor(cursorShape)
         _previousX = mouseX
     }
 
     onReleased:(mouse) => {
-        MainCtx.restoreAppOverrideCursor()
+        Helpers.restoreAppOverrideCursor()
     }
 
     onCanceled: {
-        MainCtx.restoreAppOverrideCursor()
+        Helpers.restoreAppOverrideCursor()
     }
 
     onPositionChanged: {

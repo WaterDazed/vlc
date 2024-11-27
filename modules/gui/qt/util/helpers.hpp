@@ -37,6 +37,9 @@ class Helpers : public QObject
 public:
     explicit Helpers(QObject *parent) : QObject(parent) { };
 
+    Q_INVOKABLE static void setAppOverrideCursor(Qt::CursorShape cursor);
+    Q_INVOKABLE static void restoreAppOverrideCursor(void);
+
     Q_INVOKABLE static double clamp(double number, double min, double max);
     Q_INVOKABLE static int clamp(int number, int min, int max);
 

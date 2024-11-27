@@ -18,8 +18,19 @@
 #include "helpers.hpp"
 
 #include <QQuickItem>
+#include <QApplication>
 
 #include "player/player_controller.hpp"
+
+void Helpers::setAppOverrideCursor(Qt::CursorShape cursor)
+{
+    QApplication::setOverrideCursor(QCursor(cursor));
+}
+
+void Helpers::restoreAppOverrideCursor()
+{
+    QApplication::restoreOverrideCursor();
+}
 
 double Helpers::clamp(double number, double min, double max)
 {
