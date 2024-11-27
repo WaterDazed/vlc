@@ -140,7 +140,7 @@ FSMState {
         } else if (transitions === null || (transitions instanceof FSMState)) {
             _changeState(transitions)
             return true
-        } else if (Helpers.isArray(transitions)) {
+        } else if (/*Helpers.isArray(transitions)*/ (transitions?.length !== undefined) ?? false) {
             for (const t of transitions) {
                 //stop at the first accepted transition
                 if (_evaluateTransition(state, event, t, ...args))
