@@ -43,6 +43,13 @@ public:
     Q_INVOKABLE static void setCursor(QQuickItem *item, Qt::CursorShape cursor);
     Q_INVOKABLE static void unsetCursor(QQuickItem *item);
 
+    Q_INVOKABLE static /*constexpr*/ bool qtQuickControlRejectsHoverEvents() {
+        // QTBUG-100543
+        return (QT_VERSION < QT_VERSION_CHECK(6, 3, 0) && QT_VERSION >= QT_VERSION_CHECK(6, 2, 5)) ||
+               (QT_VERSION < QT_VERSION_CHECK(6, 4, 0) && QT_VERSION >= QT_VERSION_CHECK(6, 3, 1)) ||
+               (QT_VERSION >= QT_VERSION_CHECK(6, 4, 0));
+    }
+
     Q_INVOKABLE static double clamp(double number, double min, double max);
     Q_INVOKABLE static int clamp(int number, int min, int max);
 
