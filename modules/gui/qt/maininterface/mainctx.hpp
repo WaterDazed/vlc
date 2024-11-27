@@ -271,8 +271,6 @@ public:
     Q_INVOKABLE QVariant settingValue(const QString &key, const QVariant &defaultValue) const;
     Q_INVOKABLE void setSettingValue(const QString &key, const QVariant &value);
 
-    Q_INVOKABLE static void setAttachedToolTip(QObject* toolTip);
-
     CSDButtonModel *csdButtonModel() { return m_csdButtonModel.get(); }
 
     Q_INVOKABLE static double dp(const double px, const double scale);

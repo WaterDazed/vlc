@@ -885,46 +885,6 @@ void MainCtx::setSettingValue(const QString &key, const QVariant &value)
     settings->setValue(key, value);
 }
 
-void MainCtx::setAttachedToolTip(QObject *toolTip)
-{
-    // See QQuickToolTipAttachedPrivate::instance(bool create)
-    assert(toolTip);
-
-    // Prevent possible invalid down-casting:
-    assert(toolTip->inherits("QQuickToolTip"));
-
-    QQmlEngine* const engine = qmlEngine(toolTip);
-    assert(engine);
-    assert(engine->objectOwnership(toolTip) == QQmlEngine::ObjectOwnership::JavaScriptOwnership);
-
-    // Dynamic internal property:
-    static const char* const name = "_q_QQuickToolTip";
-
-    if (const auto obj = engine->property(name).value<QObject *>())
-    {
-        if (engine->objectOwnership(obj) == QQmlEngine::ObjectOwnership::CppOwnership)
-            obj->deleteLater();
-    }
-
-    // setProperty() will return false, so there is no
-    // need to check the return value:
-    engine->setProperty(name, QVariant::fromValue(toolTip));
-
-    // Check if the attached tooltip is actually the
-    // one that is set
-#ifndef NDEBUG
-    QQmlComponent component(engine);
-    component.setData(QByteArrayLiteral("import QtQuick; import QtQuick.Controls; Item { }"), {});
-    QObject* const obj = component.create();
-    assert(obj);
-    // Consider disabling setting of custom attached
-    // tooltip if the following assertion fails:
-    if (QQmlProperty::read(obj, QStringLiteral("ToolTip.toolTip"), qmlContext(obj)).value<QObject*>() != toolTip)
-        qmlWarning(obj) << "Could not set self as custom ToolTip!";
-    obj->deleteLater();
-#endif
-}
-
 double MainCtx::dp(const double px, const double scale)
 {
     return std::round(px * scale);

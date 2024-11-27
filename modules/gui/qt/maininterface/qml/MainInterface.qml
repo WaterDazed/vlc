@@ -125,7 +125,7 @@ Item {
                                                                 : VLCStyle.palette
 
             Component.onCompleted: {
-                MainCtx.setAttachedToolTip(this)
+                Helpers.setAttachedToolTip(this)
             }
         }
 

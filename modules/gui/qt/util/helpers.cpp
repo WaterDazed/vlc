@@ -19,6 +19,8 @@
 
 #include <QQuickItem>
 #include <QApplication>
+#include <QQmlProperty>
+#include <QQmlInfo>
 
 #include "player/player_controller.hpp"
 
@@ -217,4 +219,44 @@ QJSValue Helpers::urlListToMimeData(const QJSValue &array) const
     QJSValue ret = engine->newObject();
     ret.setProperty(QStringLiteral("text/uri-list"), data);
     return ret;
+}
+
+void Helpers::setAttachedToolTip(QObject *toolTip)
+{
+    // See QQuickToolTipAttachedPrivate::instance(bool create)
+    assert(toolTip);
+
+    // Prevent possible invalid down-casting:
+    assert(toolTip->inherits("QQuickToolTip"));
+
+    QQmlEngine* const engine = qmlEngine(toolTip);
+    assert(engine);
+    assert(engine->objectOwnership(toolTip) == QQmlEngine::ObjectOwnership::JavaScriptOwnership);
+
+    // Dynamic internal property:
+    static const char* const name = "_q_QQuickToolTip";
+
+    if (const auto obj = engine->property(name).value<QObject *>())
+    {
+        if (engine->objectOwnership(obj) == QQmlEngine::ObjectOwnership::CppOwnership)
+            obj->deleteLater();
+    }
+
+    // setProperty() will return false, so there is no
+    // need to check the return value:
+    engine->setProperty(name, QVariant::fromValue(toolTip));
+
+// Check if the attached tooltip is actually the
+// one that is set
+#ifndef NDEBUG
+    QQmlComponent component(engine);
+    component.setData(QByteArrayLiteral("import QtQuick; import QtQuick.Controls; Item { }"), {});
+    QObject* const obj = component.create();
+    assert(obj);
+    // Consider disabling setting of custom attached
+    // tooltip if the following assertion fails:
+    if (QQmlProperty::read(obj, QStringLiteral("ToolTip.toolTip"), qmlContext(obj)).value<QObject*>() != toolTip)
+        qmlWarning(obj) << "Could not set self as custom ToolTip!";
+    obj->deleteLater();
+#endif
 };
