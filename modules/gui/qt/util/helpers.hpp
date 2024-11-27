@@ -35,6 +35,11 @@ class Helpers : public QObject
     QML_ELEMENT
     QML_SINGLETON
 
+    // WARNING: It is not allowed to have properties in this singleton.
+    //          When necessary, use the relevant context singleton to
+    //          add property. In other words, Helpers itself should
+    //          not carry state in itself.
+
     qt_intf_t * const m_intf;
 
 public:
