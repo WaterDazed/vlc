@@ -255,12 +255,6 @@ public:
     VideoSurfaceProvider* getVideoSurfaceProvider() const;
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
-    Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersion() { return QT_VERSION; }
-    Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersionCheck(unsigned char major,
-                                                                        unsigned char minor,
-                                                                        unsigned char patch)
-                                                                       { return QT_VERSION_CHECK(major, minor, patch); }
-
     Q_INVOKABLE static /*constexpr*/ inline bool qtQuickControlRejectsHoverEvents() {
         // QTBUG-100543
         return (QT_VERSION < QT_VERSION_CHECK(6, 3, 0) && QT_VERSION >= QT_VERSION_CHECK(6, 2, 5)) ||
