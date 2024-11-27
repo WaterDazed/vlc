@@ -21,6 +21,7 @@
 #include <QApplication>
 #include <QQmlProperty>
 #include <QQmlInfo>
+#include <QSettings>
 
 #include "player/player_controller.hpp"
 
@@ -259,4 +260,16 @@ void Helpers::setAttachedToolTip(QObject *toolTip)
         qmlWarning(obj) << "Could not set self as custom ToolTip!";
     obj->deleteLater();
 #endif
+}
+
+QVariant Helpers::settingValue(const QString &key, const QVariant &defaultValue) const
+{
+    assert(m_intf->mainSettings);
+    return m_intf->mainSettings->value(key, defaultValue);
+}
+
+void Helpers::setSettingValue(const QString &key, const QVariant &value)
+{
+    assert(m_intf->mainSettings);
+    m_intf->mainSettings->setValue(key, value);
 };

@@ -23,6 +23,7 @@
 
 class QQuickItem;
 class PlayerController;
+struct qt_intf_t;
 
 Q_MOC_INCLUDE("qquickitem.h")
 Q_MOC_INCLUDE("player/player_controller.hpp")
@@ -34,8 +35,15 @@ class Helpers : public QObject
     QML_ELEMENT
     QML_SINGLETON
 
+    qt_intf_t * const m_intf;
+
 public:
-    explicit Helpers(QObject *parent) : QObject(parent) { };
+    explicit Helpers(qt_intf_t* p_intf, QObject *parent)
+        : QObject(parent)
+        , m_intf(p_intf)
+    {
+        assert(m_intf);
+    };
 
     Q_INVOKABLE static void setAppOverrideCursor(Qt::CursorShape cursor);
     Q_INVOKABLE static void restoreAppOverrideCursor(void);
@@ -53,6 +61,9 @@ public:
     Q_INVOKABLE QJSValue urlListToMimeData(const QJSValue& array) const;
 
     Q_INVOKABLE static void setAttachedToolTip(QObject* toolTip);
+
+    Q_INVOKABLE QVariant settingValue(const QString &key, const QVariant &defaultValue) const;
+    Q_INVOKABLE void setSettingValue(const QString &key, const QVariant &value);
 
     Q_INVOKABLE static double clamp(double number, double min, double max);
     Q_INVOKABLE static int clamp(int number, int min, int max);

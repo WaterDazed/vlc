@@ -337,7 +337,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterType<ListSelectionModel>( uri, versionMajor, versionMinor, "ListSelectionModel" );
         qmlRegisterType<DoubleClickIgnoringItem>( uri, versionMajor, versionMinor, "DoubleClickIgnoringItem" );
 
-        qmlRegisterSingletonInstance<Helpers>( uri, versionMajor, versionMinor, "Helpers", new Helpers(this) );
+        qmlRegisterSingletonInstance<Helpers>( uri, versionMajor, versionMinor, "Helpers", new Helpers(m_intf, this) );
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);

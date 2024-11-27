@@ -19,6 +19,7 @@
 import QtQml
 
 import VLC.MainInterface
+import VLC.Util
 
 /**
   * save and restore global context properties when view is changing
@@ -33,8 +34,8 @@ QtObject {
         const orderKey = [_sortOrderKey, ...path].join("/")
         const critKey = [_sortCriteriaKey, ...path].join("/")
         if (MainCtx.sort.available) {
-            MainCtx.setSettingValue(orderKey, MainCtx.sort.order)
-            MainCtx.setSettingValue(critKey, MainCtx.sort.criteria)
+            Helpers.setSettingValue(orderKey, MainCtx.sort.order)
+            Helpers.setSettingValue(critKey, MainCtx.sort.criteria)
         }
     }
 
@@ -42,11 +43,11 @@ QtObject {
         const orderKey = [_sortOrderKey, ...path].join("/")
         const critKey = [_sortCriteriaKey, ...path].join("/")
 
-        const criteria = MainCtx.settingValue(critKey, undefined)
+        const criteria = Helpers.settingValue(critKey, undefined)
         if (criteria !== undefined)
             MainCtx.sort.criteria = criteria
 
-        const order = MainCtx.settingValue(orderKey, undefined)
+        const order = Helpers.settingValue(orderKey, undefined)
         if (order !== undefined)
             MainCtx.sort.order = parseInt(order)
     }
