@@ -19,9 +19,11 @@ import QtQuick
 import QtQuick.Controls
 
 import VLC.Style
+import VLC.Util
+import VLC.MainInterface
 
 ToolTipExt {
-    id: pointingTooltip
+    id: root
 
     margins: 0
     padding: VLCStyle.margin_xxsmall
@@ -29,15 +31,36 @@ ToolTipExt {
     height: implicitHeight + background.arrowHeight
     bottomInset: height - implicitHeight
 
-    x: _x
-    y: pos.y - (implicitHeight + arrowArea.implicitHeight + VLCStyle.dp(7.5))
+    x: isAWindow ? _tootipPos.x : _clippedPos.x
+    y: isAWindow ? _tootipPos.y : _clippedPos.y
 
-    readonly property real _x: pos.x - (width / 2)
-    property point pos
+    required property point pos
+
+    readonly property point _tootipPos: Qt.point(
+            pos.x - (width / 2),
+            pos.y - (implicitHeight + arrowArea.implicitHeight + VLCStyle.dp(7.5)))
+
+    // workaround for QTBUG-113468
+    // when tooltip get negative coordinates relative to the window
+    // it will flickers. To avoid this, we ensure that the tooltip cannot exceed
+    // the window boundaries
+
+    //tooltip position in window referential
+    readonly property point _tooltipScenePos: parent.mapToItem(Window.contentItem, _tootipPos)
+
+    //restrict tooltip position to window boundaries
+    // use MainCtx.intfMainWindow.width here as Overlay.overlay.width returns 0 with Qt 6.2 (works with Qt6.5)
+    // Window.width always returns 0 from here (6.2 -> 6.8)
+    readonly property point _clippedPos: root.isAWindow ? Qt.point(0,0) //only compute value when tooltip is embed
+        : parent.mapFromItem(
+            Window.contentItem,
+            Helpers.clamp(_tooltipScenePos.x, 0, MainCtx.intfMainWindow.width - root.width),
+            Helpers.clamp(_tooltipScenePos.y, 0, MainCtx.intfMainWindow.height - root.height)
+        )
 
     background: Rectangle {
-        border.color: pointingTooltip.colorContext.border
-        color: pointingTooltip.colorContext.bg.primary
+        border.color: root.colorContext.border
+        color: root.colorContext.bg.primary
         radius: VLCStyle.dp(6, VLCStyle.scale)
 
         readonly property real arrowHeight: arrow.implicitHeight + border.width
@@ -59,8 +82,8 @@ ToolTipExt {
                 id: arrow
 
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: (pointingTooltip.popupType === 1 /* Popup.Window */) ? 0
-                                                                                                     : (pointingTooltip._x - pointingTooltip.x)
+                anchors.horizontalCenterOffset: (root.isAWindow) ? 0
+                                                                 : (root._tootipPos.x - root._clippedPos.x)
                 anchors.verticalCenter: parent.top
 
                 implicitWidth: VLCStyle.dp(10, VLCStyle.scale)
@@ -68,8 +91,8 @@ ToolTipExt {
 
                 rotation: 45
 
-                color: pointingTooltip.colorContext.bg.primary
-                border.color: pointingTooltip.colorContext.border
+                color: root.colorContext.bg.primary
+                border.color: root.colorContext.border
             }
         }
     }
