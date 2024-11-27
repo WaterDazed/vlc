@@ -96,6 +96,13 @@ class MainCtx : public QObject
 {
     Q_OBJECT
 
+    // WARNING: MainCtx is deprecated, do not add new properties or methods.
+    //          Instead, use the relevant context singleton for the
+    //          appropriate module. For example, `playlistDocked` property
+    //          should belong to `VLC.MainInterface`'s `MainInterfaceCtx`
+    //          singleton while `pinOpacity` should belong to `VLC.Style`'s
+    //          `StyleCtx` singleton.
+
     Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
     Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
     Q_PROPERTY(double playlistWidthFactor READ getPlaylistWidthFactor WRITE setPlaylistWidthFactor NOTIFY playlistWidthFactorChanged FINAL)
@@ -270,6 +277,7 @@ public:
 
     CSDButtonModel *csdButtonModel() { return m_csdButtonModel.get(); }
 
+    // TODO: Migrate these to VLC.MainInterface's MainInterfaceCtx
     Q_INVOKABLE static double dp(const double px, const double scale);
     Q_INVOKABLE double dp(const double px) const;
 
@@ -277,6 +285,7 @@ public:
 
     ThreadRunner* threadRunner() const;
 
+    // TODO: Migrate these to VLC.MediaLibrary's MediaLibraryCtx
     Q_INVOKABLE QUrl folderMRL(const QString &fileMRL) const;
     Q_INVOKABLE QUrl folderMRL(const QUrl &fileMRL) const;
 
