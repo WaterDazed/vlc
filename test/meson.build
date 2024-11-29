@@ -2,6 +2,13 @@ subdir('src')
 subdir('modules')
 subdir('libvlc')
 
+tests_c_args = []
+tests_cpp_args = []
+if not cc.has_function('alarm', prefix: '#include <unistd.h>' )
+    tests_c_args += ['-Dalarm=']
+    tests_cpp_args += ['-Dalarm=']
+endif
+
 foreach vlc_test: vlc_tests
     if not vlc_test.has_key('name')
         error('Got invalid vlc_tests entry without \'name\' key')
@@ -75,8 +82,8 @@ foreach vlc_test: vlc_tests
                 vlc_include_dirs],
             dependencies: [vlc_test.get('dependencies', []),
                 libvlccore_deps],
-            c_args: [vlc_test.get('c_args', []), common_args],
-            cpp_args: [vlc_test.get('cpp_args', []), common_args],
+            c_args: [vlc_test.get('c_args', []), common_args, tests_c_args],
+            cpp_args: [vlc_test.get('cpp_args', []), common_args, tests_cpp_args],
             objc_args: [vlc_test.get('objc_args', []), common_args]),
         suite: [vlc_test.get('suite', []), 'test'],
         depends: [test_modules_deps])
