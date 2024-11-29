@@ -5,8 +5,8 @@ subdir('libvlc')
 tests_c_args = []
 tests_cpp_args = []
 if not cc.has_function('alarm', prefix: '#include <unistd.h>' )
-    tests_c_args += ['-Dalarm=']
-    tests_cpp_args += ['-Dalarm=']
+    tests_c_args += ['-Dalarm=', cc.get_supported_arguments(['-Wno-unused-value'])]
+    tests_cpp_args += ['-Dalarm=', cpp.get_supported_arguments(['-Wno-unused-value'])]
 endif
 
 foreach vlc_test: vlc_tests
