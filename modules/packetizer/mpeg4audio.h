@@ -108,6 +108,30 @@ static const uint32_t mpeg4_asc_channelsbyindex[] =
           AOUT_CHAN_LFE,
 
     [8] = 0,
+    /* ARIB STD-B32 fascicle 2 */
+    [9] = 0,
+
+    [10] = 0,
+
+    [11] = AOUT_CHAN_CENTER | // 6.1ch 3/3.1
+           AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT |
+           AOUT_CHAN_REARLEFT | AOUT_CHAN_REARRIGHT |
+           AOUT_CHAN_REARCENTER |
+           AOUT_CHAN_LFE,
+
+    [12] = AOUT_CHAN_CENTER | // 7.1ch 3/2/2.1
+           AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT |
+           AOUT_CHAN_MIDDLELEFT | AOUT_CHAN_MIDDLERIGHT |
+           AOUT_CHAN_REARLEFT | AOUT_CHAN_REARRIGHT |
+           AOUT_CHAN_LFE,
+
+    [13] = 0, // 22.2ch 3/3/3-5/2/3-3/0/0.2
+
+    [14] = AOUT_CHAN_CENTER | // 7.1ch 2/0/0-3/0/2-0.1
+           AOUT_CHAN_LEFT | AOUT_CHAN_RIGHT |
+           AOUT_CHAN_MIDDLELEFT | AOUT_CHAN_MIDDLERIGHT |
+           AOUT_CHAN_LFE |
+           AOUT_CHAN_REARLEFT | AOUT_CHAN_REARRIGHT,
 };
 
 #define MPEG4_ASC_MAX_INDEXEDPOS ARRAY_SIZE(mpeg4_asc_channelsbyindex)
