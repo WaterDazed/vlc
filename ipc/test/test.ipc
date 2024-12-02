@@ -1,0 +1,50 @@
+message test_submsg {
+  string str;
+  bool b;
+}
+
+message test_simple {
+  int8 i8;
+  uint8 u8;
+  int16 i16;
+  uint16 u16;
+  int32 i32;
+  uint32 u32;
+  int64 i64;
+  uint64 u64;
+  float fl;
+  double db;
+  string null_string;
+  buffer buf;
+  message test_submsg smsg;
+}
+
+message test_fixed_arrays {
+  int8 i8[1];
+  uint8 u8[2];
+  int16 i16[3];
+  uint16 u16[4];
+  int32 i32[5];
+  uint32 u32[6];
+  int64 i64[7];
+  uint64 u64[8];
+  float fl[9];
+  double db[10];
+  string str[11];
+  message test_submsg smp[3];
+}
+
+message test_var_arrays {
+  int8 i8[];
+  uint8 u8[];
+  int16 i16[];
+  uint16 u16[];
+  int32 i32[];
+  uint32 u32[];
+  int64 i64[];
+  uint64 u64[];
+  float fl[];
+  double db[];
+  string str[];
+  message test_submsg smp[];
+}
