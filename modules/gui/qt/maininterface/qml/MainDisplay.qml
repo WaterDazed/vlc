@@ -235,7 +235,7 @@ FocusScope {
 
             NavigationPane {
                 id: sidebar
-                z: 99
+                z: 2
 
                 anchors {
                     top: VLCStyle.isScreenSmall ? globalTopbar.bottom : stackViewParent.top
@@ -334,7 +334,7 @@ FocusScope {
                 anchors {
                     top: globalTopbar.bottom
                     right: parent.right
-                    bottom: miniPlayer.visible ? miniPlayer.top : null
+                    bottom: miniPlayer.visible ? miniPlayer.top : parent.bottom
                 }
 
                 width: 0
@@ -483,102 +483,103 @@ FocusScope {
                     }
                 }
             }
-        }
-    }
 
-    Loader {
-        id: loaderProgress
+            Loader {
+                id: loaderProgress
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: miniPlayer.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: miniPlayer.top
 
-        active: (MainCtx.mediaLibraryAvailable && MainCtx.mediaLibrary.idle === false)
+                active: (MainCtx.mediaLibraryAvailable && MainCtx.mediaLibrary.idle === false)
 
-        height: active ? implicitHeight : 0
+                height: active ? implicitHeight : 0
 
-        source: "qrc:///qt/qml/VLC/Widgets/ScanProgressBar.qml"
+                source: "qrc:///qt/qml/VLC/Widgets/ScanProgressBar.qml"
 
-        onLoaded: {
-            item.background.visible = Qt.binding(function() { return !stackViewParent.layer.enabled })
+                onLoaded: {
+                    item.background.visible = Qt.binding(function() { return !stackViewParent.layer.enabled })
 
-            item.leftPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
-            item.rightPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
-            item.bottomPadding = Qt.binding(function() { return VLCStyle.margin_small + (miniPlayer.visible ? 0 : VLCStyle.applicationVerticalMargin) })
-        }
-    }
-
-    Component {
-        id: pipPlayerComponent
-
-        PIPPlayer {
-            id: playerPip
-            anchors {
-                bottom: miniPlayer.top
-                left: parent.left
-                bottomMargin: VLCStyle.margin_normal
-                leftMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
-            }
-
-            width: VLCStyle.dp(320, VLCStyle.scale)
-            height: VLCStyle.dp(180, VLCStyle.scale)
-            z: 2
-            visible: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-            enabled: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-
-            dragXMin: 0
-            dragXMax: g_mainDisplay.width - playerPip.width
-            dragYMin: globalTopbar.y + globalTopbar.height
-            dragYMax: miniPlayer.y - playerPip.height
-
-            //keep the player visible on resize
-            Connections {
-                target: g_mainDisplay
-                function onWidthChanged() {
-                    if (playerPip.x > playerPip.dragXMax)
-                        playerPip.x = playerPip.dragXMax
-                }
-                function onHeightChanged() {
-                    if (playerPip.y > playerPip.dragYMax)
-                        playerPip.y = playerPip.dragYMax
+                    item.leftPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
+                    item.rightPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
+                    item.bottomPadding = Qt.binding(function() { return VLCStyle.margin_small + (miniPlayer.visible ? 0 : VLCStyle.applicationVerticalMargin) })
                 }
             }
+
+            Component {
+                id: pipPlayerComponent
+
+                PIPPlayer {
+                    id: playerPip
+                    anchors {
+                        bottom: miniPlayer.top
+                        left: parent.left
+                        bottomMargin: VLCStyle.margin_normal
+                        leftMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
+                    }
+
+                    width: VLCStyle.dp(320, VLCStyle.scale)
+                    height: VLCStyle.dp(180, VLCStyle.scale)
+                    z: 2
+                    visible: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
+                    enabled: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
+
+                    dragXMin: 0
+                    dragXMax: g_mainDisplay.width - playerPip.width
+                    dragYMin: globalTopbar.y + globalTopbar.height
+                    dragYMax: miniPlayer.y - playerPip.height
+
+                    //keep the player visible on resize
+                    Connections {
+                        target: g_mainDisplay
+                        function onWidthChanged() {
+                            if (playerPip.x > playerPip.dragXMax)
+                                playerPip.x = playerPip.dragXMax
+                        }
+                        function onHeightChanged() {
+                            if (playerPip.y > playerPip.dragYMax)
+                                playerPip.y = playerPip.dragYMax
+                        }
+                    }
+                }
+            }
+
+            Dialogs {
+                z: 10
+                bgContent: g_mainDisplay
+
+                anchors {
+                    bottom: miniPlayer.visible ? miniPlayer.top : parent.bottom
+                    left: parent.left
+                    right: parent.right
+                }
+            }
+
+            MiniPlayer {
+                id: miniPlayer
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+
+                z: 3
+
+                horizontalPadding: VLCStyle.applicationHorizontalMargin
+                bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_xsmall
+
+                background.visible: !stackViewParent.layer.enabled
+
+                Navigation.parentItem: g_mainDisplay
+                Navigation.upItem: stackView
+                Navigation.cancelItem:globalTopbar
+                onVisibleChanged: {
+                    if (!visible && miniPlayer.activeFocus)
+                        stackView.forceActiveFocus()
+                }
+            }
         }
     }
 
-    Dialogs {
-        z: 10
-        bgContent: g_mainDisplay
-
-        anchors {
-            bottom: miniPlayer.visible ? miniPlayer.top : parent.bottom
-            left: parent.left
-            right: parent.right
-        }
-    }
-
-    MiniPlayer {
-        id: miniPlayer
-
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-
-        z: 3
-
-        horizontalPadding: VLCStyle.applicationHorizontalMargin
-        bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_xsmall
-
-        background.visible: !stackViewParent.layer.enabled
-
-        Navigation.parentItem: g_mainDisplay
-        Navigation.upItem: stackView
-        Navigation.cancelItem:globalTopbar
-        onVisibleChanged: {
-            if (!visible && miniPlayer.activeFocus)
-                stackView.forceActiveFocus()
-        }
-    }
 
     Connections {
         target: Player
