@@ -85,12 +85,6 @@ Widgets.PageLoader {
         BrowseTreeDisplay {
             property alias source_name: deviceModel.source_name
 
-            property Component menuDelegate: NetworkAddressbar {
-                path: [{display: deviceModel.name, tree: {}}]
-
-                onHomeButtonClicked: _showServiceHome(reason)
-            }
-
             model: deviceModel
             contextMenu: contextMenu
 
@@ -122,23 +116,6 @@ Widgets.PageLoader {
         BrowseTreeDisplay {
             property alias tree: mediaModel.tree
             property string source_name
-
-            property Component menuDelegate: NetworkAddressbar {
-                path: {
-                    const _path = mediaModel.path
-                    _path.unshift({display: root_name, tree: {"source_name": source_name, "isRoot": true}})
-                    return _path
-                }
-
-                onHomeButtonClicked: root._showServiceHome(reason)
-
-                onBrowse: (tree, reason) => {
-                    if (tree.isRoot)
-                        root._showServiceRoot(source_name, reason)
-                    else
-                        root._showServiceNode(tree, source_name, reason)
-                }
-            }
 
             onBrowse: (tree, reason) => root._showServiceNode(tree, source_name, reason)
 

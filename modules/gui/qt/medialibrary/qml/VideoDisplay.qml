@@ -35,30 +35,6 @@ Widgets.PageLoader {
     //---------------------------------------------------------------------------------------------
     property var sortMenu
 
-    property ListModel tabModel: ListModel {
-        Component.onCompleted: {
-            pageModel.forEach(function(e) {
-                append({
-                    name       : e.name,
-                    displayText: e.displayText
-                })
-            })
-        }
-    }
-
-    menuDelegate: Widgets.LocalTabBar {
-        currentView: root.pageName
-
-        model: tabModel
-
-        onClicked: (index) => {
-            const pageName = root.pageModel[index].name
-            if (root.isDefaulLoadedForPath([pageName]))
-                return
-            History.push([...root.pagePrefix, pageName])
-        }
-    }
-
     //---------------------------------------------------------------------------------------------
     // Settings
     //---------------------------------------------------------------------------------------------

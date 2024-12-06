@@ -62,24 +62,4 @@ Widgets.PageLoader {
             return
         History.push([...root.pagePrefix, pageName])
     }
-
-    property ListModel tabModel: ListModel {
-        Component.onCompleted: {
-            pageModel.forEach(function(e) {
-                append({
-                           displayText: e.displayText,
-                           name: e.name,
-                       })
-            })
-        }
-    }
-
-    menuDelegate: Widgets.LocalTabBar {
-        currentView: root.pageName
-        model: tabModel
-
-        onClicked: (index) => {
-            root.loadIndex(index)
-        }
-    }
 }
