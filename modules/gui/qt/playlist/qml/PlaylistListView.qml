@@ -220,7 +220,7 @@ T.Pane {
             isDropAcceptableFunc: function(drop, index) {
                 if (drop.source === dragItem)
                     return Helpers.itemsMovable(selectionModel.sortedSelectedIndexesFlat, index)
-                else if (Helpers.isValidInstanceOf(drop.source, Widgets.DragItem))
+                else if (drop.source instanceof Widgets.DragItem)
                     return true
                 else if (drop.hasUrls)
                     return true
@@ -236,7 +236,7 @@ T.Pane {
                     model.moveItemsPre(root.selectionModel.sortedSelectedIndexesFlat, index);
                     listView.forceActiveFocus();
                 // NOTE: Dropping medialibrary content into the queue.
-                } else if (Helpers.isValidInstanceOf(item, Widgets.DragItem)) {
+                } else if (item instanceof Widgets.DragItem) {
                     return item.getSelectedInputItem().then((inputItems) => {
                             if (!Helpers.isArray(inputItems) || inputItems.length === 0) {
                                 console.warn("can't convert items to input items");

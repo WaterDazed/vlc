@@ -96,6 +96,13 @@ class MainCtx : public QObject
 {
     Q_OBJECT
 
+    // WARNING: MainCtx is deprecated, do not add new properties or methods.
+    //          Instead, use the relevant context singleton for the
+    //          appropriate module. For example, `playlistDocked` property
+    //          should belong to `VLC.MainInterface`'s `MainInterfaceCtx`
+    //          singleton while `pinOpacity` should belong to `VLC.Style`'s
+    //          `StyleCtx` singleton.
+
     Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
     Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
     Q_PROPERTY(double playlistWidthFactor READ getPlaylistWidthFactor WRITE setPlaylistWidthFactor NOTIFY playlistWidthFactorChanged FINAL)
@@ -255,27 +262,6 @@ public:
     VideoSurfaceProvider* getVideoSurfaceProvider() const;
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
-    Q_INVOKABLE static inline void setCursor(Qt::CursorShape cursor) { QApplication::setOverrideCursor(QCursor(cursor)); }
-    Q_INVOKABLE static inline void restoreCursor(void) { QApplication::restoreOverrideCursor(); }
-
-    Q_INVOKABLE static inline void setCursor(QQuickItem* item, Qt::CursorShape cursor) { assert(item); item->setCursor(cursor); }
-    Q_INVOKABLE static inline void unsetCursor(QQuickItem* item) { assert(item); item->unsetCursor(); };
-
-    Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersion() { return QT_VERSION; }
-    Q_INVOKABLE static /*constexpr*/ inline unsigned int qtVersionCheck(unsigned char major,
-                                                                        unsigned char minor,
-                                                                        unsigned char patch)
-                                                                       { return QT_VERSION_CHECK(major, minor, patch); }
-
-    Q_INVOKABLE static /*constexpr*/ inline bool qtQuickControlRejectsHoverEvents() {
-        // QTBUG-100543
-        return (QT_VERSION < QT_VERSION_CHECK(6, 3, 0) && QT_VERSION >= QT_VERSION_CHECK(6, 2, 5)) ||
-               (QT_VERSION < QT_VERSION_CHECK(6, 4, 0) && QT_VERSION >= QT_VERSION_CHECK(6, 3, 1)) ||
-               (QT_VERSION >= QT_VERSION_CHECK(6, 4, 0));
-    }
-
-    Q_INVOKABLE QJSValue urlListToMimeData(const QJSValue& array);
-
     /**
      * @brief ask for the application to terminate
      */
@@ -289,13 +275,9 @@ public:
 
     QWindow *intfMainWindow() const;
 
-    Q_INVOKABLE QVariant settingValue(const QString &key, const QVariant &defaultValue) const;
-    Q_INVOKABLE void setSettingValue(const QString &key, const QVariant &value);
-
-    Q_INVOKABLE static void setAttachedToolTip(QObject* toolTip);
-
     CSDButtonModel *csdButtonModel() { return m_csdButtonModel.get(); }
 
+    // TODO: Migrate these to VLC.MainInterface's MainInterfaceCtx
     Q_INVOKABLE static double dp(const double px, const double scale);
     Q_INVOKABLE double dp(const double px) const;
 
@@ -303,6 +285,7 @@ public:
 
     ThreadRunner* threadRunner() const;
 
+    // TODO: Migrate these to VLC.MediaLibrary's MediaLibraryCtx
     Q_INVOKABLE QUrl folderMRL(const QString &fileMRL) const;
     Q_INVOKABLE QUrl folderMRL(const QUrl &fileMRL) const;
 

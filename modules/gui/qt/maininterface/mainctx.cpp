@@ -719,50 +719,6 @@ void MainCtx::setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider
     emit hasEmbededVideoChanged(m_videoSurfaceProvider && m_videoSurfaceProvider->hasVideoEmbed());
 }
 
-QJSValue MainCtx::urlListToMimeData(const QJSValue &array) {
-    // NOTE: Due to a Qt regression since 17318c4
-    //       (Nov 11, 2022), it is not possible to
-    //       use RFC-2483 compliant string here.
-    //       This regression was later corrected by
-    //       c25f53b (Jul 31, 2024).
-    // NOTE: Qt starts supporting string list since
-    //       17318c4, so starting from 6.5.0 a string
-    //       list can be used which is not affected
-    //       by the said issue. For Qt versions below
-    //       6.5.0, use byte array which is used as is
-    //       by Qt.
-    assert(array.property("length").toInt() > 0);
-
-    QJSEngine* const engine = qjsEngine(this);
-    assert(engine);
-
-    QJSValue data;
-#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
-    QString string;
-    for (int i = 0; i < array.property(QStringLiteral("length")).toInt(); ++i)
-    {
-        QString decodedUrl;
-        const QJSValue element = array.property(i);
-        if (element.isUrl())
-            // QJSValue does not have `toUrl()`
-            decodedUrl = QJSManagedValue(element, engine).toUrl().toString(QUrl::FullyEncoded);
-        else if (element.isString())
-            // If the element is string, we assume it is already encoded
-            decodedUrl = element.toString();
-        else
-            Q_UNREACHABLE(); // Assertion failure in debug builds
-        string += decodedUrl + QStringLiteral("\r\n");
-    }
-    string.chop(2);
-    data = engine->toScriptValue(string);
-#else
-    data = array;
-#endif
-    QJSValue ret = engine->newObject();
-    ret.setProperty(QStringLiteral("text/uri-list"), data);
-    return ret;
-}
-
 VideoSurfaceProvider* MainCtx::getVideoSurfaceProvider() const
 {
     return m_videoSurfaceProvider;
@@ -917,56 +873,6 @@ QWindow *MainCtx::intfMainWindow() const
         return p_intf->p_compositor->interfaceMainWindow();
     else
         return nullptr;
-}
-
-QVariant MainCtx::settingValue(const QString &key, const QVariant &defaultValue) const
-{
-    return settings->value(key, defaultValue);
-}
-
-void MainCtx::setSettingValue(const QString &key, const QVariant &value)
-{
-    settings->setValue(key, value);
-}
-
-void MainCtx::setAttachedToolTip(QObject *toolTip)
-{
-    // See QQuickToolTipAttachedPrivate::instance(bool create)
-    assert(toolTip);
-
-    // Prevent possible invalid down-casting:
-    assert(toolTip->inherits("QQuickToolTip"));
-
-    QQmlEngine* const engine = qmlEngine(toolTip);
-    assert(engine);
-    assert(engine->objectOwnership(toolTip) == QQmlEngine::ObjectOwnership::JavaScriptOwnership);
-
-    // Dynamic internal property:
-    static const char* const name = "_q_QQuickToolTip";
-
-    if (const auto obj = engine->property(name).value<QObject *>())
-    {
-        if (engine->objectOwnership(obj) == QQmlEngine::ObjectOwnership::CppOwnership)
-            obj->deleteLater();
-    }
-
-    // setProperty() will return false, so there is no
-    // need to check the return value:
-    engine->setProperty(name, QVariant::fromValue(toolTip));
-
-    // Check if the attached tooltip is actually the
-    // one that is set
-#ifndef NDEBUG
-    QQmlComponent component(engine);
-    component.setData(QByteArrayLiteral("import QtQuick; import QtQuick.Controls; Item { }"), {});
-    QObject* const obj = component.create();
-    assert(obj);
-    // Consider disabling setting of custom attached
-    // tooltip if the following assertion fails:
-    if (QQmlProperty::read(obj, QStringLiteral("ToolTip.toolTip"), qmlContext(obj)).value<QObject*>() != toolTip)
-        qmlWarning(obj) << "Could not set self as custom ToolTip!";
-    obj->deleteLater();
-#endif
 }
 
 double MainCtx::dp(const double px, const double scale)

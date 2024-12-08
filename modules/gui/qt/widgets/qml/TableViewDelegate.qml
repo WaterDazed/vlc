@@ -273,7 +273,7 @@ T.Control {
                 // * Infinite loop *
 
                 // Disable hovering in this control to prevent twitching due to infinite loop:
-                hoverEnabled: MainCtx.qtQuickControlRejectsHoverEvents()
+                hoverEnabled: Helpers.qtQuickControlRejectsHoverEvents()
 
                 onClicked: {
                     if (!delegate.selected)
