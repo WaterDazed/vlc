@@ -195,6 +195,7 @@ static void PlacePicture(vout_display_t *vd, vout_display_place_t *place,
     video_format_Clean(&source);
 }
 
+
 /**
  * Destroys the OpenGL context.
  */
@@ -203,9 +204,10 @@ static void Close(vout_display_t *vd)
     vout_display_sys_t *sys = vd->sys;
     vlc_gl_t *gl = sys->gl;
 
-    vlc_gl_MakeCurrent (gl);
-    vout_display_opengl_Delete (sys->vgl);
-    vlc_gl_ReleaseCurrent (gl);
+    // TODO
+    //vlc_gl_MakeCurrent (gl);
+    //vout_display_opengl_Delete (sys->vgl);
+    //vlc_gl_ReleaseCurrent (gl);
 
     vlc_gl_Delete(gl);
     free (sys);
