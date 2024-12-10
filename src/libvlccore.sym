@@ -745,6 +745,7 @@ vlc_queue_DequeueAll
 vlc_gl_Create
 vlc_gl_CreateOffscreen
 vlc_gl_Delete
+vlc_gl_RequestRender
 vlc_gl_Resize
 vlc_gl_surface_Create
 vlc_gl_surface_CheckSize

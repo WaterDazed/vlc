@@ -204,6 +204,14 @@ void vlc_gl_Delete(vlc_gl_t *gl)
 
 #include <vlc_window.h>
 
+void vlc_gl_RequestRender(vlc_gl_t *gl)
+{
+    struct vlc_gl_priv_t *glpriv = (struct vlc_gl_priv_t *)gl;
+
+    if (gl->owner.cbs && gl->owner.cbs->render)
+        gl->owner.cbs->render(gl, glpriv->sync_mode.width, glpriv->sync_mode.height);
+}
+
 typedef struct vlc_gl_surface
 {
     int width;
