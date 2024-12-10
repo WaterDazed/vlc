@@ -113,17 +113,19 @@ static int SetViewpoint(vout_display_t *vd, const vlc_viewpoint_t *vp)
     return VLC_SUCCESS;
 }
 
-static int
-UpdateFormat(vout_display_t *vd, const video_format_t *fmt,
-             vlc_video_context *vctx)
+struct opengl_format_request {
+    vout_display_t *vd;
+    const video_format_t *fmt;
+    vlc_video_context *vctx;
+};
+
+static int RequestFormatUpdate(vlc_gl_t *gl, void *opaque)
 {
-    vout_display_sys_t *sys = vd->sys;
+    (void)gl;
+    struct opengl_format_request *request = opaque;
+    vout_display_sys_t *sys = request->vd->sys;
 
-    int ret = vlc_gl_MakeCurrent(sys->gl);
-    if (ret != VLC_SUCCESS)
-        return ret;
-
-    ret = vout_display_opengl_UpdateFormat(sys->vgl, fmt, vctx);
+    int ret = vout_display_opengl_UpdateFormat(sys->vgl, request->fmt, request->vctx);
 
     /* Force to recompute the viewport on next picture */
     sys->place_changed = true;
@@ -134,9 +136,17 @@ UpdateFormat(vout_display_t *vd, const video_format_t *fmt,
     assert(vp_ret == VLC_SUCCESS);
     (void) vp_ret;
 
-    vlc_gl_ReleaseCurrent(sys->gl);
-
     return ret;
+}
+
+static int
+UpdateFormat(vout_display_t *vd, const video_format_t *fmt,
+             vlc_video_context *vctx)
+{
+    vout_display_sys_t *sys = vd->sys;
+    return vlc_gl_RequestChanges(sys->gl, RequestFormatUpdate, &(struct opengl_format_request){
+        .vd = vd, .vctx = vctx, .fmt = fmt,
+    });
 }
 
 static const struct vlc_display_operations ops = {
@@ -222,10 +232,14 @@ static int RendererInit(vlc_gl_t *gl)
 
 static void PictureRender(vlc_gl_t *gl, unsigned width, unsigned height)
 {
-    (void)width; (void)height;
-
     vout_display_t *vd = gl->owner.sys;
     vout_display_sys_t *sys = vd->sys;
+
+    struct vout_display_placement dp = vd->cfg->display;
+    dp.width = width;
+    dp.height = height;
+    PlacePicture(vd, &sys->place, dp);
+    sys->place_changed = true;
 
     if (sys->latch.picture == NULL)
         return;
@@ -262,6 +276,7 @@ static void PicturePrepare(vout_display_t *vd, picture_t *pic,
     sys->latch.subpicture = subpicture ? vlc_render_subpicture_Copy(subpicture) : NULL;
 
     vlc_gl_RequestRender(sys->gl);
+    sys->is_dirty = true;
 }
 
 static void PictureDisplay (vout_display_t *vd, picture_t *pic)
@@ -271,7 +286,10 @@ static void PictureDisplay (vout_display_t *vd, picture_t *pic)
 
     /* Present on screen */
     if (sys->is_dirty)
+    {
         vlc_gl_Swap(sys->gl);
+        sys->is_dirty = false;
+    }
 }
 
 static int Control (vout_display_t *vd, int query)
@@ -372,25 +390,6 @@ static int Open(vout_display_t *vd,
     vlc_gl_Resize (sys->gl, vd->cfg->display.width, vd->cfg->display.height);
 
     /* Initialize video display */
-    const vlc_fourcc_t *spu_chromas;
-
-    if (vlc_gl_MakeCurrent (sys->gl))
-        goto error;
-
-    sys->vt.Flush = vlc_gl_GetProcAddress(sys->gl, "glFlush");
-    if (sys->vt.Flush == NULL)
-    {
-        vlc_gl_ReleaseCurrent (sys->gl);
-        goto error;
-    }
-
-    sys->vgl = vout_display_opengl_New (fmt, &spu_chromas, sys->gl,
-                                        &vd->cfg->viewpoint, context);
-    vlc_gl_ReleaseCurrent (sys->gl);
-
-    if (sys->vgl == NULL)
-        goto error;
-
     sys->viewpoint = vd->cfg->viewpoint;
 
     vd->info.subpicture_chromas = sys->cfg.spu_chromas;
