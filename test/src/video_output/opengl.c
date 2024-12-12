@@ -26,6 +26,8 @@
 #define MODULE_NAME test_offscreen_mock
 #undef VLC_DYNAMIC_PLUGIN
 
+const char vlc_module_name[] = "test_offscreen_mock";
+
 #include "../../libvlc/test.h"
 #include "../../../lib/libvlc_internal.h"
 #include <vlc_common.h>
@@ -211,21 +213,50 @@ VLC_EXPORT const vlc_plugin_cb vlc_static_modules[] = {
     NULL
 };
 
+struct test_data {
+    bool rendered;
+};
+
+static int test_gl_init(vlc_gl_t *gl)
+{
+    assert(vlc_gl_GetProcAddress(gl, "dummy") == &dummy);
+    return VLC_SUCCESS;
+}
+
+static void test_gl_render(vlc_gl_t *gl, unsigned width, unsigned height)
+{
+    struct test_data *data = gl->owner.sys;
+    data->rendered = true;
+}
+
+static const struct vlc_gl_callbacks gl_cbs = {
+    .init = test_gl_init,
+    .render = test_gl_render,
+};
+
 static void test_opengl_offscreen(vlc_object_t *root, enum vlc_gl_api_type api_type)
 {
     struct vlc_decoder_device *device =
         vlc_decoder_device_Create(root, NULL);
     assert(device != NULL);
 
+    struct test_data data = { .rendered = false };
+
+    msg_Info(root, "Initializing offscreen");
     vlc_gl_t *gl = vlc_gl_CreateOffscreen(
-            root, device, 800, 600, api_type, MODULE_STRING, NULL, NULL, NULL);
+            root, device, 800, 600, api_type, MODULE_STRING, NULL, &gl_cbs, &data);
     assert(gl != NULL);
     vlc_decoder_device_Release(device);
 
-    assert(vlc_gl_MakeCurrent(gl) == VLC_SUCCESS);
-    assert(vlc_gl_GetProcAddress(gl, "dummy") == &dummy);
-    vlc_gl_ReleaseCurrent(gl);
+    msg_Info(root, "Initializing renderer");
+    int ret = vlc_gl_RequestInit(gl);
+    assert(ret == VLC_SUCCESS);
 
+    msg_Info(root, "Requesting render");
+    vlc_gl_RequestRender(gl);
+    assert(data.rendered == true);
+
+    msg_Info(root, "Swapping offscreen");
     swapped_offscreen = false;
     vlc_gl_SwapOffscreen(gl);
     assert(swapped_offscreen == true);
@@ -240,18 +271,26 @@ static void test_opengl(vlc_object_t *root, enum vlc_gl_api_type api_type)
     vlc_window_t *wnd = vlc_window_New(root, MODULE_STRING, &owner, &wnd_cfg);
     assert(wnd != NULL && wnd->ops == &wnd_ops);
 
+    msg_Info(root, "%s: creating provider", __func__);
     const vout_display_cfg_t cfg = {
         .window = wnd,
         .display.width = wnd_cfg.width,
         .display.height = wnd_cfg.height,
     };
-    vlc_gl_t *gl = vlc_gl_Create(&cfg, api_type, MODULE_STRING, NULL, NULL, NULL);
+
+    struct test_data data = { .rendered = false };
+    vlc_gl_t *gl = vlc_gl_Create(&cfg, api_type, MODULE_STRING, NULL, &gl_cbs, &data);
     assert(gl != NULL);
 
-    assert(vlc_gl_MakeCurrent(gl) == VLC_SUCCESS);
-    assert(vlc_gl_GetProcAddress(gl, "dummy") == &dummy);
-    vlc_gl_ReleaseCurrent(gl);
+    msg_Info(root, "%s: initializing", __func__);
+    int ret = vlc_gl_RequestInit(gl);
+    assert(ret == VLC_SUCCESS);
 
+    msg_Info(root, "%s: rendering", __func__);
+    vlc_gl_RequestRender(gl);
+    assert(data.rendered == true);
+
+    msg_Info(root, "%s: swapping", __func__);
     swapped = false;
     vlc_gl_Swap(gl);
     assert(swapped == true);
