@@ -72,18 +72,49 @@ static int vlc_gl_start(void *func, bool forced, va_list ap)
     return ret;
 }
 
+static vlc_gl_t* CommonOpenglCreate(vlc_object_t *parent,
+                                    unsigned width, unsigned height,
+                                    const struct vlc_gl_callbacks *cbs,
+                                    void *owner)
+{
+    struct vlc_gl_priv_t *glpriv;
+
+    glpriv = vlc_custom_create(parent, sizeof (*glpriv), "gl");
+    if (unlikely(glpriv == NULL))
+        return NULL;
+
+    vlc_gl_t *gl = &glpriv->gl;
+    gl->surface = NULL;
+    gl->orientation = ORIENT_NORMAL;
+    gl->device = NULL;
+    gl->owner.cbs = cbs;
+    gl->owner.sys = owner;
+
+    return gl;
+}
+
+static vlc_gl_t* CommonOpenglSetup(vlc_gl_t *gl)
+{
+    struct vlc_gl_priv_t *glpriv = container_of(gl, struct vlc_gl_priv_t, gl);
+    assert(gl->ops);
+
+    assert(gl->ops->sync_mode.make_current != NULL);
+    assert(gl->ops->sync_mode.release_current != NULL);
+    assert(gl->ops->get_proc_address);
+
+    return gl;
+}
+
 vlc_gl_t *vlc_gl_Create(const struct vout_display_cfg *restrict cfg,
                         unsigned flags, const char *name,
                         const struct vlc_gl_cfg * gl_cfg,
                         const struct vlc_gl_callbacks *cbs, void *owner)
 {
     vlc_window_t *wnd = cfg->window;
-    struct vlc_gl_priv_t *glpriv;
     const char *type;
+    enum vlc_gl_api_type api_type;
     if (gl_cfg == NULL)
         gl_cfg = &gl_cfg_default;
-
-    enum vlc_gl_api_type api_type;
 
     switch (flags /*& VLC_OPENGL_API_MASK*/)
     {
@@ -98,19 +129,13 @@ vlc_gl_t *vlc_gl_Create(const struct vout_display_cfg *restrict cfg,
         default:
             return NULL;
     }
-
-    glpriv = vlc_custom_create(VLC_OBJECT(wnd), sizeof (*glpriv), "gl");
-    if (unlikely(glpriv == NULL))
+    vlc_gl_t *gl = CommonOpenglCreate(VLC_OBJECT(wnd),
+                                      cfg->display.width, cfg->display.height,
+                                      cbs, owner);
+    if (gl == NULL)
         return NULL;
-
-    vlc_gl_t *gl = &glpriv->gl;
     gl->api_type = api_type;
-    gl->orientation = ORIENT_NORMAL;
     gl->surface = wnd;
-    gl->device = NULL;
-    gl->owner.cbs = cbs;
-    gl->owner.sys = owner;
-
     gl->module = vlc_module_load(vlc_object_logger(gl), type, name, true,
                                  vlc_gl_start, gl,
                                  cfg->display.width, cfg->display.height, gl_cfg);
@@ -119,14 +144,10 @@ vlc_gl_t *vlc_gl_Create(const struct vout_display_cfg *restrict cfg,
         vlc_object_delete(gl);
         return NULL;
     }
-
     assert(gl->ops);
-    assert(gl->ops->sync_mode.make_current);
-    assert(gl->ops->sync_mode.release_current);
     assert(gl->ops->swap);
-    assert(gl->ops->get_proc_address);
 
-    return &glpriv->gl;
+    return CommonOpenglSetup(gl);
 }
 
 vlc_gl_t *vlc_gl_CreateOffscreen(vlc_object_t *parent,
@@ -137,7 +158,6 @@ vlc_gl_t *vlc_gl_CreateOffscreen(vlc_object_t *parent,
                                  const struct vlc_gl_callbacks *cbs,
                                  void *owner)
 {
-    struct vlc_gl_priv_t *glpriv;
     const char *type;
 
     enum vlc_gl_api_type api_type;
@@ -158,21 +178,13 @@ vlc_gl_t *vlc_gl_CreateOffscreen(vlc_object_t *parent,
             return NULL;
     }
 
-    glpriv = vlc_custom_create(parent, sizeof (*glpriv), "gl");
-    if (unlikely(glpriv == NULL))
+    vlc_gl_t *gl = CommonOpenglCreate(parent, width, height, cbs, owner);
+    if (unlikely(gl == NULL))
         return NULL;
 
-    vlc_gl_t *gl = &glpriv->gl;
-
     gl->api_type = api_type;
-    gl->orientation = ORIENT_NORMAL;
-
     gl->offscreen_chroma_out = VLC_CODEC_UNKNOWN;
     gl->offscreen_vctx_out = NULL;
-    gl->owner.sys = owner;
-    gl->owner.cbs = cbs;
-
-    gl->surface = NULL;
     gl->device = device ? vlc_decoder_device_Hold(device) : NULL;
     gl->module = vlc_module_load(vlc_object_logger(gl), type, name, true,
                                  vlc_gl_start, gl, width, height, gl_cfg);
@@ -184,14 +196,10 @@ vlc_gl_t *vlc_gl_CreateOffscreen(vlc_object_t *parent,
 
     /* The implementation must initialize the output chroma */
     assert(gl->offscreen_chroma_out != VLC_CODEC_UNKNOWN);
-
     assert(gl->ops);
-    assert(gl->ops->sync_mode.make_current);
-    assert(gl->ops->sync_mode.release_current);
     assert(gl->ops->swap_offscreen);
-    assert(gl->ops->get_proc_address);
 
-    return &glpriv->gl;
+    return CommonOpenglSetup(gl);
 }
 
 void vlc_gl_Delete(vlc_gl_t *gl)
