@@ -147,7 +147,16 @@ OpenOpenGLCommon(
         .close = OpenGLClose,
     };
 
-    gl->ops = offscreen ? &offscreen_ops : &onscreen_ops;
+    if (offscreen)
+    {
+        gl->offscreen_chroma_out = VLC_CODEC_RGBA;
+        gl->ops = &offscreen_ops;
+    }
+    else
+    {
+        gl->ops = &onscreen_ops;
+    }
+
     return VLC_SUCCESS;
 }
 
