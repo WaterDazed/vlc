@@ -381,7 +381,6 @@ static int Open(vout_display_t *vd,
     free(gl_name);
     if (sys->gl == NULL)
         goto error;
-    vd->sys = sys;
 
     if (vlc_gl_RequestInit(sys->gl) || sys->vgl == NULL)
         goto error;
@@ -403,6 +402,5 @@ error:
         vlc_gl_Delete(sys->gl);
     vd->sys = NULL;
     free (sys);
-    vd->sys = NULL;
     return VLC_EGENERIC;
 }
