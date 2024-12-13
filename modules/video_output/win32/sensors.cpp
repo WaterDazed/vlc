@@ -2,9 +2,10 @@
  * sensors.cpp: Windows sensor handling
  *****************************************************************************
  * Copyright © 2017 Steve Lhomme
- * Copyright © 2017 VideoLabs
+ * Copyright © 2017-2025 VideoLabs
  *
  * Authors: Steve Lhomme <robux4@gmail.com>
+ *          Alexandre Janniaux <ajanni@videolabs.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -157,7 +158,7 @@ private:
     long m_cRef;
 };
 
-void *HookWindowsSensors(vlc_logger *vd, const vout_display_owner_t *move, HWND hwnd)
+void *HookWindowsSensorsInternal(vlc_logger *vd, const void *move, HWND hwnd)
 {
     ComPtr<ISensorManager> pSensorManager;
     HRESULT hr = CoCreateInstance( __uuidof(SensorManager),
@@ -230,6 +231,11 @@ void *HookWindowsSensors(vlc_logger *vd, const vout_display_owner_t *move, HWND 
     return NULL;
 }
 
+void *HookWindowsSensors(vlc_logger *logger, const vout_display_owner_t *move, HWND hwnd)
+{
+    HookWindowsSensorsInternal(logger, move, hwnd);
+}
+
 void UnhookWindowsSensors(void *vSensor)
 {
     if (!vSensor)
@@ -239,3 +245,37 @@ void UnhookWindowsSensors(void *vSensor)
     pSensor->SetEventSink(NULL);
     pSensor->Release();
 }
+
+static void DestroySensors(struct vlc_gyroscope *gyroscope)
+{
+    UnhookWindowsSensors(gyroscope->sys);
+}
+
+static int OpenSensors(struct vlc_gyroscope *gyroscope)
+{
+    struct vlc_logger *logger = vlc_object_logger(gyroscope);
+
+    HWND window = nullptr;
+    if (gyroscope->surface != NULL && gyroscope->surface->type == VLC_WINDOW_TYPE_HWND)
+        window = gyroscope->surface->handle.hwnd;
+
+    void *sensor = HookWindowsSensorsInternal(logger, gyroscope, window);
+    if (sensors == nullptr)
+        return VLC_EGENERIC;
+
+    static const struct vlc_gyroscope_operations ops = {
+        .destroy = DestroySensors,
+    };
+
+    gyroscope->ops = &ops;
+    gyroscope->sys = sensors;
+
+    return VLC_SUCCESS;
+}
+
+vlc_module_begin()
+    set_subcategory(SUBCAT_VIDEO)
+    set_description("Windows gyroscope")
+    set_callback(OpenSensors)
+    set_capability("gyroscope", 100)
+vlc_module_end()
