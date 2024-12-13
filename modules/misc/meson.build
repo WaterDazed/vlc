@@ -174,3 +174,9 @@ if dbus_dep.found()
         'dependencies' : [dbus_dep]
     }
 endif
+
+vlc_modules += {
+    'name' : 'android_sensors',
+    'sources' : files('android_sensors.c'),
+    'enabled' : host_system == 'android',
+}
