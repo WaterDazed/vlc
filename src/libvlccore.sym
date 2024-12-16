@@ -749,6 +749,7 @@ vlc_gl_Delete
 vlc_gl_surface_Create
 vlc_gl_surface_CheckSize
 vlc_gl_surface_Destroy
+vlc_gyroscope_New
 vlm_Control
 vlm_Delete
 vlm_ExecuteCommand

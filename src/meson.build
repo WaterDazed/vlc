@@ -245,6 +245,7 @@ libvlccore_sources_base = files(
     'misc/fourcc_list.h',
     'misc/es_format.c',
     'misc/extensions.c',
+    'misc/gyroscope.c',
     'misc/picture.c',
     'misc/picture.h',
     'misc/picture_fifo.c',
