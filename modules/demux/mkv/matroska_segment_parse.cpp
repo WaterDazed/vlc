@@ -633,7 +633,25 @@ void matroska_segment_c::ParseTrackEntry( const KaxTrackEntry *m )
         E_CASE( KaxVideoProjectionPoseRoll, pose )
         {
             ONLY_FMT(VIDEO);
-            vars.tk->fmt.video.pose.roll = static_cast<float>( pose );
+            float roll = static_cast<float>(pose);
+            vars.tk->fmt.video.pose.roll = roll;
+
+            // roll is in range [-180; 180]
+            unsigned rotation = (unsigned) ((roll + 360 + 45) / 90) % 4;
+            switch (rotation) {
+                case 0:
+                    vars.tk->fmt.video.orientation = ORIENT_NORMAL;
+                    break;
+                case 1:
+                    vars.tk->fmt.video.orientation = ORIENT_ROTATED_270;
+                    break;
+                case 2:
+                    vars.tk->fmt.video.orientation = ORIENT_ROTATED_180;
+                    break;
+                case 3:
+                    vars.tk->fmt.video.orientation = ORIENT_ROTATED_90;
+                    break;
+            }
         }
 #endif
         E_CASE( KaxVideoFlagInterlaced, fint ) // UNUSED
