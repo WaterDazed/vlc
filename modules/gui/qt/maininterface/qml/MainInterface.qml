@@ -41,9 +41,17 @@ Item {
 
     property bool _interfaceReady: false
     property bool _playlistReady: false
+
     property bool _extendedFrameVisible: MainCtx.windowSuportExtendedFrame
                                       && MainCtx.clientSideDecoration
                                       && (MainCtx.intfMainWindow.visibility === Window.Windowed)
+    property bool _hasWindowResizeHandle: MainCtx.clientSideDecoration
+        && !MainCtx.platformHandlesResizeWithCSD()
+        && (MainCtx.intfMainWindow.visibility === Window.Windowed)
+
+    property bool _resizeHandleInside: _hasWindowResizeHandle
+                                       && !MainCtx.windowSuportExtendedFrame
+    property int _resizeHandleSize: _resizeHandleInside ? 3 : 20
 
     //when exiting minimal mode, what is the page to restore
     property bool _minimalRestorePlayer: false
@@ -101,7 +109,14 @@ Item {
         Binding {
             target: MainCtx
             property: "windowExtendedMargin"
-            value: _extendedFrameVisible ? 20 : 0
+            value: root._extendedFrameVisible ? root._resizeHandleSize : 0
+        }
+
+        Binding {
+            target: stackView.currentItem
+            property: "resizeHandleMargin"
+            value: root._resizeHandleSize
+            when: root._resizeHandleInside && !!stackView.currentItem && History.match(History.viewPath, ["mc"])
         }
 
         Window.onWindowChanged: {
@@ -308,18 +323,14 @@ Item {
         }
 
         Loader {
-            active: {
-                const windowVisibility = MainCtx.intfMainWindow.visibility
-                return MainCtx.clientSideDecoration && !MainCtx.platformHandlesResizeWithCSD()
-                        && (windowVisibility !== Window.Maximized)
-                        && (windowVisibility !== Window.FullScreen)
+            active: root._hasWindowResizeHandle
 
-            }
             Component.onCompleted: {
                 setSource(
                     "qrc:///qt/qml/VLC/Widgets/CSDMouseStealer.qml", {
                         target: g_mainInterface,
-                        anchorInside: Qt.binding(() => !_extendedFrameVisible)
+                        csdSize: Qt.binding(() => (root._resizeHandleInside ? root._resizeHandleSize : MainCtx.csdBorderSize)),
+                        anchorInside: Qt.binding(() => root._resizeHandleInside)
                     })
             }
         }

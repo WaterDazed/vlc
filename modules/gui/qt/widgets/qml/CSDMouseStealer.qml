@@ -24,7 +24,7 @@ import VLC.MainInterface
 Item {
     id: root
 
-    property int csdSize: MainCtx.csdBorderSize
+    required property int csdSize
     required property Item target
     property bool anchorInside: true
 
