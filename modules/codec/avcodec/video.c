@@ -1740,6 +1740,7 @@ static enum PixelFormat ffmpeg_GetFormat( AVCodecContext *p_context,
     /* Enumerate available formats */
     enum PixelFormat defaultfmt = avcodec_default_get_format(p_context, pi_fmt);
     enum PixelFormat swfmt = AV_PIX_FMT_NONE;
+    enum PixelFormat swfmt_hwonly = AV_PIX_FMT_NONE;
     bool can_hwaccel = false;
 
     for (size_t i = 0; pi_fmt[i] != AV_PIX_FMT_NONE; i++)
@@ -1760,8 +1761,13 @@ static enum PixelFormat ffmpeg_GetFormat( AVCodecContext *p_context,
 
             can_hwaccel = true;
         }
-        else if (swfmt == AV_PIX_FMT_NONE && !p_sys->b_hardware_only)
-            swfmt = pi_fmt[i];
+        else if (swfmt == AV_PIX_FMT_NONE)
+        {
+            if (!p_sys->b_hardware_only)
+                swfmt = pi_fmt[i];
+
+            swfmt_hwonly = pi_fmt[i];
+        }
     }
 
     /* Use the default fmt in priority of any sw fmt if the default fmt is a hw
@@ -1778,6 +1784,9 @@ static enum PixelFormat ffmpeg_GetFormat( AVCodecContext *p_context,
         }
         swfmt = defaultfmt;
     }
+
+    if (p_sys->b_hardware_only && swfmt == AV_PIX_FMT_NONE)
+        swfmt = swfmt_hwonly;
 
     if (p_sys->pix_fmt == AV_PIX_FMT_NONE)
         goto no_reuse;
