@@ -227,8 +227,8 @@ static int Open(vlc_gl_t *gl, unsigned width, unsigned height,
 
     static const struct vlc_gl_operations gl_ops =
     {
-        .make_current = MakeCurrent,
-        .release_current = ReleaseCurrent,
+        .sync_mode.make_current = MakeCurrent,
+        .sync_mode.release_current = ReleaseCurrent,
         .resize = NULL,
         .swap = Swap,
         .get_proc_address = OurGetProcAddress,

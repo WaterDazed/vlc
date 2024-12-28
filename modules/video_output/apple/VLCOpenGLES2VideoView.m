@@ -232,8 +232,8 @@ static void Close(vlc_gl_t *gl)
      * the get_proc_address symbol and a current context. */
     static const struct vlc_gl_operations gl_ops =
     {
-        .make_current = MakeCurrent,
-        .release_current = ReleaseCurrent,
+        .sync_mode.make_current = MakeCurrent,
+        .sync_module.release_current = ReleaseCurrent,
         .resize = Resize,
         .swap = Swap,
         .get_proc_address = GetSymbol,

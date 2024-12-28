@@ -27,6 +27,7 @@
 #include <QtGui/qpa/qplatformwindow_p.h>
 #endif
 
+
 #include "maininterface/mainctx.hpp"
 #include "util/csdmenu_module.h"
 #include "menus/menus.hpp"

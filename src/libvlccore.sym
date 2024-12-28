@@ -411,6 +411,7 @@ subpicture_Update
 vlc_spu_regions_Clear
 vlc_render_subpicture_New
 vlc_render_subpicture_Delete
+vlc_render_subpicture_Copy
 subpicture_region_Delete
 subpicture_region_New
 subpicture_region_NewText
@@ -745,6 +746,14 @@ vlc_queue_DequeueAll
 vlc_gl_Create
 vlc_gl_CreateOffscreen
 vlc_gl_Delete
+vlc_gl_RequestRender
+vlc_gl_RequestChanges
+vlc_gl_RequestInit
+vlc_gl_ReportInit
+vlc_gl_ReportRender
+vlc_gl_Resize
+vlc_gl_Swap
+vlc_gl_ApplyChanges
 vlc_gl_surface_Create
 vlc_gl_surface_CheckSize
 vlc_gl_surface_Destroy
