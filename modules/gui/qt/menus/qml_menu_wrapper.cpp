@@ -918,7 +918,11 @@ void PlaylistContextMenu::popup(int selectedIndex, QPoint pos )
     QList<QUrl> selectedUrlList;
     selectedUrlList.reserve(selectedIndexes.size());
     for (const auto modelIndex : selectedIndexes)
-        selectedUrlList.push_back(m_model->itemAt(modelIndex).getUrl());
+    {
+        const QUrl url = m_model->itemAt(modelIndex).getUrl();
+        if (Q_LIKELY(url.isValid()))
+            selectedUrlList.push_back(url);
+    }
 
     PlaylistItem selectedItem;
     if (selectedIndex >= 0)
