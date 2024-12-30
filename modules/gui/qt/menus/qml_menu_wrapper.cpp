@@ -914,8 +914,10 @@ void PlaylistContextMenu::popup(int selectedIndex, QPoint pos )
     m_menu = std::make_unique<VLCMenu>(m_ctx->getIntf());
     QAction* action;
 
+    const auto selectedIndexes = m_selectionModel->selectedIndexesFlat();
     QList<QUrl> selectedUrlList;
-    for (const int modelIndex : m_selectionModel->selectedIndexesFlat())
+    selectedUrlList.reserve(selectedIndexes.size());
+    for (const auto modelIndex : selectedIndexes)
         selectedUrlList.push_back(m_model->itemAt(modelIndex).getUrl());
 
     PlaylistItem selectedItem;
