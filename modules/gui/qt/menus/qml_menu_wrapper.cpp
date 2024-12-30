@@ -33,6 +33,8 @@
 #include <QSignalMapper>
 #include <QScreen>
 #include <QActionGroup>
+#include <QMimeData>
+#include <QClipboard>
 
 namespace
 {
@@ -1004,6 +1006,19 @@ void PlaylistContextMenu::popup(int selectedIndex, QPoint pos )
         });
 
         m_menu->addSeparator();
+
+        QClipboard *const applicationClipboard = qApp->clipboard();
+        if (Q_LIKELY(applicationClipboard) && !selectedUrlList.isEmpty())
+        {
+            action = m_menu->addAction(qtr("Copy Selection"));
+            connect(action, &QAction::triggered, applicationClipboard, [selectedUrlList, applicationClipboard]() {
+                const auto mimeData = new QMimeData;
+                mimeData->setUrls(selectedUrlList); // RFC-2483 "text/uri-list"
+
+                // NOTE: Ownership of mime data is transferred to the clipboard.
+                applicationClipboard->setMimeData(mimeData);
+            });
+        }
 
         action = m_menu->addAction( qtr("Remove Selected") );
         action->setIcon(QIcon(":/menu/remove.svg"));
