@@ -62,7 +62,7 @@ libwindow_macosx_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) \
 
 libvout_macosx_plugin_la_SOURCES = video_output/macosx.m \
 	$(OPENGL_VOUT_COMMONSOURCES)
-libvout_macosx_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc
+libvout_macosx_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) $(OPENGL_COMMONCFLAGS) -fobjc-arc
 libvout_macosx_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) -DHAVE_GL_CORE_SYMBOLS -DGL_SILENCE_DEPRECATION
 libvout_macosx_plugin_la_LIBADD = libvlc_opengl.la
 libvout_macosx_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(voutdir)' \
@@ -70,7 +70,7 @@ libvout_macosx_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(voutdir)' \
 
 libcaopengllayer_plugin_la_SOURCES = video_output/caopengllayer.m \
 	$(OPENGL_VOUT_COMMONSOURCES)
-libcaopengllayer_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc
+libcaopengllayer_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) $(OPENGL_COMMONCFLAGS) -fobjc-arc
 libcaopengllayer_plugin_la_CPPFLAGS = $(AM_CPPFLAGS)  -DHAVE_GL_CORE_SYMBOLS -DGL_SILENCE_DEPRECATION
 libcaopengllayer_plugin_la_LIBADD = libvlc_opengl.la
 libcaopengllayer_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(voutdir)' \
@@ -117,7 +117,7 @@ libcaeagl_ios_plugin_la_LDFLAGS = $(AM_LDFLAGS) \
 libcaeagl_ios_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc
 
 libcvpx_gl_plugin_la_SOURCES = video_output/apple/VLCCVOpenGLProvider.m
-libcvpx_gl_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc
+libcvpx_gl_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) $(OPENGL_COMMONCFLAGS) -fobjc-arc
 libcvpx_gl_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) -DGL_SILENCE_DEPRECATION
 libcvpx_gl_plugin_la_LDFLAGS = $(AM_LDFLAGS) \
     -Wl,-framework,Foundation,-framework,CoreFoundation,-framework,CoreVideo,-framework,Metal

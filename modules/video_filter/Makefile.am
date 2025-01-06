@@ -129,11 +129,12 @@ video_filter_LTLIBRARIES += libci_filters_plugin.la
 endif
 
 libopengl_filter_plugin_la_SOURCES = video_filter/opengl.c
+libopengl_filter_plugin_la_CFLAGS = $(OPENGL_COMMONCFLAGS)
 
 if HAVE_LINUX
 if HAVE_ANDROID
 libopengl_filter_plugin_la_LIBADD = libvlc_opengles.la
-libopengl_filter_plugin_la_CFLAGS = -DUSE_OPENGL_ES2=1
+libopengl_filter_plugin_la_CFLAGS += -DUSE_OPENGL_ES2=1
 video_filter_LTLIBRARIES += libopengl_filter_plugin.la
 else
 libopengl_filter_plugin_la_LIBADD = libvlc_opengl.la
@@ -145,7 +146,7 @@ endif
 
 if HAVE_IOS_OR_TVOS
 libopengl_filter_plugin_la_LIBADD = libvlc_opengles.la
-libopengl_filter_plugin_la_CFLAGS = -DUSE_OPENGL_ES2=1
+libopengl_filter_plugin_la_CFLAGS += -DUSE_OPENGL_ES2=1
 video_filter_LTLIBRARIES += libopengl_filter_plugin.la
 endif
 
