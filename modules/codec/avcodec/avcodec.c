@@ -109,7 +109,7 @@ vlc_module_begin ()
     add_integer ( "avcodec-error-resilience", 1, ERROR_TEXT,
         ERROR_LONGTEXT )
     add_integer ( "avcodec-workaround-bugs", 1, BUGS_TEXT, BUGS_LONGTEXT )
-    add_bool( "avcodec-hurry-up", true, HURRYUP_TEXT, HURRYUP_LONGTEXT )
+    add_bool( "avcodec-hurry-up", false, HURRYUP_TEXT, HURRYUP_LONGTEXT )
     add_integer( "avcodec-skip-frame", 0, SKIP_FRAME_TEXT,
         SKIP_FRAME_LONGTEXT )
         change_integer_list( frame_skip_list, frame_skip_list_text )
