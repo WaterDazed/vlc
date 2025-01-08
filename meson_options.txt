@@ -349,6 +349,11 @@ option('dav1d',
     value : 'auto',
     description : 'libdav1d AV1 decoder support')
 
+option('edge264',
+    type : 'feature',
+    value : 'auto',
+    description : 'edge264 H.264/MVC decoder support')
+
 option('twolame',
     type : 'feature',
     value : 'auto',
