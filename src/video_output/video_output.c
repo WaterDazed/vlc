@@ -147,6 +147,7 @@ typedef struct vout_thread_sys_t
     vlc_decoder_device *dec_device;
 
     /* Video output display */
+    bool            rendering_enabled;
     vout_display_cfg_t display_cfg;
     vout_display_t *display;
     vlc_queuedmutex_t display_lock;
@@ -587,6 +588,15 @@ void vout_ChangeCrop(vout_thread_t *vout,
     if (sys->display != NULL)
         vout_SetDisplayCrop(sys->display, crop);
     vlc_queuedmutex_unlock(&sys->display_lock);
+}
+
+void vout_ChangeDisplayRenderingEnabled(vout_thread_t *vout, bool enabled)
+{
+    vout_thread_sys_t *sys = VOUT_THREAD_TO_SYS(vout);
+    assert(!sys->dummy);
+    vlc_mutex_lock(&sys->display_lock);
+    sys->rendering_enabled = enabled;
+    vlc_mutex_unlock(&sys->display_lock);
 }
 
 void vout_ControlChangeFilters(vout_thread_t *vout, const char *filters)
@@ -1374,10 +1384,16 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     const unsigned frame_rate = todisplay->format.i_frame_rate;
     const unsigned frame_rate_base = todisplay->format.i_frame_rate_base;
 
-    if (vd->ops->prepare != NULL)
-        vd->ops->prepare(vd, todisplay, subpic, system_pts);
+    bool rendering_enabled = sys->rendering_enabled &&
+        sys->window_width != 0 && sys->window_height != 0;
 
-    vout_chrono_Stop(&sys->chrono.render);
+    if (rendering_enabled)
+    {
+        if (vd->ops->prepare != NULL)
+            vd->ops->prepare(vd, todisplay, subpic, system_pts);
+
+        vout_chrono_Stop(&sys->chrono.render);
+    }
 
     struct vlc_tracer *tracer = GetTracer(sys);
     system_now = vlc_tick_now();
@@ -1441,7 +1457,8 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     }
 
     /* Display the direct buffer returned by vout_RenderPicture */
-    vout_display_Display(vd, todisplay);
+    if (rendering_enabled)
+        vout_display_Display(vd, todisplay);
     vlc_clock_Lock(sys->clock);
     vlc_tick_t drift = vlc_clock_UpdateVideo(sys->clock,
                                              vlc_tick_now(),
@@ -2087,6 +2104,8 @@ static vout_thread_sys_t *vout_CreateCommon(vlc_object_t *object)
     vout_thread_sys_t *sys = vout;
     vlc_atomic_rc_init(&sys->rc);
     vlc_mouse_Init(&sys->mouse);
+    sys->rendering_enabled = true;
+
     return vout;
 }
 
