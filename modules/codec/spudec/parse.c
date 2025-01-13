@@ -184,11 +184,39 @@ static void ParsePXCTLI( decoder_t *p_dec, const subpicture_data_t *p_spu_data,
     }
 }
 
+typedef struct
+{
+    picture_t *pic;
+    int i_x;
+    int i_y;
+    int i_y_top_offset;
+} render_data;
+
+static void DestroyDvdRenderData(subpicture_t * p_spu)
+{
+    render_data *rd = p_spu->updater.sys;
+    picture_Release(rd->pic);
+    free(rd);
+}
+
 static void UpdateDvdSpu(subpicture_t * p_spu,
                          const struct vlc_spu_updater_configuration * cfg)
 {
+    vlc_spu_regions_Clear( &p_spu->regions );
+
+    render_data *rd = p_spu->updater.sys;
+    subpicture_region_t *p_region = subpicture_region_ForPicture( &rd->pic->format, rd->pic );
+    if( !p_region )
+        return;
+
     p_spu->i_original_picture_width  = cfg->video_src->i_visible_width;
     p_spu->i_original_picture_height = cfg->video_src->i_visible_height;
+
+    p_region->b_absolute = true;
+    p_region->i_x = rd->i_x;
+    p_region->i_y = rd->i_y + rd->i_y_top_offset;
+
+    vlc_spu_regions_push(&p_spu->regions, p_region);
 }
 
 /*****************************************************************************
@@ -208,6 +236,7 @@ static void OutputPicture( decoder_t *p_dec,
     static const struct vlc_spu_updater_ops spu_ops =
     {
         .update = UpdateDvdSpu,
+        .destroy = DestroyDvdRenderData,
     };
 
     subpicture_updater_t updater = {
@@ -861,6 +890,10 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
     const int height = p_spu_properties->i_height -
         p_spu_data->i_y_top_offset - p_spu_data->i_y_bottom_offset;
 
+    render_data *rd = malloc(sizeof(*rd));
+    if (unlikely(rd == NULL))
+        return VLC_ENOMEM;
+
     /* Create a new subpicture region */
     video_format_Init( &fmt, VLC_CODEC_YUVP );
     video_format_Setup( &fmt, VLC_CODEC_YUVP, width, height, width, height,
@@ -876,16 +909,23 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
         fmt.p_palette->palette[i_x][3] = p_spu_data->pi_alpha[i_x] * 0x11;
     }
 
-    picture_t *pic = picture_NewFromFormat( &fmt );
+    rd->pic = picture_NewFromFormat( &fmt );
     fmt.p_palette = NULL;
     video_format_Clean( &fmt );
-    if( !pic )
+    if( !rd->pic )
     {
         msg_Err( p_dec, "cannot allocate SPU picture" );
+        free(rd);
         return VLC_EGENERIC;
     }
-    p_p = pic->p->p_pixels;
-    i_pitch = pic->p->i_pitch;
+
+    rd->i_x = p_spu_properties->i_x;
+    rd->i_y = p_spu_properties->i_y;
+    rd->i_y_top_offset = p_spu_data->i_y_top_offset;
+    p_spu->updater.sys = rd;
+
+    p_p = rd->pic->p->p_pixels;
+    i_pitch = rd->pic->p->i_pitch;
 
     /* Draw until we reach the bottom of the subtitle */
     for( i_y = 0; i_y < height * i_pitch; i_y += i_pitch )
@@ -899,21 +939,6 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
             memset( p_p + i_x + i_y, i_color, i_len );
         }
     }
-
-    subpicture_region_t *p_region = subpicture_region_ForPicture( &pic->format, pic );
-    if( !p_region )
-    {
-        msg_Err( p_dec, "cannot allocate SPU region" );
-        picture_Release(pic);
-        return VLC_EGENERIC;
-    }
-    vlc_spu_regions_push(&p_spu->regions, p_region);
-
-    p_region->b_absolute = true;
-    p_region->i_x = p_spu_properties->i_x;
-    p_region->i_y = p_spu_properties->i_y + p_spu_data->i_y_top_offset;
-    p_p = p_region->p_picture->p->p_pixels;
-    i_pitch = p_region->p_picture->p->i_pitch;
 
     return VLC_SUCCESS;
 }
