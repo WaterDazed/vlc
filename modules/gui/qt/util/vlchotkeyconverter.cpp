@@ -258,13 +258,40 @@ void WheelToVLCConverter::wheelEvent( const QWheelEvent* e )
     }
 
     QPoint p = e->angleDelta();
-    if (e->inverted())
     {
-        const Qt::Orientations preliminaryOrientation = getWheelOrientation(p.x(), p.y());
-        if (preliminaryOrientation == Qt::Vertical)
-            p.setY(-p.y());
-        else if (preliminaryOrientation == Qt::Horizontal)
-            p.setX(-p.x());
+        // Inversion
+        bool inverted = e->inverted();
+
+        if (e->deviceType() == QInputDevice::DeviceType::TouchPad)
+        {
+            static const bool invert = []() {
+                // This class is not used for scrolling, so we should ignore
+                // the scrolling direction for touchpads. Unfortunately xcb
+                // and windows platform plugins do not report invertedness,
+                // so, we have to assume that the direction is reverse by
+                // default as it is often times the default configuration.
+                // TODO: Windows 11 24H2 can use `TOUCHPAD_PARAMETERS`.
+                assert(qGuiApp);
+                const QString& platform = qGuiApp->platformName();
+                return (platform == QLatin1String("windows")) ||
+                       (platform == QLatin1String("direct2d")) ||
+                       (platform == QLatin1String("xcb"));
+            }();
+
+            assert(invert ? !inverted : true); // Platform started reporting inversion, disable inversion-by-default for that platform.
+
+            if (invert)
+                inverted = true;
+        }
+
+        if (inverted)
+        {
+            const Qt::Orientations preliminaryOrientation = getWheelOrientation(p.x(), p.y());
+            if (preliminaryOrientation == Qt::Vertical)
+                p.setY(-p.y());
+            else if (preliminaryOrientation == Qt::Horizontal)
+                p.setX(-p.x());
+        }
     }
     p += m_scrollAmount;
 
