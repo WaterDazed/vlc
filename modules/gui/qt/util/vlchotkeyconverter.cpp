@@ -346,13 +346,17 @@ void WheelToVLCConverter::qmlWheelEvent( const QObject* e )
     assert(e);
     assert(e->inherits("QQuickWheelEvent"));
 
+    const auto device = e->property("device").value<const QPointingDevice*>();
+    const QPointF pos{e->property("x").toReal(), e->property("y").toReal()};
     QPoint pixelDelta = e->property("pixelDelta").toPoint();
     QPoint angleDelta = e->property("angleDelta").toPoint();
     auto buttons = Qt::MouseButtons::fromInt(e->property("buttons").toInt());
     auto modifiers = Qt::KeyboardModifiers::fromInt(e->property("modifiers").toInt());
     bool inverted = e->property("inverted").toBool();
+    const bool accepted = e->property("accepted").toBool();
 
-    QWheelEvent event({}, {}, pixelDelta, angleDelta, buttons, modifiers, Qt::ScrollPhase::NoScrollPhase, inverted);
+    QWheelEvent event(pos, {}, pixelDelta, angleDelta, buttons, modifiers, Qt::ScrollPhase::NoScrollPhase, inverted, Qt::MouseEventNotSynthesized, device);
+    event.setAccepted(accepted);
     wheelEvent(&event);
 }
 
