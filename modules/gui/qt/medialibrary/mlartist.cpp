@@ -28,6 +28,10 @@ MLArtist::MLArtist(const vlc_ml_artist_t* _data)
     , m_nbTracks( _data->i_nb_tracks )
 {
     assert( _data );
+
+    m_hash = qHashMulti(
+        0,
+        m_id, m_name, m_shortBio, m_cover, m_nbAlbums, m_nbTracks);
 }
 
 QString MLArtist::getName() const

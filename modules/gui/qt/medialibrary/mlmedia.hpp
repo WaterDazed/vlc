@@ -65,6 +65,10 @@ public:
         m_duration = VLCTick::fromMS(media->i_duration);
         m_progress = media->f_progress;
         m_playCount = media->i_playcount;
+
+        m_hash = qHashMulti(
+            0,
+            m_id, m_title, m_fileName, m_smallCover.mrl, m_bannerCover.mrl, m_duration, m_progress, m_playCount);
     }
 
     QString title() const { return m_title; }

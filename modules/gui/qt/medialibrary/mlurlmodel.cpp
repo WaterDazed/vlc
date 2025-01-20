@@ -125,6 +125,9 @@ MLUrl::MLUrl(const vlc_ml_media_t *_data)
           QDateTime::fromSecsSinceEpoch( _data->i_last_played_date, QTimeZone::systemTimeZone() ).toString( QLocale::system().dateFormat( QLocale::ShortFormat ) )
           )
 {
+    m_hash = qHashMulti(
+        0,
+        m_id, m_url, m_lastPlayedDate);
 }
 
 MLUrl::MLUrl(const MLUrl &url)

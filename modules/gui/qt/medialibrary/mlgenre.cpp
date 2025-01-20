@@ -25,6 +25,9 @@ MLGenre::MLGenre(const vlc_ml_genre_t *_data )
 
 {
     assert(_data);
+    m_hash = qHashMulti(
+        0,
+        m_id, m_name, m_nbTracks);
 }
 
 QString MLGenre::getName() const

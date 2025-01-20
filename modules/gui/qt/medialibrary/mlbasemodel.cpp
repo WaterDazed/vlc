@@ -38,7 +38,8 @@ using MLListCache = ListCache<std::unique_ptr<MLItem>>;
 template<>
 bool MLListCache::compareItems(const ItemType& a, const ItemType& b)
 {
-    return a->getId() == b->getId();
+    //id is part of the hash so it should be faster to compare hash first
+    return a->getHash() == b->getHash() && a->getId() == b->getId();
 }
 
 static constexpr ssize_t COUNT_UNINITIALIZED = MLListCache::COUNT_UNINITIALIZED;
