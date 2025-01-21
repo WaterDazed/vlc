@@ -205,7 +205,73 @@ static void UpdateDvdSpu(subpicture_t * p_spu,
     vlc_spu_regions_Clear( &p_spu->regions );
 
     render_data *rd = p_spu->updater.sys;
-    subpicture_region_t *p_region = subpicture_region_ForPicture( &rd->pic->format, rd->pic );
+    const int x_offset = rd->i_x;
+    const int y_offset = rd->i_y + rd->i_y_top_offset;
+
+    picture_t *region_pic = rd->pic;
+    picture_t *cropped = NULL;
+    int i_x_offset       = rd->pic->format.i_x_offset;
+    int i_y_offset       = rd->pic->format.i_y_offset;
+    int i_visible_width  = rd->pic->format.i_visible_width;
+    int i_visible_height = rd->pic->format.i_visible_height;
+
+    if ( cfg->dvd_hl
+         && cfg->dvd_hl->x_end > cfg->dvd_hl->x_start
+         && cfg->dvd_hl->y_end > cfg->dvd_hl->y_start )
+    {
+        // picture area in video coordinates
+        const int video_x_start = x_offset;
+        const int video_y_start = y_offset;
+        const int video_x_end = video_x_start + rd->pic->format.i_x_offset + rd->pic->format.i_visible_width;
+        const int video_y_end = video_y_start + rd->pic->format.i_y_offset + rd->pic->format.i_visible_height;
+
+        // compute the crop coordinates in video dimensions, inside the cropped video
+        const int x_start = __MAX(cfg->dvd_hl->x_start, video_x_start);
+        const int y_start = __MAX(cfg->dvd_hl->y_start, video_y_start);
+        const int x_end   = __MIN(cfg->dvd_hl->x_end,   video_x_end);
+        const int y_end   = __MIN(cfg->dvd_hl->y_end,   video_y_end);
+
+        if (x_end > x_start && y_end > y_start)
+        {
+            i_x_offset       = x_start - x_offset;
+            i_y_offset       = y_start - y_offset;
+            i_visible_width  = x_end - x_start;
+            i_visible_height = y_end - y_start;
+
+            if ((unsigned)i_visible_width  != rd->pic->format.i_visible_width  ||
+                (unsigned)i_visible_height != rd->pic->format.i_visible_height ||
+                (unsigned)i_x_offset       != rd->pic->format.i_x_offset       ||
+                (unsigned)i_y_offset       != rd->pic->format.i_y_offset)
+            {
+                cropped = picture_Clone( rd->pic );
+                if ( cropped )
+                {
+                    // skip bytes in the YUVP buffer to pretend it is a picture without
+                    // cropping, until we can provide cropped picture formats to the core
+                    region_pic = cropped;
+                    cropped->p[0].p_pixels = &cropped->p[0].p_pixels[i_x_offset + i_y_offset * cropped->p[0].i_pitch];
+                    cropped->p[0].i_lines -= i_y_offset;
+                    cropped->p[0].i_visible_lines -= i_y_offset;
+                    cropped->p[0].i_visible_pitch = i_visible_width;
+                    cropped->format.i_x_offset = 0;
+                    cropped->format.i_y_offset = 0;
+                    cropped->format.i_visible_width = i_visible_width;
+                    cropped->format.i_visible_height = i_visible_height;
+                }
+            }
+
+            if (cropped == NULL)
+            {
+                // region_pic is not shifted
+                i_x_offset = 0;
+                i_y_offset = 0;
+            }
+        }
+    }
+
+    subpicture_region_t *p_region = subpicture_region_ForPicture( &region_pic->format, region_pic );
+    if (cropped)
+        picture_Release(cropped);
     if( !p_region )
         return;
 
@@ -213,8 +279,8 @@ static void UpdateDvdSpu(subpicture_t * p_spu,
     p_spu->i_original_picture_height = cfg->video_src->i_visible_height;
 
     p_region->b_absolute = true;
-    p_region->i_x = rd->i_x;
-    p_region->i_y = rd->i_y + rd->i_y_top_offset;
+    p_region->i_x = x_offset + i_x_offset;
+    p_region->i_y = y_offset + i_y_offset;
 
     vlc_spu_regions_push(&p_spu->regions, p_region);
 }
@@ -887,8 +953,10 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
     video_format_t fmt;
     video_palette_t palette;
     const int width = p_spu_properties->i_width;
-    const int height = p_spu_properties->i_height -
+    const int visible_height = p_spu_properties->i_height -
         p_spu_data->i_y_top_offset - p_spu_data->i_y_bottom_offset;
+    const int height = visible_height
+        + 1; // extra line so the shifted planes doesn't read further than our buffer
 
     render_data *rd = malloc(sizeof(*rd));
     if (unlikely(rd == NULL))
@@ -896,7 +964,7 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
 
     /* Create a new subpicture region */
     video_format_Init( &fmt, VLC_CODEC_YUVP );
-    video_format_Setup( &fmt, VLC_CODEC_YUVP, width, height, width, height,
+    video_format_Setup( &fmt, VLC_CODEC_YUVP, width, height, width, visible_height,
                         0, /* 0 means use aspect ratio of background video */
                         1 );
     fmt.p_palette = &palette;
@@ -928,7 +996,7 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
     i_pitch = rd->pic->p->i_pitch;
 
     /* Draw until we reach the bottom of the subtitle */
-    for( i_y = 0; i_y < height * i_pitch; i_y += i_pitch )
+    for( i_y = 0; i_y < visible_height * i_pitch; i_y += i_pitch )
     {
         /* Draw until we reach the end of the line */
         for( i_x = 0 ; i_x < width; i_x += i_len )

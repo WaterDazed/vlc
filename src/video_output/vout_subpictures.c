@@ -966,7 +966,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
      */
     const bool using_palette = region->p_picture->format.i_chroma == VLC_CODEC_YUVP;
     const bool force_palette = using_palette && sys->crop_highlight;
-    const bool crop_requested = (force_palette && sys->crop_highlight) ||
+    const bool crop_requested = (force_palette && false) ||
                                 region->i_max_width || region->i_max_height;
     bool changed_palette     = false;
 
@@ -1202,7 +1202,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
     /* Force cropping if requested */
     if (crop_requested) {
         int crop_x, crop_y, crop_width, crop_height;
-        if(sys->crop_highlight){
+        if(false){
             crop_x      = sys->dvd_highlight.x_start;
             crop_y      = sys->dvd_highlight.y_start;
             crop_width  = sys->dvd_highlight.x_end - sys->dvd_highlight.x_start;
