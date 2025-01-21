@@ -50,17 +50,17 @@ int  WindowOpen   ( vlc_window_t * );
 
 vlc_module_begin ()
     /* Minimal interface. see intf.m */
-    set_shortname( "Minimal Macosx" )
-    add_shortcut( "minimal_macosx", "miosx" )
-    set_description( N_("Minimal Mac OS X interface") )
-    set_capability( "interface", 50 )
-    set_callbacks( OpenIntf, CloseIntf )
-    set_subcategory( SUBCAT_INTERFACE_MAIN )
+    vlc_set_shortname( "Minimal Macosx" )
+    vlc_add_shortcut( "minimal_macosx", "miosx" )
+    vlc_set_description( N_("Minimal Mac OS X interface") )
+    vlc_set_capability( "interface", 50 )
+    vlc_set_callbacks( OpenIntf, CloseIntf )
+    vlc_set_subcategory( SUBCAT_INTERFACE_MAIN )
 
-    add_submodule ()
+    vlc_add_submodule ()
     /* Will be loaded even without interface module. see voutgl.m */
-        set_description( "Minimal Mac OS X Video Output Provider" )
-        set_capability( "vout window", 50 )
-        set_callback( WindowOpen )
+        vlc_set_description( "Minimal Mac OS X Video Output Provider" )
+        vlc_set_capability( "vout window", 50 )
+        vlc_set_callback( WindowOpen )
 vlc_module_end ()
 

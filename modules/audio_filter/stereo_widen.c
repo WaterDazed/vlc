@@ -74,20 +74,20 @@ typedef struct
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname( N_("Stereo Enhancer") )
-    set_description( N_("Simple stereo widening effect") )
-    set_help( HELP_TEXT )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    set_capability( "audio filter", 0 )
-    set_callback( Open )
+    vlc_set_shortname( N_("Stereo Enhancer") )
+    vlc_set_description( N_("Simple stereo widening effect") )
+    vlc_set_help( HELP_TEXT )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_callback( Open )
 
-    add_float_with_range( CONFIG_PREFIX "delay", 20, 1, 100,
+    vlc_add_float_with_range( CONFIG_PREFIX "delay", 20, 1, 100,
         DELAY_TEXT, DELAY_LONGTEXT )
-    add_float_with_range( CONFIG_PREFIX "feedback", 0.3, 0.0, 0.9,
+    vlc_add_float_with_range( CONFIG_PREFIX "feedback", 0.3, 0.0, 0.9,
         FEEDBACK_TEXT, FEEDBACK_LONGTEXT )
-    add_float_with_range( CONFIG_PREFIX "crossfeed", 0.3, 0.0, 0.8,
+    vlc_add_float_with_range( CONFIG_PREFIX "crossfeed", 0.3, 0.0, 0.8,
         CROSSFEED_TEXT, CROSSFEED_LONGTEXT )
-    add_float_with_range( CONFIG_PREFIX "dry-mix", 0.8, 0.0, 1.0,
+    vlc_add_float_with_range( CONFIG_PREFIX "dry-mix", 0.8, 0.0, 1.0,
         DRYMIX_TEXT, DRYMIX_LONGTEXT )
 vlc_module_end ()
 

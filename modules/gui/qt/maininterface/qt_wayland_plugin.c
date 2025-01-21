@@ -23,13 +23,13 @@
 #endif
 
 vlc_module_begin()
-    set_shortname(N_("QtWayland"))
-    set_description(N_(" calls for compositing with Qt"))
-    set_capability("qtwayland", 10)
-    set_callback(OpenCompositor)
+    vlc_set_shortname(N_("QtWayland"))
+    vlc_set_description(N_(" calls for compositing with Qt"))
+    vlc_set_capability("qtwayland", 10)
+    vlc_set_callback(OpenCompositor)
 #ifdef QT_HAS_WAYLAND_PROTOCOLS
-add_submodule()
-    set_capability("qtcsdmenu", 10)
-    set_callbacks(WaylandCSDMenuOpen, WaylandCSDMenuClose)
+vlc_add_submodule()
+    vlc_set_capability("qtcsdmenu", 10)
+    vlc_set_callbacks(WaylandCSDMenuOpen, WaylandCSDMenuClose)
 #endif
 vlc_module_end()

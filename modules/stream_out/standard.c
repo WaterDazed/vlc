@@ -68,25 +68,25 @@ static void     Close   ( sout_stream_t * );
 #endif
 
 vlc_module_begin ()
-    set_shortname( N_("Standard"))
-    set_description( N_("Standard stream output") )
-    set_capability( "sout output", 50 )
-    add_shortcut( "standard", "std", "file", "http", SRT_SHORTCUT )
-    set_subcategory( SUBCAT_SOUT_STREAM )
+    vlc_set_shortname( N_("Standard"))
+    vlc_set_description( N_("Standard stream output") )
+    vlc_set_capability( "sout output", 50 )
+    vlc_add_shortcut( "standard", "std", "file", "http", SRT_SHORTCUT )
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )
 
-    add_string( SOUT_CFG_PREFIX "access", "", ACCESS_TEXT, ACCESS_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "mux", "", MUX_TEXT, MUX_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "dst", "", DEST_TEXT, DEST_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "bind", "", BIND_TEXT, BIND_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "path", "", PATH_TEXT, PATH_LONGTEXT )
-    add_obsolete_bool( SOUT_CFG_PREFIX "sap" ) /* since 4.0.0 */
-    add_obsolete_string( SOUT_CFG_PREFIX "name" ) /* since 4.0.0 */
-    add_obsolete_string( SOUT_CFG_PREFIX "description" ) /* since 4.0.0 */
-    add_obsolete_string( SOUT_CFG_PREFIX "url" ) /* since 4.0.0 */
-    add_obsolete_string( SOUT_CFG_PREFIX "email" ) /* since 4.0.0 */
-    add_obsolete_string( SOUT_CFG_PREFIX "phone" ) /* since 3.0.0 */
+    vlc_add_string( SOUT_CFG_PREFIX "access", "", ACCESS_TEXT, ACCESS_LONGTEXT )
+    vlc_add_string( SOUT_CFG_PREFIX "mux", "", MUX_TEXT, MUX_LONGTEXT )
+    vlc_add_string( SOUT_CFG_PREFIX "dst", "", DEST_TEXT, DEST_LONGTEXT )
+    vlc_add_string( SOUT_CFG_PREFIX "bind", "", BIND_TEXT, BIND_LONGTEXT )
+    vlc_add_string( SOUT_CFG_PREFIX "path", "", PATH_TEXT, PATH_LONGTEXT )
+    vlc_add_obsolete_bool( SOUT_CFG_PREFIX "sap" ) /* since 4.0.0 */
+    vlc_add_obsolete_string( SOUT_CFG_PREFIX "name" ) /* since 4.0.0 */
+    vlc_add_obsolete_string( SOUT_CFG_PREFIX "description" ) /* since 4.0.0 */
+    vlc_add_obsolete_string( SOUT_CFG_PREFIX "url" ) /* since 4.0.0 */
+    vlc_add_obsolete_string( SOUT_CFG_PREFIX "email" ) /* since 4.0.0 */
+    vlc_add_obsolete_string( SOUT_CFG_PREFIX "phone" ) /* since 3.0.0 */
 
-    set_callback( Open )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 

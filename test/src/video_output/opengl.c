@@ -177,24 +177,24 @@ OpenOpenGLESOffscreen(vlc_gl_t *gl, unsigned width, unsigned height,
  *  - opengl offscreen for generating video context and using decoder device
  **/
 vlc_module_begin()
-    set_callback_dec_device(OpenDecoderDevice, 1000)
-    add_shortcut("test_offscreen")
+    vlc_set_callback_dec_device(OpenDecoderDevice, 1000)
+    vlc_add_shortcut("test_offscreen")
 
-    add_submodule()
-        set_callback(OpenWindow)
-        set_capability("vout window", 1)
+    vlc_add_submodule()
+        vlc_set_callback(OpenWindow)
+        vlc_set_capability("vout window", 1)
 
-    add_submodule()
-        set_callback_opengl(OpenOpenGL, 1)
+    vlc_add_submodule()
+        vlc_set_callback_opengl(OpenOpenGL, 1)
 
-    add_submodule()
-        set_callback_opengl_es2(OpenOpenGLES, 1)
+    vlc_add_submodule()
+        vlc_set_callback_opengl_es2(OpenOpenGLES, 1)
 
-    add_submodule()
-        set_callback_opengl_offscreen(OpenOpenGLOffscreen, 1)
+    vlc_add_submodule()
+        vlc_set_callback_opengl_offscreen(OpenOpenGLOffscreen, 1)
 
-    add_submodule()
-        set_callback_opengl_es2_offscreen(OpenOpenGLESOffscreen, 1)
+    vlc_add_submodule()
+        vlc_set_callback_opengl_es2_offscreen(OpenOpenGLESOffscreen, 1)
 vlc_module_end()
 
 VLC_EXPORT const vlc_plugin_cb vlc_static_modules[] = {

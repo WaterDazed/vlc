@@ -148,8 +148,8 @@ static int Open(filter_t *filter)
 }
 
 vlc_module_begin()
-    set_description(N_("VDPAU sharpen video filter"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    add_shortcut("sharpen")
-    set_callback_video_filter(Open)
+    vlc_set_description(N_("VDPAU sharpen video filter"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_add_shortcut("sharpen")
+    vlc_set_callback_video_filter(Open)
 vlc_module_end()

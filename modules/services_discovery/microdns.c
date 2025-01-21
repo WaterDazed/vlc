@@ -55,19 +55,19 @@ VLC_RD_PROBE_HELPER( "microdns_renderer", "mDNS renderer Discovery" )
  * Module descriptor
  */
 vlc_module_begin()
-    set_shortname( "mDNS" )
-    set_description( N_( "mDNS Network Discovery" ) )
-    set_subcategory( SUBCAT_PLAYLIST_SD )
-    set_capability( "services_discovery", 0 )
-    set_callbacks( OpenSD, CloseSD )
-    add_shortcut( "mdns", "microdns" )
+    vlc_set_shortname( "mDNS" )
+    vlc_set_description( N_( "mDNS Network Discovery" ) )
+    vlc_set_subcategory( SUBCAT_PLAYLIST_SD )
+    vlc_set_capability( "services_discovery", 0 )
+    vlc_set_callbacks( OpenSD, CloseSD )
+    vlc_add_shortcut( "mdns", "microdns" )
     VLC_SD_PROBE_SUBMODULE
-    add_submodule() \
-        set_description( N_( "mDNS Renderer Discovery" ) )
-        set_subcategory( SUBCAT_SOUT_RENDERER )
-        set_capability( "renderer_discovery", 0 )
-        set_callbacks( OpenRD, CloseRD )
-        add_shortcut( "mdns_renderer", "microdns_renderer" )
+    vlc_add_submodule() \
+        vlc_set_description( N_( "mDNS Renderer Discovery" ) )
+        vlc_set_subcategory( SUBCAT_SOUT_RENDERER )
+        vlc_set_capability( "renderer_discovery", 0 )
+        vlc_set_callbacks( OpenRD, CloseRD )
+        vlc_add_shortcut( "mdns_renderer", "microdns_renderer" )
         VLC_RD_PROBE_SUBMODULE
 vlc_module_end ()
 

@@ -66,17 +66,17 @@ static int  Decode( decoder_t *, block_t * );
         "your subtitles don't appear.")
 
 vlc_module_begin ()
-    set_description( N_("Teletext subtitles decoder") )
-    set_shortname( "Teletext" )
-    set_capability( "spu decoder", 50 )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_callback( Open )
+    vlc_set_description( N_("Teletext subtitles decoder") )
+    vlc_set_shortname( "Teletext" )
+    vlc_set_capability( "spu decoder", 50 )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_callback( Open )
 
-    add_integer( "telx-override-page", -1,
+    vlc_add_integer( "telx-override-page", -1,
                  OVERRIDE_PAGE_TEXT, OVERRIDE_PAGE_LONGTEXT )
-    add_bool( "telx-ignore-subtitle-flag", false,
+    vlc_add_bool( "telx-ignore-subtitle-flag", false,
               IGNORE_SUB_FLAG_TEXT, IGNORE_SUB_FLAG_LONGTEXT )
-    add_bool( "telx-french-workaround", false,
+    vlc_add_bool( "telx-french-workaround", false,
               FRENCH_WORKAROUND_TEXT, FRENCH_WORKAROUND_LONGTEXT )
 
 vlc_module_end ()

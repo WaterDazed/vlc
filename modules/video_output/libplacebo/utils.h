@@ -67,20 +67,20 @@ void vlc_placebo_ColorMapParams(vlc_object_t *obj, const char *prefix,
                                 struct pl_color_map_params *out_params);
 
 #define add_placebo_color_map_opts(prefix) \
-    add_integer(prefix"-gamut-mapping", GAMUT_AUTO, \
+    vlc_add_integer(prefix"-gamut-mapping", GAMUT_AUTO, \
             GAMUT_MAPPING_TEXT, GAMUT_MAPPING_LONGTEXT) \
-            change_integer_list(gamut_values, gamut_text) \
-    add_obsolete_integer(prefix"-gamut-mode") /* since 4.0.0 */ \
-    add_obsolete_integer(prefix"-rendering-intent") /* since 4.0.0 */ \
-    add_integer(prefix"-tone-mapping-function", TONEMAP_AUTO, \
+            vlc_change_integer_list(gamut_values, gamut_text) \
+    vlc_add_obsolete_integer(prefix"-gamut-mode") /* since 4.0.0 */ \
+    vlc_add_obsolete_integer(prefix"-rendering-intent") /* since 4.0.0 */ \
+    vlc_add_integer(prefix"-tone-mapping-function", TONEMAP_AUTO, \
             TONEMAP_FUNC_TEXT, TONEMAP_FUNC_LONGTEXT) \
-            change_integer_list(tone_values, tone_text) \
-    add_float(prefix"-tone-mapping-param", pl_color_map_default_params.tone_mapping_param, \
+            vlc_change_integer_list(tone_values, tone_text) \
+    vlc_add_float(prefix"-tone-mapping-param", pl_color_map_default_params.tone_mapping_param, \
             TONEMAP_PARAM_TEXT, TONEMAP_PARAM_LONGTEXT) \
-    add_obsolete_integer(prefix"-tone-mapping-mode") /* since 4.0.0 */ \
-    add_bool(prefix"-inverse-tone-mapping", false, \
+    vlc_add_obsolete_integer(prefix"-tone-mapping-mode") /* since 4.0.0 */ \
+    vlc_add_bool(prefix"-inverse-tone-mapping", false, \
             INVERSE_TONEMAPPING_TEXT, INVERSE_TONEMAPPING_LONGTEXT) \
-    add_obsolete_integer(prefix"-crosstalk") /* since 4.0.0 */
+    vlc_add_obsolete_integer(prefix"-crosstalk") /* since 4.0.0 */
 
 // Shared options strings/structs for libplacebo options
 

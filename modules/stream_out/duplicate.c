@@ -43,15 +43,15 @@
 static int      Open    ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("Duplicate stream output") )
-    set_capability( "sout output", 50 )
-    add_shortcut( "duplicate", "dup" )
-    set_subcategory( SUBCAT_SOUT_STREAM )
-    set_callback( Open )
-    add_submodule()
-    set_capability("sout filter", 0)
-    add_shortcut("duplicate", "dup")
-    set_callback(Open)
+    vlc_set_description( N_("Duplicate stream output") )
+    vlc_set_capability( "sout output", 50 )
+    vlc_add_shortcut( "duplicate", "dup" )
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )
+    vlc_set_callback( Open )
+    vlc_add_submodule()
+    vlc_set_capability("sout filter", 0)
+    vlc_add_shortcut("duplicate", "dup")
+    vlc_set_callback(Open)
 vlc_module_end ()
 
 

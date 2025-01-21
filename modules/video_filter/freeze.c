@@ -75,11 +75,11 @@ static int  Open ( filter_t * );
 static void Close( filter_t * );
 
 vlc_module_begin()
-    set_description( N_("Freezing interactive video filter") )
-    set_shortname(   N_("Freeze" ) )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Freezing interactive video filter") )
+    vlc_set_shortname(   N_("Freeze" ) )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    set_callback_video_filter( Open )
+    vlc_set_callback_video_filter( Open )
 vlc_module_end()
 
 /*****************************************************************************

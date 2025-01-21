@@ -384,8 +384,8 @@ error:
 }
 
 vlc_module_begin ()
-    set_description("Apple OpenGL CVPX converter")
-    set_capability("glinterop", 1)
-    set_callback(Open)
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_description("Apple OpenGL CVPX converter")
+    vlc_set_capability("glinterop", 1)
+    vlc_set_callback(Open)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 vlc_module_end ()

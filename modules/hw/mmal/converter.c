@@ -66,15 +66,15 @@ static const char * const  ppsz_converter_text[] = {
 static int OpenConverter(filter_t *);
 
 vlc_module_begin()
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    set_shortname(N_("MMAL resizer"))
-    set_description(N_("MMAL resizing conversion filter"))
-    add_shortcut("mmal_converter")
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_shortname(N_("MMAL resizer"))
+    vlc_set_description(N_("MMAL resizing conversion filter"))
+    vlc_add_shortcut("mmal_converter")
 #ifndef NDEBUG
-    add_integer( MMAL_CONVERTER_TYPE_NAME, FILTER_RESIZER_HVS, MMAL_CONVERTER_TYPE_TEXT, MMAL_CONVERTER_TYPE_LONGTEXT )
-        change_integer_list( pi_converter_modes, ppsz_converter_text )
+    vlc_add_integer( MMAL_CONVERTER_TYPE_NAME, FILTER_RESIZER_HVS, MMAL_CONVERTER_TYPE_TEXT, MMAL_CONVERTER_TYPE_LONGTEXT )
+        vlc_change_integer_list( pi_converter_modes, ppsz_converter_text )
 #endif
-    set_callback_video_converter(OpenConverter, 900)
+    vlc_set_callback_video_converter(OpenConverter, 900)
 vlc_module_end()
 
 #define MMAL_SLICE_HEIGHT 16

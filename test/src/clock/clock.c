@@ -303,8 +303,8 @@ OpenTracer(vlc_object_t *obj, void **restrict sysp)
 }
 
 vlc_module_begin()
-    set_callback(OpenTracer)
-    set_capability("tracer", 0)
+    vlc_set_callback(OpenTracer)
+    vlc_set_capability("tracer", 0)
 vlc_module_end()
 
 VLC_EXPORT const vlc_plugin_cb vlc_static_modules[] = {

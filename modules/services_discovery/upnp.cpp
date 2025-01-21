@@ -129,47 +129,47 @@ VLC_RD_PROBE_HELPER( "upnp_renderer", N_("UPnP Renderer Discovery") )
  * Module descriptor
  */
 vlc_module_begin()
-    set_shortname( "UPnP" )
-    set_description( N_( "Universal Plug'n'Play" ) )
-    set_subcategory( SUBCAT_PLAYLIST_SD )
-    set_capability( "services_discovery", 0 )
-    set_callbacks( SD::OpenSD, SD::CloseSD )
+    vlc_set_shortname( "UPnP" )
+    vlc_set_description( N_( "Universal Plug'n'Play" ) )
+    vlc_set_subcategory( SUBCAT_PLAYLIST_SD )
+    vlc_set_capability( "services_discovery", 0 )
+    vlc_set_callbacks( SD::OpenSD, SD::CloseSD )
 
-    add_obsolete_string( "satip-channelist" ) /* since 3.0.22 */
-    add_string( "satip-channellist-url", NULL, SATIP_CHANNEL_LIST_URL,
+    vlc_add_obsolete_string( "satip-channelist" ) /* since 3.0.22 */
+    vlc_add_string( "satip-channellist-url", NULL, SATIP_CHANNEL_LIST_URL,
                 nullptr )
 
-    add_submodule()
-        set_subcategory( SUBCAT_INPUT_ACCESS )
-        set_callbacks( Access::OpenAccess, Access::CloseAccess )
-        set_capability( "access", 0 )
-        add_shortcut( "upnp", "upnps" )
+    vlc_add_submodule()
+        vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+        vlc_set_callbacks( Access::OpenAccess, Access::CloseAccess )
+        vlc_set_capability( "access", 0 )
+        vlc_add_shortcut( "upnp", "upnps" )
 
     VLC_SD_PROBE_SUBMODULE
 
-    add_submodule()
-        set_description( N_( "UPnP Renderer Discovery" ) )
-        set_subcategory( SUBCAT_SOUT_RENDERER )
-        set_callbacks( RD::OpenRD, RD::CloseRD )
-        set_capability( "renderer_discovery", 0 )
-        add_shortcut( "upnp_renderer" )
+    vlc_add_submodule()
+        vlc_set_description( N_( "UPnP Renderer Discovery" ) )
+        vlc_set_subcategory( SUBCAT_SOUT_RENDERER )
+        vlc_set_callbacks( RD::OpenRD, RD::CloseRD )
+        vlc_set_capability( "renderer_discovery", 0 )
+        vlc_add_shortcut( "upnp_renderer" )
 
     VLC_RD_PROBE_SUBMODULE
 
-    add_submodule()
-        set_shortname("dlna")
-        set_description(N_("UPnP/DLNA stream output"))
-        set_capability("sout output", 0)
-        add_shortcut("dlna")
-        set_subcategory(SUBCAT_SOUT_STREAM)
-        set_callback(DLNA::OpenSout)
+    vlc_add_submodule()
+        vlc_set_shortname("dlna")
+        vlc_set_description(N_("UPnP/DLNA stream output"))
+        vlc_set_capability("sout output", 0)
+        vlc_add_shortcut("dlna")
+        vlc_set_subcategory(SUBCAT_SOUT_STREAM)
+        vlc_set_callback(DLNA::OpenSout)
 
-        add_string(SOUT_CFG_PREFIX "ip", NULL, IP_ADDR_TEXT, IP_ADDR_LONGTEXT)
-        add_integer(SOUT_CFG_PREFIX "port", 0, PORT_TEXT, PORT_LONGTEXT)
-        add_integer(SOUT_CFG_PREFIX "http-port", HTTP_PORT, HTTP_PORT_TEXT, HTTP_PORT_LONGTEXT)
-        add_bool(SOUT_CFG_PREFIX "video", true, HAS_VIDEO_TEXT, HAS_VIDEO_LONGTEXT)
-        add_string(SOUT_CFG_PREFIX "base_url", NULL, BASE_URL_TEXT, BASE_URL_LONGTEXT)
-        add_string(SOUT_CFG_PREFIX "url", NULL, URL_TEXT, URL_LONGTEXT)
+        vlc_add_string(SOUT_CFG_PREFIX "ip", NULL, IP_ADDR_TEXT, IP_ADDR_LONGTEXT)
+        vlc_add_integer(SOUT_CFG_PREFIX "port", 0, PORT_TEXT, PORT_LONGTEXT)
+        vlc_add_integer(SOUT_CFG_PREFIX "http-port", HTTP_PORT, HTTP_PORT_TEXT, HTTP_PORT_LONGTEXT)
+        vlc_add_bool(SOUT_CFG_PREFIX "video", true, HAS_VIDEO_TEXT, HAS_VIDEO_LONGTEXT)
+        vlc_add_string(SOUT_CFG_PREFIX "base_url", NULL, BASE_URL_TEXT, BASE_URL_LONGTEXT)
+        vlc_add_string(SOUT_CFG_PREFIX "url", NULL, URL_TEXT, URL_LONGTEXT)
         add_renderer_opts(SOUT_CFG_PREFIX)
 vlc_module_end()
 

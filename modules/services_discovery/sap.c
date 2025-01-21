@@ -710,18 +710,18 @@ static void Close( vlc_object_t *p_this )
 VLC_SD_PROBE_HELPER("sap", N_("Network streams (SAP)"), SD_CAT_LAN)
 
 vlc_module_begin()
-    set_shortname(N_("SAP"))
-    set_description(N_("Network streams (SAP)") )
-    set_subcategory(SUBCAT_PLAYLIST_SD)
+    vlc_set_shortname(N_("SAP"))
+    vlc_set_description(N_("Network streams (SAP)") )
+    vlc_set_subcategory(SUBCAT_PLAYLIST_SD)
 
-    add_string("sap-addr", NULL, SAP_ADDR_TEXT, SAP_ADDR_LONGTEXT)
-    add_integer("sap-timeout", 1800,
+    vlc_add_string("sap-addr", NULL, SAP_ADDR_TEXT, SAP_ADDR_LONGTEXT)
+    vlc_add_integer("sap-timeout", 1800,
                 SAP_TIMEOUT_TEXT, SAP_TIMEOUT_LONGTEXT)
-    add_obsolete_bool("sap-parse") /* since 4.0.0 */
-    add_obsolete_bool("sap-strict") /* since 4.0.0 */
+    vlc_add_obsolete_bool("sap-parse") /* since 4.0.0 */
+    vlc_add_obsolete_bool("sap-strict") /* since 4.0.0 */
 
-    set_capability("services_discovery", 0)
-    set_callbacks(Open, Close)
+    vlc_set_capability("services_discovery", 0)
+    vlc_set_callbacks(Open, Close)
 
     VLC_SD_PROBE_SUBMODULE
 vlc_module_end()

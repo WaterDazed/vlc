@@ -2252,19 +2252,19 @@ static const char *const chroma_list_names[] =
     };
 
 vlc_module_begin()
-    set_subcategory(SUBCAT_INPUT_VCODEC)
-    set_description(N_("VideoToolbox video decoder"))
-    set_capability("video decoder", 800)
-    set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_description(N_("VideoToolbox video decoder"))
+    vlc_set_capability("video decoder", 800)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
 
-    add_bool("videotoolbox-hw-decoder-only", true, VT_REQUIRE_HW_DEC, VT_REQUIRE_HW_DEC)
-    add_string("videotoolbox-cvpx-chroma", "", VT_FORCE_CVPX_CHROMA, VT_FORCE_CVPX_CHROMA_LONG)
-        change_string_list(chroma_list_values, chroma_list_names)
+    vlc_add_bool("videotoolbox-hw-decoder-only", true, VT_REQUIRE_HW_DEC, VT_REQUIRE_HW_DEC)
+    vlc_add_string("videotoolbox-cvpx-chroma", "", VT_FORCE_CVPX_CHROMA, VT_FORCE_CVPX_CHROMA_LONG)
+        vlc_change_string_list(chroma_list_values, chroma_list_names)
 
     /* Deprecated options */
-    add_obsolete_bool("videotoolbox-temporal-deinterlacing") // Since 4.0.0
-    add_obsolete_bool("videotoolbox") // Since 4.0.0
+    vlc_add_obsolete_bool("videotoolbox-temporal-deinterlacing") // Since 4.0.0
+    vlc_add_obsolete_bool("videotoolbox") // Since 4.0.0
 
-    add_submodule()
-        set_callback_dec_device(OpenDecDevice, 1)
+    vlc_add_submodule()
+        vlc_set_callback_dec_device(OpenDecDevice, 1)
 vlc_module_end()

@@ -287,10 +287,10 @@ static int EmFileOpen( vlc_object_t *p_this ) {
 }
 
 vlc_module_begin ()
-    set_description( N_("Emscripten module to allow reading local files from the DOM's <input>") )
-    set_shortname( N_("Emscripten Local File Input") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    set_capability( "access", 0 )
-    add_shortcut( "emjsfile" )
-    set_callbacks( EmFileOpen, EmFileClose )
+    vlc_set_description( N_("Emscripten module to allow reading local files from the DOM's <input>") )
+    vlc_set_shortname( N_("Emscripten Local File Input") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "emjsfile" )
+    vlc_set_callbacks( EmFileOpen, EmFileClose )
 vlc_module_end()

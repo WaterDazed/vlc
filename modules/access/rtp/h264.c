@@ -298,9 +298,9 @@ static int rtp_h264_open(vlc_object_t *obj, struct vlc_rtp_pt *pt,
 }
 
 vlc_module_begin()
-    set_shortname(N_("RTP H264"))
-    set_description(N_("RTP H264 payload parser"))
-    set_subcategory(SUBCAT_INPUT_DEMUX)
+    vlc_set_shortname(N_("RTP H264"))
+    vlc_set_description(N_("RTP H264 payload parser"))
+    vlc_set_subcategory(SUBCAT_INPUT_DEMUX)
     set_rtp_parser_callback(rtp_h264_open)
-    add_shortcut("video/H264")
+    vlc_add_shortcut("video/H264")
 vlc_module_end()

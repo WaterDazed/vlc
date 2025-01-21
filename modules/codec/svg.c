@@ -58,21 +58,21 @@ static int DecodeBlock  ( decoder_t *, block_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_description( N_("SVG video decoder") )
-    set_capability( "video decoder", 100 )
-    set_callbacks( OpenDecoder, CloseDecoder )
-    add_shortcut( "svg" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_description( N_("SVG video decoder") )
+    vlc_set_capability( "video decoder", 100 )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_add_shortcut( "svg" )
 
     /* svg options */
-    add_integer_with_range( "svg-width", -1, -1, 65535,
+    vlc_add_integer_with_range( "svg-width", -1, -1, 65535,
                             TEXT_WIDTH, LONG_TEXT_WIDTH )
-        change_safe()
-    add_integer_with_range( "svg-height", -1, -1, 65535,
+        vlc_change_safe()
+    vlc_add_integer_with_range( "svg-height", -1, -1, 65535,
                             TEXT_HEIGHT, LONG_TEXT_HEIGHT )
-        change_safe()
+        vlc_change_safe()
 
-    add_float( "svg-scale", -1.0, TEXT_SCALE, LONG_TEXT_SCALE )
+    vlc_add_float( "svg-scale", -1.0, TEXT_SCALE, LONG_TEXT_SCALE )
 vlc_module_end ()
 
 typedef struct

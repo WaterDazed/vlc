@@ -127,15 +127,15 @@ static int OpenConverter(filter_t *filter)
 
 /** Inject the mocked modules as a static plugin: **/
 vlc_module_begin()
-    set_callback(OpenEncoder)
-    set_capability("image encoder", INT_MAX)
+    vlc_set_callback(OpenEncoder)
+    vlc_set_capability("image encoder", INT_MAX)
 
-    add_submodule()
-        set_callback_video_converter(OpenConverter, INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callback_video_converter(OpenConverter, INT_MAX)
 
-    add_submodule()
-        set_callback(OpenIntf)
-        set_capability("interface", 0)
+    vlc_add_submodule()
+        vlc_set_callback(OpenIntf)
+        vlc_set_capability("interface", 0)
 
 vlc_module_end()
 

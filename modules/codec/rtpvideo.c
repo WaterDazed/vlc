@@ -41,11 +41,11 @@ static block_t *Encode( encoder_t *p_enc, picture_t *p_pict );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Raw video encoder for RTP") )
-    set_capability( "video encoder", 50 )
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_callback( OpenEncoder )
-    add_shortcut( "rtpvideo" )
+    vlc_set_description( N_("Raw video encoder for RTP") )
+    vlc_set_capability( "video encoder", 50 )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_callback( OpenEncoder )
+    vlc_add_shortcut( "rtpvideo" )
 vlc_module_end ()
 
 static int OpenEncoder( vlc_object_t *p_this )

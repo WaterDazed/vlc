@@ -69,22 +69,22 @@ static int  Open ( vlc_object_t * );
 #define DAMP_LONGTEXT NULL
 
 vlc_module_begin ()
-    set_description( N_("Audio Spatializer") )
-    set_shortname( N_("Spatializer" ) )
-    set_capability( "audio filter", 0 )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_description( N_("Audio Spatializer") )
+    vlc_set_shortname( N_("Spatializer" ) )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
 
-    set_callback( Open )
-    add_shortcut( "spatializer" )
-    add_float_with_range( "spatializer-roomsize", 0.85, 0., 1.1,
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "spatializer" )
+    vlc_add_float_with_range( "spatializer-roomsize", 0.85, 0., 1.1,
                             ROOMSIZE_TEXT, ROOMSIZE_LONGTEXT )
-    add_float_with_range( "spatializer-width", 1,     0.,  1.,
+    vlc_add_float_with_range( "spatializer-width", 1,     0.,  1.,
                             WIDTH_TEXT,WIDTH_LONGTEXT )
-    add_float_with_range( "spatializer-wet",   0.4,   0.,  1.,
+    vlc_add_float_with_range( "spatializer-wet",   0.4,   0.,  1.,
                             WET_TEXT,WET_LONGTEXT )
-    add_float_with_range( "spatializer-dry",   0.5,   0.,  1.,
+    vlc_add_float_with_range( "spatializer-dry",   0.5,   0.,  1.,
                             DRY_TEXT,DRY_LONGTEXT )
-    add_float_with_range( "spatializer-damp",  0.5,   0.,  1.,
+    vlc_add_float_with_range( "spatializer-damp",  0.5,   0.,  1.,
                             DAMP_TEXT,DAMP_LONGTEXT )
 vlc_module_end ()
 

@@ -18,8 +18,8 @@
 #include "util/csdmenu_x11.h"
 
 vlc_module_begin()
-    set_shortname(N_("QtX11"))
-    set_description(N_("Qt extra X11 features"))
-    set_capability("qtcsdmenu", 10)
-    set_callback(X11CSDMenuOpen)
+    vlc_set_shortname(N_("QtX11"))
+    vlc_set_description(N_("Qt extra X11 features"))
+    vlc_set_capability("qtcsdmenu", 10)
+    vlc_set_callback(X11CSDMenuOpen)
 vlc_module_end()

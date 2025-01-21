@@ -61,14 +61,14 @@ static int MaskCallback( vlc_object_t *, char const *,
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Alpha mask video filter") )
-    set_shortname( N_("Alpha mask" ))
-    set_help( ALPHAMASK_HELP )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_shortcut( "alphamask", "mask" )
-    set_callback_video_filter( Create )
+    vlc_set_description( N_("Alpha mask video filter") )
+    vlc_set_shortname( N_("Alpha mask" ))
+    vlc_set_help( ALPHAMASK_HELP )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_shortcut( "alphamask", "mask" )
+    vlc_set_callback_video_filter( Create )
 
-    add_loadfile(CFG_PREFIX "mask", NULL, MASK_TEXT, MASK_LONGTEXT)
+    vlc_add_loadfile(CFG_PREFIX "mask", NULL, MASK_TEXT, MASK_LONGTEXT)
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

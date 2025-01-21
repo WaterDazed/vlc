@@ -105,17 +105,17 @@ static const char *const ppsz_kai_audio_device_text[] = {
     N_("Auto"), "DART", "UNIAUD" };
 
 vlc_module_begin ()
-    set_shortname( "KAI" )
-    set_description( N_("K Audio Interface audio output") )
-    set_capability( "audio output", 100 )
-    set_subcategory( SUBCAT_AUDIO_AOUT )
-    add_string( "kai-audio-device", ppsz_kai_audio_device[0],
+    vlc_set_shortname( "KAI" )
+    vlc_set_description( N_("K Audio Interface audio output") )
+    vlc_set_capability( "audio output", 100 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AOUT )
+    vlc_add_string( "kai-audio-device", ppsz_kai_audio_device[0],
                 KAI_AUDIO_DEVICE_TEXT, KAI_AUDIO_DEVICE_LONGTEXT )
-        change_string_list( ppsz_kai_audio_device, ppsz_kai_audio_device_text )
+        vlc_change_string_list( ppsz_kai_audio_device, ppsz_kai_audio_device_text )
     add_sw_gain( )
-    add_bool( "kai-audio-exclusive-mode", false,
+    vlc_add_bool( "kai-audio-exclusive-mode", false,
               KAI_AUDIO_EXCLUSIVE_MODE_TEXT, KAI_AUDIO_EXCLUSIVE_MODE_LONGTEXT )
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -63,17 +63,17 @@ VIDEO_FILTER_WRAPPER_CLOSE( Filter, Destroy )
 #define CFG_PREFIX "erase-"
 
 vlc_module_begin ()
-    set_description( N_("Erase video filter") )
-    set_shortname( N_( "Erase" ))
-    set_help(ERASE_HELP)
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Erase video filter") )
+    vlc_set_shortname( N_( "Erase" ))
+    vlc_set_help(ERASE_HELP)
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_loadfile(CFG_PREFIX "mask", NULL, MASK_TEXT, MASK_LONGTEXT)
-    add_integer( CFG_PREFIX "x", 0, POSX_TEXT, POSX_LONGTEXT )
-    add_integer( CFG_PREFIX "y", 0, POSY_TEXT, POSY_LONGTEXT )
+    vlc_add_loadfile(CFG_PREFIX "mask", NULL, MASK_TEXT, MASK_LONGTEXT)
+    vlc_add_integer( CFG_PREFIX "x", 0, POSX_TEXT, POSX_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "y", 0, POSY_TEXT, POSY_LONGTEXT )
 
-    add_shortcut( "erase" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "erase" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

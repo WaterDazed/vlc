@@ -390,8 +390,8 @@ static int Create(vlc_va_t *va, struct vlc_va_cfg *cfg)
 }
 
 vlc_module_begin ()
-    set_description( N_("VA-API video decoder") )
+    vlc_set_description( N_("VA-API video decoder") )
     set_va_callback( Create, 100 )
-    add_shortcut( "vaapi" )
-    set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_add_shortcut( "vaapi" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
 vlc_module_end ()

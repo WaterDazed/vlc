@@ -42,10 +42,10 @@ static int  Open (vlc_object_t *);
 static void Close(vlc_object_t *);
 
 vlc_module_begin()
-    set_description(N_("EBU STL subtitles decoder"))
-    set_subcategory(SUBCAT_INPUT_SCODEC)
-    set_capability("spu decoder", 10)
-    set_callbacks(Open, Close)
+    vlc_set_description(N_("EBU STL subtitles decoder"))
+    vlc_set_subcategory(SUBCAT_INPUT_SCODEC)
+    vlc_set_capability("spu decoder", 10)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end()
 
 /*****************************************************************************

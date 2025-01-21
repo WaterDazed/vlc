@@ -356,9 +356,9 @@ error:
 }
 
 vlc_module_begin()
-    set_shortname(N_("WL SHM"))
-    set_description(N_("Wayland shared memory video output"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_callback_display(Open, 170)
-    add_shortcut("wl")
+    vlc_set_shortname(N_("WL SHM"))
+    vlc_set_description(N_("Wayland shared memory video output"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_display(Open, 170)
+    vlc_add_shortcut("wl")
 vlc_module_end()

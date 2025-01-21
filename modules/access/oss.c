@@ -68,16 +68,16 @@ static void DemuxClose( vlc_object_t * );
 #define CFG_PREFIX "oss-"
 
 vlc_module_begin ()
-    set_shortname( N_("OSS") )
-    set_description( N_("OSS input") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_shortname( N_("OSS") )
+    vlc_set_description( N_("OSS input") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_shortcut( "oss" )
-    set_capability( "access", 0 )
-    set_callbacks( DemuxOpen, DemuxClose )
+    vlc_add_shortcut( "oss" )
+    vlc_set_capability( "access", 0 )
+    vlc_set_callbacks( DemuxOpen, DemuxClose )
 
-    add_bool( CFG_PREFIX "stereo", true, STEREO_TEXT, STEREO_LONGTEXT )
-    add_integer( CFG_PREFIX "samplerate", 48000, SAMPLERATE_TEXT,
+    vlc_add_bool( CFG_PREFIX "stereo", true, STEREO_TEXT, STEREO_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "samplerate", 48000, SAMPLERATE_TEXT,
                 SAMPLERATE_LONGTEXT )
 vlc_module_end ()
 

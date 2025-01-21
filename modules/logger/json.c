@@ -267,11 +267,11 @@ static const struct vlc_tracer_operations *Open(vlc_object_t *obj,
 #define LOGFILE_NAME_LONGTEXT N_("Specify the log filename.")
 
 vlc_module_begin()
-    set_shortname(N_("Tracer"))
-    set_description(N_("JSON tracer"))
-    set_subcategory(SUBCAT_ADVANCED_MISC)
-    set_capability("tracer", 0)
-    set_callback(Open)
+    vlc_set_shortname(N_("Tracer"))
+    vlc_set_description(N_("JSON tracer"))
+    vlc_set_subcategory(SUBCAT_ADVANCED_MISC)
+    vlc_set_capability("tracer", 0)
+    vlc_set_callback(Open)
 
-    add_savefile("json-tracer-file", NULL, LOGFILE_NAME_TEXT, LOGFILE_NAME_LONGTEXT)
+    vlc_add_savefile("json-tracer-file", NULL, LOGFILE_NAME_TEXT, LOGFILE_NAME_LONGTEXT)
 vlc_module_end()

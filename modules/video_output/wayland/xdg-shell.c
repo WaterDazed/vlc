@@ -849,22 +849,22 @@ static void Close(vlc_window_t *wnd)
 
 vlc_module_begin()
 #ifdef XDG_SHELL
-    set_shortname(N_("XDG shell"))
-    set_description(N_("XDG shell surface"))
+    vlc_set_shortname(N_("XDG shell"))
+    vlc_set_description(N_("XDG shell surface"))
 #else
-    set_shortname(N_("WL shell"))
-    set_description(N_("Wayland shell surface"))
+    vlc_set_shortname(N_("WL shell"))
+    vlc_set_description(N_("Wayland shell surface"))
 #endif
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 #ifdef XDG_SHELL
-    set_capability("vout window", 20)
+    vlc_set_capability("vout window", 20)
 #else
-    set_capability("vout window", 10)
+    vlc_set_capability("vout window", 10)
 #endif
-    set_callback(Open)
+    vlc_set_callback(Open)
 
-    add_string("wl-display", NULL, DISPLAY_TEXT, DISPLAY_LONGTEXT)
-    add_integer("wl-output", 0, OUTPUT_TEXT, OUTPUT_LONGTEXT)
-        change_integer_range(0, UINT32_MAX)
-        change_volatile()
+    vlc_add_string("wl-display", NULL, DISPLAY_TEXT, DISPLAY_LONGTEXT)
+    vlc_add_integer("wl-output", 0, OUTPUT_TEXT, OUTPUT_LONGTEXT)
+        vlc_change_integer_range(0, UINT32_MAX)
+        vlc_change_volatile()
 vlc_module_end()

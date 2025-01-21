@@ -63,18 +63,18 @@ VIDEO_FILTER_WRAPPER_CLOSE( Filter, Destroy )
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Antiflicker video filter") )
-    set_shortname( N_( "antiflicker" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Antiflicker video filter") )
+    vlc_set_shortname( N_( "antiflicker" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_integer_with_range( FILTER_PREFIX "window-size", 10, 0, MAX_WINDOW_SZ,
+    vlc_add_integer_with_range( FILTER_PREFIX "window-size", 10, 0, MAX_WINDOW_SZ,
         WINDOW_TEXT, WINDOW_LONGTEXT )
 
-    add_integer_with_range( FILTER_PREFIX "softening-size", 10, 0, MAX_SOFTENING_SZ,
+    vlc_add_integer_with_range( FILTER_PREFIX "softening-size", 10, 0, MAX_SOFTENING_SZ,
         SFTN_TEXT, SFTN_LONGTEXT )
 
-    add_shortcut( "antiflicker" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "antiflicker" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 /*****************************************************************************

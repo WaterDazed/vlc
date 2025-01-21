@@ -128,51 +128,51 @@ static const char *const continue_playback_list_text[] = {
 
 
 vlc_module_begin()
-    set_description(N_("Mac OS X interface"))
-    set_capability("interface", 200)
-    set_callbacks(OpenIntf, CloseIntf)
-    set_subcategory(SUBCAT_INTERFACE_MAIN)
-    cannot_unload_broken_library()
+    vlc_set_description(N_("Mac OS X interface"))
+    vlc_set_capability("interface", 200)
+    vlc_set_callbacks(OpenIntf, CloseIntf)
+    vlc_set_subcategory(SUBCAT_INTERFACE_MAIN)
+    vlc_cannot_unload_broken_library()
 
-    set_section(N_("Appearance"), 0)
-        add_bool("macosx-nativefullscreenmode", true, NATIVE_FULLSCREEN_MODE_ON_LION_TEXT, NATIVE_FULLSCREEN_MODE_ON_LION_LONGTEXT)
-        add_bool("macosx-statusicon", true, DISPLAY_STATUS_ICONMENU_TEXT, DISPLAY_STATUS_ICONMENU_LONGTEXT)
-        add_bool("macosx-icon-change", true, ICONCHANGE_TEXT, ICONCHANGE_LONGTEXT)
-        add_integer_with_range("macosx-max-volume", 125, 60, 200, VOLUME_MAX_TEXT, NULL)
+    vlc_set_section(N_("Appearance"), 0)
+        vlc_add_bool("macosx-nativefullscreenmode", true, NATIVE_FULLSCREEN_MODE_ON_LION_TEXT, NATIVE_FULLSCREEN_MODE_ON_LION_LONGTEXT)
+        vlc_add_bool("macosx-statusicon", true, DISPLAY_STATUS_ICONMENU_TEXT, DISPLAY_STATUS_ICONMENU_LONGTEXT)
+        vlc_add_bool("macosx-icon-change", true, ICONCHANGE_TEXT, ICONCHANGE_LONGTEXT)
+        vlc_add_integer_with_range("macosx-max-volume", 125, 60, 200, VOLUME_MAX_TEXT, NULL)
 
-    set_section(N_("Behavior"), 0)
-        add_bool("macosx-autoplay", true, AUTOPLAY_OSX_TEST, AUTOPLAY_OSX_LONGTEXT)
-        add_bool("macosx-recentitems", true, RECENT_ITEMS_TEXT, RECENT_ITEMS_LONGTEXT)
-        add_bool("macosx-video-autoresize", true, KEEPSIZE_TEXT, KEEPSIZE_LONGTEXT)
-        add_bool("macosx-pause-minimized", false, PAUSE_MINIMIZED_TEXT, PAUSE_MINIMIZED_LONGTEXT)
-        add_bool("macosx-lock-aspect-ratio", true, LOCK_ASPECT_RATIO_TEXT, NULL)
-        add_bool("macosx-dim-keyboard", false, DIM_KEYBOARD_PLAYBACK_TEXT, DIM_KEYBOARD_PLAYBACK_LONGTEXT)
-        add_integer("macosx-control-itunes", 1, ITUNES_TEXT, ITUNES_LONGTEXT)
-        change_integer_list(itunes_list, itunes_list_text)
-        add_integer("macosx-continue-playback", 0, CONTINUE_PLAYBACK_TEXT, CONTINUE_PLAYBACK_LONGTEXT)
-        change_integer_list(continue_playback_list, continue_playback_list_text)
+    vlc_set_section(N_("Behavior"), 0)
+        vlc_add_bool("macosx-autoplay", true, AUTOPLAY_OSX_TEST, AUTOPLAY_OSX_LONGTEXT)
+        vlc_add_bool("macosx-recentitems", true, RECENT_ITEMS_TEXT, RECENT_ITEMS_LONGTEXT)
+        vlc_add_bool("macosx-video-autoresize", true, KEEPSIZE_TEXT, KEEPSIZE_LONGTEXT)
+        vlc_add_bool("macosx-pause-minimized", false, PAUSE_MINIMIZED_TEXT, PAUSE_MINIMIZED_LONGTEXT)
+        vlc_add_bool("macosx-lock-aspect-ratio", true, LOCK_ASPECT_RATIO_TEXT, NULL)
+        vlc_add_bool("macosx-dim-keyboard", false, DIM_KEYBOARD_PLAYBACK_TEXT, DIM_KEYBOARD_PLAYBACK_LONGTEXT)
+        vlc_add_integer("macosx-control-itunes", 1, ITUNES_TEXT, ITUNES_LONGTEXT)
+        vlc_change_integer_list(itunes_list, itunes_list_text)
+        vlc_add_integer("macosx-continue-playback", 0, CONTINUE_PLAYBACK_TEXT, CONTINUE_PLAYBACK_LONGTEXT)
+        vlc_change_integer_list(continue_playback_list, continue_playback_list_text)
 
-    set_section(N_("Apple Remote and media keys"), 0)
-        add_bool("macosx-appleremote", true, USE_APPLE_REMOTE_TEXT, USE_APPLE_REMOTE_LONGTEXT)
-        add_bool("macosx-appleremote-sysvol", false, USE_APPLE_REMOTE_VOLUME_TEXT, USE_APPLE_REMOTE_VOLUME_LONGTEXT)
-        add_bool("macosx-appleremote-prevnext", false, USE_APPLE_REMOTE_PREVNEXT_TEXT, USE_APPLE_REMOTE_PREVNEXT_LONGTEXT)
-        add_bool("macosx-mediakeys", true, USE_MEDIAKEYS_TEXT, USE_MEDIAKEYS_LONGTEXT)
+    vlc_set_section(N_("Apple Remote and media keys"), 0)
+        vlc_add_bool("macosx-appleremote", true, USE_APPLE_REMOTE_TEXT, USE_APPLE_REMOTE_LONGTEXT)
+        vlc_add_bool("macosx-appleremote-sysvol", false, USE_APPLE_REMOTE_VOLUME_TEXT, USE_APPLE_REMOTE_VOLUME_LONGTEXT)
+        vlc_add_bool("macosx-appleremote-prevnext", false, USE_APPLE_REMOTE_PREVNEXT_TEXT, USE_APPLE_REMOTE_PREVNEXT_LONGTEXT)
+        vlc_add_bool("macosx-mediakeys", true, USE_MEDIAKEYS_TEXT, USE_MEDIAKEYS_LONGTEXT)
 
-    add_obsolete_bool("macosx-show-sidebar") /* since 3.0.1 */
-    add_obsolete_bool("macosx-interfacestyle") /* since 4.0.0 */
-    add_obsolete_bool("macosx-show-playmode-buttons") /* since 4.0.0 */
-    add_obsolete_bool("macosx-show-playback-buttons") /* since 4.0.0 */
-    add_obsolete_bool("macosx-show-effects-button") /* since 4.0.0 */
+    vlc_add_obsolete_bool("macosx-show-sidebar") /* since 3.0.1 */
+    vlc_add_obsolete_bool("macosx-interfacestyle") /* since 4.0.0 */
+    vlc_add_obsolete_bool("macosx-show-playmode-buttons") /* since 4.0.0 */
+    vlc_add_obsolete_bool("macosx-show-playback-buttons") /* since 4.0.0 */
+    vlc_add_obsolete_bool("macosx-show-effects-button") /* since 4.0.0 */
 
-    add_submodule()
-        set_description("Mac OS X Video Output Provider")
-        set_capability("vout window", 100)
-        set_callback(WindowOpen)
+    vlc_add_submodule()
+        vlc_set_description("Mac OS X Video Output Provider")
+        vlc_set_capability("vout window", 100)
+        vlc_set_callback(WindowOpen)
 
-        set_section(N_("Video output"), 0)
-        add_integer("macosx-vdev", 0, VDEV_TEXT, VDEV_LONGTEXT)
-        add_float_with_range("macosx-opaqueness", 1, 0, 1, OPAQUENESS_TEXT, OPAQUENESS_LONGTEXT)
-        add_bool("macosx-black", false, BLACK_TEXT, BLACK_LONGTEXT)
+        vlc_set_section(N_("Video output"), 0)
+        vlc_add_integer("macosx-vdev", 0, VDEV_TEXT, VDEV_LONGTEXT)
+        vlc_add_float_with_range("macosx-opaqueness", 1, 0, 1, OPAQUENESS_TEXT, OPAQUENESS_LONGTEXT)
+        vlc_add_bool("macosx-black", false, BLACK_TEXT, BLACK_LONGTEXT)
 vlc_module_end()
 
 /* the following is fake code to make the pseudo VLC target for the macOS module compile and link */

@@ -150,19 +150,19 @@ struct aout_sys_t
 #define VOLUME_TEXT N_("Audio volume")
 
 vlc_module_begin ()
-    set_shortname( "WaveOut" )
-    set_description( N_("WaveOut audio output") )
-    set_capability( "audio output", 50 )
-    set_subcategory( SUBCAT_AUDIO_AOUT )
-    add_string( "waveout-audio-device", "wavemapper",
+    vlc_set_shortname( "WaveOut" )
+    vlc_set_description( N_("WaveOut audio output") )
+    vlc_set_capability( "audio output", 50 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AOUT )
+    vlc_add_string( "waveout-audio-device", "wavemapper",
                  DEVICE_TEXT, DEVICE_LONG )
-    add_float( "waveout-volume", 1.0f, VOLUME_TEXT, NULL )
-         change_float_range(0.0f, 2.0f)
-    add_bool( "waveout-float32", true, FLOAT_TEXT, FLOAT_LONGTEXT )
-    add_integer ("waveout-audio-channels", 9, AUDIO_CHAN_TEXT,
+    vlc_add_float( "waveout-volume", 1.0f, VOLUME_TEXT, NULL )
+         vlc_change_float_range(0.0f, 2.0f)
+    vlc_add_bool( "waveout-float32", true, FLOAT_TEXT, FLOAT_LONGTEXT )
+    vlc_add_integer ("waveout-audio-channels", 9, AUDIO_CHAN_TEXT,
                  AUDIO_CHAN_LONGTEXT)
-        change_integer_range(1,9)
-    set_callbacks( Open, Close )
+        vlc_change_integer_range(1,9)
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

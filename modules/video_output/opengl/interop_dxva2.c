@@ -553,11 +553,11 @@ error:
 }
 
 vlc_module_begin ()
-    set_shortname("dxva2")
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_description("DXVA2 surface converter")
-    set_capability("glinterop", 1)
-    set_callback(GLConvOpen)
+    vlc_set_shortname("dxva2")
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_description("DXVA2 surface converter")
+    vlc_set_capability("glinterop", 1)
+    vlc_set_callback(GLConvOpen)
 
-    add_bool("direct3d9-dxvahd", true, DXVAHD_TEXT, NULL)
+    vlc_add_bool("direct3d9-dxvahd", true, DXVAHD_TEXT, NULL)
 vlc_module_end ()

@@ -98,9 +98,9 @@ static int rtp_opus_open(vlc_object_t *obj, struct vlc_rtp_pt *pt,
 }
 
 vlc_module_begin()
-    set_shortname(N_("RTP Opus"))
-    set_description(N_("RTP Opus audio payload parser"))
-    set_subcategory(SUBCAT_INPUT_DEMUX)
+    vlc_set_shortname(N_("RTP Opus"))
+    vlc_set_description(N_("RTP Opus audio payload parser"))
+    vlc_set_subcategory(SUBCAT_INPUT_DEMUX)
     set_rtp_parser_callback(rtp_opus_open)
-    add_shortcut("audio/opus")
+    vlc_add_shortcut("audio/opus")
 vlc_module_end()

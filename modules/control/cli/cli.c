@@ -1059,25 +1059,25 @@ static void Deactivate( vlc_object_t *p_this )
 #endif
 
 vlc_module_begin()
-    set_shortname(N_("RC"))
-    set_subcategory(SUBCAT_INTERFACE_MAIN)
-    set_description(N_("Remote control interface"))
-    add_bool("rc-show-pos", false, POS_TEXT, POS_LONGTEXT)
+    vlc_set_shortname(N_("RC"))
+    vlc_set_subcategory(SUBCAT_INTERFACE_MAIN)
+    vlc_set_description(N_("Remote control interface"))
+    vlc_add_bool("rc-show-pos", false, POS_TEXT, POS_LONGTEXT)
 
 #ifdef _WIN32
-    add_bool("rc-quiet", false, QUIET_TEXT, QUIET_LONGTEXT)
+    vlc_add_bool("rc-quiet", false, QUIET_TEXT, QUIET_LONGTEXT)
 #else
 #if defined (HAVE_ISATTY)
-    add_bool("rc-fake-tty", false, TTY_TEXT, TTY_LONGTEXT)
+    vlc_add_bool("rc-fake-tty", false, TTY_TEXT, TTY_LONGTEXT)
 #endif
 #ifdef AF_LOCAL
-    add_string("rc-unix", NULL, UNIX_TEXT, UNIX_LONGTEXT)
+    vlc_add_string("rc-unix", NULL, UNIX_TEXT, UNIX_LONGTEXT)
 #endif
 #endif
-    add_string("rc-host", NULL, HOST_TEXT, HOST_LONGTEXT)
+    vlc_add_string("rc-host", NULL, HOST_TEXT, HOST_LONGTEXT)
 
-    set_capability("interface", 20)
+    vlc_set_capability("interface", 20)
 
-    set_callbacks(Activate, Deactivate)
-    add_shortcut("cli", "rc", "oldrc")
+    vlc_set_callbacks(Activate, Deactivate)
+    vlc_add_shortcut("cli", "rc", "oldrc")
 vlc_module_end()

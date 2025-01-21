@@ -38,11 +38,11 @@ extern "C"
 #endif
 
 #define add_opengl_submodule_renderer() \
-    add_submodule() \
-    add_shortcut("renderer") \
-    set_shortname("renderer") \
-    set_capability("opengl filter", 0) \
-    set_callback_opengl_filter(vlc_gl_renderer_Open)
+    vlc_add_submodule() \
+    vlc_add_shortcut("renderer") \
+    vlc_set_shortname("renderer") \
+    vlc_set_capability("opengl filter", 0) \
+    vlc_set_callback_opengl_filter(vlc_gl_renderer_Open)
 
 /**
  * OpenGL picture renderer

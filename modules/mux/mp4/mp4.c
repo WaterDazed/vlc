@@ -65,23 +65,23 @@ static void CloseFrag  (vlc_object_t *);
 #define SOUT_CFG_PREFIX "sout-mp4-"
 
 vlc_module_begin ()
-    set_description(N_("MP4/MOV muxer"))
-    set_subcategory(SUBCAT_SOUT_MUX)
-    set_shortname("MP4")
+    vlc_set_description(N_("MP4/MOV muxer"))
+    vlc_set_subcategory(SUBCAT_SOUT_MUX)
+    vlc_set_shortname("MP4")
 
-    add_bool(SOUT_CFG_PREFIX "faststart", false,
+    vlc_add_bool(SOUT_CFG_PREFIX "faststart", false,
               FASTSTART_TEXT, FASTSTART_LONGTEXT)
-    set_capability("sout mux", 5)
-    add_shortcut("mp4", "mov", "3gp")
-    set_callbacks(Open, Close)
+    vlc_set_capability("sout mux", 5)
+    vlc_add_shortcut("mp4", "mov", "3gp")
+    vlc_set_callbacks(Open, Close)
 
-add_submodule ()
-    set_description(N_("Fragmented and streamable MP4 muxer"))
-    set_subcategory(SUBCAT_SOUT_MUX)
-    set_shortname("MP4 Frag")
-    add_shortcut("mp4frag", "mp4stream")
-    set_capability("sout mux", 0)
-    set_callbacks(Open, CloseFrag)
+vlc_add_submodule ()
+    vlc_set_description(N_("Fragmented and streamable MP4 muxer"))
+    vlc_set_subcategory(SUBCAT_SOUT_MUX)
+    vlc_set_shortname("MP4 Frag")
+    vlc_add_shortcut("mp4frag", "mp4stream")
+    vlc_set_capability("sout mux", 0)
+    vlc_set_callbacks(Open, CloseFrag)
 
 vlc_module_end ()
 

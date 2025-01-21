@@ -71,20 +71,20 @@ static const char *const ppsz_stereo_descriptions[] =
 
 
 vlc_module_begin ()
-    set_shortname( "Twolame")
-    set_description( N_("Libtwolame audio encoder") )
-    set_capability( "audio encoder", 120 )
-    set_callback( OpenEncoder )
-    set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_set_shortname( "Twolame")
+    vlc_set_description( N_("Libtwolame audio encoder") )
+    vlc_set_capability( "audio encoder", 120 )
+    vlc_set_callback( OpenEncoder )
+    vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
 
-    add_float( ENC_CFG_PREFIX "quality", 0.0, ENC_QUALITY_TEXT,
+    vlc_add_float( ENC_CFG_PREFIX "quality", 0.0, ENC_QUALITY_TEXT,
                ENC_QUALITY_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "mode", 0, ENC_MODE_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "mode", 0, ENC_MODE_TEXT,
                  ENC_MODE_LONGTEXT )
-        change_integer_list( pi_stereo_values, ppsz_stereo_descriptions )
-    add_bool( ENC_CFG_PREFIX "vbr", false, ENC_VBR_TEXT,
+        vlc_change_integer_list( pi_stereo_values, ppsz_stereo_descriptions )
+    vlc_add_bool( ENC_CFG_PREFIX "vbr", false, ENC_VBR_TEXT,
               ENC_VBR_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "psy", 3, ENC_PSY_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "psy", 3, ENC_PSY_TEXT,
                  ENC_PSY_LONGTEXT )
 vlc_module_end ()
 

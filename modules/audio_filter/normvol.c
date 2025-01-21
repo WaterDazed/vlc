@@ -74,15 +74,15 @@ typedef struct
                "between 0.5 and 10 seems sensible." )
 
 vlc_module_begin ()
-    set_description( N_("Volume normalizer") )
-    set_shortname( N_("Volume normalizer") )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    add_shortcut( "volnorm" )
-    add_integer( "norm-buff-size", 20  ,BUFF_TEXT, BUFF_LONGTEXT )
-    add_float( "norm-max-level", 2.0, LEVEL_TEXT,
+    vlc_set_description( N_("Volume normalizer") )
+    vlc_set_shortname( N_("Volume normalizer") )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_add_shortcut( "volnorm" )
+    vlc_add_integer( "norm-buff-size", 20  ,BUFF_TEXT, BUFF_LONGTEXT )
+    vlc_add_float( "norm-max-level", 2.0, LEVEL_TEXT,
                LEVEL_LONGTEXT )
-    set_capability( "audio filter", 0 )
-    set_callback( Open )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 /*****************************************************************************

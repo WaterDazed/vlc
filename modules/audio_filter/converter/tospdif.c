@@ -42,10 +42,10 @@
 static int  Open( vlc_object_t * );
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    set_description( N_("Audio filter for A/52/DTS->S/PDIF encapsulation") )
-    set_capability( "audio converter", 10 )
-    set_callback( Open )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_description( N_("Audio filter for A/52/DTS->S/PDIF encapsulation") )
+    vlc_set_capability( "audio converter", 10 )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 typedef struct

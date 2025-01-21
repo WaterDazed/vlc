@@ -1168,11 +1168,11 @@ static int Open (vout_display_t *vd,
                      "other OpenGL/ES based video outputs.")
 
 vlc_module_begin()
-    set_description(N_("CoreMedia sample buffers based video output display"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    add_bool("force-darwin-legacy-display", false,
+    vlc_set_description(N_("CoreMedia sample buffers based video output display"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_add_bool("force-darwin-legacy-display", false,
              FORCE_LEGACY_DISPLAY_TEXT, FORCE_LEGACY_DISPLAY_LONGTEXT)
-        change_volatile()
-    set_help(HELP_TEXT)
-    set_callback_display(Open, 600)
+        vlc_change_volatile()
+    vlc_set_help(HELP_TEXT)
+    vlc_set_callback_display(Open, 600)
 vlc_module_end()

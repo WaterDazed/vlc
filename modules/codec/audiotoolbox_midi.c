@@ -53,12 +53,12 @@ static void Close (vlc_object_t *);
 #define CFG_PREFIX "aumidi-"
 
 vlc_module_begin()
-    set_description(N_("AudioToolbox MIDI synthesizer"))
-    set_capability("audio decoder", 100)
-    set_shortname(N_("AUMIDI"))
-    set_subcategory(SUBCAT_INPUT_ACODEC)
-    set_callbacks(Open, Close)
-    add_loadfile(CFG_PREFIX "soundfont", "",
+    vlc_set_description(N_("AudioToolbox MIDI synthesizer"))
+    vlc_set_capability("audio decoder", 100)
+    vlc_set_shortname(N_("AUMIDI"))
+    vlc_set_subcategory(SUBCAT_INPUT_ACODEC)
+    vlc_set_callbacks(Open, Close)
+    vlc_add_loadfile(CFG_PREFIX "soundfont", "",
                  SOUNDFONT_TEXT, SOUNDFONT_LONGTEXT)
 vlc_module_end()
 

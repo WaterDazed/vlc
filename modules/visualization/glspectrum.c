@@ -58,16 +58,16 @@ static void Close(filter_t *);
 #define LOG_OFFSET 0.1
 
 vlc_module_begin()
-    set_shortname(N_("glSpectrum"))
-    set_description(N_("3D OpenGL spectrum visualization"))
-    set_capability("visualization", 0)
-    set_subcategory(SUBCAT_AUDIO_VISUAL)
+    vlc_set_shortname(N_("glSpectrum"))
+    vlc_set_description(N_("3D OpenGL spectrum visualization"))
+    vlc_set_capability("visualization", 0)
+    vlc_set_subcategory(SUBCAT_AUDIO_VISUAL)
 
-    add_integer("glspectrum-width", 400, WIDTH_TEXT, WIDTH_LONGTEXT)
-    add_integer("glspectrum-height", 300, HEIGHT_TEXT, HEIGHT_LONGTEXT)
+    vlc_add_integer("glspectrum-width", 400, WIDTH_TEXT, WIDTH_LONGTEXT)
+    vlc_add_integer("glspectrum-height", 300, HEIGHT_TEXT, HEIGHT_LONGTEXT)
 
-    add_shortcut("glspectrum")
-    set_callback(Open)
+    vlc_add_shortcut("glspectrum")
+    vlc_set_callback(Open)
 vlc_module_end()
 
 /* Legacy glBegin()/glEnd() API */

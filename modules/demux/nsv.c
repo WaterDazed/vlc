@@ -47,12 +47,12 @@ static int  Open    ( vlc_object_t * );
 static void Close  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("NullSoft demuxer" ) )
-    set_capability( "demux", 10 )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_callbacks( Open, Close )
-    add_shortcut( "nsv" )
-    add_file_extension("nsv")
+    vlc_set_description( N_("NullSoft demuxer" ) )
+    vlc_set_capability( "demux", 10 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "nsv" )
+    vlc_add_file_extension("nsv")
 vlc_module_end ()
 
 /*****************************************************************************

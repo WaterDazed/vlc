@@ -294,12 +294,12 @@ static void Close (vlc_object_t *obj)
 VLC_SD_PROBE_HELPER("pipewire", N_("Audio and Video capture"), SD_CAT_DEVICES);
 
 vlc_module_begin ()
-    set_shortname (N_("Audio and Video capture"))
-    set_description (N_("Audio and Video capture (PipeWire)"))
-    set_subcategory (SUBCAT_PLAYLIST_SD)
-    set_capability ("services_discovery", 0)
-    set_callbacks (Open, Close)
-    add_shortcut ("pipewire", "pw")
+    vlc_set_shortname (N_("Audio and Video capture"))
+    vlc_set_description (N_("Audio and Video capture (PipeWire)"))
+    vlc_set_subcategory (SUBCAT_PLAYLIST_SD)
+    vlc_set_capability ("services_discovery", 0)
+    vlc_set_callbacks (Open, Close)
+    vlc_add_shortcut ("pipewire", "pw")
 
     VLC_SD_PROBE_SUBMODULE
 vlc_module_end ()

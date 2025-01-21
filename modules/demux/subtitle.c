@@ -63,18 +63,18 @@ static const char *const ppsz_sub_type[] =
 };
 
 vlc_module_begin ()
-    set_shortname( N_("Subtitles"))
-    set_description( N_("Text subtitle parser") )
-    set_capability( "demux", 0 )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    add_string( "sub-type", "auto", N_("Subtitle format"),
+    vlc_set_shortname( N_("Subtitles"))
+    vlc_set_description( N_("Text subtitle parser") )
+    vlc_set_capability( "demux", 0 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_add_string( "sub-type", "auto", N_("Subtitle format"),
                 SUB_TYPE_LONGTEXT )
-        change_string_list( ppsz_sub_type, ppsz_sub_type )
-    add_string( "sub-description", NULL, N_("Subtitle description"),
+        vlc_change_string_list( ppsz_sub_type, ppsz_sub_type )
+    vlc_add_string( "sub-description", NULL, N_("Subtitle description"),
                 SUB_DESCRIPTION_LONGTEXT )
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 
-    add_shortcut( "subtitle" )
+    vlc_add_shortcut( "subtitle" )
 vlc_module_end ()
 
 /*****************************************************************************

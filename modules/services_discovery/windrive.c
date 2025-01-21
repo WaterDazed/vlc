@@ -38,12 +38,12 @@ VLC_SD_PROBE_HELPER("disc", N_("Discs"), SD_CAT_DEVICES)
  * Module descriptor
  */
 vlc_module_begin ()
-    set_shortname (N_("Discs"))
-    set_description (N_("Discs"))
-    set_subcategory (SUBCAT_PLAYLIST_SD)
-    set_capability ("services_discovery", 0)
-    set_callback(Open)
-    add_shortcut ("disc")
+    vlc_set_shortname (N_("Discs"))
+    vlc_set_description (N_("Discs"))
+    vlc_set_subcategory (SUBCAT_PLAYLIST_SD)
+    vlc_set_capability ("services_discovery", 0)
+    vlc_set_callback(Open)
+    vlc_add_shortcut ("disc")
 
     VLC_SD_PROBE_SUBMODULE
 

@@ -55,12 +55,12 @@ static block_t *Block( stream_t *, bool * );
 static int Control( stream_t *, int, va_list );
 
 vlc_module_begin ()
-    set_description( N_("Digital Video (Firewire/ieee1394) input") )
-    set_shortname( N_("DV") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    set_capability( "access", 0 )
-    add_shortcut( "dv", "raw1394" )
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("Digital Video (Firewire/ieee1394) input") )
+    vlc_set_shortname( N_("DV") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "dv", "raw1394" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 typedef struct

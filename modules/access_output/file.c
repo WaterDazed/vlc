@@ -386,17 +386,17 @@ static void Close( vlc_object_t * p_this )
 #define SYNC_LONGTEXT N_( "Open the file with synchronous writing.")
 
 vlc_module_begin ()
-    set_description( N_("File stream output") )
-    set_shortname( N_("File" ))
-    set_capability( "sout access", 50 )
-    set_subcategory( SUBCAT_SOUT_ACO )
-    add_shortcut( "file", "stream", "fd" )
-    add_bool( SOUT_CFG_PREFIX "overwrite", true, OVERWRITE_TEXT,
+    vlc_set_description( N_("File stream output") )
+    vlc_set_shortname( N_("File" ))
+    vlc_set_capability( "sout access", 50 )
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_add_shortcut( "file", "stream", "fd" )
+    vlc_add_bool( SOUT_CFG_PREFIX "overwrite", true, OVERWRITE_TEXT,
               OVERWRITE_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "append", false, APPEND_TEXT,APPEND_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "format", false, FORMAT_TEXT, FORMAT_LONGTEXT )
+    vlc_add_bool( SOUT_CFG_PREFIX "append", false, APPEND_TEXT,APPEND_LONGTEXT )
+    vlc_add_bool( SOUT_CFG_PREFIX "format", false, FORMAT_TEXT, FORMAT_LONGTEXT )
 #ifdef O_SYNC
-    add_bool( SOUT_CFG_PREFIX "sync", false, SYNC_TEXT,SYNC_LONGTEXT )
+    vlc_add_bool( SOUT_CFG_PREFIX "sync", false, SYNC_TEXT,SYNC_LONGTEXT )
 #endif
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()

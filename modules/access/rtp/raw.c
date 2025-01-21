@@ -183,9 +183,9 @@ static int rtp_raw_open(vlc_object_t *obj, struct vlc_rtp_pt *pt,
 }
 
 vlc_module_begin()
-    set_shortname(N_("RTP raw"))
-    set_description(N_("RTP raw video payload parser"))
-    set_subcategory(SUBCAT_INPUT_DEMUX)
+    vlc_set_shortname(N_("RTP raw"))
+    vlc_set_description(N_("RTP raw video payload parser"))
+    vlc_set_subcategory(SUBCAT_INPUT_DEMUX)
     set_rtp_parser_callback(rtp_raw_open)
-    add_shortcut("video/raw")
+    vlc_add_shortcut("video/raw")
 vlc_module_end()

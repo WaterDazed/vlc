@@ -190,74 +190,74 @@ static void DemuxClose ( vlc_object_t * );
 using namespace dshow;
 
 vlc_module_begin ()
-    set_shortname( N_("DirectShow") )
-    set_description( N_("DirectShow input") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    add_string( "dshow-vdev", NULL, VDEV_TEXT, VDEV_LONGTEXT)
+    vlc_set_shortname( N_("DirectShow") )
+    vlc_set_description( N_("DirectShow input") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_add_string( "dshow-vdev", NULL, VDEV_TEXT, VDEV_LONGTEXT)
 
-    add_string( "dshow-adev", NULL, ADEV_TEXT, ADEV_LONGTEXT)
+    vlc_add_string( "dshow-adev", NULL, ADEV_TEXT, ADEV_LONGTEXT)
 
-    add_string( "dshow-size", NULL, SIZE_TEXT, SIZE_LONGTEXT)
-        change_safe()
+    vlc_add_string( "dshow-size", NULL, SIZE_TEXT, SIZE_LONGTEXT)
+        vlc_change_safe()
 
-    add_string( "dshow-aspect-ratio", "4:3", ASPECT_TEXT, ASPECT_LONGTEXT)
-        change_safe()
+    vlc_add_string( "dshow-aspect-ratio", "4:3", ASPECT_TEXT, ASPECT_LONGTEXT)
+        vlc_change_safe()
 
-    add_string( "dshow-chroma", NULL, CHROMA_TEXT, CHROMA_LONGTEXT )
-        change_safe()
+    vlc_add_string( "dshow-chroma", NULL, CHROMA_TEXT, CHROMA_LONGTEXT )
+        vlc_change_safe()
 
-    add_float( "dshow-fps", 0.0f, FPS_TEXT, FPS_LONGTEXT )
-        change_safe()
+    vlc_add_float( "dshow-fps", 0.0f, FPS_TEXT, FPS_LONGTEXT )
+        vlc_change_safe()
 
-    add_bool( "dshow-config", false, CONFIG_TEXT, CONFIG_LONGTEXT )
+    vlc_add_bool( "dshow-config", false, CONFIG_TEXT, CONFIG_LONGTEXT )
 
-    add_bool( "dshow-tuner", false, TUNER_TEXT, TUNER_LONGTEXT )
+    vlc_add_bool( "dshow-tuner", false, TUNER_TEXT, TUNER_LONGTEXT )
 
-    add_integer( "dshow-tuner-channel", 0, CHANNEL_TEXT, CHANNEL_LONGTEXT )
-        change_safe()
+    vlc_add_integer( "dshow-tuner-channel", 0, CHANNEL_TEXT, CHANNEL_LONGTEXT )
+        vlc_change_safe()
 
-    add_integer( "dshow-tuner-country", 0, COUNTRY_TEXT, COUNTRY_LONGTEXT )
+    vlc_add_integer( "dshow-tuner-country", 0, COUNTRY_TEXT, COUNTRY_LONGTEXT )
 
-    add_integer( "dshow-tuner-input", 0, TUNER_INPUT_TEXT,
+    vlc_add_integer( "dshow-tuner-input", 0, TUNER_INPUT_TEXT,
                  TUNER_INPUT_LONGTEXT )
-        change_integer_list( pi_tuner_input, ppsz_tuner_input_text )
-        change_safe()
+        vlc_change_integer_list( pi_tuner_input, ppsz_tuner_input_text )
+        vlc_change_safe()
 
-    add_integer( "dshow-video-input",  -1, VIDEO_IN_TEXT,
+    vlc_add_integer( "dshow-video-input",  -1, VIDEO_IN_TEXT,
                  VIDEO_IN_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
-    add_integer( "dshow-video-output", -1, VIDEO_OUT_TEXT,
+    vlc_add_integer( "dshow-video-output", -1, VIDEO_OUT_TEXT,
                  VIDEO_OUT_LONGTEXT )
 
-    add_integer( "dshow-audio-input",  -1, AUDIO_IN_TEXT,
+    vlc_add_integer( "dshow-audio-input",  -1, AUDIO_IN_TEXT,
                  AUDIO_IN_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
-    add_integer( "dshow-audio-output", -1, AUDIO_OUT_TEXT,
+    vlc_add_integer( "dshow-audio-output", -1, AUDIO_OUT_TEXT,
                  AUDIO_OUT_LONGTEXT )
 
-    add_integer( "dshow-amtuner-mode", AMTUNER_MODE_TV,
+    vlc_add_integer( "dshow-amtuner-mode", AMTUNER_MODE_TV,
                 AMTUNER_MODE_TEXT, AMTUNER_MODE_LONGTEXT)
-        change_integer_list( pi_amtuner_mode, ppsz_amtuner_mode_text )
-        change_safe()
+        vlc_change_integer_list( pi_amtuner_mode, ppsz_amtuner_mode_text )
+        vlc_change_safe()
 
-    add_integer( "dshow-audio-channels", 0, AUDIO_CHANNELS_TEXT,
+    vlc_add_integer( "dshow-audio-channels", 0, AUDIO_CHANNELS_TEXT,
                  AUDIO_CHANNELS_LONGTEXT )
-    add_integer( "dshow-audio-samplerate", 0, AUDIO_SAMPLERATE_TEXT,
+    vlc_add_integer( "dshow-audio-samplerate", 0, AUDIO_SAMPLERATE_TEXT,
                  AUDIO_SAMPLERATE_LONGTEXT )
-    add_integer( "dshow-audio-bitspersample", 0, AUDIO_BITSPERSAMPLE_TEXT,
+    vlc_add_integer( "dshow-audio-bitspersample", 0, AUDIO_BITSPERSAMPLE_TEXT,
                  AUDIO_BITSPERSAMPLE_LONGTEXT )
 
-    add_shortcut( "dshow" )
-    set_capability( "access", 1 )
-    set_callbacks( DemuxOpen, DemuxClose )
+    vlc_add_shortcut( "dshow" )
+    vlc_set_capability( "access", 1 )
+    vlc_set_callbacks( DemuxOpen, DemuxClose )
 
-    add_submodule ()
-    set_description( N_("DirectShow input") )
-    add_shortcut( "dshow" )
-    set_capability( "access", 0 )
-    set_callbacks( AccessOpen, AccessClose )
+    vlc_add_submodule ()
+    vlc_set_description( N_("DirectShow input") )
+    vlc_add_shortcut( "dshow" )
+    vlc_set_capability( "access", 0 )
+    vlc_set_callbacks( AccessOpen, AccessClose )
 
 vlc_module_end ()
 

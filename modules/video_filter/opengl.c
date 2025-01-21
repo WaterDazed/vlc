@@ -360,15 +360,15 @@ gl_create_failure:
 #define FILTER_LIST_LONGTEXT N_( "List of OpenGL filters to execute" )
 
 vlc_module_begin()
-    set_shortname( N_("opengl") )
-    set_description( N_("Opengl filter executor") )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_shortcut( "opengl" )
-    set_callback_video_filter( OpenOpenGL )
-    add_module_list( "opengl-filter", "opengl filter", NULL,
+    vlc_set_shortname( N_("opengl") )
+    vlc_set_description( N_("Opengl filter executor") )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_shortcut( "opengl" )
+    vlc_set_callback_video_filter( OpenOpenGL )
+    vlc_add_module_list( "opengl-filter", "opengl filter", NULL,
                      FILTER_LIST_TEXT, FILTER_LIST_LONGTEXT )
-    add_module( "opengl-gl", "opengl offscreen", "", "OpenGL provider",
+    vlc_add_module( "opengl-gl", "opengl offscreen", "", "OpenGL provider",
                 "OpenGL provider to execute the filters with" )
-    add_module("opengl-gles", "opengl es2 offscreen", "", "OpenGL ES2 provider",
+    vlc_add_module("opengl-gles", "opengl es2 offscreen", "", "OpenGL ES2 provider",
                "OpenGL ES2 provider to execute the filters with")
 vlc_module_end()

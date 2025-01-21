@@ -43,7 +43,7 @@ int  avparser_OpenPacketizer ( vlc_object_t * );
 void avparser_ClosePacketizer( vlc_object_t * );
 
 #define AVPARSER_MODULE \
-    set_subcategory( SUBCAT_SOUT_PACKETIZER )           \
-    set_description( N_("avparser packetizer") )        \
-    set_capability( "packetizer", 20 )                   \
-    set_callbacks( avparser_OpenPacketizer, avparser_ClosePacketizer )
+    vlc_set_subcategory( SUBCAT_SOUT_PACKETIZER )           \
+    vlc_set_description( N_("avparser packetizer") )        \
+    vlc_set_capability( "packetizer", 20 )                   \
+    vlc_set_callbacks( avparser_OpenPacketizer, avparser_ClosePacketizer )

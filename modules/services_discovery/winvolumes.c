@@ -375,11 +375,11 @@ VLC_SD_PROBE_HELPER("volume", N_("Volumes"), SD_CAT_MYCOMPUTER)
  * list volumes on Windows
  */
 vlc_module_begin ()
-    set_shortname (N_("Volumes"))
-    set_description (N_("Lists volumes on host computer"))
-    set_capability ("services_discovery", 0)
-    set_callbacks(Open, Close)
-    add_shortcut ("volume")
+    vlc_set_shortname (N_("Volumes"))
+    vlc_set_description (N_("Lists volumes on host computer"))
+    vlc_set_capability ("services_discovery", 0)
+    vlc_set_callbacks(Open, Close)
+    vlc_add_shortcut ("volume")
 
     VLC_SD_PROBE_SUBMODULE
 vlc_module_end ()

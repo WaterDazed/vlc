@@ -361,166 +361,166 @@ static const char *const ppsz_enc_options[] = {
 /* Module declaration */
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_shortname( "Schroedinger" )
-    set_description( N_("Dirac video decoder using libschroedinger") )
-    set_capability( "video decoder", 200 )
-    set_callbacks( OpenDecoder, CloseDecoder )
-    add_shortcut( "schroedinger" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_shortname( "Schroedinger" )
+    vlc_set_description( N_("Dirac video decoder using libschroedinger") )
+    vlc_set_capability( "video decoder", 200 )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_add_shortcut( "schroedinger" )
 
 #ifdef ENABLE_SOUT
     /* encoder */
-    add_submodule()
-    set_section( N_("Encoding") , NULL )
-    set_description( N_("Dirac video encoder using libschroedinger") )
-    set_capability( "video encoder", 110 )
-    set_callback( OpenEncoder )
-    add_shortcut( "schroedinger", "schro" )
+    vlc_add_submodule()
+    vlc_set_section( N_("Encoding") , NULL )
+    vlc_set_description( N_("Dirac video encoder using libschroedinger") )
+    vlc_set_capability( "video encoder", 110 )
+    vlc_set_callback( OpenEncoder )
+    vlc_add_shortcut( "schroedinger", "schro" )
 
-    add_string( ENC_CFG_PREFIX ENC_RATE_CONTROL, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_RATE_CONTROL, NULL,
                  ENC_RATE_CONTROL_TEXT, ENC_RATE_CONTROL_LONGTEXT )
-    change_string_list( enc_rate_control_list, enc_rate_control_list_text )
+    vlc_change_string_list( enc_rate_control_list, enc_rate_control_list_text )
 
-    add_float( ENC_CFG_PREFIX ENC_QUALITY, -1.,
+    vlc_add_float( ENC_CFG_PREFIX ENC_QUALITY, -1.,
                ENC_QUALITY_TEXT, ENC_QUALITY_LONGTEXT )
-    change_float_range(-1., 10.)
+    vlc_change_float_range(-1., 10.)
 
-    add_float( ENC_CFG_PREFIX ENC_NOISE_THRESHOLD, -1.,
+    vlc_add_float( ENC_CFG_PREFIX ENC_NOISE_THRESHOLD, -1.,
                ENC_NOISE_THRESHOLD_TEXT, ENC_NOISE_THRESHOLD_LONGTEXT )
-    change_float_range(-1., 100.)
+    vlc_change_float_range(-1., 100.)
 
-    add_integer( ENC_CFG_PREFIX ENC_BITRATE, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_BITRATE, -1,
                  ENC_BITRATE_TEXT, ENC_BITRATE_LONGTEXT )
-    change_integer_range(-1, INT_MAX)
+    vlc_change_integer_range(-1, INT_MAX)
 
-    add_integer( ENC_CFG_PREFIX ENC_MAX_BITRATE, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_MAX_BITRATE, -1,
                  ENC_MAX_BITRATE_TEXT, ENC_MAX_BITRATE_LONGTEXT )
-    change_integer_range(-1, INT_MAX)
+    vlc_change_integer_range(-1, INT_MAX)
 
-    add_integer( ENC_CFG_PREFIX ENC_MIN_BITRATE, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_MIN_BITRATE, -1,
                  ENC_MIN_BITRATE_TEXT, ENC_MIN_BITRATE_LONGTEXT )
-    change_integer_range(-1, INT_MAX)
+    vlc_change_integer_range(-1, INT_MAX)
 
-    add_string( ENC_CFG_PREFIX ENC_GOP_STRUCTURE, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_GOP_STRUCTURE, NULL,
                  ENC_GOP_STRUCTURE_TEXT, ENC_GOP_STRUCTURE_LONGTEXT )
-    change_string_list( enc_gop_structure_list, enc_gop_structure_list_text )
+    vlc_change_string_list( enc_gop_structure_list, enc_gop_structure_list_text )
 
-    add_integer( ENC_CFG_PREFIX ENC_AU_DISTANCE, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_AU_DISTANCE, -1,
                  ENC_AU_DISTANCE_TEXT, ENC_AU_DISTANCE_LONGTEXT )
-    change_integer_range(-1, INT_MAX)
+    vlc_change_integer_range(-1, INT_MAX)
 
-    add_string( ENC_CFG_PREFIX ENC_CHROMAFMT, "420",
+    vlc_add_string( ENC_CFG_PREFIX ENC_CHROMAFMT, "420",
                 ENC_CHROMAFMT_TEXT, ENC_CHROMAFMT_LONGTEXT )
-    change_string_list( enc_chromafmt_list, enc_chromafmt_list_text )
+    vlc_change_string_list( enc_chromafmt_list, enc_chromafmt_list_text )
 
-    add_string( ENC_CFG_PREFIX ENC_CODINGMODE, "auto",
+    vlc_add_string( ENC_CFG_PREFIX ENC_CODINGMODE, "auto",
                 ENC_CODINGMODE_TEXT, ENC_CODINGMODE_LONGTEXT )
-    change_string_list( enc_codingmode_list, enc_codingmode_list_text )
+    vlc_change_string_list( enc_codingmode_list, enc_codingmode_list_text )
 
-    add_string( ENC_CFG_PREFIX ENC_MVPREC, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_MVPREC, NULL,
                 ENC_MVPREC_TEXT, ENC_MVPREC_LONGTEXT )
-    change_string_list( enc_mvprec_list, enc_mvprec_list )
+    vlc_change_string_list( enc_mvprec_list, enc_mvprec_list )
 
     /* advanced option only */
-    add_string( ENC_CFG_PREFIX ENC_MCBLK_SIZE, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_MCBLK_SIZE, NULL,
                 ENC_MCBLK_SIZE_TEXT, NULL )
-    change_string_list( enc_block_size_list, enc_block_size_list_text )
+    vlc_change_string_list( enc_block_size_list, enc_block_size_list_text )
 
 
     /* advanced option only */
-    add_string( ENC_CFG_PREFIX ENC_MCBLK_OVERLAP, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_MCBLK_OVERLAP, NULL,
                 ENC_MCBLK_OVERLAP_TEXT, NULL )
-    change_string_list( enc_block_overlap_list, enc_block_overlap_list_text )
+    vlc_change_string_list( enc_block_overlap_list, enc_block_overlap_list_text )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_ME_COMBINED, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_ME_COMBINED, -1,
               ENC_ME_COMBINED_TEXT, ENC_ME_COMBINED_LONGTEXT )
-    change_integer_range(-1, 1 )
+    vlc_change_integer_range(-1, 1 )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_ME_HIERARCHICAL, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_ME_HIERARCHICAL, -1,
                  ENC_ME_HIERARCHICAL_TEXT, NULL )
-    change_integer_range(-1, 1 )
+    vlc_change_integer_range(-1, 1 )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_ME_DOWNSAMPLE_LEVELS, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_ME_DOWNSAMPLE_LEVELS, -1,
                  ENC_ME_DOWNSAMPLE_LEVELS_TEXT, ENC_ME_DOWNSAMPLE_LEVELS_LONGTEXT )
-    change_integer_range(-1, 8 )
+    vlc_change_integer_range(-1, 8 )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_ME_GLOBAL_MOTION, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_ME_GLOBAL_MOTION, -1,
                  ENC_ME_GLOBAL_MOTION_TEXT, NULL )
-    change_integer_range(-1, 1 )
+    vlc_change_integer_range(-1, 1 )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_ME_PHASECORR, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_ME_PHASECORR, -1,
                  ENC_ME_PHASECORR_TEXT, NULL )
-    change_integer_range(-1, 1 )
+    vlc_change_integer_range(-1, 1 )
 
-    add_string( ENC_CFG_PREFIX ENC_DWTINTRA, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_DWTINTRA, NULL,
                 ENC_DWTINTRA_TEXT, NULL )
-    change_string_list( enc_wavelet_list, enc_wavelet_list_text )
+    vlc_change_string_list( enc_wavelet_list, enc_wavelet_list_text )
 
-    add_string( ENC_CFG_PREFIX ENC_DWTINTER, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_DWTINTER, NULL,
                 ENC_DWTINTER_TEXT, NULL )
-    change_string_list( enc_wavelet_list, enc_wavelet_list_text )
+    vlc_change_string_list( enc_wavelet_list, enc_wavelet_list_text )
 
-    add_integer( ENC_CFG_PREFIX ENC_DWTDEPTH, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_DWTDEPTH, -1,
                  ENC_DWTDEPTH_TEXT, ENC_DWTDEPTH_LONGTEXT )
-    change_integer_range(-1, SCHRO_LIMIT_ENCODER_TRANSFORM_DEPTH )
+    vlc_change_integer_range(-1, SCHRO_LIMIT_ENCODER_TRANSFORM_DEPTH )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_MULTIQUANT, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_MULTIQUANT, -1,
                  ENC_MULTIQUANT_TEXT, ENC_MULTIQUANT_LONGTEXT )
-    change_integer_range(-1, 1 )
+    vlc_change_integer_range(-1, 1 )
 
     /* advanced option only */
-    add_string( ENC_CFG_PREFIX ENC_SCBLK_SIZE, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_SCBLK_SIZE, NULL,
                 ENC_SCBLK_SIZE_TEXT, NULL )
-    change_string_list( enc_codeblock_size_list, enc_codeblock_size_list_text )
+    vlc_change_string_list( enc_codeblock_size_list, enc_codeblock_size_list_text )
 
-    add_string( ENC_CFG_PREFIX ENC_PREFILTER, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_PREFILTER, NULL,
                 ENC_PREFILTER_TEXT, ENC_PREFILTER_LONGTEXT )
-    change_string_list( enc_filtering_list, enc_filtering_list_text )
+    vlc_change_string_list( enc_filtering_list, enc_filtering_list_text )
 
-    add_float( ENC_CFG_PREFIX ENC_PREFILTER_STRENGTH, -1.,
+    vlc_add_float( ENC_CFG_PREFIX ENC_PREFILTER_STRENGTH, -1.,
                  ENC_PREFILTER_STRENGTH_TEXT, ENC_PREFILTER_STRENGTH_LONGTEXT )
-    change_float_range(-1., 100.0)
+    vlc_change_float_range(-1., 100.0)
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_SCD, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_SCD, -1,
                  ENC_SCD_TEXT, NULL )
-    change_integer_range(-1, 1 )
+    vlc_change_integer_range(-1, 1 )
 
     /* advanced option only */
-    add_string( ENC_CFG_PREFIX ENC_PWT, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_PWT, NULL,
                 ENC_PWT_TEXT, NULL )
-    change_string_list( enc_perceptual_weighting_list, enc_perceptual_weighting_list )
+    vlc_change_string_list( enc_perceptual_weighting_list, enc_perceptual_weighting_list )
 
     /* advanced option only */
-    add_float( ENC_CFG_PREFIX ENC_PDIST, -1,
+    vlc_add_float( ENC_CFG_PREFIX ENC_PDIST, -1,
                ENC_PDIST_TEXT, ENC_PDIST_LONGTEXT )
-    change_float_range(-1., 100.)
+    vlc_change_float_range(-1., 100.)
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_NOAC, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_NOAC, -1,
               ENC_NOAC_TEXT, ENC_NOAC_LONGTEXT )
-    change_integer_range(-1, 1 )
+    vlc_change_integer_range(-1, 1 )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_HSLICES, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_HSLICES, -1,
                  ENC_HSLICES_TEXT, ENC_HSLICES_LONGTEXT )
-    change_integer_range(-1, INT_MAX )
+    vlc_change_integer_range(-1, INT_MAX )
 
     /* advanced option only */
-    add_integer( ENC_CFG_PREFIX ENC_VSLICES, -1,
+    vlc_add_integer( ENC_CFG_PREFIX ENC_VSLICES, -1,
                  ENC_VSLICES_TEXT, ENC_VSLICES_LONGTEXT )
-    change_integer_range(-1, INT_MAX )
+    vlc_change_integer_range(-1, INT_MAX )
 
     /* advanced option only */
-    add_string( ENC_CFG_PREFIX ENC_FORCE_PROFILE, NULL,
+    vlc_add_string( ENC_CFG_PREFIX ENC_FORCE_PROFILE, NULL,
                 ENC_FORCE_PROFILE_TEXT, NULL )
-    change_string_list( enc_profile_list, enc_profile_list_text )
+    vlc_change_string_list( enc_profile_list, enc_profile_list_text )
 #endif // !ENABLE_SOUT
 
 vlc_module_end ()

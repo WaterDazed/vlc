@@ -51,16 +51,16 @@ static void AutoRun(libvlc_int_t *libvlc)
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin()
-    set_shortname( N_("Global Hotkeys") )
-    set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
-    set_description( N_("Global Hotkeys interface") )
-    set_capability( "interface", 0 )
-    set_callbacks( Open, Close )
-    add_shortcut( "globalhotkeys" )
+    vlc_set_shortname( N_("Global Hotkeys") )
+    vlc_set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
+    vlc_set_description( N_("Global Hotkeys interface") )
+    vlc_set_capability( "interface", 0 )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "globalhotkeys" )
 
-    add_submodule()
-    set_capability("autorun", 10)
-    set_callback(AutoRun)
+    vlc_add_submodule()
+    vlc_set_capability("autorun", 10)
+    vlc_set_callback(AutoRun)
 vlc_module_end()
 
 struct intf_sys_t

@@ -269,53 +269,53 @@ static const char *const multipeer_mode_type_names[] = {
 /* Module descriptor */
 vlc_module_begin()
 
-    set_shortname( N_("RIST") )
-    set_description( N_("RIST stream output") )
-    set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_set_shortname( N_("RIST") )
+    vlc_set_description( N_("RIST stream output") )
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
 
-    add_integer( RIST_CFG_PREFIX RIST_CFG_MAX_PACKET_SIZE, RIST_DEFAULT_TARGET_PAYLOAD_SIZE,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_CFG_MAX_PACKET_SIZE, RIST_DEFAULT_TARGET_PAYLOAD_SIZE,
             N_("RIST target payload size (bytes)"), NULL )
-    add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_VIRT_SRC_PORT, RIST_DEFAULT_VIRT_SRC_PORT,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_VIRT_SRC_PORT, RIST_DEFAULT_VIRT_SRC_PORT,
             SRC_PORT_TEXT, SRC_PORT_LONGTEXT )
-    add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_VIRT_DST_PORT, RIST_DEFAULT_VIRT_DST_PORT,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_VIRT_DST_PORT, RIST_DEFAULT_VIRT_DST_PORT,
             DST_PORT_TEXT, DST_PORT_LONGTEXT )
-    add_integer( RIST_CFG_PREFIX "multipeer-mode", RIST_DEFAULT_MULTIPEER_MODE,
+    vlc_add_integer( RIST_CFG_PREFIX "multipeer-mode", RIST_DEFAULT_MULTIPEER_MODE,
             RIST_MULTIPEER_MODE_TEXT, RIST_MULTIPEER_MODE_LONGTEXT )
-        change_integer_list( multipeer_mode_type, multipeer_mode_type_names )
-    add_string( RIST_CFG_PREFIX RIST_CFG_URL2, NULL, RIST_URL2_TEXT, NULL )
-    add_string( RIST_CFG_PREFIX RIST_CFG_URL3, NULL, RIST_URL3_TEXT, NULL )
-    add_string( RIST_CFG_PREFIX RIST_CFG_URL4, NULL, RIST_URL4_TEXT, NULL )
-    add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_BANDWIDTH, RIST_DEFAULT_RECOVERY_MAXBITRATE,
+        vlc_change_integer_list( multipeer_mode_type, multipeer_mode_type_names )
+    vlc_add_string( RIST_CFG_PREFIX RIST_CFG_URL2, NULL, RIST_URL2_TEXT, NULL )
+    vlc_add_string( RIST_CFG_PREFIX RIST_CFG_URL3, NULL, RIST_URL3_TEXT, NULL )
+    vlc_add_string( RIST_CFG_PREFIX RIST_CFG_URL4, NULL, RIST_URL4_TEXT, NULL )
+    vlc_add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_BANDWIDTH, RIST_DEFAULT_RECOVERY_MAXBITRATE,
             RIST_MAX_BITRATE_TEXT, RIST_MAX_BITRATE_LONGTEXT )
-    add_integer( RIST_CFG_PREFIX RIST_CFG_RETRY_INTERVAL, RIST_DEFAULT_RECOVERY_RTT_MIN,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_CFG_RETRY_INTERVAL, RIST_DEFAULT_RECOVERY_RTT_MIN,
         RIST_RETRY_INTERVAL_TEXT, NULL )
-    add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_REORDER_BUFFER, RIST_DEFAULT_RECOVERY_REORDER_BUFFER,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_REORDER_BUFFER, RIST_DEFAULT_RECOVERY_REORDER_BUFFER,
         RIST_REORDER_BUFFER_TEXT, NULL )
-    add_integer( RIST_CFG_PREFIX RIST_CFG_MAX_RETRIES, RIST_DEFAULT_MAX_RETRIES,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_CFG_MAX_RETRIES, RIST_DEFAULT_MAX_RETRIES,
         RIST_MAX_RETRIES_TEXT, NULL )
-    add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_VERBOSE_LEVEL, RIST_DEFAULT_VERBOSE_LEVEL,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_VERBOSE_LEVEL, RIST_DEFAULT_VERBOSE_LEVEL,
             RIST_VERBOSE_LEVEL_TEXT, RIST_VERBOSE_LEVEL_LONGTEXT )
-        change_integer_list( verbose_level_type, verbose_level_type_names )
-    add_integer( RIST_CFG_PREFIX RIST_CFG_LATENCY, RIST_DEFAULT_RECOVERY_LENGHT_MIN,
+        vlc_change_integer_list( verbose_level_type, verbose_level_type_names )
+    vlc_add_integer( RIST_CFG_PREFIX RIST_CFG_LATENCY, RIST_DEFAULT_RECOVERY_LENGHT_MIN,
             BUFFER_TEXT, BUFFER_LONGTEXT )
-    add_string( RIST_CFG_PREFIX RIST_URL_PARAM_CNAME, NULL, RIST_CNAME_TEXT,
+    vlc_add_string( RIST_CFG_PREFIX RIST_URL_PARAM_CNAME, NULL, RIST_CNAME_TEXT,
             RIST_CNAME_LONGTEXT )
-    add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_PROFILE, RIST_DEFAULT_PROFILE,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_PROFILE, RIST_DEFAULT_PROFILE,
             RIST_PROFILE_TEXT, RIST_PROFILE_LONGTEXT )
-    add_password( RIST_CFG_PREFIX RIST_URL_PARAM_SECRET, "",
+    vlc_add_password( RIST_CFG_PREFIX RIST_URL_PARAM_SECRET, "",
             RIST_SHARED_SECRET_TEXT, NULL )
-    add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_AES_TYPE, 0,
+    vlc_add_integer( RIST_CFG_PREFIX RIST_URL_PARAM_AES_TYPE, 0,
             RIST_ENCRYPTION_TYPE_TEXT, NULL )
-        change_integer_list( rist_encryption_type, rist_encryption_type_names )
-    add_string( RIST_CFG_PREFIX RIST_URL_PARAM_SRP_USERNAME, "",
+        vlc_change_integer_list( rist_encryption_type, rist_encryption_type_names )
+    vlc_add_string( RIST_CFG_PREFIX RIST_URL_PARAM_SRP_USERNAME, "",
             RIST_SRP_USERNAME_TEXT, NULL )
-    add_password( RIST_CFG_PREFIX RIST_URL_PARAM_SRP_PASSWORD, "",
+    vlc_add_password( RIST_CFG_PREFIX RIST_URL_PARAM_SRP_PASSWORD, "",
             RIST_SRP_PASSWORD_TEXT, NULL )
 
-    set_capability( "sout access", 10 )
-    add_shortcut( "librist", "rist", "tr06" )
+    vlc_set_capability( "sout access", 10 )
+    vlc_add_shortcut( "librist", "rist", "tr06" )
 
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 
 vlc_module_end ()
 

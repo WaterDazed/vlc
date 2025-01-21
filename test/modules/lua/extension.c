@@ -123,8 +123,8 @@ end:
 
 /** Inject the mocked modules as a static plugin: **/
 vlc_module_begin()
-    set_callback(OpenIntf)
-    set_capability("interface", 0)
+    vlc_set_callback(OpenIntf)
+    vlc_set_capability("interface", 0)
 vlc_module_end()
 
 VLC_EXPORT const vlc_plugin_cb vlc_static_modules[] = {

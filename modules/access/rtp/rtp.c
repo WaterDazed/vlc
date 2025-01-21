@@ -661,41 +661,41 @@ error:
  * Module descriptor
  */
 vlc_module_begin()
-    set_shortname(N_("RTP"))
-    set_description(N_("Real-Time Protocol (RTP) input"))
-    set_subcategory(SUBCAT_INPUT_DEMUX)
-    set_capability("demux", 55)
-    set_callbacks(OpenSDP, Close)
+    vlc_set_shortname(N_("RTP"))
+    vlc_set_description(N_("Real-Time Protocol (RTP) input"))
+    vlc_set_subcategory(SUBCAT_INPUT_DEMUX)
+    vlc_set_capability("demux", 55)
+    vlc_set_callbacks(OpenSDP, Close)
 
-    add_submodule()
-    set_capability("access", 0)
-    set_callbacks(OpenURL, Close)
+    vlc_add_submodule()
+    vlc_set_capability("access", 0)
+    vlc_set_callbacks(OpenURL, Close)
 
-    add_integer("rtcp-port", 0, RTCP_PORT_TEXT,
+    vlc_add_integer("rtcp-port", 0, RTCP_PORT_TEXT,
                  RTCP_PORT_LONGTEXT)
-        change_integer_range(0, 65535)
-        change_safe()
+        vlc_change_integer_range(0, 65535)
+        vlc_change_safe()
 #ifdef HAVE_SRTP
-    add_string ("srtp-key", "",
+    vlc_add_string ("srtp-key", "",
                 SRTP_KEY_TEXT, SRTP_KEY_LONGTEXT)
-        change_safe ()
-    add_string("srtp-salt", "",
+        vlc_change_safe ()
+    vlc_add_string("srtp-salt", "",
                SRTP_SALT_TEXT, SRTP_SALT_LONGTEXT)
-        change_safe()
+        vlc_change_safe()
 #endif
-    add_integer("rtp-max-src", RTP_MAX_SRC_DEFAULT, RTP_MAX_SRC_TEXT,
+    vlc_add_integer("rtp-max-src", RTP_MAX_SRC_DEFAULT, RTP_MAX_SRC_TEXT,
                 RTP_MAX_SRC_LONGTEXT)
-        change_integer_range (1, 255)
-    add_integer("rtp-timeout", RTP_MAX_TIMEOUT_DEFAULT, RTP_TIMEOUT_TEXT,
+        vlc_change_integer_range (1, 255)
+    vlc_add_integer("rtp-timeout", RTP_MAX_TIMEOUT_DEFAULT, RTP_TIMEOUT_TEXT,
                 RTP_TIMEOUT_LONGTEXT)
-    add_integer("rtp-max-dropout", RTP_MAX_DROPOUT_DEFAULT, RTP_MAX_DROPOUT_TEXT,
+    vlc_add_integer("rtp-max-dropout", RTP_MAX_DROPOUT_DEFAULT, RTP_MAX_DROPOUT_TEXT,
                 RTP_MAX_DROPOUT_LONGTEXT)
-        change_integer_range (0, 32767)
-    add_integer("rtp-max-misorder", RTP_MAX_MISORDER_DEFAULT, RTP_MAX_MISORDER_TEXT,
+        vlc_change_integer_range (0, 32767)
+    vlc_add_integer("rtp-max-misorder", RTP_MAX_MISORDER_DEFAULT, RTP_MAX_MISORDER_TEXT,
                 RTP_MAX_MISORDER_LONGTEXT)
-        change_integer_range (0, 32767)
-    add_obsolete_string("rtp-dynamic-pt") /* since 4.0.0 */
+        vlc_change_integer_range (0, 32767)
+    vlc_add_obsolete_string("rtp-dynamic-pt") /* since 4.0.0 */
 
-    /*add_shortcut ("sctp")*/
-    add_shortcut("dccp", "rtp", "udplite")
+    /*vlc_add_shortcut ("sctp")*/
+    vlc_add_shortcut("dccp", "rtp", "udplite")
 vlc_module_end()

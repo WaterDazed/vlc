@@ -185,36 +185,36 @@ static block_t *Encode   ( encoder_t *, block_t * );
   "Force a constant bitrate encoding (CBR)." )
 
 vlc_module_begin ()
-    set_shortname( "Vorbis" )
-    set_description( N_("Vorbis audio decoder") )
+    vlc_set_shortname( "Vorbis" )
+    vlc_set_description( N_("Vorbis audio decoder") )
 #ifdef PLUGIN_TREMOR
-    set_capability( "audio decoder", 90 )
+    vlc_set_capability( "audio decoder", 90 )
 #else
-    set_capability( "audio decoder", 100 )
+    vlc_set_capability( "audio decoder", 100 )
 #endif
-    set_subcategory( SUBCAT_INPUT_ACODEC )
-    set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
 
-    add_submodule ()
-    set_description( N_("Vorbis audio packetizer") )
-    set_capability( "packetizer", 100 )
-    set_callbacks( OpenPacketizer, CloseDecoder )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Vorbis audio packetizer") )
+    vlc_set_capability( "packetizer", 100 )
+    vlc_set_callbacks( OpenPacketizer, CloseDecoder )
 
 #ifdef HAVE_VORBIS_ENCODER
 #   define ENC_CFG_PREFIX "sout-vorbis-"
-    add_submodule ()
-    set_description( N_("Vorbis audio encoder") )
-    set_capability( "audio encoder", 130 )
-    set_callback( OpenEncoder )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Vorbis audio encoder") )
+    vlc_set_capability( "audio encoder", 130 )
+    vlc_set_callback( OpenEncoder )
 
-    add_integer( ENC_CFG_PREFIX "quality", 0, ENC_QUALITY_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "quality", 0, ENC_QUALITY_TEXT,
                  ENC_QUALITY_LONGTEXT )
-        change_integer_range( 0, 10 )
-    add_integer( ENC_CFG_PREFIX "max-bitrate", 0, ENC_MAXBR_TEXT,
+        vlc_change_integer_range( 0, 10 )
+    vlc_add_integer( ENC_CFG_PREFIX "max-bitrate", 0, ENC_MAXBR_TEXT,
                  ENC_MAXBR_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "min-bitrate", 0, ENC_MINBR_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "min-bitrate", 0, ENC_MINBR_TEXT,
                  ENC_MINBR_LONGTEXT )
-    add_bool( ENC_CFG_PREFIX "cbr", false, ENC_CBR_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "cbr", false, ENC_CBR_TEXT,
                  ENC_CBR_LONGTEXT )
 #endif
 

@@ -41,6 +41,6 @@ static void Probe(void *data)
 }
 
 vlc_module_begin()
-    set_description("AArch64 SVE optimisation for deinterlacing")
+    vlc_set_description("AArch64 SVE optimisation for deinterlacing")
     set_cpu_funcs("deinterlace functions", Probe, 20)
 vlc_module_end()

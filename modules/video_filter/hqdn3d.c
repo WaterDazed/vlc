@@ -60,22 +60,22 @@ static int DenoiseCallback( vlc_object_t *p_this, char const *psz_var,
 #define CHROMA_TEMP_TEXT        N_("Temporal chroma strength (0-254)")
 
 vlc_module_begin()
-    set_shortname(N_("HQ Denoiser 3D"))
-    set_description(N_("High Quality 3D Denoiser filter"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_shortname(N_("HQ Denoiser 3D"))
+    vlc_set_description(N_("High Quality 3D Denoiser filter"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
 
-    add_float_with_range(FILTER_PREFIX "luma-spat", 4.0, 0.0, 254.0,
+    vlc_add_float_with_range(FILTER_PREFIX "luma-spat", 4.0, 0.0, 254.0,
             LUMA_SPAT_TEXT, NULL)
-    add_float_with_range(FILTER_PREFIX "chroma-spat", 3.0, 0.0, 254.0,
+    vlc_add_float_with_range(FILTER_PREFIX "chroma-spat", 3.0, 0.0, 254.0,
             CHROMA_SPAT_TEXT, NULL)
-    add_float_with_range(FILTER_PREFIX "luma-temp", 6.0, 0.0, 254.0,
+    vlc_add_float_with_range(FILTER_PREFIX "luma-temp", 6.0, 0.0, 254.0,
             LUMA_TEMP_TEXT, NULL)
-    add_float_with_range(FILTER_PREFIX "chroma-temp", 4.5, 0.0, 254.0,
+    vlc_add_float_with_range(FILTER_PREFIX "chroma-temp", 4.5, 0.0, 254.0,
             CHROMA_TEMP_TEXT, NULL)
 
-    add_shortcut("hqdn3d")
+    vlc_add_shortcut("hqdn3d")
 
-    set_callback_video_filter(Open)
+    vlc_set_callback_video_filter(Open)
 vlc_module_end()
 
 static const char *const filter_options[] = {

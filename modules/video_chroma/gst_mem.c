@@ -111,8 +111,8 @@ static int Open(filter_t *p_filter)
 }
 
 vlc_module_begin()
-    set_shortname(N_("GST_MEM converter"))
-    set_description(N_("GST_MEM Chroma Converter filter"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_callback_video_converter(Open, 10)
+    vlc_set_shortname(N_("GST_MEM converter"))
+    vlc_set_description(N_("GST_MEM Chroma Converter filter"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_callback_video_converter(Open, 10)
 vlc_module_end()

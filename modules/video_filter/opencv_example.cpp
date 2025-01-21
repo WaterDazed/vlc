@@ -74,15 +74,15 @@ static picture_t *Filter( filter_t *, picture_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("OpenCV face detection example filter") )
-    set_shortname( N_( "OpenCV example" ))
-    set_capability( "opencv internal filter", 1 )
-    add_shortcut( "opencv_example" )
+    vlc_set_description( N_("OpenCV face detection example filter") )
+    vlc_set_shortname( N_( "OpenCV example" ))
+    vlc_set_capability( "opencv internal filter", 1 )
+    vlc_add_shortcut( "opencv_example" )
 
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    set_callback( OpenFilter )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_callback( OpenFilter )
 
-    add_string( "opencv-haarcascade-file", "c:\\haarcascade_frontalface_alt.xml",
+    vlc_add_string( "opencv-haarcascade-file", "c:\\haarcascade_frontalface_alt.xml",
                           N_("Haar cascade filename"),
                           N_("Name of XML file containing Haar cascade description"))
 vlc_module_end ()

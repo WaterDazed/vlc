@@ -112,15 +112,15 @@ static const char * const type_list_text[] = { N_("Rotate by 90 degrees"),
     N_("Transpose"), N_("Anti-transpose") };
 
 vlc_module_begin()
-    set_description(N_("Video transformation filter"))
-    set_shortname(N_("Transformation"))
-    set_help(N_("Rotate or flip the video"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_description(N_("Video transformation filter"))
+    vlc_set_shortname(N_("Transformation"))
+    vlc_set_help(N_("Rotate or flip the video"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
 
-    add_string(CFG_PREFIX "type", "90", TYPE_TEXT, NULL)
-        change_string_list(type_list, type_list_text)
-        change_safe()
+    vlc_add_string(CFG_PREFIX "type", "90", TYPE_TEXT, NULL)
+        vlc_change_string_list(type_list, type_list_text)
+        vlc_change_safe()
 
-    add_shortcut("transform")
-    set_callback_video_filter(Open)
+    vlc_add_shortcut("transform")
+    vlc_set_callback_video_filter(Open)
 vlc_module_end()

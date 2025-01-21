@@ -66,8 +66,8 @@ static int Open(vlc_object_t* const p_this)
 }
 
 vlc_module_begin()
-    add_shortcut("QtKWindowSystem")
-    set_description("Provides window effects through KWindowSystem.")
-    set_capability("qtwindoweffects", 10)
-    set_callback(Open)
+    vlc_add_shortcut("QtKWindowSystem")
+    vlc_set_description("Provides window effects through KWindowSystem.")
+    vlc_set_capability("qtwindoweffects", 10)
+    vlc_set_callback(Open)
 vlc_module_end()

@@ -48,14 +48,14 @@ static int  PacketizerOpen( vlc_object_t * );
 static void DecoderClose  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("CVD subtitle decoder") )
-    set_capability( "spu decoder", 50 )
-    set_callbacks( DecoderOpen, DecoderClose )
+    vlc_set_description( N_("CVD subtitle decoder") )
+    vlc_set_capability( "spu decoder", 50 )
+    vlc_set_callbacks( DecoderOpen, DecoderClose )
 
-    add_submodule ()
-    set_description( N_("Chaoji VCD subtitle packetizer") )
-    set_capability( "packetizer", 50 )
-    set_callbacks( PacketizerOpen, DecoderClose )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Chaoji VCD subtitle packetizer") )
+    vlc_set_capability( "packetizer", 50 )
+    vlc_set_callbacks( PacketizerOpen, DecoderClose )
 vlc_module_end ()
 
 /*****************************************************************************

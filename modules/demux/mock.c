@@ -187,58 +187,58 @@ var_Read_float(const char *psz)
 #define NO_FREE(x) (void) x
 
 #define OPTIONS_AUDIO(Y) \
-    Y(audio, packetized, bool, add_bool, Bool, true, NO_FREE) \
-    Y(audio, add_track_at, vlc_tick_t, add_integer, Integer, VLC_TICK_INVALID, NO_FREE) \
-    Y(audio, channels, unsigned, add_integer, Unsigned, 2, NO_FREE) \
-    Y(audio, format, vlc_fourcc_t, add_string, Fourcc, "f32l", NO_FREE) \
-    Y(audio, rate, unsigned, add_integer, Unsigned, 48000, NO_FREE) \
-    Y(audio, sample_length, vlc_tick_t, add_integer, Integer, VLC_TICK_FROM_MS(40), NO_FREE) \
-    Y(audio, sinewave, bool, add_bool, Bool, true, NO_FREE) \
-    Y(audio, sinewave_frequency, unsigned, add_integer, Integer, 500, NO_FREE) \
-    Y(audio, sinewave_amplitude, float, add_float, Float, 0.2, NO_FREE)
+    Y(audio, packetized, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    Y(audio, add_track_at, vlc_tick_t, vlc_add_integer, Integer, VLC_TICK_INVALID, NO_FREE) \
+    Y(audio, channels, unsigned, vlc_add_integer, Unsigned, 2, NO_FREE) \
+    Y(audio, format, vlc_fourcc_t, vlc_add_string, Fourcc, "f32l", NO_FREE) \
+    Y(audio, rate, unsigned, vlc_add_integer, Unsigned, 48000, NO_FREE) \
+    Y(audio, sample_length, vlc_tick_t, vlc_add_integer, Integer, VLC_TICK_FROM_MS(40), NO_FREE) \
+    Y(audio, sinewave, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    Y(audio, sinewave_frequency, unsigned, vlc_add_integer, Integer, 500, NO_FREE) \
+    Y(audio, sinewave_amplitude, float, vlc_add_float, Float, 0.2, NO_FREE)
 
 #define OPTIONS_VIDEO(Y) \
-    Y(video, packetized, bool, add_bool, Bool, true, NO_FREE) \
-    Y(video, add_track_at, vlc_tick_t, add_integer, Integer, VLC_TICK_INVALID, NO_FREE) \
-    Y(video, chroma, vlc_fourcc_t, add_string, Fourcc, "I420", NO_FREE) \
-    Y(video, width, unsigned, add_integer, Unsigned, 640, NO_FREE) \
-    Y(video, height, unsigned, add_integer, Unsigned, 480, NO_FREE) \
-    Y(video, frame_rate, unsigned, add_integer, Unsigned, 25, NO_FREE) \
-    Y(video, frame_rate_base, unsigned, add_integer, Unsigned, 1, NO_FREE) \
-    Y(video, colorbar, bool, add_bool, Bool, false, NO_FREE) \
-    Y(video, orientation, unsigned, add_integer, Unsigned, ORIENT_NORMAL, NO_FREE) \
-    Y(video, image_count, unsigned, add_integer, Unsigned, 0, NO_FREE)
+    Y(video, packetized, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    Y(video, add_track_at, vlc_tick_t, vlc_add_integer, Integer, VLC_TICK_INVALID, NO_FREE) \
+    Y(video, chroma, vlc_fourcc_t, vlc_add_string, Fourcc, "I420", NO_FREE) \
+    Y(video, width, unsigned, vlc_add_integer, Unsigned, 640, NO_FREE) \
+    Y(video, height, unsigned, vlc_add_integer, Unsigned, 480, NO_FREE) \
+    Y(video, frame_rate, unsigned, vlc_add_integer, Unsigned, 25, NO_FREE) \
+    Y(video, frame_rate_base, unsigned, vlc_add_integer, Unsigned, 1, NO_FREE) \
+    Y(video, colorbar, bool, vlc_add_bool, Bool, false, NO_FREE) \
+    Y(video, orientation, unsigned, vlc_add_integer, Unsigned, ORIENT_NORMAL, NO_FREE) \
+    Y(video, image_count, unsigned, vlc_add_integer, Unsigned, 0, NO_FREE)
 
 #define OPTIONS_SUB(Y) \
-    Y(sub, packetized, bool, add_bool, Bool, true, NO_FREE) \
-    Y(sub, add_track_at, vlc_tick_t, add_integer, Integer, VLC_TICK_INVALID, NO_FREE) \
-    Y(sub, format, vlc_fourcc_t, add_string, Fourcc, "subt", NO_FREE) \
-    Y(sub, page, unsigned, add_integer, Integer, 0, NO_FREE)
+    Y(sub, packetized, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    Y(sub, add_track_at, vlc_tick_t, vlc_add_integer, Integer, VLC_TICK_INVALID, NO_FREE) \
+    Y(sub, format, vlc_fourcc_t, vlc_add_string, Fourcc, "subt", NO_FREE) \
+    Y(sub, page, unsigned, vlc_add_integer, Integer, 0, NO_FREE)
 
 /* var_name, type, module_header_type, getter, default_value */
 #define OPTIONS_GLOBAL(X) \
-    X(node_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(length, vlc_tick_t, add_integer, Integer, VLC_TICK_FROM_MS(5000), NO_FREE) \
-    X(audio_track_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(video_track_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(sub_track_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(input_sample_length, vlc_tick_t, add_integer, Integer, VLC_TICK_FROM_MS(40), NO_FREE) \
-    X(title_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(chapter_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(null_names, bool, add_bool, Bool, false, NO_FREE) \
-    X(program_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(attachment_count, ssize_t, add_integer, Ssize, 0, NO_FREE) \
-    X(can_seek, bool, add_bool, Bool, true, NO_FREE) \
-    X(can_pause, bool, add_bool, Bool, true, NO_FREE) \
-    X(can_control_pace, bool, add_bool, Bool, true, NO_FREE) \
-    X(can_control_rate, bool, add_bool, Bool, true, NO_FREE) \
-    X(can_record, bool, add_bool, Bool, true, NO_FREE) \
-    X(error, bool, add_bool, Bool, false, NO_FREE) \
-    X(pts_delay, vlc_tick_t, add_integer, Unsigned, DEFAULT_PTS_DELAY, NO_FREE) \
-    X(pts_offset, vlc_tick_t, add_integer, Unsigned, 0, NO_FREE) \
-    X(time_offset, vlc_tick_t, add_integer, Ssize, 0, NO_FREE) \
-    X(discontinuities, char *, add_string, String, NULL, FREE_CB) \
-    X(config, char *, add_string, String, NULL, FREE_CB)
+    X(node_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(length, vlc_tick_t, vlc_add_integer, Integer, VLC_TICK_FROM_MS(5000), NO_FREE) \
+    X(audio_track_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(video_track_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(sub_track_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(input_sample_length, vlc_tick_t, vlc_add_integer, Integer, VLC_TICK_FROM_MS(40), NO_FREE) \
+    X(title_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(chapter_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(null_names, bool, vlc_add_bool, Bool, false, NO_FREE) \
+    X(program_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(attachment_count, ssize_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(can_seek, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    X(can_pause, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    X(can_control_pace, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    X(can_control_rate, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    X(can_record, bool, vlc_add_bool, Bool, true, NO_FREE) \
+    X(error, bool, vlc_add_bool, Bool, false, NO_FREE) \
+    X(pts_delay, vlc_tick_t, vlc_add_integer, Unsigned, DEFAULT_PTS_DELAY, NO_FREE) \
+    X(pts_offset, vlc_tick_t, vlc_add_integer, Unsigned, 0, NO_FREE) \
+    X(time_offset, vlc_tick_t, vlc_add_integer, Ssize, 0, NO_FREE) \
+    X(discontinuities, char *, vlc_add_string, String, NULL, FREE_CB) \
+    X(config, char *, vlc_add_string, String, NULL, FREE_CB)
 
 #define DECLARE_OPTION(var_name, type, module_header_type, getter, default_value, free_cb) \
     type var_name;
@@ -253,8 +253,8 @@ var_Read_float(const char *psz)
 
 #define DECLARE_MODULE_OPTIONS(var_name, type, module_header_type, getter, default_value, free_cb) \
     module_header_type("mock-"#var_name, default_value, #var_name, NULL) \
-    change_volatile() \
-    change_safe()
+    vlc_change_volatile() \
+    vlc_change_safe()
 #define DECLARE_MODULE_SUBOPTIONS(a,b,c,d,e,f,g) \
     DECLARE_MODULE_OPTIONS(a##_##b,c,d,e,f,g)
 
@@ -1728,15 +1728,15 @@ error:
 }
 
 vlc_module_begin()
-    set_description("mock access demux")
-    set_capability("access", 0)
-    set_subcategory(SUBCAT_INPUT_ACCESS)
-    set_callbacks(Open, Close)
+    vlc_set_description("mock access demux")
+    vlc_set_capability("access", 0)
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_set_callbacks(Open, Close)
     OPTIONS_GLOBAL(DECLARE_MODULE_OPTIONS)
     OPTIONS_AUDIO(DECLARE_MODULE_SUBOPTIONS)
     OPTIONS_VIDEO(DECLARE_MODULE_SUBOPTIONS)
     OPTIONS_SUB(DECLARE_MODULE_SUBOPTIONS)
-    add_shortcut("mock")
+    vlc_add_shortcut("mock")
 vlc_module_end()
 
 #undef X

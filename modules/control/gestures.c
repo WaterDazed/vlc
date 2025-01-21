@@ -88,17 +88,17 @@ static const char *const button_list_text[] =
                                    { N_("Left"), N_("Middle"), N_("Right") };
 
 vlc_module_begin ()
-    set_shortname( N_("Gestures"))
-    set_subcategory( SUBCAT_INTERFACE_CONTROL )
-    add_integer( "gestures-threshold", 30,
+    vlc_set_shortname( N_("Gestures"))
+    vlc_set_subcategory( SUBCAT_INTERFACE_CONTROL )
+    vlc_add_integer( "gestures-threshold", 30,
                  THRESHOLD_TEXT, THRESHOLD_LONGTEXT )
-    add_string( "gestures-button", BUTTON_DEFAULT,
+    vlc_add_string( "gestures-button", BUTTON_DEFAULT,
                 BUTTON_TEXT, BUTTON_LONGTEXT )
-        change_string_list( button_list, button_list_text )
-    set_description( N_("Mouse gestures control interface") )
+        vlc_change_string_list( button_list, button_list_text )
+    vlc_set_description( N_("Mouse gestures control interface") )
 
-    set_capability( "interface", 0 )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "interface", 0 )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 static void player_on_vout_changed(vlc_player_t *player,

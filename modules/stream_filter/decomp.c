@@ -50,24 +50,24 @@ static int  OpenZstd(vlc_object_t *);
 static void Close (vlc_object_t *);
 
 vlc_module_begin ()
-    set_subcategory (SUBCAT_INPUT_STREAM_FILTER)
-    set_capability ("stream_filter", 320)
+    vlc_set_subcategory (SUBCAT_INPUT_STREAM_FILTER)
+    vlc_set_capability ("stream_filter", 320)
 
-    set_description (N_("Zstandard decompression"))
-    set_callbacks (OpenZstd, Close)
+    vlc_set_description (N_("Zstandard decompression"))
+    vlc_set_callbacks (OpenZstd, Close)
 
-    add_submodule ()
-    set_description (N_("LZMA decompression"))
-    set_callbacks (OpenXZ, Close)
+    vlc_add_submodule ()
+    vlc_set_description (N_("LZMA decompression"))
+    vlc_set_callbacks (OpenXZ, Close)
 
-    add_submodule ()
-    set_description (N_("Burrows-Wheeler decompression"))
-    set_callbacks (OpenBzip2, Close)
+    vlc_add_submodule ()
+    vlc_set_description (N_("Burrows-Wheeler decompression"))
+    vlc_set_callbacks (OpenBzip2, Close)
     /* TODO: access shortnames for vlc_stream_NewURL() */
 
-    add_submodule ()
-    set_description (N_("gzip decompression"))
-    set_callbacks (OpenGzip, Close)
+    vlc_add_submodule ()
+    vlc_set_description (N_("gzip decompression"))
+    vlc_set_callbacks (OpenGzip, Close)
 vlc_module_end ()
 
 typedef struct

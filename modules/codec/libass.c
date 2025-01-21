@@ -59,12 +59,12 @@ static void Destroy( vlc_object_t * );
 #define TEXT_SSA_FONTSDIR   N_("Additional fonts directory")
 
 vlc_module_begin ()
-    set_shortname( N_("Subtitles (advanced)"))
-    set_description( N_("Subtitle renderers using libass") )
-    set_capability( "spu decoder", 100 )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_callbacks( Create, Destroy )
-    add_string("ssa-fontsdir", NULL, TEXT_SSA_FONTSDIR, NULL)
+    vlc_set_shortname( N_("Subtitles (advanced)"))
+    vlc_set_description( N_("Subtitle renderers using libass") )
+    vlc_set_capability( "spu decoder", 100 )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_callbacks( Create, Destroy )
+    vlc_add_string("ssa-fontsdir", NULL, TEXT_SSA_FONTSDIR, NULL)
 vlc_module_end ()
 
 /*****************************************************************************

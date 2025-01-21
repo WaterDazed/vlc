@@ -178,18 +178,18 @@ static int  OpenDecoder   ( vlc_object_t * );
 static void CloseDecoder  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_shortname( N_("Subtitles"))
-    set_description( N_("Text subtitle decoder") )
-    set_capability( "spu decoder", 50 )
-    set_callbacks( OpenDecoder, CloseDecoder )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_shortname( N_("Subtitles"))
+    vlc_set_description( N_("Text subtitle decoder") )
+    vlc_set_capability( "spu decoder", 50 )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
 
-    add_integer( "subsdec-align", -1, ALIGN_TEXT, ALIGN_LONGTEXT )
-        change_integer_list( pi_justification, ppsz_justification_text )
-    add_string( "subsdec-encoding", "",
+    vlc_add_integer( "subsdec-align", -1, ALIGN_TEXT, ALIGN_LONGTEXT )
+        vlc_change_integer_list( pi_justification, ppsz_justification_text )
+    vlc_add_string( "subsdec-encoding", "",
                 ENCODING_TEXT, ENCODING_LONGTEXT )
-        change_string_list( ppsz_encodings, ppsz_encoding_names )
-    add_bool( "subsdec-autodetect-utf8", true,
+        vlc_change_string_list( ppsz_encodings, ppsz_encoding_names )
+    vlc_add_bool( "subsdec-autodetect-utf8", true,
               AUTODETECT_UTF8_TEXT, AUTODETECT_UTF8_LONGTEXT )
 vlc_module_end ()
 

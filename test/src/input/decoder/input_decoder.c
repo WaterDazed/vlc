@@ -424,38 +424,38 @@ static int OpenIntf(vlc_object_t *obj)
  *  - filter for generating video format and context
  **/
 vlc_module_begin()
-    set_callback(OpenIntf)
-    set_capability("interface", 0)
+    vlc_set_callback(OpenIntf)
+    vlc_set_capability("interface", 0)
 
 
-    add_submodule()
-        set_callback_dec_device(OpenDecoderDevice, 0)
+    vlc_add_submodule()
+        vlc_set_callback_dec_device(OpenDecoderDevice, 0)
 
-    add_submodule()
-        set_callbacks(OpenDecoder, CloseDecoder)
-        set_capability("video decoder", INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callbacks(OpenDecoder, CloseDecoder)
+        vlc_set_capability("video decoder", INT_MAX)
 
-    add_submodule()
-        set_callbacks(OpenCcDecoder, CloseCcDecoder)
-        set_capability("spu decoder", INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callbacks(OpenCcDecoder, CloseCcDecoder)
+        vlc_set_capability("spu decoder", INT_MAX)
 
-    add_submodule()
-        set_callback(OpenPacketizer)
-        set_capability("packetizer", INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callback(OpenPacketizer)
+        vlc_set_capability("packetizer", INT_MAX)
 
-    add_submodule()
-        set_callback(OpenWindow)
-        set_capability("vout window", INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callback(OpenWindow)
+        vlc_set_capability("vout window", INT_MAX)
 
-    add_submodule()
-        set_callback_display(OpenDisplay, 0)
+    vlc_add_submodule()
+        vlc_set_callback_display(OpenDisplay, 0)
 
-    add_submodule()
-        set_callback_text_renderer(OpenTextRenderer, INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callback_text_renderer(OpenTextRenderer, INT_MAX)
 
-    add_submodule()
-        set_callback(OpenSoutFilter)
-        set_capability("sout output", 0)
+    vlc_add_submodule()
+        vlc_set_callback(OpenSoutFilter)
+        vlc_set_capability("sout output", 0)
 
 vlc_module_end()
 

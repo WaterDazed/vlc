@@ -151,17 +151,17 @@ static const struct vlc_logger_operations *Open(vlc_object_t *obj,
 #define SYSLOG_FACILITY_LONGTEXT N_("System logging facility.")
 
 vlc_module_begin()
-    set_shortname(N_( "syslog" ))
-    set_description(N_("System logger (syslog)"))
-    set_subcategory(SUBCAT_ADVANCED_MISC)
-    set_capability("logger", 20)
-    set_callback(Open)
+    vlc_set_shortname(N_( "syslog" ))
+    vlc_set_description(N_("System logger (syslog)"))
+    vlc_set_subcategory(SUBCAT_ADVANCED_MISC)
+    vlc_set_capability("logger", 20)
+    vlc_set_callback(Open)
 
-    add_bool("syslog", false, SYSLOG_TEXT, SYSLOG_LONGTEXT)
-    add_bool("syslog-debug", false, SYSLOG_DEBUG_TEXT, SYSLOG_DEBUG_LONGTEXT)
-    add_string("syslog-ident", default_ident, SYSLOG_IDENT_TEXT,
+    vlc_add_bool("syslog", false, SYSLOG_TEXT, SYSLOG_LONGTEXT)
+    vlc_add_bool("syslog-debug", false, SYSLOG_DEBUG_TEXT, SYSLOG_DEBUG_LONGTEXT)
+    vlc_add_string("syslog-ident", default_ident, SYSLOG_IDENT_TEXT,
                SYSLOG_IDENT_LONGTEXT)
-    add_string("syslog-facility", fac_names[0], SYSLOG_FACILITY_TEXT,
+    vlc_add_string("syslog-facility", fac_names[0], SYSLOG_FACILITY_TEXT,
                SYSLOG_FACILITY_LONGTEXT)
-        change_string_list(fac_names, fac_names)
+        vlc_change_string_list(fac_names, fac_names)
 vlc_module_end()

@@ -788,25 +788,25 @@ static const char *const algo_names[] = {
 };
 
 vlc_module_begin()
-    set_shortname(N_("VDPAU"))
-    set_description(N_("VDPAU surface conversions"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_callback_video_converter(OutputOpen, 10)
+    vlc_set_shortname(N_("VDPAU"))
+    vlc_set_description(N_("VDPAU surface conversions"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_callback_video_converter(OutputOpen, 10)
 
-    add_integer("vdpau-deinterlace",
+    vlc_add_integer("vdpau-deinterlace",
                 VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL,
                 N_("Deinterlace"), N_("Deinterlacing algorithm"))
-        change_integer_list(algo_values, algo_names)
-    add_bool("vdpau-ivtc", false,
+        vlc_change_integer_list(algo_values, algo_names)
+    vlc_add_bool("vdpau-ivtc", false,
              N_("Inverse telecine"), NULL)
-    add_bool("vdpau-chroma-skip", false,
+    vlc_add_bool("vdpau-chroma-skip", false,
              N_("Deinterlace chroma skip"),
              N_("Whether temporal deinterlacing applies to luma only"))
-    add_float_with_range("vdpau-noise-reduction", 0., 0., 1.,
+    vlc_add_float_with_range("vdpau-noise-reduction", 0., 0., 1.,
         N_("Noise reduction level"), NULL)
-    add_integer_with_range("vdpau-scaling", 0, 0, 9,
+    vlc_add_integer_with_range("vdpau-scaling", 0, 0, 9,
        N_("Scaling quality"), N_("High quality scaling level"))
 
-    add_submodule()
-    set_callback_video_converter(YCbCrOpen, 10)
+    vlc_add_submodule()
+    vlc_set_callback_video_converter(YCbCrOpen, 10)
 vlc_module_end()

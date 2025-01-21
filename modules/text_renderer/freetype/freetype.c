@@ -123,83 +123,83 @@ static const char *const ppsz_text_direction[] = {
 #endif
 
 vlc_module_begin ()
-    set_shortname( N_("Text renderer"))
-    set_description( N_("Freetype2 font renderer") )
-    set_subcategory( SUBCAT_VIDEO_SUBPIC )
+    vlc_set_shortname( N_("Text renderer"))
+    vlc_set_description( N_("Freetype2 font renderer") )
+    vlc_set_subcategory( SUBCAT_VIDEO_SUBPIC )
 
 #ifdef HAVE_GET_FONT_BY_FAMILY_NAME
-    add_font("freetype-font", DEFAULT_FAMILY, FONT_TEXT, FAMILY_LONGTEXT)
-    add_font("freetype-monofont", DEFAULT_MONOSPACE_FAMILY,
+    vlc_add_font("freetype-font", DEFAULT_FAMILY, FONT_TEXT, FAMILY_LONGTEXT)
+    vlc_add_font("freetype-monofont", DEFAULT_MONOSPACE_FAMILY,
              MONOSPACE_FONT_TEXT, FAMILY_LONGTEXT)
 #else
-    add_loadfile("freetype-font", DEFAULT_FONT_FILE, FONT_TEXT, FONT_LONGTEXT)
-    add_loadfile("freetype-monofont", DEFAULT_MONOSPACE_FONT_FILE,
+    vlc_add_loadfile("freetype-font", DEFAULT_FONT_FILE, FONT_TEXT, FONT_LONGTEXT)
+    vlc_add_loadfile("freetype-monofont", DEFAULT_MONOSPACE_FONT_FILE,
                  MONOSPACE_FONT_TEXT, FONT_LONGTEXT)
 #endif
 
     /* opacity valid on 0..255, with default 255 = fully opaque */
-    add_integer_with_range( "freetype-opacity", 255, 0, 255,
+    vlc_add_integer_with_range( "freetype-opacity", 255, 0, 255,
         OPACITY_TEXT, OPACITY_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
     /* hook to the color values list, with default 0x00ffffff = white */
-    add_rgb("freetype-color", 0x00FFFFFF, COLOR_TEXT, COLOR_LONGTEXT)
-        change_integer_list( pi_color_values, ppsz_color_descriptions )
-        change_safe()
+    vlc_add_rgb("freetype-color", 0x00FFFFFF, COLOR_TEXT, COLOR_LONGTEXT)
+        vlc_change_integer_list( pi_color_values, ppsz_color_descriptions )
+        vlc_change_safe()
 
-    add_bool( "freetype-bold", false, BOLD_TEXT, NULL )
-        change_safe()
+    vlc_add_bool( "freetype-bold", false, BOLD_TEXT, NULL )
+        vlc_change_safe()
 
-    add_integer_with_range( "freetype-background-opacity", 0, 0, 255,
+    vlc_add_integer_with_range( "freetype-background-opacity", 0, 0, 255,
                             BG_OPACITY_TEXT, NULL )
-        change_safe()
-    add_rgb("freetype-background-color", 0x00000000, BG_COLOR_TEXT, NULL)
-        change_integer_list( pi_color_values, ppsz_color_descriptions )
-        change_safe()
+        vlc_change_safe()
+    vlc_add_rgb("freetype-background-color", 0x00000000, BG_COLOR_TEXT, NULL)
+        vlc_change_integer_list( pi_color_values, ppsz_color_descriptions )
+        vlc_change_safe()
 
-    add_integer_with_range( "freetype-outline-opacity", 255, 0, 255,
+    vlc_add_integer_with_range( "freetype-outline-opacity", 255, 0, 255,
                             OUTLINE_OPACITY_TEXT, NULL )
-        change_safe()
-    add_rgb("freetype-outline-color", 0x00000000, OUTLINE_COLOR_TEXT, NULL)
-        change_integer_list( pi_color_values, ppsz_color_descriptions )
-        change_safe()
-    add_integer_with_range( "freetype-outline-thickness", 4, 0, 50, OUTLINE_THICKNESS_TEXT,
+        vlc_change_safe()
+    vlc_add_rgb("freetype-outline-color", 0x00000000, OUTLINE_COLOR_TEXT, NULL)
+        vlc_change_integer_list( pi_color_values, ppsz_color_descriptions )
+        vlc_change_safe()
+    vlc_add_integer_with_range( "freetype-outline-thickness", 4, 0, 50, OUTLINE_THICKNESS_TEXT,
              NULL )
-        change_integer_list( pi_outline_thickness, ppsz_outline_thickness )
-        change_safe()
+        vlc_change_integer_list( pi_outline_thickness, ppsz_outline_thickness )
+        vlc_change_safe()
 
-    add_integer_with_range( "freetype-shadow-opacity", 128, 0, 255,
+    vlc_add_integer_with_range( "freetype-shadow-opacity", 128, 0, 255,
                             SHADOW_OPACITY_TEXT, NULL )
-        change_safe()
-    add_rgb("freetype-shadow-color", 0x00000000, SHADOW_COLOR_TEXT, NULL)
-        change_integer_list( pi_color_values, ppsz_color_descriptions )
-        change_safe()
-    add_float_with_range( "freetype-shadow-angle", -45, -360, 360,
+        vlc_change_safe()
+    vlc_add_rgb("freetype-shadow-color", 0x00000000, SHADOW_COLOR_TEXT, NULL)
+        vlc_change_integer_list( pi_color_values, ppsz_color_descriptions )
+        vlc_change_safe()
+    vlc_add_float_with_range( "freetype-shadow-angle", -45, -360, 360,
                           SHADOW_ANGLE_TEXT, NULL )
-        change_safe()
-    add_float_with_range( "freetype-shadow-distance", 0.06, 0.0, 1.0,
+        vlc_change_safe()
+    vlc_add_float_with_range( "freetype-shadow-distance", 0.06, 0.0, 1.0,
                           SHADOW_DISTANCE_TEXT, NULL )
-        change_safe()
+        vlc_change_safe()
 
-    add_integer_with_range( "freetype-cache-size", 200, 25, (UINT32_MAX >> 10),
+    vlc_add_integer_with_range( "freetype-cache-size", 200, 25, (UINT32_MAX >> 10),
                             CACHE_SIZE_TEXT, CACHE_SIZE_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
-    add_obsolete_integer( "freetype-fontsize" ) /* since 4.0.0 */
-    add_obsolete_integer( "freetype-rel-fontsize" ) /* since 4.0.0 */
+    vlc_add_obsolete_integer( "freetype-fontsize" ) /* since 4.0.0 */
+    vlc_add_obsolete_integer( "freetype-rel-fontsize" ) /* since 4.0.0 */
 
-    add_bool( "freetype-yuvp", false, YUVP_TEXT,
+    vlc_add_bool( "freetype-yuvp", false, YUVP_TEXT,
               YUVP_LONGTEXT )
 
 #ifdef HAVE_FRIBIDI
-    add_integer_with_range( "freetype-text-direction", 0, 0, 2, TEXT_DIRECTION_TEXT,
+    vlc_add_integer_with_range( "freetype-text-direction", 0, 0, 2, TEXT_DIRECTION_TEXT,
                             TEXT_DIRECTION_LONGTEXT )
-        change_integer_list( pi_text_direction, ppsz_text_direction )
-        change_safe()
+        vlc_change_integer_list( pi_text_direction, ppsz_text_direction )
+        vlc_change_safe()
 #endif
 
-    add_shortcut( "text" )
-    set_callback_text_renderer( Create, 100 )
+    vlc_add_shortcut( "text" )
+    vlc_set_callback_text_renderer( Create, 100 )
 vlc_module_end ()
 
 /* */

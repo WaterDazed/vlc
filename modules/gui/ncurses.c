@@ -78,13 +78,13 @@ static void Close          (vlc_object_t *);
     "will show you initially.")
 
 vlc_module_begin ()
-    set_shortname("Ncurses")
-    set_description(N_("Ncurses interface"))
-    set_capability("interface", 10)
-    set_subcategory(SUBCAT_INTERFACE_MAIN)
-    set_callbacks(Open, Close)
-    add_shortcut("curses")
-    add_directory("browse-dir", NULL, BROWSE_TEXT, BROWSE_LONGTEXT)
+    vlc_set_shortname("Ncurses")
+    vlc_set_description(N_("Ncurses interface"))
+    vlc_set_capability("interface", 10)
+    vlc_set_subcategory(SUBCAT_INTERFACE_MAIN)
+    vlc_set_callbacks(Open, Close)
+    vlc_add_shortcut("curses")
+    vlc_add_directory("browse-dir", NULL, BROWSE_TEXT, BROWSE_LONGTEXT)
 vlc_module_end ()
 
 #include "eject.c"

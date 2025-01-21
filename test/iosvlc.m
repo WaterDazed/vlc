@@ -186,13 +186,13 @@ static int OpenAssetDemux(vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_capability("interface", 0)
-    set_callback(Open)
+    vlc_set_capability("interface", 0)
+    vlc_set_callback(Open)
 
-    add_submodule()
-    set_capability("access", 1)
-    set_callback(OpenAssetDemux)
-    add_shortcut("asset")
+    vlc_add_submodule()
+    vlc_set_capability("access", 1)
+    vlc_set_callback(OpenAssetDemux)
+    vlc_add_shortcut("asset")
 vlc_module_end()
 
 VLC_EXPORT const vlc_plugin_cb vlc_static_modules[] = {

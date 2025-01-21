@@ -42,10 +42,10 @@ static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_SOUT_PACKETIZER )
-    set_description( N_("Copy packetizer") )
-    set_capability( "packetizer", 1 )
-    set_callbacks( Open, Close )
+    vlc_set_subcategory( SUBCAT_SOUT_PACKETIZER )
+    vlc_set_description( N_("Copy packetizer") )
+    vlc_set_capability( "packetizer", 1 )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -57,12 +57,12 @@ static void  Close( sout_stream_t * );
 #define DURATION_LONGTEXT N_("Default: 90sec")
 
 vlc_module_begin ()
-    set_description( N_("Chromaprint stream output") )
-    set_capability( "sout output", 0 )
-    add_shortcut( "chromaprint" )
-    set_subcategory( SUBCAT_SOUT_STREAM )
-    add_integer( "duration", 90, DURATION_TEXT, DURATION_LONGTEXT )
-    set_callback( Open )
+    vlc_set_description( N_("Chromaprint stream output") )
+    vlc_set_capability( "sout output", 0 )
+    vlc_add_shortcut( "chromaprint" )
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )
+    vlc_add_integer( "duration", 90, DURATION_TEXT, DURATION_LONGTEXT )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 typedef struct sout_stream_id_sys_t sout_stream_id_sys_t;

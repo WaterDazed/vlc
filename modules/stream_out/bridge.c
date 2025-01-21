@@ -89,37 +89,37 @@ static void CloseIn ( sout_stream_t * );
 #define SOUT_CFG_PREFIX_IN "sout-bridge-in-"
 
 vlc_module_begin ()
-    set_shortname( N_("Bridge"))
-    set_description( N_("Bridge stream output"))
-    add_submodule ()
-    set_section( N_("Bridge out"), NULL )
-    set_capability( "sout output", 50 )
-    add_shortcut( "bridge-out" )
+    vlc_set_shortname( N_("Bridge"))
+    vlc_set_description( N_("Bridge stream output"))
+    vlc_add_submodule ()
+    vlc_set_section( N_("Bridge out"), NULL )
+    vlc_set_capability( "sout output", 50 )
+    vlc_add_shortcut( "bridge-out" )
     /* Only usable with VLM. No category so not in gui preferences
-    set_subcategory( SUBCAT_SOUT_STREAM )*/
-    add_string( SOUT_CFG_PREFIX_OUT "id", NULL, ID_TEXT, ID_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX_OUT "in-name", "default",
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )*/
+    vlc_add_string( SOUT_CFG_PREFIX_OUT "id", NULL, ID_TEXT, ID_LONGTEXT )
+    vlc_add_string( SOUT_CFG_PREFIX_OUT "in-name", "default",
                 DEST_TEXT, DEST_LONGTEXT )
-    set_callback( OpenOut )
+    vlc_set_callback( OpenOut )
 
-    add_submodule ()
-    set_section( N_("Bridge in"), NULL )
-    set_capability( "sout filter", 50 )
-    add_shortcut( "bridge-in" )
-    /*set_subcategory( SUBCAT_SOUT_STREAM )*/
-    add_integer( SOUT_CFG_PREFIX_IN "delay", 0, DELAY_TEXT,
+    vlc_add_submodule ()
+    vlc_set_section( N_("Bridge in"), NULL )
+    vlc_set_capability( "sout filter", 50 )
+    vlc_add_shortcut( "bridge-in" )
+    /*vlc_set_subcategory( SUBCAT_SOUT_STREAM )*/
+    vlc_add_integer( SOUT_CFG_PREFIX_IN "delay", 0, DELAY_TEXT,
                  DELAY_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX_IN "id-offset", 8192, ID_OFFSET_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX_IN "id-offset", 8192, ID_OFFSET_TEXT,
                  ID_OFFSET_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX_IN "name", "default",
+    vlc_add_string( SOUT_CFG_PREFIX_IN "name", "default",
                 NAME_TEXT, NAME_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX_IN "placeholder", false,
+    vlc_add_bool( SOUT_CFG_PREFIX_IN "placeholder", false,
               PLACEHOLDER_TEXT, PLACEHOLDER_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX_IN "placeholder-delay", 200,
+    vlc_add_integer( SOUT_CFG_PREFIX_IN "placeholder-delay", 200,
                  PLACEHOLDER_DELAY_TEXT, PLACEHOLDER_DELAY_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX_IN "placeholder-switch-on-iframe", true,
+    vlc_add_bool( SOUT_CFG_PREFIX_IN "placeholder-switch-on-iframe", true,
               PLACEHOLDER_IFRAME_TEXT, PLACEHOLDER_IFRAME_LONGTEXT )
-    set_callback( OpenIn )
+    vlc_set_callback( OpenIn )
 
 vlc_module_end ()
 

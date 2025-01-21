@@ -75,23 +75,23 @@ static void Close( vlc_object_t *p_this );
 #define SCAN_NIT_TEXT N_("Use NIT for scanning services")
 
 vlc_module_begin ()
-    set_shortname( N_("DVB") )
-    set_description( N_("DVB input with v4l2 support") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_shortname( N_("DVB") )
+    vlc_set_description( N_("DVB input with v4l2 support") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_bool( "dvb-probe", true, PROBE_TEXT, PROBE_LONGTEXT )
+    vlc_add_bool( "dvb-probe", true, PROBE_TEXT, PROBE_LONGTEXT )
     /* DVB-S (satellite) */
-    add_string( "dvb-satellite", NULL, SATELLITE_TEXT, SATELLITE_LONGTEXT )
-    add_string( "dvb-scanlist", NULL, SCANLIST_TEXT, SCANLIST_LONGTEXT )
-    add_bool( "dvb-scan-nit", true, SCAN_NIT_TEXT, NULL )
+    vlc_add_string( "dvb-satellite", NULL, SATELLITE_TEXT, SATELLITE_LONGTEXT )
+    vlc_add_string( "dvb-scanlist", NULL, SCANLIST_TEXT, SCANLIST_LONGTEXT )
+    vlc_add_bool( "dvb-scan-nit", true, SCAN_NIT_TEXT, NULL )
 
-    set_capability( "access", 0 )
-    add_shortcut( "dvb",                        /* Generic name */
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "dvb",                        /* Generic name */
                   "dvb-s", "qpsk", "satellite", /* Satellite */
                   "dvb-c", "cable",             /* Cable */
                   "dvb-t", "terrestrial" )      /* Terrestrial */
 
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 
 vlc_module_end ()
 

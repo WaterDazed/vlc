@@ -360,35 +360,35 @@ static int OpenIntf(vlc_object_t *obj)
  *  - encoder to check the previous video format and context
  **/
 vlc_module_begin()
-    set_callbacks(OpenDecoder, CloseDecoder)
-    set_capability("video decoder", INT_MAX)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_set_capability("video decoder", INT_MAX)
 
-    add_submodule()
-        set_callback(OpenErrorChecker)
-        set_capability("sout filter", 0)
-        add_shortcut("error_checker")
+    vlc_add_submodule()
+        vlc_set_callback(OpenErrorChecker)
+        vlc_set_capability("sout filter", 0)
+        vlc_add_shortcut("error_checker")
 
-    add_submodule()
-        set_callback(OpenOutputChecker)
-        set_capability("sout output", 0)
-        add_shortcut("output_checker")
+    vlc_add_submodule()
+        vlc_set_callback(OpenOutputChecker)
+        vlc_set_capability("sout output", 0)
+        vlc_add_shortcut("output_checker")
 
-    add_submodule()
-        set_callback_dec_device(OpenDecoderDevice, 0)
+    vlc_add_submodule()
+        vlc_set_callback_dec_device(OpenDecoderDevice, 0)
 
-    add_submodule()
-        set_callback_video_filter(OpenFilter)
+    vlc_add_submodule()
+        vlc_set_callback_video_filter(OpenFilter)
 
-    add_submodule()
-        set_callback_video_converter(OpenConverter, INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callback_video_converter(OpenConverter, INT_MAX)
 
-    add_submodule()
-        set_callback(OpenEncoder)
-        set_capability("video encoder", 0)
+    vlc_add_submodule()
+        vlc_set_callback(OpenEncoder)
+        vlc_set_capability("video encoder", 0)
 
-    add_submodule()
-        set_callback(OpenIntf)
-        set_capability("interface", 0)
+    vlc_add_submodule()
+        vlc_set_callback(OpenIntf)
+        vlc_set_capability("interface", 0)
 
 vlc_module_end()
 

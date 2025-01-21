@@ -39,12 +39,12 @@
 static int  Open ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("Dummy stream output") )
-    set_shortname( N_( "Dummy" ))
-    set_capability( "sout access", 0 )
-    set_subcategory( SUBCAT_SOUT_ACO )
-    add_shortcut( "dummy" )
-    set_callback( Open )
+    vlc_set_description( N_("Dummy stream output") )
+    vlc_set_shortname( N_( "Dummy" ))
+    vlc_set_capability( "sout access", 0 )
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_add_shortcut( "dummy" )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 

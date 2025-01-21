@@ -44,8 +44,8 @@
 static int  Open ( filter_t * );
 
 vlc_module_begin ()
-    set_description( N_("YUVP converter") )
-    set_callback_video_converter( Open, 10 )
+    vlc_set_description( N_("YUVP converter") )
+    vlc_set_callback_video_converter( Open, 10 )
 vlc_module_end ()
 
 /****************************************************************************

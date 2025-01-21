@@ -38,11 +38,11 @@ static int  Open (vlc_object_t *);
 static void Close(vlc_object_t *);
 
 vlc_module_begin ()
-    set_description(N_("SCTE-27 decoder"))
-    set_shortname(N_("SCTE-27"))
-    set_capability( "spu decoder", 51)
-    set_subcategory(SUBCAT_INPUT_SCODEC)
-    set_callbacks(Open, Close)
+    vlc_set_description(N_("SCTE-27 decoder"))
+    vlc_set_shortname(N_("SCTE-27"))
+    vlc_set_capability( "spu decoder", 51)
+    vlc_set_subcategory(SUBCAT_INPUT_SCODEC)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end ()
 
 /****************************************************************************

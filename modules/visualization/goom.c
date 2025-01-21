@@ -66,18 +66,18 @@ static void Close        ( filter_t * );
 #define MAX_SPEED 10
 
 vlc_module_begin ()
-    set_shortname( N_("Goom"))
-    set_description( N_("Goom effect") )
-    set_subcategory( SUBCAT_AUDIO_VISUAL )
-    set_capability( "visualization", 0 )
-    add_integer( "goom-width", 800,
+    vlc_set_shortname( N_("Goom"))
+    vlc_set_description( N_("Goom effect") )
+    vlc_set_subcategory( SUBCAT_AUDIO_VISUAL )
+    vlc_set_capability( "visualization", 0 )
+    vlc_add_integer( "goom-width", 800,
                  WIDTH_TEXT, RES_LONGTEXT )
-    add_integer( "goom-height", 500,
+    vlc_add_integer( "goom-height", 500,
                  HEIGHT_TEXT, RES_LONGTEXT )
-    add_integer_with_range( "goom-speed", 6, 1, 10,
+    vlc_add_integer_with_range( "goom-speed", 6, 1, 10,
                  SPEED_TEXT, SPEED_LONGTEXT )
-    set_callback( Open )
-    add_shortcut( "goom" )
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "goom" )
 vlc_module_end ()
 
 /*****************************************************************************

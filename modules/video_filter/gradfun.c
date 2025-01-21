@@ -54,16 +54,16 @@ static int  Open (filter_t *);
 #define STRENGTH_LONGTEXT N_("Strength used to modify the value of a pixel")
 
 vlc_module_begin()
-    set_description(N_("Gradfun video filter"))
-    set_shortname(N_("Gradfun"))
-    set_help(N_("Debanding algorithm"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    add_integer_with_range(CFG_PREFIX "radius", 16, RADIUS_MIN, RADIUS_MAX,
+    vlc_set_description(N_("Gradfun video filter"))
+    vlc_set_shortname(N_("Gradfun"))
+    vlc_set_help(N_("Debanding algorithm"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_add_integer_with_range(CFG_PREFIX "radius", 16, RADIUS_MIN, RADIUS_MAX,
                            RADIUS_TEXT, RADIUS_LONGTEXT)
-    add_float_with_range(CFG_PREFIX "strength", 1.2, STRENGTH_MIN, STRENGTH_MAX,
+    vlc_add_float_with_range(CFG_PREFIX "strength", 1.2, STRENGTH_MIN, STRENGTH_MAX,
                          STRENGTH_TEXT, STRENGTH_LONGTEXT)
 
-    set_callback_video_filter(Open)
+    vlc_set_callback_video_filter(Open)
 vlc_module_end()
 
 /*****************************************************************************

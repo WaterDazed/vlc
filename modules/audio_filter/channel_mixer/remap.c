@@ -73,22 +73,22 @@ static const int channel_flag[] =
 };
 
 vlc_module_begin ()
-    set_description( N_("Audio channel remapper") )
-    set_capability( "audio filter", 0 )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    set_callback( OpenFilter )
-    set_shortname( "Remap" )
+    vlc_set_description( N_("Audio channel remapper") )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_callback( OpenFilter )
+    vlc_set_shortname( "Remap" )
 
 #define CHANNEL( idx ) \
-    add_integer( channel_name[idx], idx, channel_desc[idx], \
+    vlc_add_integer( channel_name[idx], idx, channel_desc[idx], \
             channel_desc[idx]) \
-        change_integer_list( channel_idx, channel_desc )
+        vlc_change_integer_list( channel_idx, channel_desc )
     CHANNEL(0) CHANNEL(1) CHANNEL(2)
     CHANNEL(3) CHANNEL(4) CHANNEL(5)
     CHANNEL(6) CHANNEL(7) CHANNEL(8)
 #undef CHANNEL
 
-    add_bool( REMAP_CFG "normalize", true, "Normalize channels",
+    vlc_add_bool( REMAP_CFG "normalize", true, "Normalize channels",
             "When mapping more than one channel to a single output channel, "
             "normalize the output accordingly." )
 

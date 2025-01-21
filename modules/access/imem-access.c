@@ -165,11 +165,11 @@ static void Close(vlc_object_t *object)
 }
 
 vlc_module_begin()
-    set_shortname(N_("Memory stream"))
-    set_description(N_("In-memory stream input"))
-    set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_set_shortname(N_("Memory stream"))
+    vlc_set_description(N_("In-memory stream input"))
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
 
-    add_shortcut("imem")
-    set_capability("access", 0)
-    set_callbacks(Open, Close)
+    vlc_add_shortcut("imem")
+    vlc_set_capability("access", 0)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end()

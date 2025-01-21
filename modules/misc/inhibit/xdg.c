@@ -32,11 +32,11 @@ static int Open (vlc_object_t *);
 static void Close (vlc_object_t *);
 
 vlc_module_begin ()
-    set_shortname (N_("XDG-screensaver") )
-    set_description (N_("XDG screen saver inhibition") )
-    set_capability ("inhibit", 10 )
-    set_callbacks (Open, Close)
-    set_subcategory (SUBCAT_ADVANCED_MISC)
+    vlc_set_shortname (N_("XDG-screensaver") )
+    vlc_set_description (N_("XDG screen saver inhibition") )
+    vlc_set_capability ("inhibit", 10 )
+    vlc_set_callbacks (Open, Close)
+    vlc_set_subcategory (SUBCAT_ADVANCED_MISC)
 vlc_module_end ()
 
 static void Timer (void *data)

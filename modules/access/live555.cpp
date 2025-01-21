@@ -96,44 +96,44 @@ static void Close( vlc_object_t * );
 #define DEFAULT_FRAME_BUFFER_SIZE 250000
 
 vlc_module_begin ()
-    set_description( N_("RTP/RTSP/SDP demuxer (using Live555)" ) )
-    set_capability( "demux", 50 )
-    set_shortname( "RTP/RTSP")
-    set_callbacks( Open, Close )
-    add_shortcut( "live", "livedotcom" )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_description( N_("RTP/RTSP/SDP demuxer (using Live555)" ) )
+    vlc_set_capability( "demux", 50 )
+    vlc_set_shortname( "RTP/RTSP")
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "live", "livedotcom" )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
 
-    add_submodule ()
-        set_description( N_("RTSP/RTP access and demux") )
-        add_shortcut( "rtsp", "rtsps", "pnm", "live", "livedotcom" )
-        set_capability( "access", 300 )
-        set_callbacks( Open, Close )
-        add_bool( "rtsp-tcp", false,
+    vlc_add_submodule ()
+        vlc_set_description( N_("RTSP/RTP access and demux") )
+        vlc_add_shortcut( "rtsp", "rtsps", "pnm", "live", "livedotcom" )
+        vlc_set_capability( "access", 300 )
+        vlc_set_callbacks( Open, Close )
+        vlc_add_bool( "rtsp-tcp", false,
                   N_("Use RTP over RTSP (TCP)"), nullptr )
-            change_safe()
-        add_integer( "rtp-client-port", -1,
+            vlc_change_safe()
+        vlc_add_integer( "rtp-client-port", -1,
                   N_("Client port"),
                   N_("Port to use for the RTP source of the session") )
-        add_bool( "rtsp-mcast", false,
+        vlc_add_bool( "rtsp-mcast", false,
                   N_("Force multicast RTP via RTSP"), nullptr )
-            change_safe()
-        add_bool( "rtsp-http", false,
+            vlc_change_safe()
+        vlc_add_bool( "rtsp-http", false,
                   N_("Tunnel RTSP and RTP over HTTP"), nullptr )
-            change_safe()
-        add_integer( "rtsp-http-port", 80,
+            vlc_change_safe()
+        vlc_add_integer( "rtsp-http-port", 80,
                   N_("HTTP tunnel port"),
                   N_("Port to use for tunneling the RTSP/RTP over HTTP.") )
-        add_bool(   "rtsp-kasenna", false, KASENNA_TEXT,
+        vlc_add_bool(   "rtsp-kasenna", false, KASENNA_TEXT,
                     KASENNA_LONGTEXT )
-            change_safe()
-        add_bool(   "rtsp-wmserver", false, WMSERVER_TEXT,
+            vlc_change_safe()
+        vlc_add_bool(   "rtsp-wmserver", false, WMSERVER_TEXT,
                     WMSERVER_LONGTEXT)
-            change_safe()
-        add_string( "rtsp-user", NULL, USER_TEXT,
+            vlc_change_safe()
+        vlc_add_string( "rtsp-user", NULL, USER_TEXT,
                     USER_LONGTEXT )
-            change_safe()
-        add_password("rtsp-pwd", NULL, PASS_TEXT, PASS_LONGTEXT)
-        add_integer( "rtsp-frame-buffer-size", DEFAULT_FRAME_BUFFER_SIZE,
+            vlc_change_safe()
+        vlc_add_password("rtsp-pwd", NULL, PASS_TEXT, PASS_LONGTEXT)
+        vlc_add_integer( "rtsp-frame-buffer-size", DEFAULT_FRAME_BUFFER_SIZE,
                      FRAME_BUFFER_SIZE_TEXT, FRAME_BUFFER_SIZE_LONGTEXT )
 vlc_module_end ()
 

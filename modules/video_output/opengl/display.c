@@ -46,25 +46,25 @@ static void Close(vout_display_t *vd);
     "Extension through which to use the Open Graphics Library (OpenGL).")
 
 vlc_module_begin ()
-    set_subcategory (SUBCAT_VIDEO_VOUT)
+    vlc_set_subcategory (SUBCAT_VIDEO_VOUT)
 #if defined (USE_OPENGL_ES2)
 # define API VLC_OPENGL_ES2
 # define MODULE_VARNAME "gles2"
-    set_shortname (N_("OpenGL ES2"))
-    set_description (N_("OpenGL for Embedded Systems 2 video output"))
-    set_callback_display(Open, 265)
-    add_shortcut ("opengles2", "gles2")
-    add_module("gles2", "opengl es2", "any", GLES2_TEXT, PROVIDER_LONGTEXT)
+    vlc_set_shortname (N_("OpenGL ES2"))
+    vlc_set_description (N_("OpenGL for Embedded Systems 2 video output"))
+    vlc_set_callback_display(Open, 265)
+    vlc_add_shortcut ("opengles2", "gles2")
+    vlc_add_module("gles2", "opengl es2", "any", GLES2_TEXT, PROVIDER_LONGTEXT)
 
 #else
 
 # define API VLC_OPENGL
 # define MODULE_VARNAME "gl"
-    set_shortname (N_("OpenGL"))
-    set_description (N_("OpenGL video output"))
-    set_callback_display(Open, 270)
-    add_shortcut ("opengl", "gl")
-    add_module("gl", "opengl", "any", GL_TEXT, PROVIDER_LONGTEXT)
+    vlc_set_shortname (N_("OpenGL"))
+    vlc_set_description (N_("OpenGL video output"))
+    vlc_set_callback_display(Open, 270)
+    vlc_add_shortcut ("opengl", "gl")
+    vlc_add_module("gl", "opengl", "any", GL_TEXT, PROVIDER_LONGTEXT)
 #endif
     add_glopts ()
 

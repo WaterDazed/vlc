@@ -241,13 +241,13 @@ static int Open(vout_display_t *vd,
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname("drm")
+    vlc_set_shortname("drm")
     /* Keep kms here for compatibility with previous video output. */
-    add_shortcut("drm", "kms_drm", "kms")
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_add_shortcut("drm", "kms_drm", "kms")
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 
-    add_obsolete_string("kms-vlc-chroma") /* since 4.0.0 */
-    add_string( "kms-drm-chroma", NULL, DRM_CHROMA_TEXT, DRM_CHROMA_LONGTEXT)
-    set_description("Direct rendering management video output")
-    set_callback_display(Open, 30)
+    vlc_add_obsolete_string("kms-vlc-chroma") /* since 4.0.0 */
+    vlc_add_string( "kms-drm-chroma", NULL, DRM_CHROMA_TEXT, DRM_CHROMA_LONGTEXT)
+    vlc_set_description("Direct rendering management video output")
+    vlc_set_callback_display(Open, 30)
 vlc_module_end ()

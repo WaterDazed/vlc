@@ -1570,711 +1570,711 @@ static const char *const mouse_wheel_texts[] = {
  * Quick usage guide for the configuration options:
  *
  * add_category_hint(N_(text), N_(longtext))
- * add_string( option_name, value, N_(text), N_(longtext) )
- * add_loadfile( option_name, psz_value, N_(text), N_(longtext) )
- * add_savefile( option_name, psz_value, N_(text), N_(longtext) )
- * add_module( option_name, psz_value, i_capability,
+ * vlc_add_string( option_name, value, N_(text), N_(longtext) )
+ * vlc_add_loadfile( option_name, psz_value, N_(text), N_(longtext) )
+ * vlc_add_savefile( option_name, psz_value, N_(text), N_(longtext) )
+ * vlc_add_module( option_name, psz_value, i_capability,
  *             N_(text), N_(longtext) )
- * add_integer( option_name, i_value, N_(text), N_(longtext) )
- * add_bool( option_name, b_value, N_(text), N_(longtext) )
+ * vlc_add_integer( option_name, i_value, N_(text), N_(longtext) )
+ * vlc_add_bool( option_name, b_value, N_(text), N_(longtext) )
  */
 
 #define add_category_hint(text, longtext) \
-    add_typedesc_inner( CONFIG_HINT_CATEGORY, text, longtext )
+    vlc_add_typedesc_inner( CONFIG_HINT_CATEGORY, text, longtext )
 
-#define add_module_cat(name, subcategory, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_MODULE_CAT, name, text, longtext, value) \
-    change_integer_range (subcategory /* gruik */, 0)
+#define vlc_add_module_cat(name, subcategory, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_MODULE_CAT, name, text, longtext, value) \
+    vlc_change_integer_range (subcategory /* gruik */, 0)
 
-#define add_module_list_cat(name, subcategory, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_MODULE_LIST_CAT, name, text, longtext, \
+#define vlc_add_module_list_cat(name, subcategory, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_MODULE_LIST_CAT, name, text, longtext, \
                      value) \
-    change_integer_range (subcategory /* gruik */, 0)
+    vlc_change_integer_range (subcategory /* gruik */, 0)
 
 vlc_module_begin ()
-    set_description( N_("core program") )
+    vlc_set_description( N_("core program") )
 
 /* Audio options */
-    set_subcategory( SUBCAT_AUDIO_GENERAL )
+    vlc_set_subcategory( SUBCAT_AUDIO_GENERAL )
     add_category_hint(N_("Audio"), AOUT_CAT_LONGTEXT)
 
-    add_bool( "audio", true, AUDIO_TEXT, AUDIO_LONGTEXT )
-        change_safe ()
-    add_float( "gain", 1., GAIN_TEXT, GAIN_LONGTEXT )
-        change_float_range( 0., 8. )
-    add_float( "volume-step", AOUT_VOLUME_STEP, VOLUME_STEP_TEXT,
+    vlc_add_bool( "audio", true, AUDIO_TEXT, AUDIO_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_float( "gain", 1., GAIN_TEXT, GAIN_LONGTEXT )
+        vlc_change_float_range( 0., 8. )
+    vlc_add_float( "volume-step", AOUT_VOLUME_STEP, VOLUME_STEP_TEXT,
                  VOLUME_STEP_LONGTEXT )
-        change_float_range( 1., AOUT_VOLUME_DEFAULT )
-    add_bool( "volume-save", true, VOLUME_SAVE_TEXT, NULL )
+        vlc_change_float_range( 1., AOUT_VOLUME_DEFAULT )
+    vlc_add_bool( "volume-save", true, VOLUME_SAVE_TEXT, NULL )
 #if defined(__ANDROID__) || defined(__APPLE__) || defined(_WIN32)
-    add_bool( "spdif", false, SPDIF_TEXT, SPDIF_LONGTEXT )
+    vlc_add_bool( "spdif", false, SPDIF_TEXT, SPDIF_LONGTEXT )
 #else
-    add_obsolete_bool("spdif") /* since 4.0.0 */
+    vlc_add_obsolete_bool("spdif") /* since 4.0.0 */
 #endif
-    add_integer( "force-dolby-surround", 0, FORCE_DOLBY_TEXT,
+    vlc_add_integer( "force-dolby-surround", 0, FORCE_DOLBY_TEXT,
                  FORCE_DOLBY_LONGTEXT )
-        change_integer_list( pi_force_dolby_values, ppsz_force_dolby_descriptions )
-    add_integer( "stereo-mode", 0, STEREO_MODE_TEXT, NULL )
-        change_integer_list( pi_stereo_mode_values, ppsz_stereo_mode_texts )
-    add_integer( "mix-mode", AOUT_MIX_MODE_UNSET, MIX_MODE_TEXT, NULL )
-        change_integer_list( pi_mix_mode_values, ppsz_mix_mode_texts )
-    add_integer( "audio-desync", 0, DESYNC_TEXT,
+        vlc_change_integer_list( pi_force_dolby_values, ppsz_force_dolby_descriptions )
+    vlc_add_integer( "stereo-mode", 0, STEREO_MODE_TEXT, NULL )
+        vlc_change_integer_list( pi_stereo_mode_values, ppsz_stereo_mode_texts )
+    vlc_add_integer( "mix-mode", AOUT_MIX_MODE_UNSET, MIX_MODE_TEXT, NULL )
+        vlc_change_integer_list( pi_mix_mode_values, ppsz_mix_mode_texts )
+    vlc_add_integer( "audio-desync", 0, DESYNC_TEXT,
                  DESYNC_LONGTEXT )
-        change_safe ()
+        vlc_change_safe ()
 
     /* FIXME TODO create a subcat replay gain ? */
-    add_string( "audio-replay-gain-mode", ppsz_replay_gain_mode[0], AUDIO_REPLAY_GAIN_MODE_TEXT,
+    vlc_add_string( "audio-replay-gain-mode", ppsz_replay_gain_mode[0], AUDIO_REPLAY_GAIN_MODE_TEXT,
                 AUDIO_REPLAY_GAIN_MODE_LONGTEXT )
-        change_string_list( ppsz_replay_gain_mode, ppsz_replay_gain_mode_text )
-    add_float( "audio-replay-gain-preamp", 0.0,
+        vlc_change_string_list( ppsz_replay_gain_mode, ppsz_replay_gain_mode_text )
+    vlc_add_float( "audio-replay-gain-preamp", 0.0,
                AUDIO_REPLAY_GAIN_PREAMP_TEXT, AUDIO_REPLAY_GAIN_PREAMP_LONGTEXT )
-    add_float( "audio-replay-gain-default", -7.0,
+    vlc_add_float( "audio-replay-gain-default", -7.0,
                AUDIO_REPLAY_GAIN_DEFAULT_TEXT, AUDIO_REPLAY_GAIN_DEFAULT_LONGTEXT )
-    add_bool( "audio-replay-gain-peak-protection", true,
+    vlc_add_bool( "audio-replay-gain-peak-protection", true,
               AUDIO_REPLAY_GAIN_PEAK_PROTECTION_TEXT, AUDIO_REPLAY_GAIN_PEAK_PROTECTION_LONGTEXT )
 
-    add_bool( "audio-time-stretch", true,
+    vlc_add_bool( "audio-time-stretch", true,
               AUDIO_TIME_STRETCH_TEXT, AUDIO_TIME_STRETCH_LONGTEXT )
 
-    set_subcategory( SUBCAT_AUDIO_AOUT )
-    add_module("aout", "audio output", "any", AOUT_TEXT, AOUT_LONGTEXT)
-        change_short('A')
-    add_string( "role", "video", ROLE_TEXT, ROLE_LONGTEXT )
-        change_string_list( ppsz_roles, ppsz_roles_text )
+    vlc_set_subcategory( SUBCAT_AUDIO_AOUT )
+    vlc_add_module("aout", "audio output", "any", AOUT_TEXT, AOUT_LONGTEXT)
+        vlc_change_short('A')
+    vlc_add_string( "role", "video", ROLE_TEXT, ROLE_LONGTEXT )
+        vlc_change_string_list( ppsz_roles, ppsz_roles_text )
 
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-        add_bool( "audio-bitexact", false, AUDIO_BITEXACT_TEXT,
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+        vlc_add_bool( "audio-bitexact", false, AUDIO_BITEXACT_TEXT,
                    AUDIO_BITEXACT_LONGTEXT )
-    add_module_list("audio-filter", "audio filter", NULL,
+    vlc_add_module_list("audio-filter", "audio filter", NULL,
                     AUDIO_FILTER_TEXT, AUDIO_FILTER_LONGTEXT)
-    set_subcategory( SUBCAT_AUDIO_VISUAL )
-    add_module("audio-visual", "visualization", "none",
+    vlc_set_subcategory( SUBCAT_AUDIO_VISUAL )
+    vlc_add_module("audio-visual", "visualization", "none",
                AUDIO_VISUAL_TEXT, AUDIO_VISUAL_LONGTEXT)
 
-    set_subcategory( SUBCAT_AUDIO_RESAMPLER )
-    add_module("audio-resampler", "audio resampler", "any",
+    vlc_set_subcategory( SUBCAT_AUDIO_RESAMPLER )
+    vlc_add_module("audio-resampler", "audio resampler", "any",
                AUDIO_RESAMPLER_TEXT, AUDIO_RESAMPLER_LONGTEXT)
 
 /* Video options */
-    set_subcategory( SUBCAT_VIDEO_GENERAL )
+    vlc_set_subcategory( SUBCAT_VIDEO_GENERAL )
     add_category_hint(N_("Video"), VOUT_CAT_LONGTEXT)
 
-    add_bool( "video", true, VIDEO_TEXT, VIDEO_LONGTEXT )
-        change_safe ()
-    add_bool( "grayscale", false, GRAYSCALE_TEXT,
+    vlc_add_bool( "video", true, VIDEO_TEXT, VIDEO_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_bool( "grayscale", false, GRAYSCALE_TEXT,
               GRAYSCALE_LONGTEXT )
-    add_bool( "fullscreen", false, FULLSCREEN_TEXT, FULLSCREEN_LONGTEXT )
-        change_short('f')
-        change_safe ()
-    add_integer("projection-mode", -1, PROJECTION_MODE_TEXT, PROJECTION_MODE_LONGTEXT)
-        change_volatile ()
-        change_safe ()
-    add_bool( "embedded-video", true, EMBEDDED_TEXT, EMBEDDED_LONGTEXT )
-    add_bool( "xlib", true, "", "" )
-        change_private ()
-    add_bool( "drop-late-frames", true, DROP_LATE_FRAMES_TEXT,
+    vlc_add_bool( "fullscreen", false, FULLSCREEN_TEXT, FULLSCREEN_LONGTEXT )
+        vlc_change_short('f')
+        vlc_change_safe ()
+    vlc_add_integer("projection-mode", -1, PROJECTION_MODE_TEXT, PROJECTION_MODE_LONGTEXT)
+        vlc_change_volatile ()
+        vlc_change_safe ()
+    vlc_add_bool( "embedded-video", true, EMBEDDED_TEXT, EMBEDDED_LONGTEXT )
+    vlc_add_bool( "xlib", true, "", "" )
+        vlc_change_private ()
+    vlc_add_bool( "drop-late-frames", true, DROP_LATE_FRAMES_TEXT,
               DROP_LATE_FRAMES_LONGTEXT )
     /* Used in vout_synchro */
-    add_obsolete_bool( "skip-frames" ) /* since 4.0.0 */
-    add_obsolete_bool( "quiet-synchro" ) /* since 4.0.0 */
-    add_bool( "keyboard-events", true, KEYBOARD_EVENTS_TEXT,
+    vlc_add_obsolete_bool( "skip-frames" ) /* since 4.0.0 */
+    vlc_add_obsolete_bool( "quiet-synchro" ) /* since 4.0.0 */
+    vlc_add_bool( "keyboard-events", true, KEYBOARD_EVENTS_TEXT,
               KEYBOARD_EVENTS_LONGTEXT )
-    add_bool( "mouse-events", true, MOUSE_EVENTS_TEXT,
+    vlc_add_bool( "mouse-events", true, MOUSE_EVENTS_TEXT,
               MOUSE_EVENTS_LONGTEXT )
-    add_bool( "video-on-top", false, VIDEO_ON_TOP_TEXT,
+    vlc_add_bool( "video-on-top", false, VIDEO_ON_TOP_TEXT,
               VIDEO_ON_TOP_LONGTEXT )
-    add_bool( "video-wallpaper", false, WALLPAPER_TEXT,
+    vlc_add_bool( "video-wallpaper", false, WALLPAPER_TEXT,
               WALLPAPER_LONGTEXT )
-    add_integer("disable-screensaver", 1, SS_TEXT, SS_LONGTEXT)
-        change_integer_list(screensaver_values, screensaver_texts)
+    vlc_add_integer("disable-screensaver", 1, SS_TEXT, SS_LONGTEXT)
+        vlc_change_integer_list(screensaver_values, screensaver_texts)
 
-    add_bool( "video-title-show", true, VIDEO_TITLE_SHOW_TEXT,
+    vlc_add_bool( "video-title-show", true, VIDEO_TITLE_SHOW_TEXT,
               VIDEO_TITLE_SHOW_LONGTEXT )
-        change_safe()
-    add_integer ("video-stereo-mode", VIDEO_STEREO_OUTPUT_AUTO, VIDEO_STEREO_FORMAT_TEXT,
+        vlc_change_safe()
+    vlc_add_integer ("video-stereo-mode", VIDEO_STEREO_OUTPUT_AUTO, VIDEO_STEREO_FORMAT_TEXT,
                  VIDEO_STEREO_FORMAT_TEXT_LONGTEXT)
-        change_safe()
-        change_integer_list (video_stereo_formats, video_stereo_formats_text)
-    add_integer( "video-title-timeout", 5000, VIDEO_TITLE_TIMEOUT_TEXT,
+        vlc_change_safe()
+        vlc_change_integer_list (video_stereo_formats, video_stereo_formats_text)
+    vlc_add_integer( "video-title-timeout", 5000, VIDEO_TITLE_TIMEOUT_TEXT,
                  VIDEO_TITLE_TIMEOUT_LONGTEXT )
-        change_safe()
-    add_integer( "video-title-position", 8, VIDEO_TITLE_POSITION_TEXT,
+        vlc_change_safe()
+    vlc_add_integer( "video-title-position", 8, VIDEO_TITLE_POSITION_TEXT,
                  VIDEO_TITLE_POSITION_LONGTEXT )
-        change_safe()
-        change_integer_list( pi_pos_values, ppsz_pos_descriptions )
+        vlc_change_safe()
+        vlc_change_integer_list( pi_pos_values, ppsz_pos_descriptions )
     // autohide after 1 second
-    add_integer( "mouse-hide-timeout", 1000, MOUSE_HIDE_TIMEOUT_TEXT,
+    vlc_add_integer( "mouse-hide-timeout", 1000, MOUSE_HIDE_TIMEOUT_TEXT,
                  MOUSE_HIDE_TIMEOUT_LONGTEXT )
-    set_section( N_("Snapshot") , NULL )
-    add_directory("snapshot-path", NULL, SNAP_PATH_TEXT, SNAP_PATH_LONGTEXT)
-    add_string( "snapshot-prefix", "vlcsnap-", SNAP_PREFIX_TEXT,
+    vlc_set_section( N_("Snapshot") , NULL )
+    vlc_add_directory("snapshot-path", NULL, SNAP_PATH_TEXT, SNAP_PATH_LONGTEXT)
+    vlc_add_string( "snapshot-prefix", "vlcsnap-", SNAP_PREFIX_TEXT,
                    NULL )
-    add_string( "snapshot-format", "png", SNAP_FORMAT_TEXT,
+    vlc_add_string( "snapshot-format", "png", SNAP_FORMAT_TEXT,
                    SNAP_FORMAT_LONGTEXT )
-        change_string_list( ppsz_snap_formats, ppsz_snap_formats )
-    add_bool( "snapshot-preview", true, SNAP_PREVIEW_TEXT,
+        vlc_change_string_list( ppsz_snap_formats, ppsz_snap_formats )
+    vlc_add_bool( "snapshot-preview", true, SNAP_PREVIEW_TEXT,
               SNAP_PREVIEW_LONGTEXT )
-    add_bool( "snapshot-sequential", false, SNAP_SEQUENTIAL_TEXT,
+    vlc_add_bool( "snapshot-sequential", false, SNAP_SEQUENTIAL_TEXT,
               SNAP_SEQUENTIAL_LONGTEXT )
-    add_integer( "snapshot-width", -1, SNAP_WIDTH_TEXT,
+    vlc_add_integer( "snapshot-width", -1, SNAP_WIDTH_TEXT,
                  SNAP_WIDTH_LONGTEXT )
-    add_integer( "snapshot-height", -1, SNAP_HEIGHT_TEXT,
+    vlc_add_integer( "snapshot-height", -1, SNAP_HEIGHT_TEXT,
                  SNAP_HEIGHT_LONGTEXT )
 
-    set_section( N_("Window properties" ), NULL )
-    add_integer( "width", -1, WIDTH_TEXT, WIDTH_LONGTEXT )
-        change_safe ()
-    add_integer( "height", -1, HEIGHT_TEXT, HEIGHT_LONGTEXT )
-        change_safe ()
+    vlc_set_section( N_("Window properties" ), NULL )
+    vlc_add_integer( "width", -1, WIDTH_TEXT, WIDTH_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_integer( "height", -1, HEIGHT_TEXT, HEIGHT_LONGTEXT )
+        vlc_change_safe ()
 #if defined(__APPLE__) || defined(_WIN32)
-    add_integer( "video-x", 0, VIDEOX_TEXT, VIDEOX_LONGTEXT )
-        change_safe ()
-    add_integer( "video-y", 0, VIDEOY_TEXT, VIDEOY_LONGTEXT )
-        change_safe ()
+    vlc_add_integer( "video-x", 0, VIDEOX_TEXT, VIDEOX_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_integer( "video-y", 0, VIDEOY_TEXT, VIDEOY_LONGTEXT )
+        vlc_change_safe ()
 #endif
-    add_string( "crop", NULL, CROP_TEXT, CROP_LONGTEXT )
-        change_safe ()
-    add_string( "custom-crop-ratios", NULL, CUSTOM_CROP_RATIOS_TEXT,
+    vlc_add_string( "crop", NULL, CROP_TEXT, CROP_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_string( "custom-crop-ratios", NULL, CUSTOM_CROP_RATIOS_TEXT,
                 CUSTOM_CROP_RATIOS_LONGTEXT )
-    add_string( "aspect-ratio", NULL,
+    vlc_add_string( "aspect-ratio", NULL,
                 ASPECT_RATIO_TEXT, ASPECT_RATIO_LONGTEXT )
-        change_safe ()
-    add_bool( "autoscale", true, AUTOSCALE_TEXT, AUTOSCALE_LONGTEXT )
-        change_safe ()
-    add_obsolete_float( "scale" ) /* since 3.0.0 */
-    add_integer("fit", VLC_VIDEO_FIT_SMALLER, FIT_TEXT, FIT_LONGTEXT)
-        change_integer_list(fit_values, fit_descriptions)
-        change_safe()
-    add_string( "monitor-par", NULL,
+        vlc_change_safe ()
+    vlc_add_bool( "autoscale", true, AUTOSCALE_TEXT, AUTOSCALE_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_obsolete_float( "scale" ) /* since 3.0.0 */
+    vlc_add_integer("fit", VLC_VIDEO_FIT_SMALLER, FIT_TEXT, FIT_LONGTEXT)
+        vlc_change_integer_list(fit_values, fit_descriptions)
+        vlc_change_safe()
+    vlc_add_string( "monitor-par", NULL,
                 MASPECT_RATIO_TEXT, MASPECT_RATIO_LONGTEXT )
-    add_string( "custom-aspect-ratios", NULL, CUSTOM_ASPECT_RATIOS_TEXT,
+    vlc_add_string( "custom-aspect-ratios", NULL, CUSTOM_ASPECT_RATIOS_TEXT,
                 CUSTOM_ASPECT_RATIOS_LONGTEXT )
-    add_bool( "hdtv-fix", true, HDTV_FIX_TEXT, HDTV_FIX_LONGTEXT )
-    add_bool( "video-deco", true, VIDEO_DECO_TEXT,
+    vlc_add_bool( "hdtv-fix", true, HDTV_FIX_TEXT, HDTV_FIX_LONGTEXT )
+    vlc_add_bool( "video-deco", true, VIDEO_DECO_TEXT,
               VIDEO_DECO_LONGTEXT )
-    add_string( "video-title", NULL, VIDEO_TITLE_TEXT,
+    vlc_add_string( "video-title", NULL, VIDEO_TITLE_TEXT,
                  VIDEO_TITLE_LONGTEXT )
-    add_integer( "align", 0, ALIGN_TEXT, ALIGN_LONGTEXT )
-        change_integer_list( pi_align_values, ppsz_align_descriptions )
-    add_float( "zoom", 1., ZOOM_TEXT, ZOOM_LONGTEXT )
-        change_safe()
-    add_integer( "deinterlace", -1,
+    vlc_add_integer( "align", 0, ALIGN_TEXT, ALIGN_LONGTEXT )
+        vlc_change_integer_list( pi_align_values, ppsz_align_descriptions )
+    vlc_add_float( "zoom", 1., ZOOM_TEXT, ZOOM_LONGTEXT )
+        vlc_change_safe()
+    vlc_add_integer( "deinterlace", -1,
                  DEINTERLACE_TEXT, NULL )
-        change_integer_list( pi_deinterlace, ppsz_deinterlace_text )
-        change_safe()
-    add_string( "deinterlace-mode", "auto",
+        vlc_change_integer_list( pi_deinterlace, ppsz_deinterlace_text )
+        vlc_change_safe()
+    vlc_add_string( "deinterlace-mode", "auto",
                 DEINTERLACE_MODE_TEXT, DEINTERLACE_MODE_LONGTEXT )
-        change_string_list( ppsz_deinterlace_mode, ppsz_deinterlace_mode_text )
-        change_safe()
-    add_string( "deinterlace-filter", "deinterlace",
+        vlc_change_string_list( ppsz_deinterlace_mode, ppsz_deinterlace_mode_text )
+        vlc_change_safe()
+    vlc_add_string( "deinterlace-filter", "deinterlace",
                 DEINTERLACE_FILTER_TEXT, DEINTERLACE_FILTER_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
-    set_subcategory( SUBCAT_VIDEO_VOUT )
-    add_module("vout", "vout display", "any", VOUT_TEXT, VOUT_LONGTEXT)
-        change_short('V')
+    vlc_set_subcategory( SUBCAT_VIDEO_VOUT )
+    vlc_add_module("vout", "vout display", "any", VOUT_TEXT, VOUT_LONGTEXT)
+        vlc_change_short('V')
 
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_module_list("video-filter", "video filter", NULL,
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_module_list("video-filter", "video filter", NULL,
                     VIDEO_FILTER_TEXT, VIDEO_FILTER_LONGTEXT)
 
 #if 0
-    add_string( "pixel-ratio", "1", PIXEL_RATIO_TEXT, PIXEL_RATIO_TEXT )
+    vlc_add_string( "pixel-ratio", "1", PIXEL_RATIO_TEXT, PIXEL_RATIO_TEXT )
 #endif
 
 /* Subpictures options */
-    set_subcategory( SUBCAT_VIDEO_SUBPIC )
-    set_section( N_("On Screen Display") , NULL )
+    vlc_set_subcategory( SUBCAT_VIDEO_SUBPIC )
+    vlc_set_section( N_("On Screen Display") , NULL )
     add_category_hint(N_("Subpictures"), SUB_CAT_LONGTEXT)
 
-    add_bool( "spu", true, SPU_TEXT, SPU_LONGTEXT )
-        change_safe ()
-    add_bool( "spu-fill", true, SPU_FULL_TEXT, SPU_FULL_LONGTEXT )
-        change_safe ()
-    add_bool( "osd", true, OSD_TEXT, OSD_LONGTEXT )
-    add_module("text-renderer", "text renderer", "any",
+    vlc_add_bool( "spu", true, SPU_TEXT, SPU_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_bool( "spu-fill", true, SPU_FULL_TEXT, SPU_FULL_LONGTEXT )
+        vlc_change_safe ()
+    vlc_add_bool( "osd", true, OSD_TEXT, OSD_LONGTEXT )
+    vlc_add_module("text-renderer", "text renderer", "any",
                TEXTRENDERER_TEXT, TEXTRENDERER_LONGTEXT)
 
-    set_section( N_("Subtitles") , NULL )
-    add_float( "sub-fps", 0.0, SUB_FPS_TEXT, SUB_FPS_LONGTEXT )
-    add_integer( "sub-delay", 0, SUB_DELAY_TEXT, SUB_DELAY_LONGTEXT )
-    add_loadfile("sub-file", NULL, SUB_FILE_TEXT, SUB_FILE_LONGTEXT)
-        change_safe()
-    add_bool( "sub-autodetect-file", true,
+    vlc_set_section( N_("Subtitles") , NULL )
+    vlc_add_float( "sub-fps", 0.0, SUB_FPS_TEXT, SUB_FPS_LONGTEXT )
+    vlc_add_integer( "sub-delay", 0, SUB_DELAY_TEXT, SUB_DELAY_LONGTEXT )
+    vlc_add_loadfile("sub-file", NULL, SUB_FILE_TEXT, SUB_FILE_LONGTEXT)
+        vlc_change_safe()
+    vlc_add_bool( "sub-autodetect-file", true,
                  SUB_AUTO_TEXT, SUB_AUTO_LONGTEXT )
-    add_integer( "sub-autodetect-fuzzy", 3,
+    vlc_add_integer( "sub-autodetect-fuzzy", 3,
                  SUB_FUZZY_TEXT, SUB_FUZZY_LONGTEXT )
 #if defined( _WIN32 ) || defined( __OS2__ )
 #   define SUB_PATH ".\\subtitles, .\\subs"
 #else
 #   define SUB_PATH "./Subtitles, ./subtitles, ./Subs, ./subs"
 #endif
-    add_string( "sub-autodetect-path", SUB_PATH,
+    vlc_add_string( "sub-autodetect-path", SUB_PATH,
                  SUB_PATH_TEXT, SUB_PATH_LONGTEXT )
-    add_integer( "sub-margin", 0, SUB_MARGIN_TEXT,
+    vlc_add_integer( "sub-margin", 0, SUB_MARGIN_TEXT,
                  SUB_MARGIN_LONGTEXT )
-    add_integer_with_range( "sub-text-scale", 100, 10, 500,
+    vlc_add_integer_with_range( "sub-text-scale", 100, 10, 500,
                SUB_TEXT_SCALE_TEXT, SUB_TEXT_SCALE_LONGTEXT )
-    set_section( N_( "Overlays" ) , NULL )
-    add_module_list("sub-source", "sub source", NULL,
+    vlc_set_section( N_( "Overlays" ) , NULL )
+    vlc_add_module_list("sub-source", "sub source", NULL,
                     SUB_SOURCE_TEXT, SUB_SOURCE_LONGTEXT)
-    add_module_list("sub-filter", "sub filter", NULL,
+    vlc_add_module_list("sub-filter", "sub filter", NULL,
                     SUB_FILTER_TEXT, SUB_FILTER_LONGTEXT)
 
-    set_section( N_( "Multiple Subtitles" ) , NULL )
-    add_integer( "secondary-sub-alignment", -1, SECONDARY_SUB_POSITION_TEXT,
+    vlc_set_section( N_( "Multiple Subtitles" ) , NULL )
+    vlc_add_integer( "secondary-sub-alignment", -1, SECONDARY_SUB_POSITION_TEXT,
                  SECONDARY_SUB_POSITION_LONGTEXT )
-        change_integer_list( pi_sub_align_values, ppsz_sub_align_descriptions )
+        vlc_change_integer_list( pi_sub_align_values, ppsz_sub_align_descriptions )
     /* Push the secondary subtitles up a bit so they won't overlap with
        the primary subtitles using the default settings.*/
-    add_integer( "secondary-sub-margin", 100, SECONDARY_SUB_MARGIN_TEXT,
+    vlc_add_integer( "secondary-sub-margin", 100, SECONDARY_SUB_MARGIN_TEXT,
                  SECONDARY_SUB_MARGIN_LONGTEXT )
 
 /* Input options */
-    set_subcategory( SUBCAT_INPUT_GENERAL )
+    vlc_set_subcategory( SUBCAT_INPUT_GENERAL )
     add_category_hint( N_("Input"), INPUT_CAT_LONGTEXT )
 
-    set_section( N_( "Track settings" ), NULL )
-    add_integer( "program", 0,
+    vlc_set_section( N_( "Track settings" ), NULL )
+    vlc_add_integer( "program", 0,
                  INPUT_PROGRAM_TEXT, INPUT_PROGRAM_LONGTEXT )
-        change_safe ()
-    add_string( "programs", "",
+        vlc_change_safe ()
+    vlc_add_string( "programs", "",
                 INPUT_PROGRAMS_TEXT, INPUT_PROGRAMS_LONGTEXT )
-        change_safe ()
-    add_integer( "video-track", -1,
+        vlc_change_safe ()
+    vlc_add_integer( "video-track", -1,
                  INPUT_VIDEOTRACK_TEXT, INPUT_VIDEOTRACK_LONGTEXT )
-        change_safe ()
-    add_integer( "audio-track", -1,
+        vlc_change_safe ()
+    vlc_add_integer( "audio-track", -1,
                  INPUT_AUDIOTRACK_TEXT, INPUT_AUDIOTRACK_LONGTEXT )
-        change_safe ()
-    add_integer( "sub-track", -1,
+        vlc_change_safe ()
+    vlc_add_integer( "sub-track", -1,
                  INPUT_SUBTRACK_TEXT, INPUT_SUBTRACK_LONGTEXT )
-        change_safe ()
-    add_string( "audio-language", "",
+        vlc_change_safe ()
+    vlc_add_string( "audio-language", "",
                  INPUT_AUDIOTRACK_LANG_TEXT, INPUT_AUDIOTRACK_LANG_LONGTEXT )
-        change_safe ()
-    add_string( "sub-language", "",
+        vlc_change_safe ()
+    vlc_add_string( "sub-language", "",
                  INPUT_SUBTRACK_LANG_TEXT, INPUT_SUBTRACK_LANG_LONGTEXT )
-        change_safe ()
-    add_string( "menu-language", "",
+        vlc_change_safe ()
+    vlc_add_string( "menu-language", "",
                  INPUT_MENUTRACK_LANG_TEXT, INPUT_MENUTRACK_LANG_LONGTEXT )
-        change_safe ()
-    add_string( "video-track-id", NULL, INPUT_VIDEOTRACK_ID_TEXT,
+        vlc_change_safe ()
+    vlc_add_string( "video-track-id", NULL, INPUT_VIDEOTRACK_ID_TEXT,
                  INPUT_VIDEOTRACK_ID_LONGTEXT )
-        change_safe ()
-    add_string( "audio-track-id", NULL, INPUT_AUDIOTRACK_ID_TEXT,
+        vlc_change_safe ()
+    vlc_add_string( "audio-track-id", NULL, INPUT_AUDIOTRACK_ID_TEXT,
                  INPUT_AUDIOTRACK_ID_LONGTEXT )
-        change_safe ()
-    add_string( "sub-track-id", NULL,
+        vlc_change_safe ()
+    vlc_add_string( "sub-track-id", NULL,
                  INPUT_SUBTRACK_ID_TEXT, INPUT_SUBTRACK_ID_LONGTEXT )
-        change_safe ()
-    add_integer( "captions", 608,
+        vlc_change_safe ()
+    vlc_add_integer( "captions", 608,
                  INPUT_CAPTIONS_TEXT, NULL )
-        change_integer_list( pi_captions, ppsz_captions )
-        change_safe ()
-    add_integer( "preferred-resolution", -1, INPUT_PREFERREDRESOLUTION_TEXT,
+        vlc_change_integer_list( pi_captions, ppsz_captions )
+        vlc_change_safe ()
+    vlc_add_integer( "preferred-resolution", -1, INPUT_PREFERREDRESOLUTION_TEXT,
                  INPUT_PREFERREDRESOLUTION_LONGTEXT )
-        change_safe ()
-        change_integer_list( pi_prefres, ppsz_prefres )
-    add_bool( "low-delay", false, INPUT_LOWDELAY_TEXT,
+        vlc_change_safe ()
+        vlc_change_integer_list( pi_prefres, ppsz_prefres )
+    vlc_add_bool( "low-delay", false, INPUT_LOWDELAY_TEXT,
               INPUT_LOWDELAY_LONGTEXT )
-        change_safe ()
+        vlc_change_safe ()
 
-    set_section( N_( "Playback control" ) , NULL)
-    add_integer( "input-repeat", 0,
+    vlc_set_section( N_( "Playback control" ) , NULL)
+    vlc_add_integer( "input-repeat", 0,
                  INPUT_REPEAT_TEXT, INPUT_REPEAT_LONGTEXT )
-        change_integer_range( 0, 65535 )
-        change_safe ()
-    add_float( "start-time", 0,
+        vlc_change_integer_range( 0, 65535 )
+        vlc_change_safe ()
+    vlc_add_float( "start-time", 0,
                START_TIME_TEXT, START_TIME_LONGTEXT )
-        change_safe ()
-    add_float( "stop-time", 0,
+        vlc_change_safe ()
+    vlc_add_float( "stop-time", 0,
                STOP_TIME_TEXT, STOP_TIME_LONGTEXT )
-        change_safe ()
-    add_float( "run-time", 0,
+        vlc_change_safe ()
+    vlc_add_float( "run-time", 0,
                RUN_TIME_TEXT, RUN_TIME_LONGTEXT )
-        change_safe ()
-    add_bool( "input-fast-seek", false,
+        vlc_change_safe ()
+    vlc_add_bool( "input-fast-seek", false,
               INPUT_FAST_SEEK_TEXT, INPUT_FAST_SEEK_LONGTEXT )
-        change_safe ()
-    add_float( "rate", 1.,
+        vlc_change_safe ()
+    vlc_add_float( "rate", 1.,
                INPUT_RATE_TEXT, INPUT_RATE_LONGTEXT )
 
-    add_string( "input-list", NULL,
+    vlc_add_string( "input-list", NULL,
                  INPUT_LIST_TEXT, INPUT_LIST_LONGTEXT )
-    add_string( "input-slave", NULL,
+    vlc_add_string( "input-slave", NULL,
                  INPUT_SLAVE_TEXT, INPUT_SLAVE_LONGTEXT )
 
-    add_string( "bookmarks", NULL,
+    vlc_add_string( "bookmarks", NULL,
                  BOOKMARKS_TEXT, BOOKMARKS_LONGTEXT )
-        change_safe ()
+        vlc_change_safe ()
 
-    add_bool( "save-recentplay", true, SAVE_RECENTPLAY, NULL )
+    vlc_add_bool( "save-recentplay", true, SAVE_RECENTPLAY, NULL )
 
-    add_integer( "restore-playback-pos", VLC_PLAYER_RESTORE_PLAYBACK_POS_ASK,
+    vlc_add_integer( "restore-playback-pos", VLC_PLAYER_RESTORE_PLAYBACK_POS_ASK,
                  RESTORE_PLAYBACK_POS_TEXT, RESTORE_PLAYBACK_POS_LONGTEXT )
-        change_integer_list( pi_restore_playback_values, ppsz_restore_playback_desc )
+        vlc_change_integer_list( pi_restore_playback_values, ppsz_restore_playback_desc )
 
-    add_bool( "restore-playback-states", false,
+    vlc_add_bool( "restore-playback-states", false,
                  RESTORE_PLAYBACK_STATE_TEXT, RESTORE_PLAYBACK_STATE_LONGTEXT )
 
-    set_section( N_( "Default devices") , NULL )
+    vlc_set_section( N_( "Default devices") , NULL )
 
-    add_loadfile("dvd", DVD_DEVICE, DVD_DEV_TEXT, DVD_DEV_LONGTEXT)
-    add_loadfile("vcd", VCD_DEVICE, VCD_DEV_TEXT, VCD_DEV_LONGTEXT)
+    vlc_add_loadfile("dvd", DVD_DEVICE, DVD_DEV_TEXT, DVD_DEV_LONGTEXT)
+    vlc_add_loadfile("vcd", VCD_DEVICE, VCD_DEV_TEXT, VCD_DEV_LONGTEXT)
 
-    set_section( N_( "Network settings" ), NULL )
+    vlc_set_section( N_( "Network settings" ), NULL )
 
-    add_integer( "mtu", MTU_DEFAULT, MTU_TEXT, MTU_LONGTEXT )
-    add_integer( "ipv4-timeout", 5 * 1000, TIMEOUT_TEXT,
+    vlc_add_integer( "mtu", MTU_DEFAULT, MTU_TEXT, MTU_LONGTEXT )
+    vlc_add_integer( "ipv4-timeout", 5 * 1000, TIMEOUT_TEXT,
                  TIMEOUT_LONGTEXT )
-        change_integer_range( 0, INT_MAX )
+        vlc_change_integer_range( 0, INT_MAX )
 
-    add_string( "http-host", NULL, HTTP_HOST_TEXT, HOST_LONGTEXT )
-    add_integer( "http-port", 8080, HTTP_PORT_TEXT, HTTP_PORT_LONGTEXT )
-        change_integer_range( 1, 65535 )
-    add_integer( "https-port", 8443, HTTPS_PORT_TEXT, HTTPS_PORT_LONGTEXT )
-        change_integer_range( 1, 65535 )
-    add_string( "rtsp-host", NULL, RTSP_HOST_TEXT, RTSP_HOST_LONGTEXT )
-    add_integer( "rtsp-port", 554, RTSP_PORT_TEXT, RTSP_PORT_LONGTEXT )
-        change_integer_range( 1, 65535 )
-    add_loadfile("http-cert", NULL, HTTP_CERT_TEXT, CERT_LONGTEXT)
-    add_loadfile("http-key", NULL, HTTP_KEY_TEXT, KEY_LONGTEXT)
-    add_obsolete_string( "http-ca" ) /* since 3.0.0 */
-    add_obsolete_string( "http-crl" ) /* since 3.0.0 */
+    vlc_add_string( "http-host", NULL, HTTP_HOST_TEXT, HOST_LONGTEXT )
+    vlc_add_integer( "http-port", 8080, HTTP_PORT_TEXT, HTTP_PORT_LONGTEXT )
+        vlc_change_integer_range( 1, 65535 )
+    vlc_add_integer( "https-port", 8443, HTTPS_PORT_TEXT, HTTPS_PORT_LONGTEXT )
+        vlc_change_integer_range( 1, 65535 )
+    vlc_add_string( "rtsp-host", NULL, RTSP_HOST_TEXT, RTSP_HOST_LONGTEXT )
+    vlc_add_integer( "rtsp-port", 554, RTSP_PORT_TEXT, RTSP_PORT_LONGTEXT )
+        vlc_change_integer_range( 1, 65535 )
+    vlc_add_loadfile("http-cert", NULL, HTTP_CERT_TEXT, CERT_LONGTEXT)
+    vlc_add_loadfile("http-key", NULL, HTTP_KEY_TEXT, KEY_LONGTEXT)
+    vlc_add_obsolete_string( "http-ca" ) /* since 3.0.0 */
+    vlc_add_obsolete_string( "http-crl" ) /* since 3.0.0 */
 
 #ifdef _WIN32
-    add_string( "http-proxy", NULL, PROXY_TEXT, PROXY_LONGTEXT )
-    add_password("http-proxy-pwd", NULL, PROXY_PASS_TEXT, PROXY_PASS_LONGTEXT)
+    vlc_add_string( "http-proxy", NULL, PROXY_TEXT, PROXY_LONGTEXT )
+    vlc_add_password("http-proxy-pwd", NULL, PROXY_PASS_TEXT, PROXY_PASS_LONGTEXT)
 #else
-    add_obsolete_string( "http-proxy" ) /* since 4.0.0 */
-    add_obsolete_string( "http-proxy-pwd" ) /* since 4.0.0 */
+    vlc_add_obsolete_string( "http-proxy" ) /* since 4.0.0 */
+    vlc_add_obsolete_string( "http-proxy-pwd" ) /* since 4.0.0 */
 
 #endif
-    add_obsolete_bool( "http-use-IE-proxy" ) /* since 4.0.0 */
+    vlc_add_obsolete_bool( "http-use-IE-proxy" ) /* since 4.0.0 */
 
-    set_section( N_( "Socks proxy") , NULL )
-    add_string( "socks", NULL,
+    vlc_set_section( N_( "Socks proxy") , NULL )
+    vlc_add_string( "socks", NULL,
                  SOCKS_SERVER_TEXT, SOCKS_SERVER_LONGTEXT )
-    add_string( "socks-user", NULL,
+    vlc_add_string( "socks-user", NULL,
                  SOCKS_USER_TEXT, SOCKS_USER_LONGTEXT )
-    add_password( "socks-pwd", NULL,
+    vlc_add_password( "socks-pwd", NULL,
                  SOCKS_PASS_TEXT, SOCKS_PASS_LONGTEXT )
 
 
-    set_section( N_("Metadata" ) , NULL )
-    add_string( "meta-title", NULL, META_TITLE_TEXT,
+    vlc_set_section( N_("Metadata" ) , NULL )
+    vlc_add_string( "meta-title", NULL, META_TITLE_TEXT,
                 META_TITLE_LONGTEXT )
-        change_safe()
-    add_string( "meta-author", NULL, META_AUTHOR_TEXT,
+        vlc_change_safe()
+    vlc_add_string( "meta-author", NULL, META_AUTHOR_TEXT,
                 META_AUTHOR_LONGTEXT )
-        change_safe()
-    add_string( "meta-artist", NULL, META_ARTIST_TEXT,
+        vlc_change_safe()
+    vlc_add_string( "meta-artist", NULL, META_ARTIST_TEXT,
                 META_ARTIST_LONGTEXT )
-        change_safe()
-    add_string( "meta-genre", NULL, META_GENRE_TEXT,
+        vlc_change_safe()
+    vlc_add_string( "meta-genre", NULL, META_GENRE_TEXT,
                 META_GENRE_LONGTEXT )
-        change_safe()
-    add_string( "meta-copyright", NULL, META_CPYR_TEXT,
+        vlc_change_safe()
+    vlc_add_string( "meta-copyright", NULL, META_CPYR_TEXT,
                 META_CPYR_LONGTEXT )
-        change_safe()
-    add_string( "meta-description", NULL, META_DESCR_TEXT,
+        vlc_change_safe()
+    vlc_add_string( "meta-description", NULL, META_DESCR_TEXT,
                 META_DESCR_LONGTEXT )
-        change_safe()
-    add_string( "meta-date", NULL, META_DATE_TEXT,
+        vlc_change_safe()
+    vlc_add_string( "meta-date", NULL, META_DATE_TEXT,
                 META_DATE_LONGTEXT )
-        change_safe()
-    add_string( "meta-url", NULL, META_URL_TEXT,
+        vlc_change_safe()
+    vlc_add_string( "meta-url", NULL, META_URL_TEXT,
                 META_URL_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
-    set_section( N_( "Advanced" ), NULL )
+    vlc_set_section( N_( "Advanced" ), NULL )
 
-    add_integer( "file-caching", 1000,
+    vlc_add_integer( "file-caching", 1000,
                  CACHING_TEXT, CACHING_LONGTEXT )
-        change_integer_range( 0, 60000 )
-        change_safe()
-    add_integer( "live-caching", MS_FROM_VLC_TICK(DEFAULT_PTS_DELAY),
+        vlc_change_integer_range( 0, 60000 )
+        vlc_change_safe()
+    vlc_add_integer( "live-caching", MS_FROM_VLC_TICK(DEFAULT_PTS_DELAY),
                  CAPTURE_CACHING_TEXT, CAPTURE_CACHING_LONGTEXT )
-        change_integer_range( 0, 60000 )
-        change_safe()
-    add_integer( "disc-caching", MS_FROM_VLC_TICK(DEFAULT_PTS_DELAY),
+        vlc_change_integer_range( 0, 60000 )
+        vlc_change_safe()
+    vlc_add_integer( "disc-caching", MS_FROM_VLC_TICK(DEFAULT_PTS_DELAY),
                  DISC_CACHING_TEXT, DISC_CACHING_LONGTEXT )
-        change_integer_range( 0, 60000 )
-        change_safe()
-    add_integer( "network-caching", 1000,
+        vlc_change_integer_range( 0, 60000 )
+        vlc_change_safe()
+    vlc_add_integer( "network-caching", 1000,
                  NETWORK_CACHING_TEXT, NETWORK_CACHING_LONGTEXT )
-        change_integer_range( 0, 60000 )
-        change_safe()
+        vlc_change_integer_range( 0, 60000 )
+        vlc_change_safe()
 
-    add_integer( "cr-average", 40, CR_AVERAGE_TEXT,
+    vlc_add_integer( "cr-average", 40, CR_AVERAGE_TEXT,
                  CR_AVERAGE_LONGTEXT )
-    add_integer( "clock-synchro", -1, CLOCK_SYNCHRO_TEXT,
+    vlc_add_integer( "clock-synchro", -1, CLOCK_SYNCHRO_TEXT,
                  CLOCK_SYNCHRO_LONGTEXT )
-        change_integer_list( pi_clock_values, ppsz_clock_descriptions )
-    add_integer( "clock-jitter", 5000, CLOCK_JITTER_TEXT,
+        vlc_change_integer_list( pi_clock_values, ppsz_clock_descriptions )
+    vlc_add_integer( "clock-jitter", 5000, CLOCK_JITTER_TEXT,
               CLOCK_JITTER_LONGTEXT )
-        change_safe()
-    add_string( "clock-master", "auto",
+        vlc_change_safe()
+    vlc_add_string( "clock-master", "auto",
                  CLOCK_MASTER_TEXT, CLOCK_MASTER_LONGTEXT )
-        change_string_list( ppsz_clock_master_values, ppsz_clock_master_descriptions )
+        vlc_change_string_list( ppsz_clock_master_values, ppsz_clock_master_descriptions )
 
-    add_directory("input-record-path", NULL,
+    vlc_add_directory("input-record-path", NULL,
                   INPUT_RECORD_PATH_TEXT, INPUT_RECORD_PATH_LONGTEXT)
-    add_bool( "input-record-native", true, INPUT_RECORD_NATIVE_TEXT,
+    vlc_add_bool( "input-record-native", true, INPUT_RECORD_NATIVE_TEXT,
               INPUT_RECORD_NATIVE_LONGTEXT )
 
-    add_directory("input-timeshift-path", NULL,
+    vlc_add_directory("input-timeshift-path", NULL,
                   INPUT_TIMESHIFT_PATH_TEXT, INPUT_TIMESHIFT_PATH_LONGTEXT)
-    add_integer( "input-timeshift-granularity", -1, INPUT_TIMESHIFT_GRANULARITY_TEXT,
+    vlc_add_integer( "input-timeshift-granularity", -1, INPUT_TIMESHIFT_GRANULARITY_TEXT,
                  INPUT_TIMESHIFT_GRANULARITY_LONGTEXT )
 
-    add_string( "input-title-format", "$Z", INPUT_TITLE_FORMAT_TEXT, INPUT_TITLE_FORMAT_LONGTEXT )
+    vlc_add_string( "input-title-format", "$Z", INPUT_TITLE_FORMAT_TEXT, INPUT_TITLE_FORMAT_LONGTEXT )
 
 /* Decoder options */
     add_category_hint(N_("Input access and codecs"), CODEC_CAT_LONGTEXT)
 
-    //set_subcategory( SUBCAT_INPUT_ACCESS )
-    add_obsolete_string("access") /* since 4.0.0 */
+    //vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_add_obsolete_string("access") /* since 4.0.0 */
 
-    set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
 
-    add_module("demux", "demux", "any", DEMUX_TEXT, DEMUX_LONGTEXT)
-    add_string( "demux-filter", NULL, DEMUX_FILTER_TEXT, DEMUX_FILTER_LONGTEXT )
+    vlc_add_module("demux", "demux", "any", DEMUX_TEXT, DEMUX_LONGTEXT)
+    vlc_add_string( "demux-filter", NULL, DEMUX_FILTER_TEXT, DEMUX_FILTER_LONGTEXT )
 
-    //set_subcategory( SUBCAT_INPUT_ACODEC )
-    set_subcategory( SUBCAT_INPUT_VCODEC )
+    //vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
 
-    add_string( "codec", "any", CODEC_TEXT, CODEC_LONGTEXT )
-    add_bool( "hw-dec", true, HW_DEC_TEXT, HW_DEC_LONGTEXT )
-    add_obsolete_string( "encoder" ) /* since 4.0.0 */
-    add_module("dec-dev", "decoder device", "any", DEC_DEV_TEXT, DEC_DEV_LONGTEXT)
+    vlc_add_string( "codec", "any", CODEC_TEXT, CODEC_LONGTEXT )
+    vlc_add_bool( "hw-dec", true, HW_DEC_TEXT, HW_DEC_LONGTEXT )
+    vlc_add_obsolete_string( "encoder" ) /* since 4.0.0 */
+    vlc_add_module("dec-dev", "decoder device", "any", DEC_DEV_TEXT, DEC_DEV_LONGTEXT)
 
-    //set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_subcategory( SUBCAT_INPUT_STREAM_FILTER )
+    //vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_subcategory( SUBCAT_INPUT_STREAM_FILTER )
 
-    add_module_list("stream-filter", "stream_filter", NULL,
+    vlc_add_module_list("stream-filter", "stream_filter", NULL,
                     STREAM_FILTER_TEXT, STREAM_FILTER_LONGTEXT)
 
 /* Stream output options */
-    set_subcategory( SUBCAT_SOUT_GENERAL )
+    vlc_set_subcategory( SUBCAT_SOUT_GENERAL )
     add_category_hint(N_("Stream output"), SOUT_CAT_LONGTEXT)
 
-    add_string( "sout", NULL, SOUT_TEXT, SOUT_LONGTEXT )
-    add_bool( "sout-display", false, SOUT_DISPLAY_TEXT,
+    vlc_add_string( "sout", NULL, SOUT_TEXT, SOUT_LONGTEXT )
+    vlc_add_bool( "sout-display", false, SOUT_DISPLAY_TEXT,
                                 SOUT_DISPLAY_LONGTEXT )
-    add_bool( "sout-keep", false, SOUT_KEEP_TEXT,
+    vlc_add_bool( "sout-keep", false, SOUT_KEEP_TEXT,
                                 SOUT_KEEP_LONGTEXT )
-    add_bool( "sout-all", true, SOUT_ALL_TEXT,
+    vlc_add_bool( "sout-all", true, SOUT_ALL_TEXT,
                                 SOUT_ALL_LONGTEXT )
-    add_bool( "sout-audio", true, SOUT_AUDIO_TEXT,
+    vlc_add_bool( "sout-audio", true, SOUT_AUDIO_TEXT,
                                 SOUT_AUDIO_LONGTEXT )
-    add_bool( "sout-video", true, SOUT_VIDEO_TEXT,
+    vlc_add_bool( "sout-video", true, SOUT_VIDEO_TEXT,
                                 SOUT_VIDEO_LONGTEXT )
-    add_bool( "sout-spu", true, SOUT_SPU_TEXT,
+    vlc_add_bool( "sout-spu", true, SOUT_SPU_TEXT,
                                 SOUT_SPU_LONGTEXT )
-    add_integer( "sout-mux-caching", 1500, SOUT_MUX_CACHING_TEXT,
+    vlc_add_integer( "sout-mux-caching", 1500, SOUT_MUX_CACHING_TEXT,
                                 SOUT_MUX_CACHING_LONGTEXT )
 
-    set_section( N_("VLM"), NULL )
-    add_loadfile("vlm-conf", NULL, VLM_CONF_TEXT, VLM_CONF_LONGTEXT)
+    vlc_set_section( N_("VLM"), NULL )
+    vlc_add_loadfile("vlm-conf", NULL, VLM_CONF_TEXT, VLM_CONF_LONGTEXT)
 
 
-    set_subcategory( SUBCAT_SOUT_STREAM )
-    add_integer( "sap-interval", 5, ANN_SAPINTV_TEXT,
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )
+    vlc_add_integer( "sap-interval", 5, ANN_SAPINTV_TEXT,
                                ANN_SAPINTV_LONGTEXT )
 
-    add_obsolete_string("mux") /* since 0.5.0 (warning since 4.0) */
-    set_subcategory( SUBCAT_SOUT_ACO )
-    add_obsolete_string("access_output") /* since 0.5.0 (warning since 4.0) */
-    add_integer( "ttl", -1, TTL_TEXT, TTL_LONGTEXT )
-    add_string( "miface", NULL, MIFACE_TEXT, MIFACE_LONGTEXT )
-    add_integer( "dscp", 0, DSCP_TEXT, DSCP_LONGTEXT )
+    vlc_add_obsolete_string("mux") /* since 0.5.0 (warning since 4.0) */
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_add_obsolete_string("access_output") /* since 0.5.0 (warning since 4.0) */
+    vlc_add_integer( "ttl", -1, TTL_TEXT, TTL_LONGTEXT )
+    vlc_add_string( "miface", NULL, MIFACE_TEXT, MIFACE_LONGTEXT )
+    vlc_add_integer( "dscp", 0, DSCP_TEXT, DSCP_LONGTEXT )
 
-    set_subcategory( SUBCAT_SOUT_PACKETIZER )
-    add_module("packetizer", "packetizer", "any",
+    vlc_set_subcategory( SUBCAT_SOUT_PACKETIZER )
+    vlc_add_module("packetizer", "packetizer", "any",
                PACKETIZER_TEXT, PACKETIZER_LONGTEXT)
 
 /* Advanced options */
-    set_subcategory( SUBCAT_ADVANCED_MISC )
+    vlc_set_subcategory( SUBCAT_ADVANCED_MISC )
     add_category_hint(N_("Advanced"), NULL)
-    set_section( N_("Special modules"), NULL )
-    add_obsolete_string("vod-server") /* since 4.0.0 */
-    add_module("tracer", "tracer", "none",
+    vlc_set_section( N_("Special modules"), NULL )
+    vlc_add_obsolete_string("vod-server") /* since 4.0.0 */
+    vlc_add_module("tracer", "tracer", "none",
                TRACER_TEXT, TRACER_LONGTEXT)
 
-    set_section( N_("Plugins" ), NULL )
+    vlc_set_section( N_("Plugins" ), NULL )
 #ifdef HAVE_DYNAMIC_PLUGINS
-    add_bool( "plugins-cache", true, PLUGINS_CACHE_TEXT,
+    vlc_add_bool( "plugins-cache", true, PLUGINS_CACHE_TEXT,
               PLUGINS_CACHE_LONGTEXT )
-        change_volatile ()
-    add_bool( "plugins-scan", true, PLUGINS_SCAN_TEXT,
+        vlc_change_volatile ()
+    vlc_add_bool( "plugins-scan", true, PLUGINS_SCAN_TEXT,
               PLUGINS_SCAN_LONGTEXT )
-        change_volatile ()
+        vlc_change_volatile ()
 #endif
-    add_string( "keystore", NULL, KEYSTORE_TEXT,
+    vlc_add_string( "keystore", NULL, KEYSTORE_TEXT,
                 KEYSTORE_LONGTEXT )
 
-    set_section( N_("Performance options"), NULL )
+    vlc_set_section( N_("Performance options"), NULL )
 
 #if defined (LIBVLC_USE_PTHREAD)
-    add_obsolete_bool( "rt-priority" ) /* since 4.0.0 */
-    add_obsolete_integer( "rt-offset" ) /* since 4.0.0 */
+    vlc_add_obsolete_bool( "rt-priority" ) /* since 4.0.0 */
+    vlc_add_obsolete_integer( "rt-offset" ) /* since 4.0.0 */
 #endif
 
 #if defined(HAVE_DBUS)
-    add_obsolete_bool( "inhibit" ) /* since 3.0.0 */
+    vlc_add_obsolete_bool( "inhibit" ) /* since 3.0.0 */
 #endif
 
 #if defined(_WIN32) || defined(__OS2__)
-    add_bool( "high-priority", false, HPRIORITY_TEXT,
+    vlc_add_bool( "high-priority", false, HPRIORITY_TEXT,
               HPRIORITY_LONGTEXT )
 #endif
 
 #ifdef _WIN32
-    add_string( "clock-source", "perf", CLOCK_SOURCE_TEXT, NULL )
-        change_string_list( clock_sources, clock_sources_text )
+    vlc_add_string( "clock-source", "perf", CLOCK_SOURCE_TEXT, NULL )
+        vlc_change_string_list( clock_sources, clock_sources_text )
 #endif
 
 /* Playlist options */
-    set_subcategory( SUBCAT_PLAYLIST_GENERAL )
+    vlc_set_subcategory( SUBCAT_PLAYLIST_GENERAL )
     add_category_hint(N_("Playlist"), PLAYLIST_CAT_LONGTEXT)
-    add_bool( "random", false, RANDOM_TEXT, RANDOM_LONGTEXT )
-        change_short('Z')
-        change_safe()
-    add_bool( "loop", false, LOOP_TEXT, LOOP_LONGTEXT )
-        change_short('L')
-        change_safe()
-    add_bool( "repeat", false, REPEAT_TEXT, REPEAT_LONGTEXT )
-        change_short('R')
-        change_safe()
-    add_bool( "play-and-exit", false, PAE_TEXT, PAE_LONGTEXT )
-    add_bool( "play-and-stop", false, PAS_TEXT, PAS_LONGTEXT )
-        change_safe()
-    add_bool( "play-and-pause", false, PAP_TEXT, PAP_LONGTEXT )
-        change_safe()
-    add_bool( "start-paused", false, SP_TEXT, SP_LONGTEXT )
-    add_bool( "playlist-autostart", true,
+    vlc_add_bool( "random", false, RANDOM_TEXT, RANDOM_LONGTEXT )
+        vlc_change_short('Z')
+        vlc_change_safe()
+    vlc_add_bool( "loop", false, LOOP_TEXT, LOOP_LONGTEXT )
+        vlc_change_short('L')
+        vlc_change_safe()
+    vlc_add_bool( "repeat", false, REPEAT_TEXT, REPEAT_LONGTEXT )
+        vlc_change_short('R')
+        vlc_change_safe()
+    vlc_add_bool( "play-and-exit", false, PAE_TEXT, PAE_LONGTEXT )
+    vlc_add_bool( "play-and-stop", false, PAS_TEXT, PAS_LONGTEXT )
+        vlc_change_safe()
+    vlc_add_bool( "play-and-pause", false, PAP_TEXT, PAP_LONGTEXT )
+        vlc_change_safe()
+    vlc_add_bool( "start-paused", false, SP_TEXT, SP_LONGTEXT )
+    vlc_add_bool( "playlist-autostart", true,
               AUTOSTART_TEXT, AUTOSTART_LONGTEXT )
-    add_bool( "playlist-cork", true, CORK_TEXT, CORK_LONGTEXT )
+    vlc_add_bool( "playlist-cork", true, CORK_TEXT, CORK_LONGTEXT )
 #if defined(_WIN32) || defined(HAVE_DBUS) || defined(__OS2__)
-    add_bool( "one-instance", false, ONEINSTANCE_TEXT,
+    vlc_add_bool( "one-instance", false, ONEINSTANCE_TEXT,
               ONEINSTANCE_LONGTEXT )
-    add_bool( "started-from-file", false, STARTEDFROMFILE_TEXT,
+    vlc_add_bool( "started-from-file", false, STARTEDFROMFILE_TEXT,
               STARTEDFROMFILE_LONGTEXT )
-        change_volatile ()
-    add_bool( "one-instance-when-started-from-file", true,
+        vlc_change_volatile ()
+    vlc_add_bool( "one-instance-when-started-from-file", true,
               ONEINSTANCEWHENSTARTEDFROMFILE_TEXT, NULL )
-    add_bool( "playlist-enqueue", false, PLAYLISTENQUEUE_TEXT,
+    vlc_add_bool( "playlist-enqueue", false, PLAYLISTENQUEUE_TEXT,
               PLAYLISTENQUEUE_LONGTEXT )
 #endif
 #ifdef HAVE_DBUS
-    add_bool( "dbus", false, DBUS_TEXT, DBUS_LONGTEXT )
+    vlc_add_bool( "dbus", false, DBUS_TEXT, DBUS_LONGTEXT )
 #endif
-    add_bool( "media-library", false, ML_TEXT, ML_LONGTEXT )
-    add_bool( "playlist-tree", false, PLTREE_TEXT, PLTREE_LONGTEXT )
+    vlc_add_bool( "media-library", false, ML_TEXT, ML_LONGTEXT )
+    vlc_add_bool( "playlist-tree", false, PLTREE_TEXT, PLTREE_LONGTEXT )
 
-    add_string( "open", "", OPEN_TEXT, OPEN_LONGTEXT )
+    vlc_add_string( "open", "", OPEN_TEXT, OPEN_LONGTEXT )
 
-    add_bool( "auto-preparse", true, PREPARSE_TEXT,
+    vlc_add_bool( "auto-preparse", true, PREPARSE_TEXT,
               PREPARSE_LONGTEXT )
 
-    add_integer( "preparse-timeout", 5000, PREPARSE_TIMEOUT_TEXT,
+    vlc_add_integer( "preparse-timeout", 5000, PREPARSE_TIMEOUT_TEXT,
                  PREPARSE_TIMEOUT_LONGTEXT )
 
-    add_integer( "preparse-threads", 1, PREPARSE_THREADS_TEXT,
+    vlc_add_integer( "preparse-threads", 1, PREPARSE_THREADS_TEXT,
                  PREPARSE_THREADS_LONGTEXT )
 
-    add_integer( "fetch-art-threads", 1, FETCH_ART_THREADS_TEXT,
+    vlc_add_integer( "fetch-art-threads", 1, FETCH_ART_THREADS_TEXT,
                  FETCH_ART_THREADS_LONGTEXT )
 
-    add_bool( "metadata-network-access", false, METADATA_NETWORK_TEXT, NULL )
+    vlc_add_bool( "metadata-network-access", false, METADATA_NETWORK_TEXT, NULL )
 
-    add_string( "recursive", "collapse" , RECURSIVE_TEXT,
+    vlc_add_string( "recursive", "collapse" , RECURSIVE_TEXT,
                 RECURSIVE_LONGTEXT )
-        change_string_list( psz_recursive_list, psz_recursive_list_text )
-    add_string( "ignore-filetypes", "m3u,db,nfo,ini,jpg,jpeg,ljpg,gif,png,pgm,"
+        vlc_change_string_list( psz_recursive_list, psz_recursive_list_text )
+    vlc_add_string( "ignore-filetypes", "m3u,db,nfo,ini,jpg,jpeg,ljpg,gif,png,pgm,"
                 "pgmyuv,pbm,pam,tga,bmp,pnm,xpm,xcf,pcx,tif,tiff,lbm,sfv,txt,"
                 "sub,idx,srt,cue,ssa",
                 IGNORE_TEXT, IGNORE_LONGTEXT )
-    add_bool( "show-hiddenfiles", false,
+    vlc_add_bool( "show-hiddenfiles", false,
               SHOW_HIDDENFILES_TEXT, SHOW_HIDDENFILES_LONGTEXT )
-    add_bool( "extractor-flatten", false, EXTRACTOR_FLATTEN, NULL )
-        change_volatile()
+    vlc_add_bool( "extractor-flatten", false, EXTRACTOR_FLATTEN, NULL )
+        vlc_change_volatile()
 
-    set_subcategory( SUBCAT_PLAYLIST_SD )
-    add_string( "services-discovery", "", SD_TEXT, SD_LONGTEXT )
-        change_short('S')
+    vlc_set_subcategory( SUBCAT_PLAYLIST_SD )
+    vlc_add_string( "services-discovery", "", SD_TEXT, SD_LONGTEXT )
+        vlc_change_short('S')
 
     /* Not displayed in GUI, listed in help output though */
-    set_subcategory( SUBCAT_HIDDEN )
-    set_section(N_("Bookmarks"), NULL)
-    add_string( "bookmark1", NULL,
+    vlc_set_subcategory( SUBCAT_HIDDEN )
+    vlc_set_section(N_("Bookmarks"), NULL)
+    vlc_add_string( "bookmark1", NULL,
              BOOKMARK1_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark2", NULL,
+    vlc_add_string( "bookmark2", NULL,
              BOOKMARK2_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark3", NULL,
+    vlc_add_string( "bookmark3", NULL,
              BOOKMARK3_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark4", NULL,
+    vlc_add_string( "bookmark4", NULL,
              BOOKMARK4_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark5", NULL,
+    vlc_add_string( "bookmark5", NULL,
              BOOKMARK5_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark6", NULL,
+    vlc_add_string( "bookmark6", NULL,
              BOOKMARK6_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark7", NULL,
+    vlc_add_string( "bookmark7", NULL,
              BOOKMARK7_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark8", NULL,
+    vlc_add_string( "bookmark8", NULL,
              BOOKMARK8_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark9", NULL,
+    vlc_add_string( "bookmark9", NULL,
              BOOKMARK9_TEXT, BOOKMARK_LONGTEXT )
-    add_string( "bookmark10", NULL,
+    vlc_add_string( "bookmark10", NULL,
               BOOKMARK10_TEXT, BOOKMARK_LONGTEXT )
 
 /* Interface options */
-    set_subcategory( SUBCAT_INTERFACE_GENERAL )
+    vlc_set_subcategory( SUBCAT_INTERFACE_GENERAL )
     add_category_hint( N_("Interface"), INTF_CAT_LONGTEXT )
-    add_integer( "verbose", 0, VERBOSE_TEXT, VERBOSE_LONGTEXT )
-        change_short('v')
-        change_volatile ()
+    vlc_add_integer( "verbose", 0, VERBOSE_TEXT, VERBOSE_LONGTEXT )
+        vlc_change_short('v')
+        vlc_change_volatile ()
 #if !defined(_WIN32) && !defined(__OS2__)
-    add_obsolete_bool( "daemon" ) /* since 4.0.0 */
-        change_short('d')
-    add_obsolete_string( "pidfile" ) /* since 4.0.0 */
+    vlc_add_obsolete_bool( "daemon" ) /* since 4.0.0 */
+        vlc_change_short('d')
+    vlc_add_obsolete_string( "pidfile" ) /* since 4.0.0 */
 #endif
 
-    add_bool( "color", true, COLOR_TEXT, COLOR_LONGTEXT )
-    add_obsolete_bool( "advanced" ) /* since 4.0.0 */
-    add_bool( "interact", true, INTERACTION_TEXT,
+    vlc_add_bool( "color", true, COLOR_TEXT, COLOR_LONGTEXT )
+    vlc_add_obsolete_bool( "advanced" ) /* since 4.0.0 */
+    vlc_add_bool( "interact", true, INTERACTION_TEXT,
               INTERACTION_LONGTEXT )
 
-    add_bool ( "stats", true, STATS_TEXT, STATS_LONGTEXT )
-    add_integer( "stats-min-report-interval", 250,
+    vlc_add_bool ( "stats", true, STATS_TEXT, STATS_LONGTEXT )
+    vlc_add_integer( "stats-min-report-interval", 250,
                         STATSFREQ_TEXT, STATSFREQ_LONGTEXT );
-        change_integer_range( 0, INT32_MAX )
+        vlc_change_integer_range( 0, INT32_MAX )
 
-    set_subcategory( SUBCAT_INTERFACE_MAIN )
-    add_module_cat("intf", SUBCAT_INTERFACE_MAIN, NULL,
+    vlc_set_subcategory( SUBCAT_INTERFACE_MAIN )
+    vlc_add_module_cat("intf", SUBCAT_INTERFACE_MAIN, NULL,
                    INTF_TEXT, INTF_LONGTEXT)
-        change_short('I')
-    add_module_list_cat("extraintf", SUBCAT_INTERFACE_MAIN, NULL,
+        vlc_change_short('I')
+    vlc_add_module_list_cat("extraintf", SUBCAT_INTERFACE_MAIN, NULL,
                         EXTRAINTF_TEXT, EXTRAINTF_LONGTEXT)
 
 
-    set_subcategory( SUBCAT_INTERFACE_CONTROL )
-    add_module_list_cat("control", SUBCAT_INTERFACE_CONTROL, NULL,
+    vlc_set_subcategory( SUBCAT_INTERFACE_CONTROL )
+    vlc_add_module_list_cat("control", SUBCAT_INTERFACE_CONTROL, NULL,
                         CONTROL_TEXT, CONTROL_LONGTEXT)
 
 /* Hotkey options*/
-    set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
+    vlc_set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
     add_category_hint(N_("Hot keys"), HOTKEY_CAT_LONGTEXT)
 
-    add_integer( "hotkeys-y-wheel-mode", 0, MOUSE_Y_WHEEL_MODE_TEXT,
+    vlc_add_integer( "hotkeys-y-wheel-mode", 0, MOUSE_Y_WHEEL_MODE_TEXT,
                  MOUSE_Y_WHEEL_MODE_LONGTEXT )
-        change_integer_list( mouse_wheel_values, mouse_wheel_texts )
-    add_integer( "hotkeys-x-wheel-mode", 2, MOUSE_X_WHEEL_MODE_TEXT,
+        vlc_change_integer_list( mouse_wheel_values, mouse_wheel_texts )
+    vlc_add_integer( "hotkeys-x-wheel-mode", 2, MOUSE_X_WHEEL_MODE_TEXT,
                  MOUSE_X_WHEEL_MODE_LONGTEXT )
-        change_integer_list( mouse_wheel_values, mouse_wheel_texts )
-    add_obsolete_integer( "hotkeys-mousewheel-mode" ) /* since 3.0.0 */
+        vlc_change_integer_list( mouse_wheel_values, mouse_wheel_texts )
+    vlc_add_obsolete_integer( "hotkeys-mousewheel-mode" ) /* since 3.0.0 */
 
 #if defined(__APPLE__)
 /* Don't use the following combo's */
@@ -2578,235 +2578,235 @@ vlc_module_begin ()
 #   define KEY_PLAY_CLEAR         "Ctrl+w"
 #endif
 
-    add_key("key-toggle-fullscreen", KEY_TOGGLE_FULLSCREEN,
+    vlc_add_key("key-toggle-fullscreen", KEY_TOGGLE_FULLSCREEN,
             TOGGLE_FULLSCREEN_KEY_TEXT, TOGGLE_FULLSCREEN_KEY_LONGTEXT)
-    add_key("key-leave-fullscreen", KEY_LEAVE_FULLSCREEN,
+    vlc_add_key("key-leave-fullscreen", KEY_LEAVE_FULLSCREEN,
             LEAVE_FULLSCREEN_KEY_TEXT, LEAVE_FULLSCREEN_KEY_LONGTEXT)
-    add_key("key-play-pause", KEY_PLAY_PAUSE,
+    vlc_add_key("key-play-pause", KEY_PLAY_PAUSE,
             PLAY_PAUSE_KEY_TEXT, PLAY_PAUSE_KEY_LONGTEXT)
-    add_key("key-pause", KEY_SIMPLE_PAUSE, PAUSE_KEY_TEXT, PAUSE_KEY_LONGTEXT)
-    add_key("key-play", KEY_PLAY, PLAY_KEY_TEXT, PLAY_KEY_LONGTEXT)
-    add_key("key-faster", KEY_FASTER, FASTER_KEY_TEXT, FASTER_KEY_LONGTEXT)
-    add_key("key-slower", KEY_SLOWER, SLOWER_KEY_TEXT, SLOWER_KEY_LONGTEXT)
-    add_key("key-rate-normal", KEY_RATE_NORMAL,
+    vlc_add_key("key-pause", KEY_SIMPLE_PAUSE, PAUSE_KEY_TEXT, PAUSE_KEY_LONGTEXT)
+    vlc_add_key("key-play", KEY_PLAY, PLAY_KEY_TEXT, PLAY_KEY_LONGTEXT)
+    vlc_add_key("key-faster", KEY_FASTER, FASTER_KEY_TEXT, FASTER_KEY_LONGTEXT)
+    vlc_add_key("key-slower", KEY_SLOWER, SLOWER_KEY_TEXT, SLOWER_KEY_LONGTEXT)
+    vlc_add_key("key-rate-normal", KEY_RATE_NORMAL,
             RATE_NORMAL_KEY_TEXT, RATE_NORMAL_KEY_LONGTEXT)
-    add_key("key-rate-faster-fine", KEY_RATE_FASTER_FINE,
+    vlc_add_key("key-rate-faster-fine", KEY_RATE_FASTER_FINE,
             RATE_FASTER_FINE_KEY_TEXT, RATE_FASTER_FINE_KEY_LONGTEXT)
-    add_key("key-rate-slower-fine", KEY_RATE_SLOWER_FINE,
+    vlc_add_key("key-rate-slower-fine", KEY_RATE_SLOWER_FINE,
             RATE_SLOWER_FINE_KEY_TEXT, RATE_SLOWER_FINE_KEY_LONGTEXT)
-    add_key("key-next", KEY_NEXT, NEXT_KEY_TEXT, NEXT_KEY_LONGTEXT)
-    add_key("key-prev", KEY_PREV, PREV_KEY_TEXT, PREV_KEY_LONGTEXT)
-    add_key("key-projection-toggle", KEY_PROJECTION_TOGGLE, "", "")
-    add_key("key-stop", KEY_STOP, STOP_KEY_TEXT, STOP_KEY_LONGTEXT)
-    add_key("key-position", KEY_POSITION, POSITION_KEY_TEXT,
+    vlc_add_key("key-next", KEY_NEXT, NEXT_KEY_TEXT, NEXT_KEY_LONGTEXT)
+    vlc_add_key("key-prev", KEY_PREV, PREV_KEY_TEXT, PREV_KEY_LONGTEXT)
+    vlc_add_key("key-projection-toggle", KEY_PROJECTION_TOGGLE, "", "")
+    vlc_add_key("key-stop", KEY_STOP, STOP_KEY_TEXT, STOP_KEY_LONGTEXT)
+    vlc_add_key("key-position", KEY_POSITION, POSITION_KEY_TEXT,
              POSITION_KEY_LONGTEXT)
-    add_key("key-jump-extrashort", KEY_JUMP_MEXTRASHORT,
+    vlc_add_key("key-jump-extrashort", KEY_JUMP_MEXTRASHORT,
              JBEXTRASHORT_KEY_TEXT, JBEXTRASHORT_KEY_LONGTEXT)
-    add_key("key-jump+extrashort", KEY_JUMP_PEXTRASHORT,
+    vlc_add_key("key-jump+extrashort", KEY_JUMP_PEXTRASHORT,
              JFEXTRASHORT_KEY_TEXT, JFEXTRASHORT_KEY_LONGTEXT)
-    add_key("key-jump-short", KEY_JUMP_MSHORT,
+    vlc_add_key("key-jump-short", KEY_JUMP_MSHORT,
             JBSHORT_KEY_TEXT, JBSHORT_KEY_LONGTEXT)
-    add_key("key-jump+short", KEY_JUMP_PSHORT,
+    vlc_add_key("key-jump+short", KEY_JUMP_PSHORT,
             JFSHORT_KEY_TEXT, JFSHORT_KEY_LONGTEXT)
-    add_key("key-jump-medium", KEY_JUMP_MMEDIUM,
+    vlc_add_key("key-jump-medium", KEY_JUMP_MMEDIUM,
             JBMEDIUM_KEY_TEXT, JBMEDIUM_KEY_LONGTEXT)
-    add_key("key-jump+medium", KEY_JUMP_PMEDIUM,
+    vlc_add_key("key-jump+medium", KEY_JUMP_PMEDIUM,
             JFMEDIUM_KEY_TEXT, JFMEDIUM_KEY_LONGTEXT)
-    add_key("key-jump-long", KEY_JUMP_MLONG,
+    vlc_add_key("key-jump-long", KEY_JUMP_MLONG,
             JBLONG_KEY_TEXT, JBLONG_KEY_LONGTEXT)
-    add_key("key-jump+long", KEY_JUMP_PLONG,
+    vlc_add_key("key-jump+long", KEY_JUMP_PLONG,
             JFLONG_KEY_TEXT, JFLONG_KEY_LONGTEXT)
-    add_key("key-frame-next", KEY_FRAME_NEXT,
+    vlc_add_key("key-frame-next", KEY_FRAME_NEXT,
             FRAME_NEXT_KEY_TEXT, FRAME_NEXT_KEY_LONGTEXT)
-    add_key("key-nav-activate", KEY_NAV_ACTIVATE,
+    vlc_add_key("key-nav-activate", KEY_NAV_ACTIVATE,
             NAV_ACTIVATE_KEY_TEXT, NAV_ACTIVATE_KEY_LONGTEXT)
-    add_key("key-nav-up", KEY_NAV_UP, NAV_UP_KEY_TEXT, NAV_UP_KEY_LONGTEXT)
-    add_key("key-nav-down", KEY_NAV_DOWN,
+    vlc_add_key("key-nav-up", KEY_NAV_UP, NAV_UP_KEY_TEXT, NAV_UP_KEY_LONGTEXT)
+    vlc_add_key("key-nav-down", KEY_NAV_DOWN,
             NAV_DOWN_KEY_TEXT, NAV_DOWN_KEY_LONGTEXT)
-    add_key("key-nav-left", KEY_NAV_LEFT,
+    vlc_add_key("key-nav-left", KEY_NAV_LEFT,
             NAV_LEFT_KEY_TEXT, NAV_LEFT_KEY_LONGTEXT)
-    add_key("key-nav-right", KEY_NAV_RIGHT,
+    vlc_add_key("key-nav-right", KEY_NAV_RIGHT,
             NAV_RIGHT_KEY_TEXT, NAV_RIGHT_KEY_LONGTEXT)
 
-    add_key("key-disc-menu", KEY_DISC_MENU, DISC_MENU_TEXT, DISC_MENU_LONGTEXT)
-    add_key("key-title-prev", KEY_TITLE_PREV,
+    vlc_add_key("key-disc-menu", KEY_DISC_MENU, DISC_MENU_TEXT, DISC_MENU_LONGTEXT)
+    vlc_add_key("key-title-prev", KEY_TITLE_PREV,
             TITLE_PREV_TEXT, TITLE_PREV_LONGTEXT)
-    add_key("key-title-next", KEY_TITLE_NEXT,
+    vlc_add_key("key-title-next", KEY_TITLE_NEXT,
             TITLE_NEXT_TEXT, TITLE_NEXT_LONGTEXT)
-    add_key("key-chapter-prev", KEY_CHAPTER_PREV,
+    vlc_add_key("key-chapter-prev", KEY_CHAPTER_PREV,
             CHAPTER_PREV_TEXT, CHAPTER_PREV_LONGTEXT)
-    add_key("key-chapter-next", KEY_CHAPTER_NEXT,
+    vlc_add_key("key-chapter-next", KEY_CHAPTER_NEXT,
             CHAPTER_NEXT_TEXT, CHAPTER_NEXT_LONGTEXT)
-    add_key("key-quit", KEY_QUIT, QUIT_KEY_TEXT, QUIT_KEY_LONGTEXT)
-    add_key("key-vol-up", KEY_VOL_UP, VOL_UP_KEY_TEXT, VOL_UP_KEY_LONGTEXT)
-    add_key("key-vol-down", KEY_VOL_DOWN,
+    vlc_add_key("key-quit", KEY_QUIT, QUIT_KEY_TEXT, QUIT_KEY_LONGTEXT)
+    vlc_add_key("key-vol-up", KEY_VOL_UP, VOL_UP_KEY_TEXT, VOL_UP_KEY_LONGTEXT)
+    vlc_add_key("key-vol-down", KEY_VOL_DOWN,
             VOL_DOWN_KEY_TEXT, VOL_DOWN_KEY_LONGTEXT)
-    add_key("key-vol-mute", KEY_VOL_MUTE,
+    vlc_add_key("key-vol-mute", KEY_VOL_MUTE,
             VOL_MUTE_KEY_TEXT, VOL_MUTE_KEY_LONGTEXT)
-    add_key("key-subdelay-up", KEY_SUBDELAY_UP,
+    vlc_add_key("key-subdelay-up", KEY_SUBDELAY_UP,
             SUBDELAY_UP_KEY_TEXT, SUBDELAY_UP_KEY_LONGTEXT)
-    add_key("key-subdelay-down", KEY_SUBDELAY_DOWN,
+    vlc_add_key("key-subdelay-down", KEY_SUBDELAY_DOWN,
              SUBDELAY_DOWN_KEY_TEXT, SUBDELAY_DOWN_KEY_LONGTEXT)
-    add_key("key-subsync-markaudio", KEY_SUBSYNC_MARKAUDIO,
+    vlc_add_key("key-subsync-markaudio", KEY_SUBSYNC_MARKAUDIO,
             SUBSYNC_MARKAUDIO_KEY_TEXT, SUBSYNC_MARKAUDIO_KEY_LONGTEXT)
-    add_key("key-subsync-marksub", KEY_SUBSYNC_MARKSUB,
+    vlc_add_key("key-subsync-marksub", KEY_SUBSYNC_MARKSUB,
             SUBSYNC_MARKSUB_KEY_TEXT, SUBSYNC_MARKSUB_KEY_LONGTEXT)
-    add_key("key-subsync-apply", KEY_SUBSYNC_APPLY,
+    vlc_add_key("key-subsync-apply", KEY_SUBSYNC_APPLY,
             SUBSYNC_APPLY_KEY_TEXT, SUBSYNC_APPLY_KEY_LONGTEXT)
-    add_key("key-subsync-reset", KEY_SUBSYNC_RESET,
+    vlc_add_key("key-subsync-reset", KEY_SUBSYNC_RESET,
             SUBSYNC_RESET_KEY_TEXT, SUBSYNC_RESET_KEY_LONGTEXT)
-    add_key("key-subpos-up", KEY_SUBPOS_UP,
+    vlc_add_key("key-subpos-up", KEY_SUBPOS_UP,
             SUBPOS_UP_KEY_TEXT, SUBPOS_UP_KEY_LONGTEXT)
-    add_key("key-subpos-down", KEY_SUBPOS_DOWN,
+    vlc_add_key("key-subpos-down", KEY_SUBPOS_DOWN,
             SUBPOS_DOWN_KEY_TEXT, SUBPOS_DOWN_KEY_LONGTEXT)
-    add_key("key-audiodelay-up", KEY_AUDIODELAY_UP,
+    vlc_add_key("key-audiodelay-up", KEY_AUDIODELAY_UP,
             AUDIODELAY_UP_KEY_TEXT, AUDIODELAY_UP_KEY_LONGTEXT)
-    add_key("key-audiodelay-down", KEY_AUDIODELAY_DOWN,
+    vlc_add_key("key-audiodelay-down", KEY_AUDIODELAY_DOWN,
             AUDIODELAY_DOWN_KEY_TEXT, AUDIODELAY_DOWN_KEY_LONGTEXT)
-    add_key("key-audio-track", KEY_AUDIO_TRACK, AUDIO_TRACK_KEY_TEXT,
+    vlc_add_key("key-audio-track", KEY_AUDIO_TRACK, AUDIO_TRACK_KEY_TEXT,
             AUDIO_TRACK_KEY_LONGTEXT)
-    add_key("key-audiodevice-cycle", KEY_AUDIODEVICE_CYCLE,
+    vlc_add_key("key-audiodevice-cycle", KEY_AUDIODEVICE_CYCLE,
             AUDIO_DEVICE_CYCLE_KEY_TEXT,
             AUDIO_DEVICE_CYCLE_KEY_LONGTEXT)
-    add_key("key-subtitle-revtrack", KEY_SUBTITLE_REVTRACK,
+    vlc_add_key("key-subtitle-revtrack", KEY_SUBTITLE_REVTRACK,
             SUBTITLE_REVERSE_TRACK_KEY_TEXT, SUBTITLE_REVERSE_TRACK_KEY_LONGTEXT)
-    add_key("key-subtitle-track", KEY_SUBTITLE_TRACK,
+    vlc_add_key("key-subtitle-track", KEY_SUBTITLE_TRACK,
             SUBTITLE_TRACK_KEY_TEXT, SUBTITLE_TRACK_KEY_LONGTEXT)
-    add_key("key-subtitle-toggle", KEY_SUBTITLE_TOGGLE,
+    vlc_add_key("key-subtitle-toggle", KEY_SUBTITLE_TOGGLE,
             SUBTITLE_TOGGLE_KEY_TEXT, SUBTITLE_TOGGLE_KEY_LONGTEXT)
-    add_key("key-subtitle-control-secondary", KEY_SUBTITLE_CONTROL_S,
+    vlc_add_key("key-subtitle-control-secondary", KEY_SUBTITLE_CONTROL_S,
             SUBTITLE_CONTROL_SECONDARY_KEY_TEXT, SUBTITLE_CONTROL_SECONDARY_KEY_LONGTEXT)
-    add_key("key-program-sid-next", KEY_PROGRAM_SID_NEXT,
+    vlc_add_key("key-program-sid-next", KEY_PROGRAM_SID_NEXT,
             PROGRAM_SID_NEXT_KEY_TEXT, PROGRAM_SID_NEXT_KEY_LONGTEXT)
-    add_key("key-program-sid-prev", KEY_PROGRAM_SID_PREV,
+    vlc_add_key("key-program-sid-prev", KEY_PROGRAM_SID_PREV,
             PROGRAM_SID_PREV_KEY_TEXT, PROGRAM_SID_PREV_KEY_LONGTEXT)
-    add_key("key-aspect-ratio", KEY_ASPECT_RATIO,
+    vlc_add_key("key-aspect-ratio", KEY_ASPECT_RATIO,
             ASPECT_RATIO_KEY_TEXT, ASPECT_RATIO_KEY_LONGTEXT)
-    add_key("key-crop", KEY_CROP,
+    vlc_add_key("key-crop", KEY_CROP,
             CROP_KEY_TEXT, CROP_KEY_LONGTEXT)
-    add_key("key-toggle-autoscale", KEY_TOGGLE_AUTOSCALE,
+    vlc_add_key("key-toggle-autoscale", KEY_TOGGLE_AUTOSCALE,
             TOGGLE_AUTOSCALE_KEY_TEXT, TOGGLE_AUTOSCALE_KEY_LONGTEXT)
-    add_key("key-incr-scalefactor", KEY_SCALE_UP,
+    vlc_add_key("key-incr-scalefactor", KEY_SCALE_UP,
             SCALE_UP_KEY_TEXT, SCALE_UP_KEY_LONGTEXT)
-    add_key("key-decr-scalefactor", KEY_SCALE_DOWN,
+    vlc_add_key("key-decr-scalefactor", KEY_SCALE_DOWN,
             SCALE_DOWN_KEY_TEXT, SCALE_DOWN_KEY_LONGTEXT)
-    add_key("key-deinterlace", KEY_DEINTERLACE,
+    vlc_add_key("key-deinterlace", KEY_DEINTERLACE,
             DEINTERLACE_KEY_TEXT, DEINTERLACE_KEY_LONGTEXT)
-    add_key("key-deinterlace-mode", KEY_DEINTERLACE_MODE,
+    vlc_add_key("key-deinterlace-mode", KEY_DEINTERLACE_MODE,
             DEINTERLACE_MODE_KEY_TEXT, DEINTERLACE_MODE_KEY_LONGTEXT)
-    add_key("key-intf-show", KEY_INTF_TOGGLE_FSC,
+    vlc_add_key("key-intf-show", KEY_INTF_TOGGLE_FSC,
             INTF_TOGGLE_FSC_KEY_TEXT, INTF_TOGGLE_FSC_KEY_LONGTEXT)
 
-    add_key("key-intf-boss", KEY_INTF_BOSS,
+    vlc_add_key("key-intf-boss", KEY_INTF_BOSS,
             INTF_BOSS_KEY_TEXT, INTF_BOSS_KEY_LONGTEXT)
-    add_key("key-intf-popup-menu", KEY_INTF_POPUP_MENU,
+    vlc_add_key("key-intf-popup-menu", KEY_INTF_POPUP_MENU,
             INTF_POPUP_MENU_KEY_TEXT, INTF_POPUP_MENU_KEY_LONGTEXT)
-    add_key("key-snapshot", KEY_SNAPSHOT, SNAP_KEY_TEXT, SNAP_KEY_LONGTEXT)
-    add_key("key-record", KEY_RECORD, RECORD_KEY_TEXT, RECORD_KEY_LONGTEXT)
-    add_key("key-zoom", KEY_ZOOM, ZOOM_KEY_TEXT, ZOOM_KEY_LONGTEXT)
-    add_key("key-unzoom", KEY_UNZOOM, UNZOOM_KEY_TEXT, UNZOOM_KEY_LONGTEXT)
-    add_key("key-wallpaper", KEY_WALLPAPER,
+    vlc_add_key("key-snapshot", KEY_SNAPSHOT, SNAP_KEY_TEXT, SNAP_KEY_LONGTEXT)
+    vlc_add_key("key-record", KEY_RECORD, RECORD_KEY_TEXT, RECORD_KEY_LONGTEXT)
+    vlc_add_key("key-zoom", KEY_ZOOM, ZOOM_KEY_TEXT, ZOOM_KEY_LONGTEXT)
+    vlc_add_key("key-unzoom", KEY_UNZOOM, UNZOOM_KEY_TEXT, UNZOOM_KEY_LONGTEXT)
+    vlc_add_key("key-wallpaper", KEY_WALLPAPER,
             WALLPAPER_KEY_TEXT, WALLPAPER_KEY_LONGTEXT)
 
-    add_key("key-crop-top", KEY_CROP_TOP,
+    vlc_add_key("key-crop-top", KEY_CROP_TOP,
              CROP_TOP_KEY_TEXT, CROP_TOP_KEY_LONGTEXT)
-    add_key("key-uncrop-top", KEY_UNCROP_TOP,
+    vlc_add_key("key-uncrop-top", KEY_UNCROP_TOP,
             UNCROP_TOP_KEY_TEXT, UNCROP_TOP_KEY_LONGTEXT)
-    add_key("key-crop-left", KEY_CROP_LEFT,
+    vlc_add_key("key-crop-left", KEY_CROP_LEFT,
             CROP_LEFT_KEY_TEXT, CROP_LEFT_KEY_LONGTEXT)
-    add_key("key-uncrop-left", KEY_UNCROP_LEFT,
+    vlc_add_key("key-uncrop-left", KEY_UNCROP_LEFT,
             UNCROP_LEFT_KEY_TEXT, UNCROP_LEFT_KEY_LONGTEXT)
-    add_key("key-crop-bottom", KEY_CROP_BOTTOM,
+    vlc_add_key("key-crop-bottom", KEY_CROP_BOTTOM,
             CROP_BOTTOM_KEY_TEXT, CROP_BOTTOM_KEY_LONGTEXT)
-    add_key("key-uncrop-bottom", KEY_UNCROP_BOTTOM,
+    vlc_add_key("key-uncrop-bottom", KEY_UNCROP_BOTTOM,
              UNCROP_BOTTOM_KEY_TEXT, UNCROP_BOTTOM_KEY_LONGTEXT)
-    add_key("key-crop-right", KEY_CROP_RIGHT,
+    vlc_add_key("key-crop-right", KEY_CROP_RIGHT,
             CROP_RIGHT_KEY_TEXT, CROP_RIGHT_KEY_LONGTEXT)
-    add_key("key-uncrop-right", KEY_UNCROP_RIGHT,
+    vlc_add_key("key-uncrop-right", KEY_UNCROP_RIGHT,
             UNCROP_RIGHT_KEY_TEXT, UNCROP_RIGHT_KEY_LONGTEXT)
-    add_key("key-random", KEY_RANDOM, RANDOM_KEY_TEXT, RANDOM_KEY_LONGTEXT)
-    add_key("key-loop", KEY_LOOP, LOOP_KEY_TEXT, LOOP_KEY_LONGTEXT)
+    vlc_add_key("key-random", KEY_RANDOM, RANDOM_KEY_TEXT, RANDOM_KEY_LONGTEXT)
+    vlc_add_key("key-loop", KEY_LOOP, LOOP_KEY_TEXT, LOOP_KEY_LONGTEXT)
 
-    add_key("key-viewpoint-fov-in", KEY_VIEWPOINT_FOV_IN,
+    vlc_add_key("key-viewpoint-fov-in", KEY_VIEWPOINT_FOV_IN,
             VIEWPOINT_FOV_IN_KEY_TEXT, VIEWPOINT_FOV_IN_KEY_LONGTEXT)
-    add_key("key-viewpoint-fov-out", KEY_VIEWPOINT_FOV_OUT,
+    vlc_add_key("key-viewpoint-fov-out", KEY_VIEWPOINT_FOV_OUT,
             VIEWPOINT_FOV_OUT_KEY_TEXT, VIEWPOINT_FOV_OUT_KEY_LONGTEXT)
-    add_key("key-viewpoint-roll-clock", NULL,
+    vlc_add_key("key-viewpoint-roll-clock", NULL,
             VIEWPOINT_ROLL_CLOCK_KEY_TEXT, VIEWPOINT_ROLL_CLOCK_KEY_LONGTEXT)
-    add_key("key-viewpoint-roll-anticlock", NULL,
+    vlc_add_key("key-viewpoint-roll-anticlock", NULL,
             VIEWPOINT_ROLL_ANTICLOCK_KEY_TEXT,
             VIEWPOINT_ROLL_ANTICLOCK_KEY_LONGTEXT)
 
-    add_key("key-zoom-quarter", KEY_ZOOM_QUARTER, ZOOM_QUARTER_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
-    add_key("key-zoom-half", KEY_ZOOM_HALF, ZOOM_HALF_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
-    add_key("key-zoom-original", KEY_ZOOM_ORIGINAL, ZOOM_ORIGINAL_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
-    add_key("key-zoom-double", KEY_ZOOM_DOUBLE, ZOOM_DOUBLE_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
+    vlc_add_key("key-zoom-quarter", KEY_ZOOM_QUARTER, ZOOM_QUARTER_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
+    vlc_add_key("key-zoom-half", KEY_ZOOM_HALF, ZOOM_HALF_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
+    vlc_add_key("key-zoom-original", KEY_ZOOM_ORIGINAL, ZOOM_ORIGINAL_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
+    vlc_add_key("key-zoom-double", KEY_ZOOM_DOUBLE, ZOOM_DOUBLE_KEY_TEXT, ZOOM_LEVEL_KEY_LONGTEXT)
 
-    add_key("key-clear-playlist", KEY_PLAY_CLEAR,
+    vlc_add_key("key-clear-playlist", KEY_PLAY_CLEAR,
             PLAY_CLEAR_KEY_TEXT, PLAY_CLEAR_KEY_LONGTEXT)
 
-    add_key("key-subtitle-text-scale-normal", KEY_SUBTEXT_SCALE,
+    vlc_add_key("key-subtitle-text-scale-normal", KEY_SUBTEXT_SCALE,
             SUBTEXT_SCALE_KEY_TEXT, SUBTEXT_SCALE_KEY_LONGTEXT)
-    add_key("key-subtitle-text-scale-up", KEY_SUBTEXT_SCALEUP,
+    vlc_add_key("key-subtitle-text-scale-up", KEY_SUBTEXT_SCALEUP,
             SUBTEXT_SCALEUP_KEY_TEXT, SUBTEXT_SCALE_KEY_LONGTEXT)
-    add_key("key-subtitle-text-scale-down", KEY_SUBTEXT_SCALEDOWN,
+    vlc_add_key("key-subtitle-text-scale-down", KEY_SUBTEXT_SCALEDOWN,
             SUBTEXT_SCALEDOWN_KEY_TEXT, SUBTEXT_SCALE_KEY_LONGTEXT)
 
-    set_section ( N_("Jump sizes" ), NULL )
-    add_integer( "extrashort-jump-size", 3, JIEXTRASHORT_TEXT,
+    vlc_set_section ( N_("Jump sizes" ), NULL )
+    vlc_add_integer( "extrashort-jump-size", 3, JIEXTRASHORT_TEXT,
                                     JIEXTRASHORT_LONGTEXT )
-    add_integer( "short-jump-size", 10, JISHORT_TEXT,
+    vlc_add_integer( "short-jump-size", 10, JISHORT_TEXT,
                                     JISHORT_LONGTEXT )
-    add_integer( "medium-jump-size", 60, JIMEDIUM_TEXT,
+    vlc_add_integer( "medium-jump-size", 60, JIMEDIUM_TEXT,
                                     JIMEDIUM_LONGTEXT )
-    add_integer( "long-jump-size", 300, JILONG_TEXT,
+    vlc_add_integer( "long-jump-size", 300, JILONG_TEXT,
                                     JILONG_LONGTEXT )
 
-    set_section ( N_("Bookmarks"), NULL )
-    add_key("key-set-bookmark1", KEY_SET_BOOKMARK1,
+    vlc_set_section ( N_("Bookmarks"), NULL )
+    vlc_add_key("key-set-bookmark1", KEY_SET_BOOKMARK1,
             SET_BOOKMARK1_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark2", KEY_SET_BOOKMARK2,
+    vlc_add_key("key-set-bookmark2", KEY_SET_BOOKMARK2,
             SET_BOOKMARK2_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark3", KEY_SET_BOOKMARK3,
+    vlc_add_key("key-set-bookmark3", KEY_SET_BOOKMARK3,
             SET_BOOKMARK3_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark4", KEY_SET_BOOKMARK4,
+    vlc_add_key("key-set-bookmark4", KEY_SET_BOOKMARK4,
             SET_BOOKMARK4_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark5", KEY_SET_BOOKMARK5,
+    vlc_add_key("key-set-bookmark5", KEY_SET_BOOKMARK5,
             SET_BOOKMARK5_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark6", KEY_SET_BOOKMARK6,
+    vlc_add_key("key-set-bookmark6", KEY_SET_BOOKMARK6,
             SET_BOOKMARK6_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark7", KEY_SET_BOOKMARK7,
+    vlc_add_key("key-set-bookmark7", KEY_SET_BOOKMARK7,
             SET_BOOKMARK7_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark8", KEY_SET_BOOKMARK8,
+    vlc_add_key("key-set-bookmark8", KEY_SET_BOOKMARK8,
             SET_BOOKMARK8_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark9", KEY_SET_BOOKMARK9,
+    vlc_add_key("key-set-bookmark9", KEY_SET_BOOKMARK9,
             SET_BOOKMARK9_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-set-bookmark10", KEY_SET_BOOKMARK10,
+    vlc_add_key("key-set-bookmark10", KEY_SET_BOOKMARK10,
             SET_BOOKMARK10_KEY_TEXT, SET_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark1", KEY_PLAY_BOOKMARK1,
+    vlc_add_key("key-play-bookmark1", KEY_PLAY_BOOKMARK1,
             PLAY_BOOKMARK1_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark2", KEY_PLAY_BOOKMARK2,
+    vlc_add_key("key-play-bookmark2", KEY_PLAY_BOOKMARK2,
             PLAY_BOOKMARK2_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark3", KEY_PLAY_BOOKMARK3,
+    vlc_add_key("key-play-bookmark3", KEY_PLAY_BOOKMARK3,
             PLAY_BOOKMARK3_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark4", KEY_PLAY_BOOKMARK4,
+    vlc_add_key("key-play-bookmark4", KEY_PLAY_BOOKMARK4,
             PLAY_BOOKMARK4_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark5", KEY_PLAY_BOOKMARK5,
+    vlc_add_key("key-play-bookmark5", KEY_PLAY_BOOKMARK5,
             PLAY_BOOKMARK5_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark6", KEY_PLAY_BOOKMARK6,
+    vlc_add_key("key-play-bookmark6", KEY_PLAY_BOOKMARK6,
             PLAY_BOOKMARK6_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark7", KEY_PLAY_BOOKMARK7,
+    vlc_add_key("key-play-bookmark7", KEY_PLAY_BOOKMARK7,
             PLAY_BOOKMARK7_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark8", KEY_PLAY_BOOKMARK8,
+    vlc_add_key("key-play-bookmark8", KEY_PLAY_BOOKMARK8,
             PLAY_BOOKMARK8_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark9", KEY_PLAY_BOOKMARK9,
+    vlc_add_key("key-play-bookmark9", KEY_PLAY_BOOKMARK9,
             PLAY_BOOKMARK9_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
-    add_key("key-play-bookmark10", KEY_PLAY_BOOKMARK10,
+    vlc_add_key("key-play-bookmark10", KEY_PLAY_BOOKMARK10,
             PLAY_BOOKMARK10_KEY_TEXT, PLAY_BOOKMARK_KEY_LONGTEXT)
 
 /* Miscellaneous */
     /* Not displayed in GUI, listed in help output though */
-    set_subcategory( SUBCAT_HIDDEN )
+    vlc_set_subcategory( SUBCAT_HIDDEN )
     add_category_hint(N_("Miscellaneous"), NULL)
 
 #define HELP_TEXT \
@@ -2837,37 +2837,37 @@ vlc_module_begin ()
 #define VERSION_TEXT \
     N_("print version information")
 
-    add_bool( "help", false, HELP_TEXT, "" )
-        change_short( 'h' )
-        change_volatile ()
-    add_bool( "longhelp", false, LONGHELP_TEXT, "" )
-        change_volatile ()
-    add_bool( "full-help", false, FULL_HELP_TEXT, "" )
-        change_short( 'H' )
-        change_volatile ()
-    add_bool( "help-verbose", false, HELP_VERBOSE_TEXT, "" )
-        change_volatile ()
-    add_bool( "list", false, LIST_TEXT, "" )
-        change_short( 'l' )
-        change_volatile ()
-    add_bool( "list-verbose", false, LIST_VERBOSE_TEXT, "" )
-        change_volatile ()
-    add_string( "module", NULL, MODULE_TEXT, "" )
-        change_short( 'p' )
-        change_volatile ()
-    add_bool( "ignore-config", true, IGNORE_CONFIG_TEXT, "" )
-        change_volatile ()
-    add_bool( "reset-config", false, RESET_CONFIG_TEXT, "" )
-        change_volatile ()
+    vlc_add_bool( "help", false, HELP_TEXT, "" )
+        vlc_change_short( 'h' )
+        vlc_change_volatile ()
+    vlc_add_bool( "longhelp", false, LONGHELP_TEXT, "" )
+        vlc_change_volatile ()
+    vlc_add_bool( "full-help", false, FULL_HELP_TEXT, "" )
+        vlc_change_short( 'H' )
+        vlc_change_volatile ()
+    vlc_add_bool( "help-verbose", false, HELP_VERBOSE_TEXT, "" )
+        vlc_change_volatile ()
+    vlc_add_bool( "list", false, LIST_TEXT, "" )
+        vlc_change_short( 'l' )
+        vlc_change_volatile ()
+    vlc_add_bool( "list-verbose", false, LIST_VERBOSE_TEXT, "" )
+        vlc_change_volatile ()
+    vlc_add_string( "module", NULL, MODULE_TEXT, "" )
+        vlc_change_short( 'p' )
+        vlc_change_volatile ()
+    vlc_add_bool( "ignore-config", true, IGNORE_CONFIG_TEXT, "" )
+        vlc_change_volatile ()
+    vlc_add_bool( "reset-config", false, RESET_CONFIG_TEXT, "" )
+        vlc_change_volatile ()
 #ifdef HAVE_DYNAMIC_PLUGINS
-    add_bool( "reset-plugins-cache", false,
+    vlc_add_bool( "reset-plugins-cache", false,
               RESET_PLUGINS_CACHE_TEXT, "" )
-        change_volatile ()
+        vlc_change_volatile ()
 #endif
-    add_bool( "version", false, VERSION_TEXT, "" )
-        change_volatile ()
-    add_string( "config", NULL, CONFIG_TEXT, "" )
-        change_volatile ()
+    vlc_add_bool( "version", false, VERSION_TEXT, "" )
+        vlc_change_volatile ()
+    vlc_add_string( "config", NULL, CONFIG_TEXT, "" )
+        vlc_change_volatile ()
 
 vlc_module_end ()
 

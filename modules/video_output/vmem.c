@@ -56,21 +56,21 @@ static int Open(vout_display_t *vd,
 static void Close(vout_display_t *vd);
 
 vlc_module_begin()
-    set_description(N_("Video memory output"))
-    set_shortname(N_("Video memory"))
+    vlc_set_description(N_("Video memory output"))
+    vlc_set_shortname(N_("Video memory"))
 
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 
-    add_integer("vmem-width", 320, T_WIDTH, LT_WIDTH)
-        change_private()
-    add_integer("vmem-height", 200, T_HEIGHT, LT_HEIGHT)
-        change_private()
-    add_integer("vmem-pitch", 640, T_PITCH, LT_PITCH)
-        change_private()
-    add_string("vmem-chroma", "RV16", T_CHROMA, LT_CHROMA)
-        change_private()
+    vlc_add_integer("vmem-width", 320, T_WIDTH, LT_WIDTH)
+        vlc_change_private()
+    vlc_add_integer("vmem-height", 200, T_HEIGHT, LT_HEIGHT)
+        vlc_change_private()
+    vlc_add_integer("vmem-pitch", 640, T_PITCH, LT_PITCH)
+        vlc_change_private()
+    vlc_add_string("vmem-chroma", "RV16", T_CHROMA, LT_CHROMA)
+        vlc_change_private()
 
-    set_callback_display(Open, 0)
+    vlc_set_callback_display(Open, 0)
 vlc_module_end()
 
 /*****************************************************************************

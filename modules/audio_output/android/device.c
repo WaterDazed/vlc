@@ -346,24 +346,24 @@ Open(vlc_object_t *obj)
 
 
 #define add_aout(shortcut, name, desc) \
-    add_submodule() \
-        add_shortcut(name) \
-        set_shortname(name) \
-        set_description(desc) \
-        set_capability("audio output", 0) \
-        set_callback(Open)
+    vlc_add_submodule() \
+        vlc_add_shortcut(name) \
+        vlc_set_shortname(name) \
+        vlc_set_description(desc) \
+        vlc_set_capability("audio output", 0) \
+        vlc_set_callback(Open)
 
 #define AUDIOTRACK_SESSION_ID_TEXT " Id of audio session the AudioTrack must be attached to"
 
 vlc_module_begin ()
-    set_shortname("Android Audio")
-    set_description("Android automatic audio output")
-    set_capability("audio output", 200)
-    set_subcategory(SUBCAT_AUDIO_AOUT)
-    add_integer("audiotrack-session-id", 0,
+    vlc_set_shortname("Android Audio")
+    vlc_set_description("Android automatic audio output")
+    vlc_set_capability("audio output", 200)
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_add_integer("audiotrack-session-id", 0,
             AUDIOTRACK_SESSION_ID_TEXT, NULL )
-        change_private()
-    set_callback(Open)
+        vlc_change_private()
+    vlc_set_callback(Open)
     add_aout("audiotrack", "AudioTrack", "Android AudioTrack audio output")
     add_aout("aaudio", "AAudio", "Android AAudio output")
 vlc_module_end ()

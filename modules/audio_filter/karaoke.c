@@ -30,12 +30,12 @@
 static int Open (vlc_object_t *);
 
 vlc_module_begin ()
-    set_shortname (N_("Karaoke"))
-    set_description (N_("Simple Karaoke filter"))
-    set_subcategory (SUBCAT_AUDIO_AFILTER)
+    vlc_set_shortname (N_("Karaoke"))
+    vlc_set_description (N_("Simple Karaoke filter"))
+    vlc_set_subcategory (SUBCAT_AUDIO_AFILTER)
 
-    set_capability ("audio filter", 0)
-    set_callback(Open)
+    vlc_set_capability ("audio filter", 0)
+    vlc_set_callback(Open)
 vlc_module_end ()
 
 static block_t *Process (filter_t *, block_t *);

@@ -41,12 +41,12 @@ static int  Open    ( vlc_object_t * );
 static void Close  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("PVA demuxer" ) )
-    set_capability( "demux", 10 )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_callbacks( Open, Close )
-    add_shortcut( "pva" )
-    add_file_extension("pva")
+    vlc_set_description( N_("PVA demuxer" ) )
+    vlc_set_capability( "demux", 10 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "pva" )
+    vlc_add_file_extension("pva")
 vlc_module_end ()
 
 /*****************************************************************************

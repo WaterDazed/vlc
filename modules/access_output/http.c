@@ -63,19 +63,19 @@ static void Close( vlc_object_t * );
 
 
 vlc_module_begin ()
-    set_description( N_("HTTP stream output") )
-    set_capability( "sout access", 0 )
-    set_shortname( "HTTP" )
-    add_shortcut( "http", "https", "mmsh" )
-    set_subcategory( SUBCAT_SOUT_ACO )
-    add_string( SOUT_CFG_PREFIX "user", "",
+    vlc_set_description( N_("HTTP stream output") )
+    vlc_set_capability( "sout access", 0 )
+    vlc_set_shortname( "HTTP" )
+    vlc_add_shortcut( "http", "https", "mmsh" )
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_add_string( SOUT_CFG_PREFIX "user", "",
                 USER_TEXT, USER_LONGTEXT )
-    add_password(SOUT_CFG_PREFIX "pwd", "", PASS_TEXT, PASS_LONGTEXT)
-    add_string( SOUT_CFG_PREFIX "mime", "",
+    vlc_add_password(SOUT_CFG_PREFIX "pwd", "", PASS_TEXT, PASS_LONGTEXT)
+    vlc_add_string( SOUT_CFG_PREFIX "mime", "",
                 MIME_TEXT, MIME_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "metacube", false,
+    vlc_add_bool( SOUT_CFG_PREFIX "metacube", false,
               METACUBE_TEXT, METACUBE_LONGTEXT )
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 

@@ -46,15 +46,15 @@ static void Close(vlc_window_t *);
  * Module descriptor
  */
 vlc_module_begin ()
-    set_shortname (N_("Drawable"))
-    set_description (N_("Embedded window video"))
-    set_subcategory (SUBCAT_VIDEO_VOUT)
-    set_capability ("vout window", 70)
-    set_callback(Open)
-    add_shortcut ("embed-hwnd")
+    vlc_set_shortname (N_("Drawable"))
+    vlc_set_description (N_("Embedded window video"))
+    vlc_set_subcategory (SUBCAT_VIDEO_VOUT)
+    vlc_set_capability ("vout window", 70)
+    vlc_set_callback(Open)
+    vlc_add_shortcut ("embed-hwnd")
 
-    add_integer ("drawable-hwnd", 0, HWND_TEXT, HWND_LONGTEXT)
-        change_volatile ()
+    vlc_add_integer ("drawable-hwnd", 0, HWND_TEXT, HWND_LONGTEXT)
+        vlc_change_volatile ()
 vlc_module_end ()
 
 /* Keep a list of busy drawables, so we don't overlap videos if there are

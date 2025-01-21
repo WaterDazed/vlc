@@ -50,28 +50,28 @@ static void ReleaseCurrent(vlc_placebo_t *pl);
 #define SWAP_DEPTH_LONGTEXT "Attempt limiting the maximum frame latency. The true frame latency may be lower than this setting, depending on OpenGL driver internals and the VLC clock settings."
 
 vlc_module_begin()
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_capability("libplacebo gpu", 40)
-    set_callback(InitInstance)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_capability("libplacebo gpu", 40)
+    vlc_set_callback(InitInstance)
 #ifdef USE_OPENGL_ES2
 # define API VLC_OPENGL_ES2
 # define MODULE_VARNAME "pl-gles2"
-    set_shortname("libplacebo OpenGL ES2")
-    set_description(N_("OpenGL ES2 based GPU instance"))
-    add_shortcut("pl_opengles2", "pl_gles2")
-    add_module(MODULE_VARNAME, "opengl es2", "any", GLES2_TEXT, PROVIDER_LONGTEXT)
+    vlc_set_shortname("libplacebo OpenGL ES2")
+    vlc_set_description(N_("OpenGL ES2 based GPU instance"))
+    vlc_add_shortcut("pl_opengles2", "pl_gles2")
+    vlc_add_module(MODULE_VARNAME, "opengl es2", "any", GLES2_TEXT, PROVIDER_LONGTEXT)
 #else // !USE_OPENGL_ES2
 # define API VLC_OPENGL
 # define MODULE_VARNAME "pl-gl"
-    set_shortname("libplacebo OpenGL")
-    set_description(N_("OpenGL based GPU instance"))
-    add_shortcut("pl_opengl", "pl_gl")
-    add_module(MODULE_VARNAME, "opengl", "any", GL_TEXT, PROVIDER_LONGTEXT)
+    vlc_set_shortname("libplacebo OpenGL")
+    vlc_set_description(N_("OpenGL based GPU instance"))
+    vlc_add_shortcut("pl_opengl", "pl_gl")
+    vlc_add_module(MODULE_VARNAME, "opengl", "any", GL_TEXT, PROVIDER_LONGTEXT)
 #endif
 
-    set_section("Context settings", NULL)
-    add_bool("gl-allow-sw", false, ALLOWSW_TEXT, ALLOWSW_LONGTEXT)
-    add_integer_with_range("gl-swap-depth", 0,
+    vlc_set_section("Context settings", NULL)
+    vlc_add_bool("gl-allow-sw", false, ALLOWSW_TEXT, ALLOWSW_LONGTEXT)
+    vlc_add_integer_with_range("gl-swap-depth", 0,
             0, 4, SWAP_DEPTH_TEXT, SWAP_DEPTH_LONGTEXT)
 vlc_module_end()
 

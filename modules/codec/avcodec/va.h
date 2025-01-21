@@ -100,9 +100,9 @@ typedef int (*vlc_va_open)(vlc_va_t *, struct vlc_va_cfg *cfg);
     { \
         vlc_va_open open__ = activate; \
         (void) open__; \
-        set_callback(activate) \
+        vlc_set_callback(activate) \
     } \
-    set_capability( "hw decoder", priority )
+    vlc_set_capability( "hw decoder", priority )
 
 /**
  * Determines whether the hardware acceleration PixelFormat can be used to

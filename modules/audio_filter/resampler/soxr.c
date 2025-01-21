@@ -65,19 +65,19 @@ static int OpenResampler( vlc_object_t * );
 static void Close( filter_t * );
 
 vlc_module_begin ()
-    set_shortname( N_("SoX Resampler") )
-    set_subcategory( SUBCAT_AUDIO_RESAMPLER )
-    add_integer( "soxr-resampler-quality", 2,
+    vlc_set_shortname( N_("SoX Resampler") )
+    vlc_set_subcategory( SUBCAT_AUDIO_RESAMPLER )
+    vlc_add_integer( "soxr-resampler-quality", 2,
                 SOXR_QUALITY_TEXT, NULL )
-        change_integer_list( soxr_resampler_quality_vlclist,
+        vlc_change_integer_list( soxr_resampler_quality_vlclist,
                              soxr_resampler_quality_vlctext )
-    set_capability ( "audio converter", 51 )
-    set_callback( OpenConverter )
+    vlc_set_capability ( "audio converter", 51 )
+    vlc_set_callback( OpenConverter )
 
-    add_submodule()
-    set_capability( "audio resampler", 51 )
-    set_callback( OpenResampler )
-    add_shortcut( "soxr" )
+    vlc_add_submodule()
+    vlc_set_capability( "audio resampler", 51 )
+    vlc_set_callback( OpenResampler )
+    vlc_add_shortcut( "soxr" )
 vlc_module_end ()
 
 typedef struct

@@ -100,12 +100,12 @@ static const char *const vlc_glscale_text[] = {
 #define VLC_GL_DOWNSCALER_LONGTEXT "Downscaler filter to apply during rendering"
 
 #define add_glscale_opts() \
-    set_section(N_("Scaling"), NULL) \
-    add_integer("gl-upscaler", VLC_GLSCALE_BUILTIN, VLC_GL_UPSCALER_TEXT, \
+    vlc_set_section(N_("Scaling"), NULL) \
+    vlc_add_integer("gl-upscaler", VLC_GLSCALE_BUILTIN, VLC_GL_UPSCALER_TEXT, \
                 VLC_GL_UPSCALER_LONGTEXT) \
-        change_integer_list(vlc_glscale_values, vlc_glscale_text) \
-    add_integer("gl-downscaler", VLC_GLSCALE_BUILTIN, VLC_GL_DOWNSCALER_TEXT, \
+        vlc_change_integer_list(vlc_glscale_values, vlc_glscale_text) \
+    vlc_add_integer("gl-downscaler", VLC_GLSCALE_BUILTIN, VLC_GL_DOWNSCALER_TEXT, \
                 VLC_GL_DOWNSCALER_LONGTEXT) \
-        change_integer_list(vlc_glscale_values, vlc_glscale_text) \
+        vlc_change_integer_list(vlc_glscale_values, vlc_glscale_text) \
 
 #endif

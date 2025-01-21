@@ -110,31 +110,31 @@ static const char *const ppsz_audioconns_text[] = {
     "Aspect ratio (4:3, 16:9). Default assumes square pixels.")
 
 vlc_module_begin ()
-    set_shortname(N_("DeckLink"))
-    set_description(N_("Blackmagic DeckLink SDI input"))
-    set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_set_shortname(N_("DeckLink"))
+    vlc_set_description(N_("Blackmagic DeckLink SDI input"))
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
 
-    add_integer("decklink-card-index", 0,
+    vlc_add_integer("decklink-card-index", 0,
                  CARD_INDEX_TEXT, CARD_INDEX_LONGTEXT)
-    add_string("decklink-mode", NULL,
+    vlc_add_string("decklink-mode", NULL,
                  MODE_TEXT, MODE_LONGTEXT)
-    add_string("decklink-audio-connection", 0,
+    vlc_add_string("decklink-audio-connection", 0,
                  AUDIO_CONNECTION_TEXT, AUDIO_CONNECTION_LONGTEXT)
-        change_string_list(ppsz_audioconns, ppsz_audioconns_text)
-    add_integer("decklink-audio-rate", 48000,
+        vlc_change_string_list(ppsz_audioconns, ppsz_audioconns_text)
+    vlc_add_integer("decklink-audio-rate", 48000,
                  RATE_TEXT, RATE_LONGTEXT)
-    add_integer("decklink-audio-channels", 2,
+    vlc_add_integer("decklink-audio-channels", 2,
                  CHANNELS_TEXT, CHANNELS_LONGTEXT)
-    add_string("decklink-video-connection", 0,
+    vlc_add_string("decklink-video-connection", 0,
                  VIDEO_CONNECTION_TEXT, VIDEO_CONNECTION_LONGTEXT)
-        change_string_list(ppsz_videoconns, ppsz_videoconns_text)
-    add_string("decklink-aspect-ratio", NULL,
+        vlc_change_string_list(ppsz_videoconns, ppsz_videoconns_text)
+    vlc_add_string("decklink-aspect-ratio", NULL,
                 ASPECT_RATIO_TEXT, ASPECT_RATIO_LONGTEXT)
-    add_bool("decklink-tenbits", false, N_("10 bits"), N_("10 bits"))
+    vlc_add_bool("decklink-tenbits", false, N_("10 bits"), N_("10 bits"))
 
-    add_shortcut("decklink")
-    set_capability("access", 0)
-    set_callbacks(Open, Close)
+    vlc_add_shortcut("decklink")
+    vlc_set_capability("access", 0)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end ()
 
 static int Control(demux_t *, int, va_list);

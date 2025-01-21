@@ -184,53 +184,53 @@ static const char *const ppsz_align_descriptions[] =
 #define CFG_PREFIX "mosaic-"
 
 vlc_module_begin ()
-    set_description( N_("Mosaic video sub source") )
-    set_shortname( N_("Mosaic") )
-    set_subcategory( SUBCAT_VIDEO_SUBPIC)
-    set_callback_sub_source( CreateFilter, 0 )
+    vlc_set_description( N_("Mosaic video sub source") )
+    vlc_set_shortname( N_("Mosaic") )
+    vlc_set_subcategory( SUBCAT_VIDEO_SUBPIC)
+    vlc_set_callback_sub_source( CreateFilter, 0 )
 
-    add_integer_with_range( CFG_PREFIX "alpha", 255, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "alpha", 255, 0, 255,
                             ALPHA_TEXT, ALPHA_LONGTEXT )
 
-    add_integer_with_range( CFG_PREFIX "height", 100, 0, UINT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "height", 100, 0, UINT_MAX,
                  HEIGHT_TEXT, HEIGHT_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "width", 100, 0, UINT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "width", 100, 0, UINT_MAX,
                  WIDTH_TEXT, WIDTH_LONGTEXT )
 
-    add_integer_with_range( CFG_PREFIX "align", 5, 0, 10,
+    vlc_add_integer_with_range( CFG_PREFIX "align", 5, 0, 10,
                  ALIGN_TEXT, ALIGN_LONGTEXT)
-        change_integer_list( pi_align_values, ppsz_align_descriptions )
+        vlc_change_integer_list( pi_align_values, ppsz_align_descriptions )
 
-    add_integer_with_range( CFG_PREFIX "xoffset", 0, 0, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "xoffset", 0, 0, INT_MAX,
                  XOFFSET_TEXT, XOFFSET_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "yoffset", 0, 0, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "yoffset", 0, 0, INT_MAX,
                  YOFFSET_TEXT, YOFFSET_LONGTEXT )
 
-    add_integer_with_range( CFG_PREFIX "borderw", 0, 0, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "borderw", 0, 0, INT_MAX,
                  BORDERW_TEXT, BORDERW_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "borderh", 0, 0, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "borderh", 0, 0, INT_MAX,
                  BORDERH_TEXT, BORDERH_LONGTEXT )
 
-    add_integer_with_range( CFG_PREFIX "position", 0, 0, 2,
+    vlc_add_integer_with_range( CFG_PREFIX "position", 0, 0, 2,
                  POS_TEXT, POS_LONGTEXT )
-        change_integer_list( pi_pos_values, ppsz_pos_descriptions )
-    add_integer_with_range( CFG_PREFIX "rows", 2, 1, INT_MAX,
+        vlc_change_integer_list( pi_pos_values, ppsz_pos_descriptions )
+    vlc_add_integer_with_range( CFG_PREFIX "rows", 2, 1, INT_MAX,
                  ROWS_TEXT, ROWS_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "cols", 2, 1, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "cols", 2, 1, INT_MAX,
                  COLS_TEXT, COLS_LONGTEXT )
 
-    add_bool( CFG_PREFIX "keep-aspect-ratio", false,
+    vlc_add_bool( CFG_PREFIX "keep-aspect-ratio", false,
               AR_TEXT, AR_LONGTEXT )
-    add_bool( CFG_PREFIX "keep-picture", false,
+    vlc_add_bool( CFG_PREFIX "keep-picture", false,
               KEEP_TEXT, KEEP_LONGTEXT )
 
-    add_string( CFG_PREFIX "order", "",
+    vlc_add_string( CFG_PREFIX "order", "",
                 ORDER_TEXT, ORDER_LONGTEXT )
 
-    add_string( CFG_PREFIX "offsets", "",
+    vlc_add_string( CFG_PREFIX "offsets", "",
                 OFFSETS_TEXT, OFFSETS_LONGTEXT )
 
-    add_integer_with_range( CFG_PREFIX "delay", 0, 0, INT_MAX, DELAY_TEXT, DELAY_LONGTEXT )
+    vlc_add_integer_with_range( CFG_PREFIX "delay", 0, 0, INT_MAX, DELAY_TEXT, DELAY_LONGTEXT )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

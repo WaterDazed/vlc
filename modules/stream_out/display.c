@@ -52,19 +52,19 @@ static void Close( sout_stream_t * );
 #define SOUT_CFG_PREFIX "sout-display-"
 
 vlc_module_begin()
-    set_shortname( N_("Display") )
-    set_description( N_("Display stream output") )
-    set_capability( "sout output", 50 )
-    add_shortcut( "display" )
-    set_subcategory( SUBCAT_SOUT_STREAM )
+    vlc_set_shortname( N_("Display") )
+    vlc_set_description( N_("Display stream output") )
+    vlc_set_capability( "sout output", 50 )
+    vlc_add_shortcut( "display" )
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )
 
-    add_bool( SOUT_CFG_PREFIX "audio", true, AUDIO_TEXT,
+    vlc_add_bool( SOUT_CFG_PREFIX "audio", true, AUDIO_TEXT,
               AUDIO_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "video", true, VIDEO_TEXT,
+    vlc_add_bool( SOUT_CFG_PREFIX "video", true, VIDEO_TEXT,
               VIDEO_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "delay", 100, DELAY_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "delay", 100, DELAY_TEXT,
                  DELAY_LONGTEXT )
-    set_callback( Open )
+    vlc_set_callback( Open )
 vlc_module_end()
 
 

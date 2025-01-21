@@ -44,11 +44,11 @@ static int  Open   ( vlc_object_t * );
 static void Close  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("WAV muxer") )
-    set_capability( "sout mux", 5 )
-    set_subcategory( SUBCAT_SOUT_MUX )
-    set_callbacks( Open, Close )
-    add_shortcut( "wav" )
+    vlc_set_description( N_("WAV muxer") )
+    vlc_set_capability( "sout mux", 5 )
+    vlc_set_subcategory( SUBCAT_SOUT_MUX )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "wav" )
 vlc_module_end ()
 
 /*****************************************************************************

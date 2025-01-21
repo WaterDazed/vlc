@@ -91,22 +91,22 @@ static void Close(vout_display_t *);
 #define D3D9_HELP N_("Recommended video output for Windows Vista and later versions")
 
 vlc_module_begin ()
-    set_shortname("Direct3D9")
-    set_description(N_("Direct3D9 video output"))
-    set_help(D3D9_HELP)
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_shortname("Direct3D9")
+    vlc_set_description(N_("Direct3D9 video output"))
+    vlc_set_help(D3D9_HELP)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 
-    add_bool("direct3d9-hw-blending", true, HW_BLENDING_TEXT, HW_BLENDING_LONGTEXT)
-    add_bool("directx-hw-yuv", true, HW_YUV_TEXT, HW_YUV_LONGTEXT)
+    vlc_add_bool("direct3d9-hw-blending", true, HW_BLENDING_TEXT, HW_BLENDING_LONGTEXT)
+    vlc_add_bool("directx-hw-yuv", true, HW_YUV_TEXT, HW_YUV_LONGTEXT)
 
-    add_string("direct3d9-shader", "", PIXEL_SHADER_TEXT, PIXEL_SHADER_LONGTEXT)
-    add_loadfile("direct3d9-shader-file", NULL,
+    vlc_add_string("direct3d9-shader", "", PIXEL_SHADER_TEXT, PIXEL_SHADER_LONGTEXT)
+    vlc_add_loadfile("direct3d9-shader-file", NULL,
                  PIXEL_SHADER_FILE_TEXT, PIXEL_SHADER_FILE_LONGTEXT)
 
-    add_bool("direct3d9-dxvahd", true, DXVAHD_TEXT, NULL)
+    vlc_add_bool("direct3d9-dxvahd", true, DXVAHD_TEXT, NULL)
 
-    add_shortcut("direct3d9", "direct3d")
-    set_callback_display(Open, 280)
+    vlc_add_shortcut("direct3d9", "direct3d")
+    vlc_set_callback_display(Open, 280)
 vlc_module_end ()
 
 /*****************************************************************************

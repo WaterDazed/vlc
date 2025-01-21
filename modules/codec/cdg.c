@@ -81,11 +81,11 @@ static int Render( decoder_sys_t *p_cdg, picture_t *p_picture );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_description( N_("CDG video decoder") )
-    set_capability( "video decoder", 1000 )
-    set_callback( Open )
-    add_shortcut( "cdg" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_description( N_("CDG video decoder") )
+    vlc_set_capability( "video decoder", 1000 )
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "cdg" )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -98,21 +98,21 @@ static int  GraphChange  ( void *p_arg );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname( "JACK" )
-    set_description( N_("JACK audio output") )
-    set_capability( "audio output", 100 )
-    set_subcategory( SUBCAT_AUDIO_AOUT )
-    add_bool( AUTO_CONNECT_OPTION, true, AUTO_CONNECT_TEXT,
+    vlc_set_shortname( "JACK" )
+    vlc_set_description( N_("JACK audio output") )
+    vlc_set_capability( "audio output", 100 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AOUT )
+    vlc_add_bool( AUTO_CONNECT_OPTION, true, AUTO_CONNECT_TEXT,
               AUTO_CONNECT_LONGTEXT )
-    add_string( CONNECT_REGEX_OPTION, "system", CONNECT_REGEX_TEXT,
+    vlc_add_string( CONNECT_REGEX_OPTION, "system", CONNECT_REGEX_TEXT,
                 CONNECT_REGEX_LONGTEXT )
-    add_string( "jack-name", "", JACK_NAME_TEXT, NULL)
+    vlc_add_string( "jack-name", "", JACK_NAME_TEXT, NULL)
 
-    add_float("jack-gain", 1., N_("Software gain"),
+    vlc_add_float("jack-gain", 1., N_("Software gain"),
     N_("This linear gain will be applied in software."))
-        change_float_range(0., 8.)
+        vlc_change_float_range(0., 8.)
 
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 

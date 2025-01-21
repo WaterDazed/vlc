@@ -65,29 +65,29 @@ static picture_t *FilterPacked( filter_t *, picture_t * );
 #define GAMMA_LONGTEXT N_("Set the image gamma, between 0.01 and 10. Defaults to 1.")
 
 vlc_module_begin ()
-    set_description( N_("Image properties filter") )
-    set_shortname( N_("Image adjust" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Image properties filter") )
+    vlc_set_shortname( N_("Image adjust" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_float_with_range( "contrast", 1.0, 0.0, 2.0,
+    vlc_add_float_with_range( "contrast", 1.0, 0.0, 2.0,
                           CONT_TEXT, CONT_LONGTEXT )
-        change_safe()
-    add_float_with_range( "brightness", 1.0, 0.0, 2.0,
+        vlc_change_safe()
+    vlc_add_float_with_range( "brightness", 1.0, 0.0, 2.0,
                            LUM_TEXT, LUM_LONGTEXT )
-        change_safe()
-    add_float_with_range( "hue", 0, -180., +180.,
+        vlc_change_safe()
+    vlc_add_float_with_range( "hue", 0, -180., +180.,
                             HUE_TEXT, HUE_LONGTEXT )
-        change_safe()
-    add_float_with_range( "saturation", 1.0, 0.0, 3.0,
+        vlc_change_safe()
+    vlc_add_float_with_range( "saturation", 1.0, 0.0, 3.0,
                           SAT_TEXT, SAT_LONGTEXT )
-        change_safe()
-    add_float_with_range( "gamma", 1.0, 0.01, 10.0,
+        vlc_change_safe()
+    vlc_add_float_with_range( "gamma", 1.0, 0.01, 10.0,
                           GAMMA_TEXT, GAMMA_LONGTEXT )
-        change_safe()
-    add_obsolete_bool("brightness-threshold") /* since 4.0.0 */
+        vlc_change_safe()
+    vlc_add_obsolete_bool("brightness-threshold") /* since 4.0.0 */
 
-    add_shortcut( "adjust" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "adjust" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

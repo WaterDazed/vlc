@@ -98,22 +98,22 @@ static int OpenDecoderDevice( vlc_decoder_device*, vlc_window_t* );
     "your own risk."
 
 vlc_module_begin( )
-    set_shortname( "GstDecode" )
-    add_shortcut( "gstdecode" )
-    set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_shortname( "GstDecode" )
+    vlc_add_shortcut( "gstdecode" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
     /* decoder main module */
-    set_description( N_( "GStreamer Based Decoder" ) )
-    set_help( MODULE_DESCRIPTION )
-    set_capability( "video decoder", 50 )
-    set_section( N_( "Decoding" ) , NULL )
-    set_callbacks( OpenDecoder, CloseDecoder )
-    add_bool( "use-decodebin", true, USEDECODEBIN_TEXT,
+    vlc_set_description( N_( "GStreamer Based Decoder" ) )
+    vlc_set_help( MODULE_DESCRIPTION )
+    vlc_set_capability( "video decoder", 50 )
+    vlc_set_section( N_( "Decoding" ) , NULL )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_add_bool( "use-decodebin", true, USEDECODEBIN_TEXT,
         USEDECODEBIN_LONGTEXT )
-    add_bool( "use-vlcpool", false, USEVLCPOOL_TEXT,
+    vlc_add_bool( "use-vlcpool", false, USEVLCPOOL_TEXT,
         USEVLCPOOL_LONGTEXT )
-    add_submodule( )
-        set_callback_dec_device( OpenDecoderDevice, 1 )
-        add_shortcut( "gstdecode" )
+    vlc_add_submodule( )
+        vlc_set_callback_dec_device( OpenDecoderDevice, 1 )
+        vlc_add_shortcut( "gstdecode" )
 vlc_module_end( )
 
 static void gst_mem_pic_context_Destroy( struct picture_context_t *ctx )

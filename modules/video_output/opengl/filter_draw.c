@@ -217,12 +217,12 @@ error:
 }
 
 vlc_module_begin()
-    add_shortcut("draw")
-    set_shortname("draw")
-    set_capability("opengl filter", 0)
-    set_callback_opengl_filter(Open)
+    vlc_add_shortcut("draw")
+    vlc_set_shortname("draw")
+    vlc_set_capability("opengl filter", 0)
+    vlc_set_callback_opengl_filter(Open)
     /* Hide the option - this is just used as a hack and not meant for user config */
-    set_subcategory(SUBCAT_HIDDEN)
-    add_bool(DRAW_CFG_PREFIX "vflip", false,
+    vlc_set_subcategory(SUBCAT_HIDDEN)
+    vlc_add_bool(DRAW_CFG_PREFIX "vflip", false,
              DRAW_VFLIP_SHORTTEXT, DRAW_VFLIP_LONGTEXT)
 vlc_module_end()

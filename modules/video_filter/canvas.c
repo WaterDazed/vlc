@@ -103,22 +103,22 @@ static void Flush( filter_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname( N_("Canvas") )
-    set_description( N_("Canvas video filter") )
-    set_help( CANVAS_HELP )
-    set_callback_video_filter( Activate )
+    vlc_set_shortname( N_("Canvas") )
+    vlc_set_description( N_("Canvas video filter") )
+    vlc_set_help( CANVAS_HELP )
+    vlc_set_callback_video_filter( Activate )
 
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_integer_with_range( CFG_PREFIX "width", 0, 0, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "width", 0, 0, INT_MAX,
                             WIDTH_TEXT, WIDTH_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "height", 0, 0, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "height", 0, 0, INT_MAX,
                             HEIGHT_TEXT, HEIGHT_LONGTEXT )
 
-    add_string( CFG_PREFIX "aspect", NULL,
+    vlc_add_string( CFG_PREFIX "aspect", NULL,
                 ASPECT_TEXT, ASPECT_LONGTEXT )
 
-    add_bool( CFG_PREFIX "padd", true,
+    vlc_add_bool( CFG_PREFIX "padd", true,
               PADD_TEXT, PADD_LONGTEXT )
 vlc_module_end ()
 

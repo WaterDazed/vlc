@@ -122,35 +122,35 @@ typedef struct
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname( N_("Marquee" ))
-    set_description( N_("Marquee display") )
-    set_help(MARQUEE_HELP)
-    set_callback_sub_source( CreateFilter, 0 )
-    set_subcategory( SUBCAT_VIDEO_SUBPIC )
-    add_string( CFG_PREFIX "marquee", "VLC", MSG_TEXT, MSG_LONGTEXT )
-    add_loadfile(CFG_PREFIX "file", NULL, FILE_TEXT, FILE_LONGTEXT)
+    vlc_set_shortname( N_("Marquee" ))
+    vlc_set_description( N_("Marquee display") )
+    vlc_set_help(MARQUEE_HELP)
+    vlc_set_callback_sub_source( CreateFilter, 0 )
+    vlc_set_subcategory( SUBCAT_VIDEO_SUBPIC )
+    vlc_add_string( CFG_PREFIX "marquee", "VLC", MSG_TEXT, MSG_LONGTEXT )
+    vlc_add_loadfile(CFG_PREFIX "file", NULL, FILE_TEXT, FILE_LONGTEXT)
 
-    set_section( N_("Position"), NULL )
-    add_integer( CFG_PREFIX "x", 0, POSX_TEXT, POSX_LONGTEXT )
-    add_integer( CFG_PREFIX "y", 0, POSY_TEXT, POSY_LONGTEXT )
-    add_integer( CFG_PREFIX "position", -1, POS_TEXT, POS_LONGTEXT )
-        change_integer_list( pi_pos_values, ppsz_pos_descriptions )
+    vlc_set_section( N_("Position"), NULL )
+    vlc_add_integer( CFG_PREFIX "x", 0, POSX_TEXT, POSX_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "y", 0, POSY_TEXT, POSY_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "position", -1, POS_TEXT, POS_LONGTEXT )
+        vlc_change_integer_list( pi_pos_values, ppsz_pos_descriptions )
 
-    set_section( N_("Font"), NULL )
+    vlc_set_section( N_("Font"), NULL )
     /* 5 sets the default to top [1] left [4] */
-    add_integer_with_range( CFG_PREFIX "opacity", 255, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "opacity", 255, 0, 255,
         OPACITY_TEXT, OPACITY_LONGTEXT )
-    add_rgb(CFG_PREFIX "color", 0xFFFFFF, COLOR_TEXT, COLOR_LONGTEXT)
-        change_integer_list( pi_color_values, ppsz_color_descriptions )
-    add_integer( CFG_PREFIX "size", 0, SIZE_TEXT, SIZE_LONGTEXT )
-        change_integer_range( 0, 4096)
+    vlc_add_rgb(CFG_PREFIX "color", 0xFFFFFF, COLOR_TEXT, COLOR_LONGTEXT)
+        vlc_change_integer_list( pi_color_values, ppsz_color_descriptions )
+    vlc_add_integer( CFG_PREFIX "size", 0, SIZE_TEXT, SIZE_LONGTEXT )
+        vlc_change_integer_range( 0, 4096)
 
-    set_section( N_("Misc"), NULL )
-    add_integer( CFG_PREFIX "timeout", 0, TIMEOUT_TEXT, TIMEOUT_LONGTEXT )
-    add_integer( CFG_PREFIX "refresh", 1000, REFRESH_TEXT,
+    vlc_set_section( N_("Misc"), NULL )
+    vlc_add_integer( CFG_PREFIX "timeout", 0, TIMEOUT_TEXT, TIMEOUT_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "refresh", 1000, REFRESH_TEXT,
                  REFRESH_LONGTEXT )
 
-    add_shortcut( "time" )
+    vlc_add_shortcut( "time" )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

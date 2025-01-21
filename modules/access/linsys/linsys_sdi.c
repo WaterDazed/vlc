@@ -91,28 +91,28 @@ static int  DemuxOpen ( vlc_object_t * );
 static void DemuxClose( vlc_object_t * );
 
 vlc_module_begin()
-    set_description( N_("SDI Input") )
-    set_shortname( N_("SDI") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_description( N_("SDI Input") )
+    vlc_set_shortname( N_("SDI") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_integer( "linsys-sdi-link", 0,
+    vlc_add_integer( "linsys-sdi-link", 0,
         LINK_TEXT, LINK_LONGTEXT )
 
-    add_integer( "linsys-sdi-id-video", 0, VIDEO_TEXT, VIDEO_LONGTEXT )
-    add_string( "linsys-sdi-aspect-ratio", "", VIDEO_ASPECT_TEXT,
+    vlc_add_integer( "linsys-sdi-id-video", 0, VIDEO_TEXT, VIDEO_LONGTEXT )
+    vlc_add_string( "linsys-sdi-aspect-ratio", "", VIDEO_ASPECT_TEXT,
                 VIDEO_ASPECT_LONGTEXT )
-    add_string( "linsys-sdi-audio", "0=1,1", AUDIO_TEXT, AUDIO_LONGTEXT )
-    add_string( "linsys-sdi-telx", "", TELX_TEXT, TELX_LONGTEXT )
-    add_string( "linsys-sdi-telx-lang", "", TELX_LANG_TEXT, TELX_LANG_LONGTEXT )
+    vlc_add_string( "linsys-sdi-audio", "0=1,1", AUDIO_TEXT, AUDIO_LONGTEXT )
+    vlc_add_string( "linsys-sdi-telx", "", TELX_TEXT, TELX_LONGTEXT )
+    vlc_add_string( "linsys-sdi-telx-lang", "", TELX_LANG_TEXT, TELX_LANG_LONGTEXT )
 
-    set_capability( "access", 0 )
-    add_shortcut( "linsys-sdi" )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "linsys-sdi" )
+    vlc_set_callbacks( Open, Close )
 
-    add_submodule()
-        set_description( N_("SDI Demux") )
-        set_capability( "demux", 0 )
-        set_callbacks( DemuxOpen, DemuxClose )
+    vlc_add_submodule()
+        vlc_set_description( N_("SDI Demux") )
+        vlc_set_capability( "demux", 0 )
+        vlc_set_callbacks( DemuxOpen, DemuxClose )
 vlc_module_end()
 
 /*****************************************************************************

@@ -76,13 +76,13 @@ static void Close( vlc_object_t * );
 
 /* Module descriptor */
 vlc_module_begin()
-    set_shortname( N_( "DCP" ) )
-    add_shortcut( "dcp" )
-    set_description( N_( "Digital Cinema Package module" ) )
-    set_capability( "access", 0 )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    add_loadfile("kdm", "", KDM_HELP_TEXT, KDM_HELP_LONG_TEXT)
-    set_callbacks( Open, Close )
+    vlc_set_shortname( N_( "DCP" ) )
+    vlc_add_shortcut( "dcp" )
+    vlc_set_description( N_( "Digital Cinema Package module" ) )
+    vlc_set_capability( "access", 0 )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_add_loadfile("kdm", "", KDM_HELP_TEXT, KDM_HELP_LONG_TEXT)
+    vlc_set_callbacks( Open, Close )
 vlc_module_end()
 
 namespace {

@@ -47,12 +47,12 @@ static int  Open ( vlc_object_t * );
     "live stream (from a camera).")
 
 vlc_module_begin ()
-    set_shortname( "MJPEG")
-    set_description( N_("M-JPEG camera demuxer") )
-    set_capability( "demux", 7 )
-    set_callback( Open )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    add_float( "mjpeg-fps", 0.0, FPS_TEXT, FPS_LONGTEXT )
+    vlc_set_shortname( "MJPEG")
+    vlc_set_description( N_("M-JPEG camera demuxer") )
+    vlc_set_capability( "demux", 7 )
+    vlc_set_callback( Open )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_add_float( "mjpeg-fps", 0.0, FPS_TEXT, FPS_LONGTEXT )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -58,16 +58,16 @@ VIDEO_FILTER_WRAPPER_CLOSE(Filter, Destroy)
 #define FILTER_PREFIX "blur-"
 
 vlc_module_begin ()
-    set_shortname( N_("Motion blur") )
-    set_description( N_("Motion blur filter") )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_shortname( N_("Motion blur") )
+    vlc_set_description( N_("Motion blur filter") )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_integer_with_range( FILTER_PREFIX "factor", 80, 1, 127,
+    vlc_add_integer_with_range( FILTER_PREFIX "factor", 80, 1, 127,
                             FACTOR_TEXT, FACTOR_LONGTEXT )
 
-    add_shortcut( "blur" )
+    vlc_add_shortcut( "blur" )
 
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

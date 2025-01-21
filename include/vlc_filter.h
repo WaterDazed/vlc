@@ -150,58 +150,58 @@ typedef int (*vlc_filter_open)(filter_t *);
     {                                            \
         vlc_filter_open open__ = activate;       \
         (void) open__;                           \
-        set_callback(activate)                   \
+        vlc_set_callback(activate)               \
     }                                            \
-    set_capability( "video filter", 0 )          \
-    add_shortcut( "deinterlace" )
+    vlc_set_capability( "video filter", 0 )      \
+    vlc_add_shortcut( "deinterlace" )
 
-#define set_callback_video_filter( activate )              \
+#define vlc_set_callback_video_filter( activate )          \
     {                                                      \
         vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
-        set_callback(activate)                             \
+        vlc_set_callback(activate)                         \
     }                                                      \
-    set_capability( "video filter", 0 )
+    vlc_set_capability( "video filter", 0 )
 
-#define set_callback_video_converter( activate, priority ) \
+#define vlc_set_callback_video_converter( activate, priority ) \
     {                                                      \
         vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
-        set_callback(activate)                             \
+        vlc_set_callback(activate)                         \
     }                                                      \
-    set_capability( "video converter", priority )
+    vlc_set_capability( "video converter", priority )
 
-#define set_callback_text_renderer( activate, priority )   \
+#define vlc_set_callback_text_renderer( activate, priority )   \
     {                                                      \
         vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
-        set_callback(activate)                             \
+        vlc_set_callback(activate)                         \
     }                                                      \
-    set_capability( "text renderer", priority )
+    vlc_set_capability( "text renderer", priority )
 
-#define set_callback_sub_filter( activate )                \
+#define vlc_set_callback_sub_filter( activate )            \
     {                                                      \
         vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
-        set_callback(activate)                             \
+        vlc_set_callback(activate)                         \
     }                                                      \
-    set_capability( "sub filter", 0 )
+    vlc_set_capability( "sub filter", 0 )
 
-#define set_callback_sub_source( activate, priority )      \
+#define vlc_set_callback_sub_source( activate, priority )  \
     {                                                      \
         vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
-        set_callback(activate)                             \
+        vlc_set_callback(activate)                         \
     }                                                      \
-    set_capability( "sub source", priority )
+    vlc_set_capability( "sub source", priority )
 
-#define set_callback_video_blending( activate, priority )  \
+#define vlc_set_callback_video_blending( activate, priority )  \
     {                                                      \
         vlc_filter_open open__ = activate;                 \
         (void) open__;                                     \
-        set_callback(activate)                             \
+        vlc_set_callback(activate)                         \
     }                                                      \
-    set_capability( "video blending", priority )
+    vlc_set_capability( "video blending", priority )
 
 /** Structure describing a filter
  * @warning BIG FAT WARNING : the code relies on the first 3 members of

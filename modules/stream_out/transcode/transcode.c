@@ -154,74 +154,74 @@ static void Close( sout_stream_t * );
 #define SOUT_CFG_PREFIX "sout-transcode-"
 
 vlc_module_begin ()
-    set_shortname( N_("Transcode"))
-    set_description( N_("Transcode stream output") )
-    set_capability( "sout filter", 50 )
-    add_shortcut( "transcode" )
-    set_callback( Open )
-    set_subcategory( SUBCAT_SOUT_STREAM )
-    set_section( N_("Video"), NULL )
-    add_module(SOUT_CFG_PREFIX "venc", "video encoder", "none",
+    vlc_set_shortname( N_("Transcode"))
+    vlc_set_description( N_("Transcode stream output") )
+    vlc_set_capability( "sout filter", 50 )
+    vlc_add_shortcut( "transcode" )
+    vlc_set_callback( Open )
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )
+    vlc_set_section( N_("Video"), NULL )
+    vlc_add_module(SOUT_CFG_PREFIX "venc", "video encoder", "none",
                VENC_TEXT, VENC_LONGTEXT)
-    add_string( SOUT_CFG_PREFIX "vcodec", NULL, VCODEC_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "vcodec", NULL, VCODEC_TEXT,
                 VCODEC_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "vb", 0, VB_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "vb", 0, VB_TEXT,
                  VB_LONGTEXT )
-    add_float( SOUT_CFG_PREFIX "scale", 0, SCALE_TEXT,
+    vlc_add_float( SOUT_CFG_PREFIX "scale", 0, SCALE_TEXT,
                SCALE_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "fps", NULL, FPS_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "fps", NULL, FPS_TEXT,
                FPS_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "deinterlace", false, DEINTERLACE_TEXT,
+    vlc_add_bool( SOUT_CFG_PREFIX "deinterlace", false, DEINTERLACE_TEXT,
               DEINTERLACE_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "deinterlace-module", "deinterlace",
+    vlc_add_string( SOUT_CFG_PREFIX "deinterlace-module", "deinterlace",
                 DEINTERLACE_MODULE_TEXT, DEINTERLACE_MODULE_LONGTEXT )
-        change_string_list( ppsz_deinterlace_type, ppsz_deinterlace_type )
-    add_integer( SOUT_CFG_PREFIX "width", 0, WIDTH_TEXT,
+        vlc_change_string_list( ppsz_deinterlace_type, ppsz_deinterlace_type )
+    vlc_add_integer( SOUT_CFG_PREFIX "width", 0, WIDTH_TEXT,
                  WIDTH_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "height", 0, HEIGHT_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "height", 0, HEIGHT_TEXT,
                  HEIGHT_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "maxwidth", 0, MAXWIDTH_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "maxwidth", 0, MAXWIDTH_TEXT,
                  MAXWIDTH_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "maxheight", 0, MAXHEIGHT_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "maxheight", 0, MAXHEIGHT_TEXT,
                  MAXHEIGHT_LONGTEXT )
-    add_module_list(SOUT_CFG_PREFIX "vfilter", "video filter", NULL,
+    vlc_add_module_list(SOUT_CFG_PREFIX "vfilter", "video filter", NULL,
                     VFILTER_TEXT, VFILTER_LONGTEXT)
 
-    set_section( N_("Audio"), NULL )
-    add_module(SOUT_CFG_PREFIX "aenc", "audio encoder", "none",
+    vlc_set_section( N_("Audio"), NULL )
+    vlc_add_module(SOUT_CFG_PREFIX "aenc", "audio encoder", "none",
                AENC_TEXT, AENC_LONGTEXT)
-    add_string( SOUT_CFG_PREFIX "acodec", NULL, ACODEC_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "acodec", NULL, ACODEC_TEXT,
                 ACODEC_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "ab", 96, AB_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "ab", 96, AB_TEXT,
                  AB_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "alang", NULL, ALANG_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "alang", NULL, ALANG_TEXT,
                 ALANG_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "channels", 0, ACHANS_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "channels", 0, ACHANS_TEXT,
                  ACHANS_LONGTEXT )
-        change_integer_list( channel_layout_values, channel_layout_texts)
-    add_integer( SOUT_CFG_PREFIX "samplerate", 0, ARATE_TEXT,
+        vlc_change_integer_list( channel_layout_values, channel_layout_texts)
+    vlc_add_integer( SOUT_CFG_PREFIX "samplerate", 0, ARATE_TEXT,
                  ARATE_LONGTEXT )
-        change_integer_range( 0, 48000 )
-    add_module_list(SOUT_CFG_PREFIX "afilter",  "audio filter", NULL,
+        vlc_change_integer_range( 0, 48000 )
+    vlc_add_module_list(SOUT_CFG_PREFIX "afilter",  "audio filter", NULL,
                     AFILTER_TEXT, AFILTER_LONGTEXT)
 
-    set_section( N_("Overlays/Subtitles"), NULL )
-    add_module(SOUT_CFG_PREFIX "senc", "spu encoder", "none",
+    vlc_set_section( N_("Overlays/Subtitles"), NULL )
+    vlc_add_module(SOUT_CFG_PREFIX "senc", "spu encoder", "none",
                SENC_TEXT, SENC_LONGTEXT)
-    add_string( SOUT_CFG_PREFIX "scodec", NULL, SCODEC_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "scodec", NULL, SCODEC_TEXT,
                 SCODEC_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "soverlay", false, SOVERLAY_TEXT, NULL )
-    add_module_list(SOUT_CFG_PREFIX "sfilter", "sub source", NULL,
+    vlc_add_bool( SOUT_CFG_PREFIX "soverlay", false, SOVERLAY_TEXT, NULL )
+    vlc_add_module_list(SOUT_CFG_PREFIX "sfilter", "sub source", NULL,
                     SFILTER_TEXT, SFILTER_LONGTEXT)
 
-    set_section( N_("Miscellaneous"), NULL )
-    add_integer( SOUT_CFG_PREFIX "threads", 0, THREADS_TEXT,
+    vlc_set_section( N_("Miscellaneous"), NULL )
+    vlc_add_integer( SOUT_CFG_PREFIX "threads", 0, THREADS_TEXT,
                  THREADS_LONGTEXT )
-        change_integer_range( 0, 32 )
-    add_integer( SOUT_CFG_PREFIX "pool-size", 10, POOL_TEXT, POOL_LONGTEXT )
-        change_integer_range( 1, 1000 )
-    add_obsolete_bool( SOUT_CFG_PREFIX "high-priority" ) // Since 4.0.0
-    add_bool( SOUT_CFG_PREFIX "forward-pcr", true, FORWARD_PCR_TEXT,
+        vlc_change_integer_range( 0, 32 )
+    vlc_add_integer( SOUT_CFG_PREFIX "pool-size", 10, POOL_TEXT, POOL_LONGTEXT )
+        vlc_change_integer_range( 1, 1000 )
+    vlc_add_obsolete_bool( SOUT_CFG_PREFIX "high-priority" ) // Since 4.0.0
+    vlc_add_bool( SOUT_CFG_PREFIX "forward-pcr", true, FORWARD_PCR_TEXT,
               FORWARD_PCR_LONGTEXT )
 
 vlc_module_end ()

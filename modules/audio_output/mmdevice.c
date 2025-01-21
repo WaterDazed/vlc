@@ -1536,18 +1536,18 @@ static const char *const ppsz_mmdevice_passthrough_texts[] = {
 #define VOLUME_LONGTEXT N_("Audio volume in hundredths of decibels (dB).")
 
 vlc_module_begin()
-    set_shortname("MMDevice")
-    set_description(N_("Windows Multimedia Device output"))
-    set_capability("audio output", 150)
-    set_subcategory(SUBCAT_AUDIO_AOUT)
-    set_callbacks(Open, Close)
-    add_module("mmdevice-backend", "aout stream", "any",
+    vlc_set_shortname("MMDevice")
+    vlc_set_description(N_("Windows Multimedia Device output"))
+    vlc_set_capability("audio output", 150)
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_set_callbacks(Open, Close)
+    vlc_add_module("mmdevice-backend", "aout stream", "any",
                N_("Output back-end"), N_("Audio output back-end interface."))
-    add_integer( "mmdevice-passthrough", MM_PASSTHROUGH_DEFAULT,
+    vlc_add_integer( "mmdevice-passthrough", MM_PASSTHROUGH_DEFAULT,
                  MM_PASSTHROUGH_TEXT, MM_PASSTHROUGH_LONGTEXT )
-        change_integer_list( pi_mmdevice_passthrough_values,
+        vlc_change_integer_list( pi_mmdevice_passthrough_values,
                              ppsz_mmdevice_passthrough_texts )
-    add_string("mmdevice-audio-device", NULL, DEVICE_TEXT, DEVICE_LONGTEXT)
-    add_float("mmdevice-volume", 1.f, VOLUME_TEXT, VOLUME_LONGTEXT)
-        change_float_range( 0.f, 1.25f )
+    vlc_add_string("mmdevice-audio-device", NULL, DEVICE_TEXT, DEVICE_LONGTEXT)
+    vlc_add_float("mmdevice-volume", 1.f, VOLUME_TEXT, VOLUME_LONGTEXT)
+        vlc_change_float_range( 0.f, 1.25f )
 vlc_module_end()

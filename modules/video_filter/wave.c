@@ -46,12 +46,12 @@ static int  Create    ( filter_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Wave video filter") )
-    set_shortname( N_( "Wave" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Wave video filter") )
+    vlc_set_shortname( N_( "Wave" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_shortcut( "wave" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "wave" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 VIDEO_FILTER_WRAPPER(Filter)

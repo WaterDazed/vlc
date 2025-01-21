@@ -65,16 +65,16 @@ typedef struct
 } filter_sys_t;
 
 vlc_module_begin ()
-    set_description("Conversions from/to CoreVideo buffers")
-    set_callback_video_converter(Open, 10)
+    vlc_set_description("Conversions from/to CoreVideo buffers")
+    vlc_set_callback_video_converter(Open, 10)
 #if !TARGET_OS_IPHONE
-    add_submodule()
-    set_description("Conversions between CoreVideo buffers")
-    set_callback_video_converter(Open_CVPX_to_CVPX, 10)
+    vlc_add_submodule()
+    vlc_set_description("Conversions between CoreVideo buffers")
+    vlc_set_callback_video_converter(Open_CVPX_to_CVPX, 10)
 
-    add_submodule()
-    set_description("Fast CoreVideo resize+conversion")
-    set_callback_video_converter(Open_chain_CVPX, 11)
+    vlc_add_submodule()
+    vlc_set_description("Fast CoreVideo resize+conversion")
+    vlc_set_callback_video_converter(Open_chain_CVPX, 11)
 #endif
 vlc_module_end ()
 

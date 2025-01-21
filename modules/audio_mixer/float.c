@@ -43,10 +43,10 @@ static int Create( vlc_object_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    set_description( N_("Single precision audio volume") )
-    set_capability( "audio volume", 10 )
-    set_callback( Create )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_description( N_("Single precision audio volume") )
+    vlc_set_capability( "audio volume", 10 )
+    vlc_set_callback( Create )
 vlc_module_end ()
 
 /**

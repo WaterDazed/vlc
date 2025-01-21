@@ -64,16 +64,16 @@ static const char *const ppsz_component_descriptions[] = {
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Extract RGB component video filter") )
-    set_shortname( N_("Extract" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_shortcut( "extract" )
+    vlc_set_description( N_("Extract RGB component video filter") )
+    vlc_set_shortname( N_("Extract" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_shortcut( "extract" )
 
-    add_integer_with_range( FILTER_PREFIX "component", 0xFF0000, 1, 0xFFFFFF,
+    vlc_add_integer_with_range( FILTER_PREFIX "component", 0xFF0000, 1, 0xFFFFFF,
                             COMPONENT_TEXT, COMPONENT_LONGTEXT )
-        change_integer_list( pi_component_values, ppsz_component_descriptions )
+        vlc_change_integer_list( pi_component_values, ppsz_component_descriptions )
 
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

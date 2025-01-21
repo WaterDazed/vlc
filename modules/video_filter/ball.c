@@ -122,29 +122,29 @@ static const char *const mode_list_text[] = { N_("Red"), N_("Green"),
                                               N_("Blue"), N_("White") };
 
 vlc_module_begin ()
-    set_description( N_("Ball video filter") )
-    set_shortname( N_( "Ball" ))
-    set_help(BALL_HELP)
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Ball video filter") )
+    vlc_set_shortname( N_( "Ball" ))
+    vlc_set_help(BALL_HELP)
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_string( FILTER_PREFIX "color", "red",
+    vlc_add_string( FILTER_PREFIX "color", "red",
                 BALL_COLOR_TEXT, NULL )
-    change_string_list( mode_list, mode_list_text )
+    vlc_change_string_list( mode_list, mode_list_text )
 
-    add_integer_with_range( FILTER_PREFIX "speed", 4, 1, 15,
+    vlc_add_integer_with_range( FILTER_PREFIX "speed", 4, 1, 15,
                             BALL_SPEED_TEXT, BALL_SPEED_LONGTEXT )
 
-    add_integer_with_range( FILTER_PREFIX "size", 10, 5, 30,
+    vlc_add_integer_with_range( FILTER_PREFIX "size", 10, 5, 30,
                             BALL_SIZE_TEXT, BALL_SIZE_LONGTEXT )
 
-    add_integer_with_range( FILTER_PREFIX "gradient-threshold", 40, 1, 200,
+    vlc_add_integer_with_range( FILTER_PREFIX "gradient-threshold", 40, 1, 200,
                             GRAD_THRESH_TEXT, GRAD_THRESH_LONGTEXT )
 
-    add_bool( FILTER_PREFIX "edge-visible", true,
+    vlc_add_bool( FILTER_PREFIX "edge-visible", true,
               EDGE_VISIBLE_TEXT, NULL )
 
-    add_shortcut( "ball" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "ball" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

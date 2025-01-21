@@ -80,10 +80,10 @@ static int CreateSurface(vlc_vk_platform_t *vk, const vlc_vk_instance_t *inst,
 }
 
 vlc_module_begin()
-    set_shortname("Vulkan Android")
-    set_description(N_("Android platform support for Vulkan"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_capability("vulkan platform", 50)
-    set_callback(InitPlatform)
-    add_shortcut("vk_android")
+    vlc_set_shortname("Vulkan Android")
+    vlc_set_description(N_("Android platform support for Vulkan"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_capability("vulkan platform", 50)
+    vlc_set_callback(InitPlatform)
+    vlc_add_shortcut("vk_android")
 vlc_module_end()

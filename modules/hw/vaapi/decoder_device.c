@@ -263,8 +263,8 @@ Open(vlc_decoder_device *device, vlc_window_t *window)
 #endif
 
 vlc_module_begin ()
-    set_description("VA-API decoder device for " DESCRIPTION_SUFFIX)
-    set_callback_dec_device(Open, PRIORITY)
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    add_shortcut("vaapi", SHORTCUT)
+    vlc_set_description("VA-API decoder device for " DESCRIPTION_SUFFIX)
+    vlc_set_callback_dec_device(Open, PRIORITY)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_add_shortcut("vaapi", SHORTCUT)
 vlc_module_end ()

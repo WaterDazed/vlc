@@ -361,22 +361,22 @@ error:
 }
 
 vlc_module_begin()
-    set_shortname("pl_scale")
-    set_description("OpenGL scaler")
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_capability("opengl filter", 0)
-    set_callback(Open)
-    add_shortcut("pl_scale")
+    vlc_set_shortname("pl_scale")
+    vlc_set_description("OpenGL scaler")
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_capability("opengl filter", 0)
+    vlc_set_callback(Open)
+    vlc_add_shortcut("pl_scale")
 
 #define UPSCALER_TEXT "OpenGL upscaler"
 #define UPSCALER_LONGTEXT "Upscaler filter to apply during rendering"
-    add_integer(CFG_PREFIX "upscaler", SCALE_BUILTIN, UPSCALER_TEXT, \
+    vlc_add_integer(CFG_PREFIX "upscaler", SCALE_BUILTIN, UPSCALER_TEXT, \
                 UPSCALER_LONGTEXT) \
-        change_integer_list(scale_values, scale_text) \
+        vlc_change_integer_list(scale_values, scale_text) \
 
 #define DOWNSCALER_TEXT "OpenGL downscaler"
 #define DOWNSCALER_LONGTEXT "Downscaler filter to apply during rendering"
-    add_integer(CFG_PREFIX "downscaler", SCALE_BUILTIN, DOWNSCALER_TEXT, \
+    vlc_add_integer(CFG_PREFIX "downscaler", SCALE_BUILTIN, DOWNSCALER_TEXT, \
                 DOWNSCALER_LONGTEXT) \
-        change_integer_list(scale_values, scale_text) \
+        vlc_change_integer_list(scale_values, scale_text) \
 vlc_module_end()

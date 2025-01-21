@@ -285,16 +285,16 @@ static void ReaderClose( vlc_object_t *p_this )
 }
 
 vlc_module_begin ()
-    set_description( N_("XML Parser (using libxml2)") )
-    set_capability( "xml", 10 )
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("XML Parser (using libxml2)") )
+    vlc_set_capability( "xml", 10 )
+    vlc_set_callbacks( Open, Close )
 
 #ifdef _WIN32
-    cannot_unload_broken_library()
+    vlc_cannot_unload_broken_library()
 #endif
 
-    add_submodule()
-    set_capability( "xml reader", 10 )
-    set_callbacks( ReaderOpen, ReaderClose )
+    vlc_add_submodule()
+    vlc_set_capability( "xml reader", 10 )
+    vlc_set_callbacks( ReaderOpen, ReaderClose )
 
 vlc_module_end ()

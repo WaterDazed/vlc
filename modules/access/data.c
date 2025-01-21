@@ -157,11 +157,11 @@ static void Close(vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_shortname(N_("data"))
-    set_description(N_("data URI scheme"))
-    set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_set_shortname(N_("data"))
+    vlc_set_description(N_("data URI scheme"))
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
 
-    set_capability("access", 0)
-    set_callbacks(Open, Close)
-    add_shortcut("data")
+    vlc_set_capability("access", 0)
+    vlc_set_callbacks(Open, Close)
+    vlc_add_shortcut("data")
 vlc_module_end()

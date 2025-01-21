@@ -53,7 +53,7 @@ static void Probe(void *data)
 }
 
 vlc_module_begin()
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_description("RISC-V V optimisation for video transform")
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_description("RISC-V V optimisation for video transform")
     set_cpu_funcs("video transform", Probe, 10)
 vlc_module_end()

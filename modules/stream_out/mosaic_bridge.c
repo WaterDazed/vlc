@@ -706,29 +706,29 @@ static int Open( vlc_object_t *p_this )
     "Y coordinate of the upper left corner in the mosaic if non negative." )
 
 vlc_module_begin ()
-    set_shortname( N_( "Mosaic bridge" ) )
-    set_description(N_("Mosaic bridge stream output") )
-    set_capability( "sout output", 0 )
-    add_shortcut( "mosaic-bridge" )
+    vlc_set_shortname( N_( "Mosaic bridge" ) )
+    vlc_set_description(N_("Mosaic bridge stream output") )
+    vlc_set_capability( "sout output", 0 )
+    vlc_add_shortcut( "mosaic-bridge" )
 
-    set_subcategory( SUBCAT_SOUT_STREAM )
+    vlc_set_subcategory( SUBCAT_SOUT_STREAM )
 
-    add_string( CFG_PREFIX "id", "Id", ID_TEXT, ID_LONGTEXT )
-    add_integer( CFG_PREFIX "width", 0, WIDTH_TEXT,
+    vlc_add_string( CFG_PREFIX "id", "Id", ID_TEXT, ID_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "width", 0, WIDTH_TEXT,
                  WIDTH_LONGTEXT )
-    add_integer( CFG_PREFIX "height", 0, HEIGHT_TEXT,
+    vlc_add_integer( CFG_PREFIX "height", 0, HEIGHT_TEXT,
                  HEIGHT_LONGTEXT )
-    add_string( CFG_PREFIX "sar", "1:1", RATIO_TEXT,
+    vlc_add_string( CFG_PREFIX "sar", "1:1", RATIO_TEXT,
                 RATIO_LONGTEXT )
-    add_string( CFG_PREFIX "chroma", NULL, CHROMA_TEXT, CHROMA_LONGTEXT )
+    vlc_add_string( CFG_PREFIX "chroma", NULL, CHROMA_TEXT, CHROMA_LONGTEXT )
 
-    add_module_list(CFG_PREFIX "vfilter", "video filter", NULL,
+    vlc_add_module_list(CFG_PREFIX "vfilter", "video filter", NULL,
                     VFILTER_TEXT, VFILTER_LONGTEXT)
 
-    add_integer_with_range( CFG_PREFIX "alpha", 255, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "alpha", 255, 0, 255,
                             ALPHA_TEXT, ALPHA_LONGTEXT )
-    add_integer( CFG_PREFIX "x", -1, X_TEXT, X_LONGTEXT )
-    add_integer( CFG_PREFIX "y", -1, Y_TEXT, Y_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "x", -1, X_TEXT, X_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "y", -1, Y_TEXT, Y_LONGTEXT )
 
-    set_callback( Open )
+    vlc_set_callback( Open )
 vlc_module_end ()

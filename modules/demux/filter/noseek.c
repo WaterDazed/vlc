@@ -72,8 +72,8 @@ static int Open(vlc_object_t *obj)
 }
 
 vlc_module_begin ()
-    set_description(N_("Seek prevention demux filter"))
-    set_subcategory(SUBCAT_INPUT_STREAM_FILTER)
-    set_capability("demux_filter", 0)
-    set_callback(Open)
+    vlc_set_description(N_("Seek prevention demux filter"))
+    vlc_set_subcategory(SUBCAT_INPUT_STREAM_FILTER)
+    vlc_set_capability("demux_filter", 0)
+    vlc_set_callback(Open)
 vlc_module_end()

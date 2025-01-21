@@ -61,13 +61,13 @@ VIDEO_FILTER_WRAPPER_CLOSE(Filter, Destroy)
 #define CFG_PREFIX "sepia-"
 
 vlc_module_begin ()
-    set_description( N_("Sepia video filter") )
-    set_shortname( N_("Sepia" ) )
-    set_help( N_("Gives video a warmer tone by applying sepia effect") )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_integer_with_range( CFG_PREFIX "intensity", 120, 0, 255,
+    vlc_set_description( N_("Sepia video filter") )
+    vlc_set_shortname( N_("Sepia" ) )
+    vlc_set_help( N_("Gives video a warmer tone by applying sepia effect") )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_integer_with_range( CFG_PREFIX "intensity", 120, 0, 255,
                            SEPIA_INTENSITY_TEXT, SEPIA_INTENSITY_LONGTEXT )
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 /*****************************************************************************

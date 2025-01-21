@@ -35,10 +35,10 @@
 static int OpenCUDAToCPU( filter_t * );
 
 vlc_module_begin()
-    set_shortname(N_("CUDA converter"))
-    set_description(N_("CUDA/NVDEC Chroma Converter filter"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_callback_video_converter(OpenCUDAToCPU, 10)
+    vlc_set_shortname(N_("CUDA converter"))
+    vlc_set_description(N_("CUDA/NVDEC Chroma Converter filter"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_callback_video_converter(OpenCUDAToCPU, 10)
 vlc_module_end()
 
 #define CALL_CUDA(func, ...) CudaCheckErr(VLC_OBJECT(p_filter), devsys->cudaFunctions, devsys->cudaFunctions->func(__VA_ARGS__), #func)

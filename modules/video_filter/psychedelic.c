@@ -48,12 +48,12 @@ VIDEO_FILTER_WRAPPER_CLOSE(Filter, Destroy)
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Psychedelic video filter") )
-    set_shortname( N_( "Psychedelic" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Psychedelic video filter") )
+    vlc_set_shortname( N_( "Psychedelic" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_shortcut( "psychedelic" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "psychedelic" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 /*****************************************************************************

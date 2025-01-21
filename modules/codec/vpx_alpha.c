@@ -24,10 +24,10 @@ static int OpenDecoder(vlc_object_t *);
 static void CloseDecoder(vlc_object_t *);
 
 vlc_module_begin ()
-    set_description(N_("VPx+alpha video decoder"))
-    set_capability("video decoder", 150)
-    set_callbacks(OpenDecoder, CloseDecoder)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_description(N_("VPx+alpha video decoder"))
+    vlc_set_capability("video decoder", 150)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
 vlc_module_end ()
 
 struct vp_decoder

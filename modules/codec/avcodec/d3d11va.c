@@ -67,8 +67,8 @@ struct d3d11va_pic_context
 static int Open(vlc_va_t *va, struct vlc_va_cfg *cfg);
 
 vlc_module_begin()
-    set_description(N_("Direct3D11 Video Acceleration"))
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_description(N_("Direct3D11 Video Acceleration"))
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
     set_va_callback(Open, 110)
 vlc_module_end()
 

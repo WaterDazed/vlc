@@ -66,23 +66,23 @@ static const char *const output_list_text[] = { N_("Don't display any video"),
   N_("Display the input video"), N_("Display the processed video")};
 
 vlc_module_begin ()
-    set_description( N_("OpenCV video filter wrapper") )
-    set_shortname( N_("OpenCV" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_shortcut( "opencv_wrapper" )
-    set_callback_video_filter( Create )
-    add_float_with_range( "opencv-scale", 1.0, 0.1, 2.0,
+    vlc_set_description( N_("OpenCV video filter wrapper") )
+    vlc_set_shortname( N_("OpenCV" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_shortcut( "opencv_wrapper" )
+    vlc_set_callback_video_filter( Create )
+    vlc_add_float_with_range( "opencv-scale", 1.0, 0.1, 2.0,
                           N_("Scale factor (0.1-2.0)"),
                           N_("Amount by which to scale the picture before sending it to the internal OpenCV filter") )
-    add_string( "opencv-chroma", "input",
+    vlc_add_string( "opencv-chroma", "input",
                           N_("OpenCV filter chroma"),
                           N_("Chroma to convert picture to before sending it to the internal OpenCV filter"))
-        change_string_list( chroma_list, chroma_list_text )
-    add_string( "opencv-output", "input",
+        vlc_change_string_list( chroma_list, chroma_list_text )
+    vlc_add_string( "opencv-output", "input",
                           N_("Wrapper filter output"),
                           N_("Determines what (if any) video is displayed by the wrapper filter"))
-        change_string_list( output_list, output_list_text )
-    add_string( "opencv-filter-name", "none",
+        vlc_change_string_list( output_list, output_list_text )
+    vlc_add_string( "opencv-filter-name", "none",
                           N_("OpenCV internal filter name"),
                           N_("Name of internal OpenCV plugin filter to use"))
 vlc_module_end ()

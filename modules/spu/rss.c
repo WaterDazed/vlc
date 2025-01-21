@@ -173,37 +173,37 @@ static const char *const ppsz_title_modes[] =
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname( N_("RSS / Atom") )
-    set_help(RSS_HELP)
-    set_callback_sub_source( CreateFilter, 1 )
-    set_subcategory( SUBCAT_VIDEO_SUBPIC )
-    add_string( CFG_PREFIX "urls", NULL, MSG_TEXT, MSG_LONGTEXT )
+    vlc_set_shortname( N_("RSS / Atom") )
+    vlc_set_help(RSS_HELP)
+    vlc_set_callback_sub_source( CreateFilter, 1 )
+    vlc_set_subcategory( SUBCAT_VIDEO_SUBPIC )
+    vlc_add_string( CFG_PREFIX "urls", NULL, MSG_TEXT, MSG_LONGTEXT )
 
-    set_section( N_("Position"), NULL )
-    add_integer( CFG_PREFIX "x", 0, POSX_TEXT, POSX_LONGTEXT )
-    add_integer( CFG_PREFIX "y", 0, POSY_TEXT, POSY_LONGTEXT )
-    add_integer( CFG_PREFIX "position", -1, POS_TEXT, POS_LONGTEXT )
-        change_integer_list( pi_pos_values, ppsz_pos_descriptions )
+    vlc_set_section( N_("Position"), NULL )
+    vlc_add_integer( CFG_PREFIX "x", 0, POSX_TEXT, POSX_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "y", 0, POSY_TEXT, POSY_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "position", -1, POS_TEXT, POS_LONGTEXT )
+        vlc_change_integer_list( pi_pos_values, ppsz_pos_descriptions )
 
-    set_section( N_("Font"), NULL )
+    vlc_set_section( N_("Font"), NULL )
     /* 5 sets the default to top [1] left [4] */
-    add_integer_with_range( CFG_PREFIX "opacity", 255, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "opacity", 255, 0, 255,
         OPACITY_TEXT, OPACITY_LONGTEXT )
-    add_rgb(CFG_PREFIX "color", 0xFFFFFF, COLOR_TEXT, COLOR_LONGTEXT)
-        change_integer_list( pi_color_values, ppsz_color_descriptions )
-    add_integer( CFG_PREFIX "size", 0, SIZE_TEXT, SIZE_LONGTEXT )
-        change_integer_range( 0, 4096)
+    vlc_add_rgb(CFG_PREFIX "color", 0xFFFFFF, COLOR_TEXT, COLOR_LONGTEXT)
+        vlc_change_integer_list( pi_color_values, ppsz_color_descriptions )
+    vlc_add_integer( CFG_PREFIX "size", 0, SIZE_TEXT, SIZE_LONGTEXT )
+        vlc_change_integer_range( 0, 4096)
 
-    set_section( N_("Misc"), NULL )
-    add_integer( CFG_PREFIX "speed", 100000, SPEED_TEXT, SPEED_LONGTEXT )
-    add_integer( CFG_PREFIX "length", 60, LENGTH_TEXT, LENGTH_LONGTEXT )
-    add_integer( CFG_PREFIX "ttl", 1800, TTL_TEXT, TTL_LONGTEXT )
-    add_bool( CFG_PREFIX "images", true, IMAGE_TEXT, IMAGE_LONGTEXT )
-    add_integer( CFG_PREFIX "title", default_title, TITLE_TEXT, TITLE_LONGTEXT )
-        change_integer_list( pi_title_modes, ppsz_title_modes )
+    vlc_set_section( N_("Misc"), NULL )
+    vlc_add_integer( CFG_PREFIX "speed", 100000, SPEED_TEXT, SPEED_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "length", 60, LENGTH_TEXT, LENGTH_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "ttl", 1800, TTL_TEXT, TTL_LONGTEXT )
+    vlc_add_bool( CFG_PREFIX "images", true, IMAGE_TEXT, IMAGE_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "title", default_title, TITLE_TEXT, TITLE_LONGTEXT )
+        vlc_change_integer_list( pi_title_modes, ppsz_title_modes )
 
-    set_description( N_("RSS and Atom feed display") )
-    add_shortcut( "rss", "atom" )
+    vlc_set_description( N_("RSS and Atom feed display") )
+    vlc_add_shortcut( "rss", "atom" )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

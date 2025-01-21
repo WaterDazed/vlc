@@ -101,22 +101,22 @@ static const int level_zvbi_values[] =
 { VBI_WST_LEVEL_1, VBI_WST_LEVEL_1p5, VBI_WST_LEVEL_2p5, VBI_WST_LEVEL_3p5 };
 
 vlc_module_begin ()
-    set_description( N_("VBI and Teletext decoder") )
-    set_shortname( N_("VBI & Teletext") )
-    set_capability( "spu decoder", 51 )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("VBI and Teletext decoder") )
+    vlc_set_shortname( N_("VBI & Teletext") )
+    vlc_set_capability( "spu decoder", 51 )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_callbacks( Open, Close )
 
-    add_integer_with_range( "vbi-page", 100, 0, 'z' << 16,
+    vlc_add_integer_with_range( "vbi-page", 100, 0, 'z' << 16,
                  PAGE_TEXT, PAGE_LONGTEXT )
-    add_bool( "vbi-opaque", true,
+    vlc_add_bool( "vbi-opaque", true,
                  OPAQUE_TEXT, OPAQUE_LONGTEXT )
-    add_integer( "vbi-position", SUBPICTURE_ALIGN_BOTTOM, POS_TEXT, POS_LONGTEXT )
-        change_integer_list( pi_pos_values, ppsz_pos_descriptions )
-    add_bool( "vbi-text", false,
+    vlc_add_integer( "vbi-position", SUBPICTURE_ALIGN_BOTTOM, POS_TEXT, POS_LONGTEXT )
+        vlc_change_integer_list( pi_pos_values, ppsz_pos_descriptions )
+    vlc_add_bool( "vbi-text", false,
               TELX_TEXT, TELX_LONGTEXT )
-    add_integer( "vbi-level", 3, LEVEL_TEXT, NULL )
-        change_integer_list( level_values, level_descriptions )
+    vlc_add_integer( "vbi-level", 3, LEVEL_TEXT, NULL )
+        vlc_change_integer_list( level_values, level_descriptions )
 vlc_module_end ()
 
 /****************************************************************************

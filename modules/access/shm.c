@@ -80,33 +80,33 @@ static const char *const depth_texts[] = {
  * Module descriptor
  */
 vlc_module_begin ()
-    set_shortname (N_("Framebuffer input"))
-    set_description (N_("Shared memory framebuffer"))
-    set_subcategory (SUBCAT_INPUT_ACCESS)
-    set_capability ("access", 0)
-    set_callbacks (Open, Close)
+    vlc_set_shortname (N_("Framebuffer input"))
+    vlc_set_description (N_("Shared memory framebuffer"))
+    vlc_set_subcategory (SUBCAT_INPUT_ACCESS)
+    vlc_set_capability ("access", 0)
+    vlc_set_callbacks (Open, Close)
 
-    add_float ("shm-fps", 10.0, FPS_TEXT, FPS_LONGTEXT)
-    add_integer ("shm-depth", 0, DEPTH_TEXT, DEPTH_LONGTEXT)
-        change_integer_list (depths, depth_texts)
-        change_safe ()
-    add_integer ("shm-width", 800, WIDTH_TEXT, WIDTH_LONGTEXT)
-        change_integer_range (0, 65535)
-        change_safe ()
-    add_integer ("shm-height", 480, HEIGHT_TEXT, HEIGHT_LONGTEXT)
-        change_integer_range (0, 65535)
-        change_safe ()
+    vlc_add_float ("shm-fps", 10.0, FPS_TEXT, FPS_LONGTEXT)
+    vlc_add_integer ("shm-depth", 0, DEPTH_TEXT, DEPTH_LONGTEXT)
+        vlc_change_integer_list (depths, depth_texts)
+        vlc_change_safe ()
+    vlc_add_integer ("shm-width", 800, WIDTH_TEXT, WIDTH_LONGTEXT)
+        vlc_change_integer_range (0, 65535)
+        vlc_change_safe ()
+    vlc_add_integer ("shm-height", 480, HEIGHT_TEXT, HEIGHT_LONGTEXT)
+        vlc_change_integer_range (0, 65535)
+        vlc_change_safe ()
 
     /* We need to "trust" the memory segment. If it were shrunk while we copy
      * its content our process may crash - or worse. So we pass the shared
      * memory location via an unsafe variable rather than the URL. */
-    add_string ("shm-file", NULL, FILE_TEXT, FILE_LONGTEXT)
-        change_volatile ()
+    vlc_add_string ("shm-file", NULL, FILE_TEXT, FILE_LONGTEXT)
+        vlc_change_volatile ()
 #ifdef HAVE_SYS_SHM_H
-    add_integer ("shm-id", (int64_t)IPC_PRIVATE, ID_TEXT, ID_LONGTEXT)
-        change_volatile ()
+    vlc_add_integer ("shm-id", (int64_t)IPC_PRIVATE, ID_TEXT, ID_LONGTEXT)
+        vlc_change_volatile ()
 #endif
-    add_shortcut ("shm")
+    vlc_add_shortcut ("shm")
 vlc_module_end ()
 
 typedef struct demux_sys_t demux_sys_t;

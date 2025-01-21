@@ -525,12 +525,12 @@ static int Open(vlc_gl_t *gl, unsigned width, unsigned height,
 }
 
 vlc_module_begin()
-    set_shortname( N_("cvpx_gl") )
-    set_description( N_("OpenGL backed by CVPixelBuffer") )
+    vlc_set_shortname( N_("cvpx_gl") )
+    vlc_set_description( N_("OpenGL backed by CVPixelBuffer") )
 #if TARGET_OS_IPHONE
-    set_callback_opengl_es2_offscreen( Open, 100 )
+    vlc_set_callback_opengl_es2_offscreen( Open, 100 )
 #else
-    set_callback_opengl_offscreen( Open, 100 )
+    vlc_set_callback_opengl_offscreen( Open, 100 )
 #endif
-    add_shortcut( "cvpx_gl" )
+    vlc_add_shortcut( "cvpx_gl" )
 vlc_module_end()

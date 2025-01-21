@@ -78,146 +78,146 @@ static const char *const enc_hq_list_text[] = {
         "H261, H263, H264, WMV, WMA, AAC, AMR, DV, MJPEG and other codecs")
 
 vlc_module_begin ()
-    set_shortname( "FFmpeg")
-    set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_shortname( "FFmpeg")
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
     /* decoder main module */
-    set_description( N_("FFmpeg audio/video decoder") )
-    set_help( MODULE_DESCRIPTION )
-    set_section( N_("Decoding") , NULL )
+    vlc_set_description( N_("FFmpeg audio/video decoder") )
+    vlc_set_help( MODULE_DESCRIPTION )
+    vlc_set_section( N_("Decoding") , NULL )
 
-    add_shortcut("ffmpeg")
-    set_capability("video decoder", 70)
-    set_callbacks(InitVideoDec, EndVideoDec)
+    vlc_add_shortcut("ffmpeg")
+    vlc_set_capability("video decoder", 70)
+    vlc_set_callbacks(InitVideoDec, EndVideoDec)
 
-    add_submodule()
-    add_shortcut("ffmpeghw")
-    set_capability("video decoder", 10001)
-    set_callbacks(InitVideoHwDec, EndVideoDec)
+    vlc_add_submodule()
+    vlc_add_shortcut("ffmpeghw")
+    vlc_set_capability("video decoder", 10001)
+    vlc_set_callbacks(InitVideoHwDec, EndVideoDec)
 
-    add_submodule()
-    add_shortcut("ffmpeg")
-    set_capability("audio decoder", 70)
-    set_callbacks(InitAudioDec, EndAudioDec)
+    vlc_add_submodule()
+    vlc_add_shortcut("ffmpeg")
+    vlc_set_capability("audio decoder", 70)
+    vlc_set_callbacks(InitAudioDec, EndAudioDec)
 
-    add_submodule()
-    add_shortcut("ffmpeg")
-    set_capability("spu decoder", 70)
-    set_callbacks(InitSubtitleDec, EndSubtitleDec)
+    vlc_add_submodule()
+    vlc_add_shortcut("ffmpeg")
+    vlc_set_capability("spu decoder", 70)
+    vlc_set_callbacks(InitSubtitleDec, EndSubtitleDec)
 
-    add_bool( "avcodec-dr", true, DR_TEXT, NULL )
-    add_bool( "avcodec-corrupted", true, CORRUPTED_TEXT, CORRUPTED_LONGTEXT )
-    add_integer ( "avcodec-error-resilience", 1, ERROR_TEXT,
+    vlc_add_bool( "avcodec-dr", true, DR_TEXT, NULL )
+    vlc_add_bool( "avcodec-corrupted", true, CORRUPTED_TEXT, CORRUPTED_LONGTEXT )
+    vlc_add_integer ( "avcodec-error-resilience", 1, ERROR_TEXT,
         ERROR_LONGTEXT )
-    add_integer ( "avcodec-workaround-bugs", 1, BUGS_TEXT, BUGS_LONGTEXT )
-    add_bool( "avcodec-hurry-up", true, HURRYUP_TEXT, HURRYUP_LONGTEXT )
-    add_integer( "avcodec-skip-frame", 0, SKIP_FRAME_TEXT,
+    vlc_add_integer ( "avcodec-workaround-bugs", 1, BUGS_TEXT, BUGS_LONGTEXT )
+    vlc_add_bool( "avcodec-hurry-up", true, HURRYUP_TEXT, HURRYUP_LONGTEXT )
+    vlc_add_integer( "avcodec-skip-frame", 0, SKIP_FRAME_TEXT,
         SKIP_FRAME_LONGTEXT )
-        change_integer_list( frame_skip_list, frame_skip_list_text )
-    add_integer( "avcodec-skip-idct", 0, SKIP_IDCT_TEXT,
+        vlc_change_integer_list( frame_skip_list, frame_skip_list_text )
+    vlc_add_integer( "avcodec-skip-idct", 0, SKIP_IDCT_TEXT,
         SKIP_IDCT_LONGTEXT )
-        change_integer_list( idct_skip_list, idct_skip_list_text )
-    add_obsolete_integer( "avcodec-vismv" ) /* removed since 3.0.0 */
-    add_obsolete_bool( "avcodec-fast" ) /* removed since 4.0.0 */
-    add_integer ( "avcodec-skiploopfilter", 0, SKIPLOOPF_TEXT,
+        vlc_change_integer_list( idct_skip_list, idct_skip_list_text )
+    vlc_add_obsolete_integer( "avcodec-vismv" ) /* removed since 3.0.0 */
+    vlc_add_obsolete_bool( "avcodec-fast" ) /* removed since 4.0.0 */
+    vlc_add_integer ( "avcodec-skiploopfilter", 0, SKIPLOOPF_TEXT,
                   SKIPLOOPF_LONGTEXT)
-        change_safe ()
-        change_integer_list( nloopf_list, nloopf_list_text )
+        vlc_change_safe ()
+        vlc_change_integer_list( nloopf_list, nloopf_list_text )
 
-    add_integer( "avcodec-debug", 0, DEBUG_TEXT, DEBUG_LONGTEXT )
-    add_string( "avcodec-codec", NULL, CODEC_TEXT, CODEC_LONGTEXT )
-    add_obsolete_string( "avcodec-hw" ) /* removed since 4.0.0 */
-    add_integer( "avcodec-threads", 0, THREADS_TEXT, THREADS_LONGTEXT )
-    add_string( "avcodec-options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT )
+    vlc_add_integer( "avcodec-debug", 0, DEBUG_TEXT, DEBUG_LONGTEXT )
+    vlc_add_string( "avcodec-codec", NULL, CODEC_TEXT, CODEC_LONGTEXT )
+    vlc_add_obsolete_string( "avcodec-hw" ) /* removed since 4.0.0 */
+    vlc_add_integer( "avcodec-threads", 0, THREADS_TEXT, THREADS_LONGTEXT )
+    vlc_add_string( "avcodec-options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT )
 
 
 #ifdef ENABLE_SOUT
     /* encoder submodule */
-    add_submodule ()
-    add_shortcut( "ffmpeg" )
-    set_section( N_("Encoding") , NULL )
-    set_description( N_("FFmpeg video encoder") )
-    set_capability( "video encoder", 100 )
-    set_callback( InitVideoEnc )
+    vlc_add_submodule ()
+    vlc_add_shortcut( "ffmpeg" )
+    vlc_set_section( N_("Encoding") , NULL )
+    vlc_set_description( N_("FFmpeg video encoder") )
+    vlc_set_capability( "video encoder", 100 )
+    vlc_set_callback( InitVideoEnc )
 
-    add_submodule()
-    set_description( N_("FFmpeg video encoder") )
-    set_capability( "image encoder", 100 )
-    set_callback( InitVideoEnc )
+    vlc_add_submodule()
+    vlc_set_description( N_("FFmpeg video encoder") )
+    vlc_set_capability( "image encoder", 100 )
+    vlc_set_callback( InitVideoEnc )
 
-    add_submodule()
-    add_shortcut( "ffmpeg" )
-    set_section( N_("Encoding") , NULL )
-    set_description( N_("FFmpeg audio encoder") )
-    set_capability( "audio encoder", 100 )
-    set_callback( InitVideoEnc )
+    vlc_add_submodule()
+    vlc_add_shortcut( "ffmpeg" )
+    vlc_set_section( N_("Encoding") , NULL )
+    vlc_set_description( N_("FFmpeg audio encoder") )
+    vlc_set_capability( "audio encoder", 100 )
+    vlc_set_callback( InitVideoEnc )
 
-    add_string( ENC_CFG_PREFIX "codec", NULL, CODEC_TEXT, CODEC_LONGTEXT )
-    add_string( ENC_CFG_PREFIX "hq", "rd", ENC_HQ_TEXT,
+    vlc_add_string( ENC_CFG_PREFIX "codec", NULL, CODEC_TEXT, CODEC_LONGTEXT )
+    vlc_add_string( ENC_CFG_PREFIX "hq", "rd", ENC_HQ_TEXT,
                 ENC_HQ_LONGTEXT )
-        change_string_list( enc_hq_list, enc_hq_list_text )
-    add_integer( ENC_CFG_PREFIX "keyint", 0, ENC_KEYINT_TEXT,
+        vlc_change_string_list( enc_hq_list, enc_hq_list_text )
+    vlc_add_integer( ENC_CFG_PREFIX "keyint", 0, ENC_KEYINT_TEXT,
                  ENC_KEYINT_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "bframes", 0, ENC_BFRAMES_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "bframes", 0, ENC_BFRAMES_TEXT,
                  ENC_BFRAMES_LONGTEXT )
-    add_bool( ENC_CFG_PREFIX "hurry-up", false, ENC_HURRYUP_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "hurry-up", false, ENC_HURRYUP_TEXT,
               ENC_HURRYUP_LONGTEXT )
-    add_bool( ENC_CFG_PREFIX "interlace", false, ENC_INTERLACE_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "interlace", false, ENC_INTERLACE_TEXT,
               ENC_INTERLACE_LONGTEXT )
-    add_bool( ENC_CFG_PREFIX "interlace-me", true, ENC_INTERLACE_ME_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "interlace-me", true, ENC_INTERLACE_ME_TEXT,
               ENC_INTERLACE_ME_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "vt", 0, ENC_VT_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "vt", 0, ENC_VT_TEXT,
                  ENC_VT_LONGTEXT )
-    add_bool( ENC_CFG_PREFIX "pre-me", false, ENC_PRE_ME_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "pre-me", false, ENC_PRE_ME_TEXT,
               ENC_PRE_ME_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "rc-buffer-size", 0,
+    vlc_add_integer( ENC_CFG_PREFIX "rc-buffer-size", 0,
                  ENC_RC_BUF_TEXT, ENC_RC_BUF_LONGTEXT )
-    add_float( ENC_CFG_PREFIX "rc-buffer-aggressivity", 1.0,
+    vlc_add_float( ENC_CFG_PREFIX "rc-buffer-aggressivity", 1.0,
                ENC_RC_BUF_AGGR_TEXT, NULL )
-    add_float( ENC_CFG_PREFIX "i-quant-factor", 0,
+    vlc_add_float( ENC_CFG_PREFIX "i-quant-factor", 0,
                ENC_IQUANT_FACTOR_TEXT, ENC_IQUANT_FACTOR_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "noise-reduction", 0,
+    vlc_add_integer( ENC_CFG_PREFIX "noise-reduction", 0,
                  ENC_NOISE_RED_TEXT, ENC_NOISE_RED_LONGTEXT )
-    add_bool( ENC_CFG_PREFIX "mpeg4-matrix", false,
+    vlc_add_bool( ENC_CFG_PREFIX "mpeg4-matrix", false,
               ENC_MPEG4_MATRIX_TEXT, ENC_MPEG4_MATRIX_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "qmin", 0,
+    vlc_add_integer( ENC_CFG_PREFIX "qmin", 0,
                  ENC_QMIN_TEXT, NULL )
-    add_integer( ENC_CFG_PREFIX "qmax", 0,
+    vlc_add_integer( ENC_CFG_PREFIX "qmax", 0,
                  ENC_QMAX_TEXT, NULL )
-    add_bool( ENC_CFG_PREFIX "trellis", false,
+    vlc_add_bool( ENC_CFG_PREFIX "trellis", false,
               ENC_TRELLIS_TEXT, ENC_TRELLIS_LONGTEXT )
-    add_float( ENC_CFG_PREFIX "qscale", 3,
+    vlc_add_float( ENC_CFG_PREFIX "qscale", 3,
                ENC_QSCALE_TEXT, ENC_QSCALE_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "strict", 0,
+    vlc_add_integer( ENC_CFG_PREFIX "strict", 0,
                  ENC_STRICT_TEXT, ENC_STRICT_LONGTEXT )
-        change_integer_range( -2, 2 )
-    add_float( ENC_CFG_PREFIX "lumi-masking", 0.0,
+        vlc_change_integer_range( -2, 2 )
+    vlc_add_float( ENC_CFG_PREFIX "lumi-masking", 0.0,
                ENC_LUMI_MASKING_TEXT, ENC_LUMI_MASKING_LONGTEXT )
-    add_float( ENC_CFG_PREFIX "dark-masking", 0.0,
+    vlc_add_float( ENC_CFG_PREFIX "dark-masking", 0.0,
                ENC_DARK_MASKING_TEXT, ENC_DARK_MASKING_LONGTEXT )
-    add_float( ENC_CFG_PREFIX "p-masking", 0.0,
+    vlc_add_float( ENC_CFG_PREFIX "p-masking", 0.0,
                ENC_P_MASKING_TEXT, ENC_P_MASKING_LONGTEXT )
-    add_float( ENC_CFG_PREFIX "border-masking", 0.0,
+    vlc_add_float( ENC_CFG_PREFIX "border-masking", 0.0,
                ENC_BORDER_MASKING_TEXT, ENC_BORDER_MASKING_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "luma-elim-threshold", 0,
+    vlc_add_integer( ENC_CFG_PREFIX "luma-elim-threshold", 0,
                  ENC_LUMA_ELIM_TEXT, ENC_LUMA_ELIM_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "chroma-elim-threshold", 0,
+    vlc_add_integer( ENC_CFG_PREFIX "chroma-elim-threshold", 0,
                  ENC_CHROMA_ELIM_TEXT, ENC_CHROMA_ELIM_LONGTEXT )
 
     /* Audio AAC encoder profile */
-    add_string( ENC_CFG_PREFIX "aac-profile", "low",
+    vlc_add_string( ENC_CFG_PREFIX "aac-profile", "low",
                 ENC_PROFILE_TEXT, ENC_PROFILE_LONGTEXT )
 
-    add_string( ENC_CFG_PREFIX "options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT )
+    vlc_add_string( ENC_CFG_PREFIX "options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT )
 #endif /* ENABLE_SOUT */
 
 #ifdef MERGE_FFMPEG
-    add_submodule ()
+    vlc_add_submodule ()
 # ifdef HAVE_LIBAVFORMAT_AVFORMAT_H
 #   include "../../demux/avformat/avformat.c"
 # endif
-    add_submodule ()
+    vlc_add_submodule ()
         AVIO_MODULE
-    add_submodule ()
+    vlc_add_submodule ()
         AVPARSER_MODULE
 #endif
 vlc_module_end ()

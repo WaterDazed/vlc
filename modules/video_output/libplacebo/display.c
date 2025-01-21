@@ -658,123 +658,123 @@ error:
     "Extension which provides the GPU instance to use.")
 
 vlc_module_begin ()
-    set_shortname ("libplacebo")
-    set_description (N_("libplacebo video output"))
-    set_subcategory (SUBCAT_VIDEO_VOUT)
-    set_callback_display(Open, 0)
-    add_shortcut ("libplacebo", "pl")
-    add_module ("pl-gpu", "libplacebo gpu", "any", PROVIDER_TEXT, PROVIDER_LONGTEXT)
+    vlc_set_shortname ("libplacebo")
+    vlc_set_description (N_("libplacebo video output"))
+    vlc_set_subcategory (SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_display(Open, 0)
+    vlc_add_shortcut ("libplacebo", "pl")
+    vlc_add_module ("pl-gpu", "libplacebo gpu", "any", PROVIDER_TEXT, PROVIDER_LONGTEXT)
 
-    set_section("Custom shaders", NULL)
-    add_loadfile("pl-user-shader", NULL, USER_SHADER_FILE_TEXT, USER_SHADER_FILE_LONGTEXT)
+    vlc_set_section("Custom shaders", NULL)
+    vlc_add_loadfile("pl-user-shader", NULL, USER_SHADER_FILE_TEXT, USER_SHADER_FILE_LONGTEXT)
 
-    set_section("Scaling", NULL)
-    add_integer("pl-upscaler-preset", SCALE_BUILTIN,
+    vlc_set_section("Scaling", NULL)
+    vlc_add_integer("pl-upscaler-preset", SCALE_BUILTIN,
             UPSCALER_PRESET_TEXT, SCALER_PRESET_LONGTEXT)
-            change_integer_list(scale_values, scale_text)
-    add_integer("pl-downscaler-preset", SCALE_BUILTIN,
+            vlc_change_integer_list(scale_values, scale_text)
+    vlc_add_integer("pl-downscaler-preset", SCALE_BUILTIN,
             DOWNSCALER_PRESET_TEXT, SCALER_PRESET_LONGTEXT)
-            change_integer_list(scale_values, scale_text)
-    add_integer_with_range("pl-lut-entries", 64, 16, 256,
+            vlc_change_integer_list(scale_values, scale_text)
+    vlc_add_integer_with_range("pl-lut-entries", 64, 16, 256,
             LUT_ENTRIES_TEXT, LUT_ENTRIES_LONGTEXT)
-    add_float_with_range("pl-antiringing", 0.0,
+    vlc_add_float_with_range("pl-antiringing", 0.0,
             0.0, 1.0, ANTIRING_TEXT, ANTIRING_LONGTEXT)
-    add_bool("pl-sigmoid", !!pl_render_default_params.sigmoid_params,
+    vlc_add_bool("pl-sigmoid", !!pl_render_default_params.sigmoid_params,
             SIGMOID_TEXT, SIGMOID_LONGTEXT)
-    add_float_with_range("pl-sigmoid-center", pl_sigmoid_default_params.center,
+    vlc_add_float_with_range("pl-sigmoid-center", pl_sigmoid_default_params.center,
             0., 1., SIGMOID_CENTER_TEXT, SIGMOID_CENTER_LONGTEXT)
-    add_float_with_range("pl-sigmoid-slope", pl_sigmoid_default_params.slope,
+    vlc_add_float_with_range("pl-sigmoid-slope", pl_sigmoid_default_params.slope,
             1., 20., SIGMOID_SLOPE_TEXT, SIGMOID_SLOPE_LONGTEXT)
 
-    set_section("Debanding", NULL)
-    add_bool("pl-debanding", false, DEBAND_TEXT, DEBAND_LONGTEXT)
-    add_integer("pl-iterations", pl_deband_default_params.iterations,
+    vlc_set_section("Debanding", NULL)
+    vlc_add_bool("pl-debanding", false, DEBAND_TEXT, DEBAND_LONGTEXT)
+    vlc_add_integer("pl-iterations", pl_deband_default_params.iterations,
             DEBAND_ITER_TEXT, DEBAND_ITER_LONGTEXT)
-    add_float("pl-threshold", pl_deband_default_params.threshold,
+    vlc_add_float("pl-threshold", pl_deband_default_params.threshold,
             DEBAND_THRESH_TEXT, DEBAND_THRESH_LONGTEXT)
-    add_float("pl-radius", pl_deband_default_params.radius,
+    vlc_add_float("pl-radius", pl_deband_default_params.radius,
             DEBAND_RADIUS_TEXT, DEBAND_RADIUS_LONGTEXT)
-    add_float("pl-grain", pl_deband_default_params.grain,
+    vlc_add_float("pl-grain", pl_deband_default_params.grain,
             DEBAND_GRAIN_TEXT, DEBAND_GRAIN_LONGTEXT)
 
-    set_section("Colorspace conversion", NULL)
-    add_integer("pl-output-hint", true, OUTPUT_HINT_TEXT, OUTPUT_HINT_LONGTEXT)
-            change_integer_list(output_values, output_text)
+    vlc_set_section("Colorspace conversion", NULL)
+    vlc_add_integer("pl-output-hint", true, OUTPUT_HINT_TEXT, OUTPUT_HINT_LONGTEXT)
+            vlc_change_integer_list(output_values, output_text)
     add_placebo_color_map_opts("pl")
-    add_integer("pl-target-prim", PL_COLOR_PRIM_UNKNOWN, PRIM_TEXT, PRIM_LONGTEXT)
-            change_integer_list(prim_values, prim_text)
-    add_integer("pl-target-trc", PL_COLOR_TRC_UNKNOWN, TRC_TEXT, TRC_LONGTEXT)
-            change_integer_list(trc_values, trc_text)
+    vlc_add_integer("pl-target-prim", PL_COLOR_PRIM_UNKNOWN, PRIM_TEXT, PRIM_LONGTEXT)
+            vlc_change_integer_list(prim_values, prim_text)
+    vlc_add_integer("pl-target-trc", PL_COLOR_TRC_UNKNOWN, TRC_TEXT, TRC_LONGTEXT)
+            vlc_change_integer_list(trc_values, trc_text)
 
-    add_loadfile("pl-lut-file", NULL, LUT_FILE_TEXT, LUT_FILE_LONGTEXT)
-    add_integer("pl-lut-mode", LUT_DISABLED, LUT_MODE_TEXT, LUT_MODE_LONGTEXT)
-            change_integer_list(lut_mode_values, lut_mode_text)
+    vlc_add_loadfile("pl-lut-file", NULL, LUT_FILE_TEXT, LUT_FILE_LONGTEXT)
+    vlc_add_integer("pl-lut-mode", LUT_DISABLED, LUT_MODE_TEXT, LUT_MODE_LONGTEXT)
+            vlc_change_integer_list(lut_mode_values, lut_mode_text)
 
     // TODO: support for ICC profiles
 
-    add_float_with_range("pl-peak-period", pl_peak_detect_default_params.smoothing_period,
+    vlc_add_float_with_range("pl-peak-period", pl_peak_detect_default_params.smoothing_period,
             0., 1000., PEAK_PERIOD_TEXT, PEAK_PERIOD_LONGTEXT)
-    add_float("pl-scene-threshold-low", pl_peak_detect_default_params.scene_threshold_low,
+    vlc_add_float("pl-scene-threshold-low", pl_peak_detect_default_params.scene_threshold_low,
             SCENE_THRESHOLD_LOW_TEXT, SCENE_THRESHOLD_LOW_LONGTEXT)
-    add_float("pl-scene-threshold-high", pl_peak_detect_default_params.scene_threshold_high,
+    vlc_add_float("pl-scene-threshold-high", pl_peak_detect_default_params.scene_threshold_high,
             SCENE_THRESHOLD_HIGH_TEXT, SCENE_THRESHOLD_HIGH_LONGTEXT)
 
 #if PL_API_VER >= 285
-    add_float_with_range("pl-contrast-recovery", pl_color_map_default_params.contrast_recovery,
+    vlc_add_float_with_range("pl-contrast-recovery", pl_color_map_default_params.contrast_recovery,
             0., 3., CONTRAST_RECOVERY_TEXT, CONTRAST_RECOVERY_LONGTEXT)
-    add_float_with_range("pl-contrast-smoothness", pl_color_map_default_params.contrast_smoothness,
+    vlc_add_float_with_range("pl-contrast-smoothness", pl_color_map_default_params.contrast_smoothness,
             0., 10., CONTRAST_SMOOTHNESS_TEXT, CONTRAST_SMOOTHNESS_LONGTEXT)
 #endif
 
-    set_section("Dithering", NULL)
-    add_integer("pl-dither", -1,
+    vlc_set_section("Dithering", NULL)
+    vlc_add_integer("pl-dither", -1,
             DITHER_TEXT, DITHER_LONGTEXT)
-            change_integer_list(dither_values, dither_text)
-    add_integer_with_range("pl-dither-size", pl_dither_default_params.lut_size,
+            vlc_change_integer_list(dither_values, dither_text)
+    vlc_add_integer_with_range("pl-dither-size", pl_dither_default_params.lut_size,
             1, 8, DITHER_SIZE_TEXT, DITHER_SIZE_LONGTEXT)
-    add_bool("pl-temporal-dither", pl_dither_default_params.temporal,
+    vlc_add_bool("pl-temporal-dither", pl_dither_default_params.temporal,
             TEMPORAL_DITHER_TEXT, TEMPORAL_DITHER_LONGTEXT)
-    add_integer_with_range("pl-dither-depth", 0,
+    vlc_add_integer_with_range("pl-dither-depth", 0,
             0, 16, DITHER_DEPTH_TEXT, DITHER_DEPTH_LONGTEXT)
 
-    set_section("Custom upscaler (when preset = custom)", NULL)
-    add_integer("pl-upscaler-kernel", FILTER_BOX,
+    vlc_set_section("Custom upscaler (when preset = custom)", NULL)
+    vlc_add_integer("pl-upscaler-kernel", FILTER_BOX,
             KERNEL_TEXT, KERNEL_LONGTEXT)
-            change_integer_list(filter_values, filter_text)
-    add_integer("pl-upscaler-window", FILTER_NONE,
+            vlc_change_integer_list(filter_values, filter_text)
+    vlc_add_integer("pl-upscaler-window", FILTER_NONE,
             WINDOW_TEXT, WINDOW_LONGTEXT)
-            change_integer_list(filter_values, filter_text)
-    add_bool("pl-upscaler-polar", false, POLAR_TEXT, POLAR_LONGTEXT)
-    add_float_with_range("pl-upscaler-clamp", 0.0,
+            vlc_change_integer_list(filter_values, filter_text)
+    vlc_add_bool("pl-upscaler-polar", false, POLAR_TEXT, POLAR_LONGTEXT)
+    vlc_add_float_with_range("pl-upscaler-clamp", 0.0,
             0.0, 1.0, CLAMP_TEXT, CLAMP_LONGTEXT)
-    add_float_with_range("pl-upscaler-blur", 1.0,
+    vlc_add_float_with_range("pl-upscaler-blur", 1.0,
             0.0, 100.0, BLUR_TEXT, BLUR_LONGTEXT)
-    add_float_with_range("pl-upscaler-taper", 0.0,
+    vlc_add_float_with_range("pl-upscaler-taper", 0.0,
             0.0, 10.0, TAPER_TEXT, TAPER_LONGTEXT)
 
-    set_section("Custom downscaler (when preset = custom)", NULL)
-    add_integer("pl-downscaler-kernel", FILTER_BOX,
+    vlc_set_section("Custom downscaler (when preset = custom)", NULL)
+    vlc_add_integer("pl-downscaler-kernel", FILTER_BOX,
             KERNEL_TEXT, KERNEL_LONGTEXT)
-            change_integer_list(filter_values, filter_text)
-    add_integer("pl-downscaler-window", FILTER_NONE,
+            vlc_change_integer_list(filter_values, filter_text)
+    vlc_add_integer("pl-downscaler-window", FILTER_NONE,
             WINDOW_TEXT, WINDOW_LONGTEXT)
-            change_integer_list(filter_values, filter_text)
-    add_bool("pl-downscaler-polar", false, POLAR_TEXT, POLAR_LONGTEXT)
-    add_float_with_range("pl-downscaler-clamp", 0.0,
+            vlc_change_integer_list(filter_values, filter_text)
+    vlc_add_bool("pl-downscaler-polar", false, POLAR_TEXT, POLAR_LONGTEXT)
+    vlc_add_float_with_range("pl-downscaler-clamp", 0.0,
             0.0, 1.0, CLAMP_TEXT, CLAMP_LONGTEXT)
-    add_float_with_range("pl-downscaler-blur", 1.0,
+    vlc_add_float_with_range("pl-downscaler-blur", 1.0,
             0.0, 100.0, BLUR_TEXT, BLUR_LONGTEXT)
-    add_float_with_range("pl-downscaler-taper", 0.0,
+    vlc_add_float_with_range("pl-downscaler-taper", 0.0,
             0.0, 10.0, TAPER_TEXT, TAPER_LONGTEXT)
 
-    set_section("Performance tweaks / debugging", NULL)
-    add_bool("pl-skip-aa", false, SKIP_AA_TEXT, SKIP_AA_LONGTEXT)
-    add_float_with_range("pl-polar-cutoff", 0.001,
+    vlc_set_section("Performance tweaks / debugging", NULL)
+    vlc_add_bool("pl-skip-aa", false, SKIP_AA_TEXT, SKIP_AA_LONGTEXT)
+    vlc_add_float_with_range("pl-polar-cutoff", 0.001,
             0., 1., POLAR_CUTOFF_TEXT, POLAR_CUTOFF_LONGTEXT)
-    add_bool("pl-overlay-direct", false, OVERLAY_DIRECT_TEXT, OVERLAY_DIRECT_LONGTEXT)
-    add_bool("pl-disable-linear", false, DISABLE_LINEAR_TEXT, DISABLE_LINEAR_LONGTEXT)
-    add_bool("pl-force-general", false, FORCE_GENERAL_TEXT, FORCE_GENERAL_LONGTEXT)
-    add_bool("pl-delayed-peak", false, DELAYED_PEAK_TEXT, DELAYED_PEAK_LONGTEXT)
+    vlc_add_bool("pl-overlay-direct", false, OVERLAY_DIRECT_TEXT, OVERLAY_DIRECT_LONGTEXT)
+    vlc_add_bool("pl-disable-linear", false, DISABLE_LINEAR_TEXT, DISABLE_LINEAR_LONGTEXT)
+    vlc_add_bool("pl-force-general", false, FORCE_GENERAL_TEXT, FORCE_GENERAL_LONGTEXT)
+    vlc_add_bool("pl-delayed-peak", false, DELAYED_PEAK_TEXT, DELAYED_PEAK_LONGTEXT)
 
 vlc_module_end ()
 

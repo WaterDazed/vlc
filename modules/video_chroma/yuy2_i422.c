@@ -45,8 +45,8 @@ static int  Activate ( filter_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Conversions from " SRC_FOURCC " to " DEST_FOURCC) )
-    set_callback_video_converter( Activate, 80 )
+    vlc_set_description( N_("Conversions from " SRC_FOURCC " to " DEST_FOURCC) )
+    vlc_set_callback_video_converter( Activate, 80 )
 vlc_module_end ()
 
 VIDEO_FILTER_WRAPPER( YUY2_I422 )

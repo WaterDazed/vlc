@@ -57,24 +57,24 @@ static void Close  ( vlc_object_t * );
 #define CFG_KEYWORDS_TEXT   N_("Keywords")
 
 vlc_module_begin ()
-    set_description( N_("AVI muxer") )
-    set_subcategory( SUBCAT_SOUT_MUX )
-    set_capability( "sout mux", 5 )
-    add_shortcut( "avi" )
+    vlc_set_description( N_("AVI muxer") )
+    vlc_set_subcategory( SUBCAT_SOUT_MUX )
+    vlc_set_capability( "sout mux", 5 )
+    vlc_add_shortcut( "avi" )
 
-    add_string( SOUT_CFG_PREFIX "artist", NULL,    CFG_ARTIST_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "date",   NULL,    CFG_DATE_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "genre",  NULL,    CFG_GENRE_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "copyright", NULL, CFG_COPYRIGHT_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "comment", NULL,   CFG_COMMENT_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "name", NULL,      CFG_NAME_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "subject", NULL,   CFG_SUBJECT_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "encoder",
+    vlc_add_string( SOUT_CFG_PREFIX "artist", NULL,    CFG_ARTIST_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "date",   NULL,    CFG_DATE_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "genre",  NULL,    CFG_GENRE_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "copyright", NULL, CFG_COPYRIGHT_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "comment", NULL,   CFG_COMMENT_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "name", NULL,      CFG_NAME_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "subject", NULL,   CFG_SUBJECT_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "encoder",
                 "VLC Media Player - " VERSION_MESSAGE,
                                                    CFG_ENCODER_TEXT, NULL )
-    add_string( SOUT_CFG_PREFIX "keywords", NULL,  CFG_KEYWORDS_TEXT, NULL )
+    vlc_add_string( SOUT_CFG_PREFIX "keywords", NULL,  CFG_KEYWORDS_TEXT, NULL )
 
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 

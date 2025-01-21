@@ -330,10 +330,10 @@ static int vlc_vidsplit_Open(vout_display_t *vd,
 }
 
 vlc_module_begin()
-    set_shortname(N_("Splitter"))
-    set_description(N_("Video splitter display plugin"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_callback_display(vlc_vidsplit_Open, 0)
-    add_module("video-splitter", "video splitter", "none",
+    vlc_set_shortname(N_("Splitter"))
+    vlc_set_description(N_("Video splitter display plugin"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_display(vlc_vidsplit_Open, 0)
+    vlc_add_module("video-splitter", "video splitter", "none",
                N_("Video splitter module"), NULL)
 vlc_module_end()

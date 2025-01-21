@@ -110,11 +110,11 @@ static void Close( vlc_object_t *p_this )
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname( N_("TCP") )
-    set_description( N_("TCP input") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_shortname( N_("TCP") )
+    vlc_set_description( N_("TCP input") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    set_capability( "access", 0 )
-    add_shortcut( "tcp" )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "tcp" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()

@@ -45,11 +45,11 @@ static int Open( vlc_object_t * );
 static void Close( vlc_object_t * );
 
 vlc_module_begin()
-    set_shortname( N_("KWallet keystore") )
-    set_description( N_("Secrets are stored via KWallet") )
-    set_subcategory( SUBCAT_ADVANCED_MISC )
-    set_capability( "keystore", 100 )
-    set_callbacks( Open, Close )
+    vlc_set_shortname( N_("KWallet keystore") )
+    vlc_set_description( N_("Secrets are stored via KWallet") )
+    vlc_set_subcategory( SUBCAT_ADVANCED_MISC )
+    vlc_set_capability( "keystore", 100 )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end()
 
 /* kwallet is the kde keyring. *

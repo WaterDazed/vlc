@@ -181,30 +181,30 @@ static const char * const present_text[] = {
 #define PRESENT_MODE_LONGTEXT "Which present mode to use when creating the swapchain. If the chosen mode is not supported, VLC will fall back to using FIFO."
 
 vlc_module_begin()
-    set_shortname("libplacebo Vulkan")
-    set_description(N_("Vulkan-based GPU instance"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_capability("libplacebo gpu", 50)
-    set_callback(InitInstance)
-    add_shortcut("pl_vulkan")
-    add_module ("vk-platform", "vulkan platform", "any", PROVIDER_TEXT, PROVIDER_LONGTEXT)
+    vlc_set_shortname("libplacebo Vulkan")
+    vlc_set_description(N_("Vulkan-based GPU instance"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_capability("libplacebo gpu", 50)
+    vlc_set_callback(InitInstance)
+    vlc_add_shortcut("pl_vulkan")
+    vlc_add_module ("vk-platform", "vulkan platform", "any", PROVIDER_TEXT, PROVIDER_LONGTEXT)
 
-    set_section("Device selection", NULL)
-    add_bool("vk-debug", false, DEBUG_TEXT, DEBUG_LONGTEXT)
-    add_string("vk-device", "", DEVICE_TEXT, DEVICE_LONGTEXT)
-    add_bool("vk-allow-sw", pl_vulkan_default_params.allow_software,
+    vlc_set_section("Device selection", NULL)
+    vlc_add_bool("vk-debug", false, DEBUG_TEXT, DEBUG_LONGTEXT)
+    vlc_add_string("vk-device", "", DEVICE_TEXT, DEVICE_LONGTEXT)
+    vlc_add_bool("vk-allow-sw", pl_vulkan_default_params.allow_software,
             ALLOWSW_TEXT, ALLOWSW_LONGTEXT)
 
-    set_section("Performance tuning", NULL)
-    add_bool("vk-async-xfer", pl_vulkan_default_params.async_transfer,
+    vlc_set_section("Performance tuning", NULL)
+    vlc_add_bool("vk-async-xfer", pl_vulkan_default_params.async_transfer,
             ASYNC_XFER_TEXT, ASYNC_XFER_LONGTEXT)
-    add_bool("vk-async-comp", pl_vulkan_default_params.async_compute,
+    vlc_add_bool("vk-async-comp", pl_vulkan_default_params.async_compute,
             ASYNC_COMP_TEXT, ASYNC_COMP_LONGTEXT)
-    add_integer_with_range("vk-queue-count", pl_vulkan_default_params.queue_count,
+    vlc_add_integer_with_range("vk-queue-count", pl_vulkan_default_params.queue_count,
             1, 8, QUEUE_COUNT_TEXT, QUEUE_COUNT_LONGTEXT)
-    add_integer_with_range("vk-queue-depth", 3,
+    vlc_add_integer_with_range("vk-queue-depth", 3,
             1, 8, QUEUE_DEPTH_TEXT, QUEUE_DEPTH_LONGTEXT)
-    add_integer("vk-present-mode", VK_PRESENT_MODE_FIFO_KHR,
+    vlc_add_integer("vk-present-mode", VK_PRESENT_MODE_FIFO_KHR,
             PRESENT_MODE_TEXT, PRESENT_MODE_LONGTEXT)
-            change_integer_list(present_values, present_text)
+            vlc_change_integer_list(present_values, present_text)
 vlc_module_end()

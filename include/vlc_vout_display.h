@@ -216,13 +216,13 @@ typedef int (*vout_display_open_cb)(vout_display_t *vd,
                                     video_format_t *fmtp,
                                     vlc_video_context *context);
 
-#define set_callback_display(activate, priority) \
+#define vlc_set_callback_display(activate, priority) \
     { \
         vout_display_open_cb open__ = activate; \
         (void) open__; \
-        set_callback(activate) \
+        vlc_set_callback(activate) \
     } \
-    set_capability( "vout display", priority )
+    vlc_set_capability( "vout display", priority )
 
 struct vlc_display_operations
 {

@@ -45,16 +45,16 @@ static int  PacketizerOpen( vlc_object_t * );
 static void DecoderClose  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("Philips OGT (SVCD subtitle) decoder") )
-    set_shortname( N_("SVCD subtitles") )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_capability( "spu decoder", 50 )
-    set_callbacks( DecoderOpen, DecoderClose )
+    vlc_set_description( N_("Philips OGT (SVCD subtitle) decoder") )
+    vlc_set_shortname( N_("SVCD subtitles") )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_capability( "spu decoder", 50 )
+    vlc_set_callbacks( DecoderOpen, DecoderClose )
 
-    add_submodule ()
-    set_description( N_("Philips OGT (SVCD subtitle) packetizer") )
-    set_capability( "packetizer", 50 )
-    set_callbacks( PacketizerOpen, DecoderClose )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Philips OGT (SVCD subtitle) packetizer") )
+    vlc_set_capability( "packetizer", 50 )
+    vlc_set_callbacks( PacketizerOpen, DecoderClose )
 vlc_module_end ()
 
 /*****************************************************************************

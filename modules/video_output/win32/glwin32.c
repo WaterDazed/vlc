@@ -47,11 +47,11 @@ static int  Open (vout_display_t *,
 static void Close(vout_display_t *);
 
 vlc_module_begin()
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_shortname("OpenGL")
-    set_description(N_("OpenGL video output for Windows"))
-    add_shortcut("glwin32", "opengl")
-    set_callback_display(Open, 275)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_shortname("OpenGL")
+    vlc_set_description(N_("OpenGL video output for Windows"))
+    vlc_add_shortcut("glwin32", "opengl")
+    vlc_set_callback_display(Open, 275)
     add_glopts()
 
     add_opengl_submodule_renderer()

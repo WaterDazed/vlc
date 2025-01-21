@@ -45,18 +45,18 @@ static int OpenStats(vout_display_t *vd,
                      video_format_t *fmtp, vlc_video_context *context);
 
 vlc_module_begin ()
-    set_shortname( N_("Dummy") )
-    set_description( N_("Dummy video output") )
-    set_callback_display( OpenDummy, 0 )
-    add_shortcut( "dummy" )
+    vlc_set_shortname( N_("Dummy") )
+    vlc_set_description( N_("Dummy video output") )
+    vlc_set_callback_display( OpenDummy, 0 )
+    vlc_add_shortcut( "dummy" )
 
-    set_subcategory( SUBCAT_VIDEO_VOUT )
-    add_string( "dummy-chroma", NULL, CHROMA_TEXT, CHROMA_LONGTEXT )
+    vlc_set_subcategory( SUBCAT_VIDEO_VOUT )
+    vlc_add_string( "dummy-chroma", NULL, CHROMA_TEXT, CHROMA_LONGTEXT )
 
-    add_submodule ()
-    set_description( N_("Statistics video output") )
-    add_shortcut( "stats" )
-    set_callback_display( OpenStats, 0 )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Statistics video output") )
+    vlc_add_shortcut( "stats" )
+    vlc_set_callback_display( OpenStats, 0 )
 vlc_module_end ()
 
 

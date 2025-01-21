@@ -63,21 +63,21 @@
 static int OpenMmalDeinterlace(filter_t *);
 
 vlc_module_begin()
-    set_shortname(N_("MMAL deinterlace"))
-    set_description(N_("MMAL-based deinterlace filter plugin"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_shortname(N_("MMAL deinterlace"))
+    vlc_set_description(N_("MMAL-based deinterlace filter plugin"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
     set_deinterlace_callback(OpenMmalDeinterlace)
-    add_bool(MMAL_DEINTERLACE_NO_QPU, false, MMAL_DEINTERLACE_NO_QPU_TEXT,
+    vlc_add_bool(MMAL_DEINTERLACE_NO_QPU, false, MMAL_DEINTERLACE_NO_QPU_TEXT,
                     MMAL_DEINTERLACE_NO_QPU_LONGTEXT)
-    add_bool(MMAL_DEINTERLACE_ADV, false, MMAL_DEINTERLACE_ADV_TEXT,
+    vlc_add_bool(MMAL_DEINTERLACE_ADV, false, MMAL_DEINTERLACE_ADV_TEXT,
                     MMAL_DEINTERLACE_ADV_LONGTEXT)
-    add_bool(MMAL_DEINTERLACE_FAST, false, MMAL_DEINTERLACE_FAST_TEXT,
+    vlc_add_bool(MMAL_DEINTERLACE_FAST, false, MMAL_DEINTERLACE_FAST_TEXT,
                     MMAL_DEINTERLACE_FAST_LONGTEXT)
-    add_bool(MMAL_DEINTERLACE_NONE, false, MMAL_DEINTERLACE_NONE_TEXT,
+    vlc_add_bool(MMAL_DEINTERLACE_NONE, false, MMAL_DEINTERLACE_NONE_TEXT,
                     MMAL_DEINTERLACE_NONE_LONGTEXT)
-    add_bool(MMAL_DEINTERLACE_HALF_RATE, false, MMAL_DEINTERLACE_HALF_RATE_TEXT,
+    vlc_add_bool(MMAL_DEINTERLACE_HALF_RATE, false, MMAL_DEINTERLACE_HALF_RATE_TEXT,
                     MMAL_DEINTERLACE_HALF_RATE_LONGTEXT)
-    add_bool(MMAL_DEINTERLACE_FULL_RATE, false, MMAL_DEINTERLACE_FULL_RATE_TEXT,
+    vlc_add_bool(MMAL_DEINTERLACE_FULL_RATE, false, MMAL_DEINTERLACE_FULL_RATE_TEXT,
                     MMAL_DEINTERLACE_FULL_RATE_LONGTEXT)
 
 vlc_module_end()
