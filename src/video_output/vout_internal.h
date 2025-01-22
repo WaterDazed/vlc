@@ -185,7 +185,6 @@ void spu_Detach( spu_t * );
 void spu_SetClockDelay(spu_t *spu, size_t channel_id, vlc_tick_t delay);
 void spu_SetClockRate(spu_t *spu, size_t channel_id, float rate);
 void spu_ChangeChannelOrderMargin(spu_t *, enum vlc_vout_order, int);
-void spu_SetHighlight(spu_t *, const vlc_spu_highlight_t*);
 
 /**
  * This function will (un)pause the display of pictures.
@@ -237,7 +236,5 @@ void vout_DisplayTitle( vout_thread_t *p_vout, const char *psz_title );
  * This function will return true if no more pictures are to be displayed.
  */
 bool vout_IsEmpty( vout_thread_t *p_vout );
-
-void vout_SetSpuHighlight( vout_thread_t *p_vout, const vlc_spu_highlight_t * );
 
 #endif // LIBVLC_VOUT_INTERNAL_H

@@ -2834,8 +2834,6 @@ int vlc_input_decoder_SetSpuHighlight( vlc_input_decoder_t *p_owner,
         return VLC_EGENERIC;
     }
 
-    vout_SetSpuHighlight( p_owner->p_vout, spu_hl );
-
     vlc_fifo_Unlock(p_owner->p_fifo);
     return VLC_SUCCESS;
 }

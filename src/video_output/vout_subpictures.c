@@ -95,8 +95,6 @@ struct spu_private_t {
     vlc_mutex_t textlock;
     filter_t *scale_yuvp;                     /**< scaling module for YUVP */
     filter_t *scale;                    /**< scaling module (all but YUVP) */
-    bool crop_highlight;                 /**< force cropping of subpicture */
-    vlc_spu_highlight_t dvd_highlight;      /**< dynamic cropping for DVDs */
 
     int margin;                        /**< force position of a subpicture */
     /**
@@ -1445,28 +1443,6 @@ static vlc_render_subpicture *SpuRenderSubpictures(spu_t *spu,
  *****************************************************************************/
 
 /*****************************************************************************
- * SetHighlights: update subpicture settings
- *****************************************************************************/
-static void SetHighlights(spu_t *spu, const vlc_spu_highlight_t *hl)
-{
-    spu_private_t *sys = spu->p;
-
-    vlc_mutex_assert(&sys->lock);
-
-    sys->crop_highlight = hl != NULL;
-
-    if (hl == NULL)
-        return;
-
-    sys->dvd_highlight = *hl;
-
-    msg_Dbg(spu, "crop: %i,%i,%i,%i",
-            sys->dvd_highlight.x_start, sys->dvd_highlight.y_start,
-            sys->dvd_highlight.x_end - sys->dvd_highlight.x_start,
-            sys->dvd_highlight.y_end - sys->dvd_highlight.y_start);
-}
-
-/*****************************************************************************
  * Buffers allocation callbacks for the filters
  *****************************************************************************/
 
@@ -1707,8 +1683,7 @@ static void * spu_PrerenderThread(void *priv)
         spu_UpdateOriginalSize(spu, p_subpic, &fmtsrc);
 
         subpicture_Update(p_subpic, &fmtsrc, &fmtdst,
-                          p_subpic->b_subtitle ? p_subpic->i_start : vlc_tick_now(),
-                          sys->crop_highlight ? &sys->dvd_highlight : NULL);
+                          p_subpic->b_subtitle ? p_subpic->i_start : vlc_tick_now());
 
         spu_PrerenderText(spu, p_subpic, chroma_list);
 
@@ -1886,8 +1861,6 @@ void spu_Attach(spu_t *spu, input_thread_t *input)
 {
     vlc_mutex_lock(&spu->p->lock);
     if (spu->p->input != input) {
-        SetHighlights(spu, NULL);
-
         spu->p->input = input;
 
         vlc_mutex_lock(&spu->p->textlock);
@@ -2207,8 +2180,7 @@ vlc_render_subpicture *spu_Render(spu_t *spu,
 
         subpicture_Update(subpic,
                           fmt_src, &fmtdst,
-                          subpic->b_subtitle ? render_subtitle_date : system_now,
-                          sys->crop_highlight ? &sys->dvd_highlight : NULL);
+                          subpic->b_subtitle ? render_subtitle_date : system_now);
     }
 
     /* Now order the subpicture array
@@ -2348,11 +2320,4 @@ void spu_ChangeChannelOrderMargin(spu_t *spu, enum vlc_vout_order order,
             vlc_assert_unreachable();
     }
     vlc_mutex_unlock(&sys->lock);
-}
-
-void spu_SetHighlight(spu_t *spu, const vlc_spu_highlight_t *hl)
-{
-    vlc_mutex_lock(&spu->p->lock);
-    SetHighlights(spu, hl);
-    vlc_mutex_unlock(&spu->p->lock);
 }

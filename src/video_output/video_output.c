@@ -381,15 +381,6 @@ void vout_FlushSubpictureChannel( vout_thread_t *vout, size_t channel )
         spu_ClearChannel(sys->spu, channel);
 }
 
-void vout_SetSpuHighlight( vout_thread_t *vout,
-                        const vlc_spu_highlight_t *spu_hl )
-{
-    vout_thread_sys_t *sys = VOUT_THREAD_TO_SYS(vout);
-    assert(!sys->dummy);
-    if (sys->spu)
-        spu_SetHighlight(sys->spu, spu_hl);
-}
-
 /**
  * It gives to the vout a picture to be displayed.
  *
