@@ -95,13 +95,8 @@ struct spu_private_t {
     vlc_mutex_t textlock;
     filter_t *scale_yuvp;                     /**< scaling module for YUVP */
     filter_t *scale;                    /**< scaling module (all but YUVP) */
-    bool crop_highlight;                     /**< force cropping of subpicture */
-    struct {
-        int x;
-        int y;
-        int width;
-        int height;
-    } crop;                                                  /**< cropping */
+    bool crop_highlight;                 /**< force cropping of subpicture */
+    vlc_spu_highlight_t dvd_highlight;      /**< dynamic cropping for DVDs */
 
     int margin;                        /**< force position of a subpicture */
     /**
@@ -112,8 +107,6 @@ struct spu_private_t {
     int secondary_margin;
     int secondary_alignment;       /**< Force alignment for secondary subs */
     subtitles_positions_vector subs_pos;
-
-    video_palette_t palette;              /**< force palette of subpicture */
 
     /* Subpiture filters */
     char           *source_chain_current;
@@ -972,7 +965,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
      * instead of only the right one (being the dvd spu).
      */
     const bool using_palette = region->p_picture->format.i_chroma == VLC_CODEC_YUVP;
-    const bool force_palette = using_palette && sys->palette.i_entries > 0;
+    const bool force_palette = using_palette && sys->crop_highlight;
     const bool crop_requested = (force_palette && sys->crop_highlight) ||
                                 region->i_max_width || region->i_max_height;
     bool changed_palette     = false;
@@ -1058,7 +1051,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
         new_palette.i_entries = 4;
         for (int i = 0; i < 4; i++)
         {
-            memcpy(new_palette.palette[i], &sys->palette.palette[i], 4);
+            memcpy(new_palette.palette[i], &sys->dvd_highlight.palette.palette[i], 4);
             b_opaque |= (new_palette.palette[i][3] > 0x00);
         }
 
@@ -1210,10 +1203,17 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
     if (crop_requested) {
         int crop_x, crop_y, crop_width, crop_height;
         if(sys->crop_highlight){
-            crop_x     = apply_scale ? spu_scale_w(sys->crop.x, scale_size) : sys->crop.x;
-            crop_y     = apply_scale ? spu_scale_h(sys->crop.y, scale_size) : sys->crop.y;
-            crop_width = apply_scale ? spu_scale_w(sys->crop.width,  scale_size) : sys->crop.width;
-            crop_height= apply_scale ? spu_scale_h(sys->crop.height, scale_size) : sys->crop.height;
+            crop_x      = sys->dvd_highlight.x_start;
+            crop_y      = sys->dvd_highlight.y_start;
+            crop_width  = sys->dvd_highlight.x_end - sys->dvd_highlight.x_start;
+            crop_height = sys->dvd_highlight.y_end - sys->dvd_highlight.y_start;
+
+            if (apply_scale) {
+                crop_x      = spu_scale_w(crop_x,      scale_size);
+                crop_y      = spu_scale_h(crop_y,      scale_size);
+                crop_width  = spu_scale_w(crop_width,  scale_size);
+                crop_height = spu_scale_h(crop_height, scale_size);
+            }
         }
         else
         {
@@ -1536,25 +1536,17 @@ static void SetHighlights(spu_t *spu, const vlc_spu_highlight_t *hl)
 
     vlc_mutex_assert(&sys->lock);
 
-    sys->palette.i_entries = 0;
-    sys->crop_highlight = false;
+    sys->crop_highlight = hl != NULL;
 
     if (hl == NULL)
         return;
 
-    sys->crop_highlight = true;
-    sys->crop.x      = hl->x_start;
-    sys->crop.y      = hl->y_start;
-    sys->crop.width  = hl->x_end - sys->crop.x;
-    sys->crop.height = hl->y_end - sys->crop.y;
+    sys->dvd_highlight = *hl;
 
-    if (hl->palette.i_entries == 4) /* XXX: Only DVD palette for now */
-        memcpy(&sys->palette, &hl->palette, sizeof(sys->palette));
-
-    msg_Dbg(spu, "crop: %i,%i,%i,%i, palette forced: %i",
-            sys->crop.x, sys->crop.y,
-            sys->crop.width, sys->crop.height,
-            sys->palette.i_entries);
+    msg_Dbg(spu, "crop: %i,%i,%i,%i",
+            sys->dvd_highlight.x_start, sys->dvd_highlight.y_start,
+            sys->dvd_highlight.x_end - sys->dvd_highlight.x_start,
+            sys->dvd_highlight.y_end - sys->dvd_highlight.y_start);
 }
 
 /*****************************************************************************
