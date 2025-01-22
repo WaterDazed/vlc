@@ -1790,7 +1790,8 @@ static void * spu_PrerenderThread(void *priv)
         spu_UpdateOriginalSize(spu, p_subpic, &fmtsrc);
 
         subpicture_Update(p_subpic, &fmtsrc, &fmtdst,
-                          p_subpic->b_subtitle ? p_subpic->i_start : vlc_tick_now());
+                          p_subpic->b_subtitle ? p_subpic->i_start : vlc_tick_now(),
+                          sys->crop_highlight ? &sys->dvd_highlight : NULL);
 
         spu_PrerenderText(spu, p_subpic, chroma_list);
 
@@ -2289,7 +2290,8 @@ vlc_render_subpicture *spu_Render(spu_t *spu,
 
         subpicture_Update(subpic,
                           fmt_src, &fmtdst,
-                          subpic->b_subtitle ? render_subtitle_date : system_now);
+                          subpic->b_subtitle ? render_subtitle_date : system_now,
+                          sys->crop_highlight ? &sys->dvd_highlight : NULL);
     }
 
     /* Now order the subpicture array

@@ -183,6 +183,8 @@ struct vlc_spu_updater_configuration
     // timestamp when the SPU will be displayed, between i_start and i_stop
     // for subtitles
     vlc_tick_t           pts;
+
+    const struct vlc_spu_highlight_t *dvd_hl;
 };
 
 /**
@@ -313,7 +315,11 @@ VLC_API subpicture_t * subpicture_NewFromPicture( vlc_object_t *, picture_t *, v
  * This function will update the content of a subpicture created with
  * a non NULL subpicture_updater_t.
  */
-VLC_API void subpicture_Update( subpicture_t *, const video_format_t *src, const video_format_t *, vlc_tick_t );
+VLC_API void subpicture_Update( subpicture_t *,
+                                const video_format_t *video_src,
+                                const video_format_t *video_dst,
+                                vlc_tick_t,
+                                const struct vlc_spu_highlight_t * );
 
 /**
  * This function will blend a given subpicture onto a picture.
