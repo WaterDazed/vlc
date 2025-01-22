@@ -1369,9 +1369,6 @@ static void ButtonUpdate( demux_t *p_demux, bool b_mode )
             .x_end = hl.ex,
             .y_start = hl.sy,
             .y_end = hl.ey,
-            .palette = {
-                .i_entries = 4,
-            }
         };
 
         for( unsigned i = 0; i < 4; i++ )
@@ -1379,10 +1376,10 @@ static void ButtonUpdate( demux_t *p_demux, bool b_mode )
             uint32_t i_yuv = p_sys->clut[(hl.palette>>(16+i*4))&0x0f];
             uint8_t i_alpha = ( (hl.palette>>(i*4))&0x0f ) * 0xff / 0xf;
 
-            spu_hl.palette.palette[i][0] = (i_yuv >> 16) & 0xff;
-            spu_hl.palette.palette[i][1] = (i_yuv >> 0) & 0xff;
-            spu_hl.palette.palette[i][2] = (i_yuv >> 8) & 0xff;
-            spu_hl.palette.palette[i][3] = i_alpha;
+            spu_hl.palette[i][0] = (i_yuv >> 16) & 0xff;
+            spu_hl.palette[i][1] = (i_yuv >> 0) & 0xff;
+            spu_hl.palette[i][2] = (i_yuv >> 8) & 0xff;
+            spu_hl.palette[i][3] = i_alpha;
         }
 
         i_ret = es_out_Control( p_sys->p_tf_out, ES_OUT_SPU_SET_HIGHLIGHT,

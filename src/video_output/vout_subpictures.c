@@ -1051,7 +1051,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
         new_palette.i_entries = 4;
         for (int i = 0; i < 4; i++)
         {
-            memcpy(new_palette.palette[i], &sys->dvd_highlight.palette.palette[i], 4);
+            memcpy(new_palette.palette[i], &sys->dvd_highlight.palette[i], 4);
             b_opaque |= (new_palette.palette[i][3] > 0x00);
         }
 

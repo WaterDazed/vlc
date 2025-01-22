@@ -111,7 +111,7 @@ struct vlc_spu_highlight_t
     int x_end;
     int y_start;
     int y_end;
-    video_palette_t palette;
+    uint8_t palette[4][4];                     /**< 4-byte YUVA palette */
 };
 
 /* Subpicture region position flags */
