@@ -34,8 +34,7 @@ typedef struct
 
     block_t *p_block;
 
-    /* We will never overflow */
-    uint8_t buffer[65536];
+    uint8_t *buffer;
 } decoder_sys_t;
 
 /*****************************************************************************
