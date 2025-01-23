@@ -104,7 +104,7 @@ GridView {
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
 
-            font.pointSize: VLCStyle.fontHeight_xxxlarge
+            font.pixelSize: VLCStyle.fontHeight_xxxlarge
 
             font.family: VLCIcons.fontFamily
             color: theme.fg.secondary
