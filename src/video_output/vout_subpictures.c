@@ -960,18 +960,11 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
     video_format_t region_fmt;
     picture_t *region_picture;
 
-    /* Force palette if requested
-     * FIXME b_force_palette and crop_highlight are applied to all subpictures using palette
-     * instead of only the right one (being the dvd spu).
-     */
     const bool using_palette = region->p_picture->format.i_chroma == VLC_CODEC_YUVP;
-    const bool force_palette = using_palette && sys->crop_highlight;
     const bool crop_requested = region->i_max_width || region->i_max_height;
-    bool changed_palette     = false;
 
     /* Compute the margin which is expressed in destination pixel unit
-     * The margin is applied only to subtitle and when no forced crop is
-     * requested (dvd menu).
+     * The margin is applied only to subtitle.
      * Note: Margin will also be applied to secondary subtitles if they exist
      * to ensure that overlap does not occur. */
     int y_margin = 0;
@@ -1040,50 +1033,6 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
         return NULL;
 
     /* */
-    if (force_palette) {
-        video_palette_t *old_palette = region->p_picture->format.p_palette;
-        video_palette_t new_palette;
-        bool b_opaque = false;
-        bool b_old_opaque = false;
-
-        /* We suppose DVD palette here */
-        new_palette.i_entries = 4;
-        for (int i = 0; i < 4; i++)
-        {
-            memcpy(new_palette.palette[i], &sys->dvd_highlight.palette[i], 4);
-            b_opaque |= (new_palette.palette[i][3] > 0x00);
-        }
-
-        if (old_palette->i_entries == new_palette.i_entries) {
-            for (int i = 0; i < old_palette->i_entries; i++)
-            {
-                changed_palette |= memcmp(old_palette->palette[i], new_palette.palette[i], 4);
-                b_old_opaque |= (old_palette->palette[i][3] > 0x00);
-            }
-        } else {
-            changed_palette = true;
-            b_old_opaque = true;
-        }
-
-        /* Reject or patch fully transparent broken palette used for dvd menus */
-        if( !b_opaque )
-        {
-            if( !b_old_opaque )
-            {
-                /* replace with new one and fixed alpha */
-                old_palette->palette[1][3] = 0x80;
-                old_palette->palette[2][3] = 0x80;
-                old_palette->palette[3][3] = 0x80;
-            }
-            /* keep old visible palette */
-            else changed_palette = false;
-        }
-
-        if( changed_palette )
-            *old_palette = new_palette;
-    }
-
-    /* */
     region_fmt = region->fmt;
     region_picture = region->p_picture;
 
@@ -1107,10 +1056,6 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
             /* Check resize changes */
             if (dst_width  != private->fmt.i_visible_width ||
                 dst_height != private->fmt.i_visible_height)
-                is_changed = true;
-
-            /* Check forced palette changes */
-            if (changed_palette)
                 is_changed = true;
 
             if (convert_chroma && private->fmt.i_chroma != chroma_list[0])
