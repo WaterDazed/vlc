@@ -199,6 +199,53 @@ static void DestroyDvdRenderData(subpicture_t * p_spu)
     free(rd);
 }
 
+static bool SetPicturePalette(picture_t *pic, const struct vlc_spu_highlight_t *dvd_hl)
+{
+    bool changed_palette = false;
+    video_palette_t *old_palette = pic->format.p_palette;
+    video_palette_t new_palette;
+    bool b_opaque = false;
+    bool b_old_opaque = false;
+
+    /* We suppose DVD palette here */
+    new_palette.i_entries = 4;
+    for (int i = 0; i < 4; i++)
+    {
+        memcpy(new_palette.palette[i], &dvd_hl->palette[i], 4);
+        b_opaque |= (new_palette.palette[i][3] > 0x00);
+    }
+
+    if (old_palette->i_entries == new_palette.i_entries) {
+        for (int i = 0; i < old_palette->i_entries; i++)
+        {
+            changed_palette |= memcmp(old_palette->palette[i], new_palette.palette[i], 4);
+            b_old_opaque |= (old_palette->palette[i][3] > 0x00);
+        }
+    } else {
+        changed_palette = true;
+        b_old_opaque = true;
+    }
+
+    /* Reject or patch fully transparent broken palette used for dvd menus */
+    if( !b_opaque )
+    {
+        if( !b_old_opaque )
+        {
+            /* replace with new one and fixed alpha */
+            old_palette->palette[1][3] = 0x80;
+            old_palette->palette[2][3] = 0x80;
+            old_palette->palette[3][3] = 0x80;
+        }
+        /* keep old visible palette */
+        else changed_palette = false;
+    }
+
+    if( changed_palette )
+        *old_palette = new_palette;
+
+    return changed_palette;
+}
+
 static void UpdateDvdSpu(subpicture_t * p_spu,
                          const struct vlc_spu_updater_configuration * cfg)
 {
@@ -215,10 +262,12 @@ static void UpdateDvdSpu(subpicture_t * p_spu,
     int i_visible_width  = rd->pic->format.i_visible_width;
     int i_visible_height = rd->pic->format.i_visible_height;
 
-    if ( cfg->dvd_hl
-         && cfg->dvd_hl->x_end > cfg->dvd_hl->x_start
-         && cfg->dvd_hl->y_end > cfg->dvd_hl->y_start )
+    if ( cfg->dvd_hl )
     {
+        const vlc_spu_highlight_t *hl = cfg->dvd_hl;
+
+        if (hl->x_end > hl->x_start && hl->y_end > hl->y_start )
+        {
         // picture area in video coordinates
         const int video_x_start = x_offset;
         const int video_y_start = y_offset;
@@ -226,10 +275,10 @@ static void UpdateDvdSpu(subpicture_t * p_spu,
         const int video_y_end = video_y_start + rd->pic->format.i_y_offset + rd->pic->format.i_visible_height;
 
         // compute the crop coordinates in video dimensions, inside the cropped video
-        const int x_start = __MAX(cfg->dvd_hl->x_start, video_x_start);
-        const int y_start = __MAX(cfg->dvd_hl->y_start, video_y_start);
-        const int x_end   = __MIN(cfg->dvd_hl->x_end,   video_x_end);
-        const int y_end   = __MIN(cfg->dvd_hl->y_end,   video_y_end);
+        const int x_start = __MAX(hl->x_start, video_x_start);
+        const int y_start = __MAX(hl->y_start, video_y_start);
+        const int x_end   = __MIN(hl->x_end,   video_x_end);
+        const int y_end   = __MIN(hl->y_end,   video_y_end);
 
         if (x_end > x_start && y_end > y_start)
         {
@@ -267,6 +316,9 @@ static void UpdateDvdSpu(subpicture_t * p_spu,
                 i_y_offset = 0;
             }
         }
+        }
+
+        SetPicturePalette(region_pic, hl);
     }
 
     subpicture_region_t *p_region = subpicture_region_ForPicture( &region_pic->format, region_pic );
