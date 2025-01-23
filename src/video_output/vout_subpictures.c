@@ -966,8 +966,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
      */
     const bool using_palette = region->p_picture->format.i_chroma == VLC_CODEC_YUVP;
     const bool force_palette = using_palette && sys->crop_highlight;
-    const bool crop_requested = (force_palette && false) ||
-                                region->i_max_width || region->i_max_height;
+    const bool crop_requested = region->i_max_width || region->i_max_height;
     bool changed_palette     = false;
 
     /* Compute the margin which is expressed in destination pixel unit
@@ -1201,27 +1200,10 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
 
     /* Force cropping if requested */
     if (crop_requested) {
-        int crop_x, crop_y, crop_width, crop_height;
-        if(false){
-            crop_x      = sys->dvd_highlight.x_start;
-            crop_y      = sys->dvd_highlight.y_start;
-            crop_width  = sys->dvd_highlight.x_end - sys->dvd_highlight.x_start;
-            crop_height = sys->dvd_highlight.y_end - sys->dvd_highlight.y_start;
-
-            if (apply_scale) {
-                crop_x      = spu_scale_w(crop_x,      scale_size);
-                crop_y      = spu_scale_h(crop_y,      scale_size);
-                crop_width  = spu_scale_w(crop_width,  scale_size);
-                crop_height = spu_scale_h(crop_height, scale_size);
-            }
-        }
-        else
-        {
-            crop_x = x_offset;
-            crop_y = y_offset;
-            crop_width = dst_width;
-            crop_height = dst_height;
-        }
+        int crop_x = x_offset;
+        int crop_y = y_offset;
+        int crop_width = dst_width;
+        int crop_height = dst_height;
 
         if(region->i_max_width && spu_scale_w(region->i_max_width, scale_size) < crop_width)
             crop_width = spu_scale_w(region->i_max_width, scale_size);
