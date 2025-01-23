@@ -1210,10 +1210,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
             crop_height = spu_scale_h(region->i_max_height, scale_size);
 
         /* Find the intersection */
-        if (crop_width <= 0 ||
-            (int)dst_width  < 0 ||
-            crop_height <= 0 ||
-            (int)dst_height < 0) {
+        if (crop_width <= 0 || crop_height <= 0) {
             /* No intersection */
             return NULL;
         }
