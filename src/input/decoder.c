@@ -2824,6 +2824,10 @@ int vlc_input_decoder_SetSpuHighlight( vlc_input_decoder_t *p_owner,
                            SOUT_INPUT_SET_SPU_HIGHLIGHT, spu_hl );
 
     vlc_fifo_Lock(p_owner->p_fifo);
+
+    if ( p_owner->dec.push_highlight )
+        p_owner->dec.push_highlight( &p_owner->dec, spu_hl );
+
     if( !p_owner->p_vout )
     {
         vlc_fifo_Unlock(p_owner->p_fifo);

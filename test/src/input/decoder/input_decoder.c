@@ -158,6 +158,7 @@ static int OpenPacketizer(vlc_object_t *obj)
 
     dec->pf_packetize = PacketizerPacketize;
     dec->pf_get_cc = PacketizerGetCC;
+    dec->push_highlight = NULL;
     dec->pf_flush = NULL;
     es_format_Clean(&dec->fmt_out);
     es_format_Copy(&dec->fmt_out, dec->fmt_in);
@@ -175,6 +176,7 @@ static int OpenDecoder(vlc_object_t *obj)
 
     dec->pf_decode = DecoderDecode;
     dec->pf_get_cc = NULL;
+    dec->push_highlight = NULL;
     dec->pf_flush = DecoderFlush;
     es_format_Clean(&dec->fmt_out);
     es_format_Copy(&dec->fmt_out, dec->fmt_in);
@@ -201,6 +203,7 @@ static int OpenCcDecoder(vlc_object_t *obj)
 
     dec->pf_decode = CcDecoderDecode;
     dec->pf_get_cc = NULL;
+    dec->push_highlight = NULL;
     dec->pf_flush = NULL;
     es_format_Clean(&dec->fmt_out);
     es_format_Copy(&dec->fmt_out, dec->fmt_in);

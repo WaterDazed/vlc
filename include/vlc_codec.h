@@ -190,6 +190,14 @@ struct decoder_t
      * the decoder_QueueCc() function to pass closed captions. */
     vlc_frame_t *       ( * pf_get_cc )      ( decoder_t *, decoder_cc_desc_t * );
 
+
+    /* Set the new DVD highlight to use in subpictures.
+     * This callback may be NULL.
+     *
+     * \param hl the highlight with crop and palette, may be NULL
+     */
+    void            ( * push_highlight )( decoder_t *, const struct vlc_spu_highlight_t *hl );
+
     /* Meta data at codec level
      *  The decoder owner set it back to NULL once it has retrieved what it needs.
      *  The decoder owner is responsible of its release except when you overwrite it.
