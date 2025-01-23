@@ -1128,6 +1128,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
             picture_Hold(picture);
 
             /* Convert YUVP to YUVA/RGBA first for better scaling quality */
+            /* and because swscale doesn't understand YUVP */
             if (using_palette) {
                 filter_t *scale_yuvp = sys->scale_yuvp;
 
