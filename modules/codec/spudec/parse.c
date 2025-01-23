@@ -190,6 +190,8 @@ typedef struct
     int i_x;
     int i_y;
     int i_y_top_offset;
+
+    decoder_t *dec;
 } render_data;
 
 static void DestroyDvdRenderData(subpicture_t * p_spu)
@@ -246,12 +248,31 @@ static bool SetPicturePalette(picture_t *pic, const struct vlc_spu_highlight_t *
     return changed_palette;
 }
 
+void PushHighlights( decoder_t *p_dec, const struct vlc_spu_highlight_t *dvd_hl )
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+
+    vlc_mutex_lock( &p_sys->hl_lock );
+    p_sys->has_highlights = dvd_hl != NULL;
+    if ( p_sys->has_highlights )
+    {
+        p_sys->highlights = *dvd_hl;
+
+        msg_Dbg(p_dec, "crop: %i,%i,%i,%i",
+                dvd_hl->x_start, dvd_hl->y_start,
+                dvd_hl->x_end - dvd_hl->x_start,
+                dvd_hl->y_end - dvd_hl->y_start);
+    }
+    vlc_mutex_unlock( &p_sys->hl_lock );
+}
+
 static void UpdateDvdSpu(subpicture_t * p_spu,
                          const struct vlc_spu_updater_configuration * cfg)
 {
     vlc_spu_regions_Clear( &p_spu->regions );
 
     render_data *rd = p_spu->updater.sys;
+    decoder_sys_t *p_sys = rd->dec->p_sys;
     const int x_offset = rd->i_x;
     const int y_offset = rd->i_y + rd->i_y_top_offset;
 
@@ -262,9 +283,10 @@ static void UpdateDvdSpu(subpicture_t * p_spu,
     int i_visible_width  = rd->pic->format.i_visible_width;
     int i_visible_height = rd->pic->format.i_visible_height;
 
-    if ( cfg->dvd_hl )
+    vlc_mutex_lock( &p_sys->hl_lock );
+    if ( p_sys->has_highlights )
     {
-        const vlc_spu_highlight_t *hl = cfg->dvd_hl;
+        const vlc_spu_highlight_t *hl = &p_sys->highlights;
 
         if (hl->x_end > hl->x_start && hl->y_end > hl->y_start )
         {
@@ -320,6 +342,7 @@ static void UpdateDvdSpu(subpicture_t * p_spu,
 
         SetPicturePalette(region_pic, hl);
     }
+    vlc_mutex_unlock( &p_sys->hl_lock );
 
     subpicture_region_t *p_region = subpicture_region_ForPicture( &region_pic->format, region_pic );
     if (cropped)
@@ -1039,6 +1062,7 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
         return VLC_EGENERIC;
     }
 
+    rd->dec = p_dec;
     rd->i_x = p_spu_properties->i_x;
     rd->i_y = p_spu_properties->i_y;
     rd->i_y_top_offset = p_spu_data->i_y_top_offset;

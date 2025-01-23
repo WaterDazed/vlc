@@ -85,6 +85,7 @@ static int OpenCommon( vlc_object_t *p_this, bool b_packetizer )
     p_sys->buffer     = NULL;
     p_sys->i_spu      = 0;
     p_sys->p_block    = NULL;
+    p_sys->has_highlights = false;
 
     if( b_packetizer )
     {
@@ -96,6 +97,8 @@ static int OpenCommon( vlc_object_t *p_this, bool b_packetizer )
     {
         p_dec->fmt_out.i_codec = VLC_CODEC_SPU;
         p_dec->pf_decode    = Decode;
+        p_dec->push_highlight = PushHighlights;
+        vlc_mutex_init( &p_sys->hl_lock );
     }
 
     return VLC_SUCCESS;
