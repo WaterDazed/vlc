@@ -1219,8 +1219,8 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
         }
 
         int x_end, y_end;
-        x_end = __MIN(x_offset + crop_width,  x_offset + (int)dst_width);
-        y_end = __MIN(y_offset + crop_height, y_offset + (int)dst_height);
+        x_end = x_offset + __MIN(crop_width,  (int)dst_width);
+        y_end = y_offset + __MIN(crop_height, (int)dst_height);
 
         region_fmt.i_x_offset       = 0;
         region_fmt.i_y_offset       = 0;
