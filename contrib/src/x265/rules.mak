@@ -20,9 +20,6 @@ ifeq ($(call need_pkg,"x265 >= 0.6"),)
 PKGS_FOUND += x265
 endif
 
-$(TARBALLS)/x265-git.tar.xz:
-	$(call download_git,$(X265_GITURL))
-
 $(TARBALLS)/x265_$(X265_VERSION).tar.gz:
 	$(call download_pkg,$(X265_SNAPURL),x265)
 
