@@ -2,7 +2,7 @@
 
 X264_HASH := 3a21e97bf23676a0bf4616df8bc2207c9fd7b1d3
 X264_VERSION := $(X264_HASH)
-X264_GITURL := https://code.videolan.org/videolan/x264.git
+X264_URL := https://code.videolan.org/videolan/x264/-/archive/$(X264_VERSION)/x264-$(X264_VERSION).tar.gz
 
 ifdef BUILD_ENCODERS
 ifdef GPL
@@ -47,17 +47,15 @@ endif
 endif
 endif
 
-$(TARBALLS)/x264-$(X264_VERSION).tar.xz:
-	$(call download_git,$(X264_GITURL),,$(X264_HASH))
+$(TARBALLS)/x264-$(X264_VERSION).tar.gz:
+	$(call download_pkg,$(X264_URL),x264)
 
 .sum-x26410b: .sum-x264
 	touch $@
 
-.sum-x264: x264-$(X264_VERSION).tar.xz
-	$(call check_githash,$(X264_VERSION))
-	touch $@
+.sum-x264: x264-$(X264_VERSION).tar.gz
 
-x264 x26410b: %: x264-$(X264_VERSION).tar.xz .sum-%
+x264 x26410b: %: x264-$(X264_VERSION).tar.gz .sum-%
 	$(UNPACK)
 	$(call update_autoconfig,.)
 	$(APPLY) $(SRC)/x264/x264-winstore.patch
