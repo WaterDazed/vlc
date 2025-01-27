@@ -38,7 +38,7 @@ CompositorPlatform::CompositorPlatform(qt_intf_t *p_intf, QObject *parent)
 
 }
 
-bool CompositorPlatform::init(bool)
+bool CompositorPlatform::init(bool enforce)
 {
     // TODO: For now only qwindows and qdirect2d
     //       running on Windows 8+, and cocoa
@@ -47,16 +47,22 @@ bool CompositorPlatform::init(bool)
     const QString& platformName = qApp->platformName();
 
 #ifdef _WIN32
-    if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8)
+    if ((QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8) || Q_UNLIKELY(enforce))
     {
         if (platformName == QLatin1String("windows") || platformName == QLatin1String("direct2d"))
+        {
+            m_windowType = VLC_WINDOW_TYPE_HWND;
             return true;
+        }
     }
 #endif
 
 #ifdef __APPLE__
     if (platformName == QLatin1String("cocoa"))
+    {
+        m_windowType = VLC_WINDOW_TYPE_NSOBJECT;
         return true;
+    }
 #endif
 
     return false;
@@ -126,21 +132,33 @@ bool CompositorPlatform::setupVoutWindow(vlc_window_t *p_wnd, VoutDestroyCb dest
 
     commonSetupVoutWindow(p_wnd, destroyCb);
 
+    const auto setup = [&]() -> bool {
 #ifdef __WIN32
-    p_wnd->type = VLC_WINDOW_TYPE_HWND;
-    p_wnd->handle.hwnd = reinterpret_cast<void*>(m_videoWindow->winId());
-
-    return true;
+        if (Q_LIKELY(m_windowType == VLC_WINDOW_TYPE_HWND))
+        {
+            p_wnd->handle.hwnd = reinterpret_cast<void*>(m_videoWindow->winId());
+            return true;
+        }
 #endif
 
 #ifdef __APPLE__
-    p_wnd->type = VLC_WINDOW_TYPE_NSOBJECT;
-    p_wnd->handle.nsobject = reinterpret_cast<id>(m_videoWindow->winId());
-
-    return true;
+        if (Q_LIKELY(m_windowType == VLC_WINDOW_TYPE_NSOBJECT))
+        {
+            p_wnd->handle.nsobject = reinterpret_cast<id>(m_videoWindow->winId());
+            return true;
+        }
 #endif
 
-    vlc_assert_unreachable();
+        return false;
+    };
+
+    if (setup())
+    {
+        p_wnd->type = m_windowType;
+        return true;
+    }
+
+    return false;
 }
 
 QWindow *CompositorPlatform::interfaceMainWindow() const

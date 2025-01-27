@@ -25,6 +25,8 @@
 
 #include <memory>
 
+#include "vlc_window.h"
+
 class QQuickView;
 
 namespace vlc {
@@ -60,6 +62,8 @@ private:
     std::unique_ptr<QWindow> m_rootWindow;
     QPointer<QWindow> m_videoWindow;
     QPointer<QQuickView> m_quickWindow;
+
+    vlc_window_type m_windowType;
 };
 
 }
