@@ -38,7 +38,7 @@ CompositorPlatform::CompositorPlatform(qt_intf_t *p_intf, QObject *parent)
 
 }
 
-bool CompositorPlatform::init()
+bool CompositorPlatform::init(bool)
 {
     // TODO: For now only qwindows and qdirect2d
     //       running on Windows 8+, and cocoa

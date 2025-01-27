@@ -46,7 +46,7 @@ public:
     CompositorWayland(qt_intf_t *p_intf, QObject* parent = nullptr);
     virtual ~CompositorWayland();
 
-    bool init() override;
+    bool init(bool enforce = false) override;
 
     bool makeMainInterface(MainCtx*) override;
 

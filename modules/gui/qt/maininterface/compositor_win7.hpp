@@ -48,7 +48,7 @@ public:
 
     virtual ~CompositorWin7();
 
-    bool init() override;
+    bool init(bool enforce = false) override;
 
     bool makeMainInterface(MainCtx*) override;
     void destroyMainInterface() override;

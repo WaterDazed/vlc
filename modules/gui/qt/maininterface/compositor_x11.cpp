@@ -84,7 +84,7 @@ static bool checkExtensionPresent(qt_intf_t* intf, xcb_connection_t *conn, const
     } while(0)
 
 
-bool CompositorX11::init()
+bool CompositorX11::init(bool)
 {
     if (!qGuiApp->nativeInterface<QNativeInterface::QX11Application>())
     {

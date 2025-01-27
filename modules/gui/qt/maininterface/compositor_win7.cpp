@@ -50,7 +50,7 @@ CompositorWin7::~CompositorWin7()
 {
 }
 
-bool CompositorWin7::init()
+bool CompositorWin7::init(bool)
 {
     {
         const QString& platformName = qApp->platformName();

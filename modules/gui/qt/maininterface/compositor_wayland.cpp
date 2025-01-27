@@ -65,7 +65,7 @@ CompositorWayland::~CompositorWayland()
     }
 }
 
-bool CompositorWayland::init()
+bool CompositorWayland::init(bool)
 {
     QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
 

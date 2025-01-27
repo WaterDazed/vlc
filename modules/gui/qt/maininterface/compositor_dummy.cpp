@@ -33,7 +33,7 @@ CompositorDummy::~CompositorDummy()
 {
 }
 
-bool CompositorDummy::init()
+bool CompositorDummy::init(bool)
 {
     return true;
 }

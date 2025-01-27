@@ -40,7 +40,7 @@ public:
     explicit CompositorX11(qt_intf_t *p_intf, QObject *parent = nullptr);
     virtual ~CompositorX11();
 
-    bool init() override;
+    bool init(bool enforce = false) override;
 
     bool makeMainInterface(MainCtx*) override;
     void destroyMainInterface() override;

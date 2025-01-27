@@ -36,7 +36,7 @@ class CompositorPlatform : public CompositorVideo
 public:
     CompositorPlatform(qt_intf_t *p_intf, QObject* parent = nullptr);
 
-    bool init() override;
+    bool init(bool enforce = false) override;
 
     bool makeMainInterface(MainCtx *) override;
     void destroyMainInterface() override;
