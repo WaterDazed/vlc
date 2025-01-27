@@ -46,6 +46,19 @@
 #include <X11/Xlib.h>
 #define X_ADJUST_DISPLAY
 #endif
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+#if defined(Q_OS_UNIX)
+#define QT_FEATURE_wayland 1
+#else
+#define QT_FEATURE_wayland -1
+#endif
+#endif
+
+#if QT_CONFIG(wayland) && QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+// Don't bother with older versions, use CompositorWayland in that case.
+#define WAYLAND_SUPPORT
+#endif
 #endif
 
 using namespace vlc;
@@ -90,6 +103,14 @@ bool CompositorPlatform::init(bool enforce)
         if (platformName == QLatin1String("wasm"))
         {
             m_windowType = VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL;
+            return true;
+        }
+#endif
+
+#ifdef WAYLAND_SUPPORT
+        if (platformName.startsWith(QLatin1String("wayland")))
+        {
+            m_windowType = VLC_WINDOW_TYPE_WAYLAND;
             return true;
         }
 #endif
@@ -219,7 +240,7 @@ bool CompositorPlatform::setupVoutWindow(vlc_window_t *p_wnd, VoutDestroyCb dest
         }
 #endif
 
-        if (Q_UNLIKELY(m_windowType == VLC_WINDOW_TYPE_XID))
+        if (m_windowType == VLC_WINDOW_TYPE_XID)
         {
             p_wnd->type = VLC_WINDOW_TYPE_XID;
             p_wnd->handle.xid = m_videoWindow->winId();
@@ -231,6 +252,20 @@ bool CompositorPlatform::setupVoutWindow(vlc_window_t *p_wnd, VoutDestroyCb dest
 #endif
             return true;
         }
+
+#ifdef WAYLAND_SUPPORT
+        if (m_windowType == VLC_WINDOW_TYPE_WAYLAND)
+        {
+            assert(qGuiApp);
+            const auto waylandApp = qGuiApp->nativeInterface<QNativeInterface::QWaylandApplication>();
+            assert(waylandApp);
+            const auto waylandWindow = dynamic_cast<QNativeInterface::Private::QWaylandWindow *>(m_videoWindow->handle());
+            assert(waylandWindow);
+
+            p_wnd->handle.wl = waylandWindow->surface();
+            p_wnd->display.wl = waylandApp->display();
+        }
+#endif
 
         return false;
     };
