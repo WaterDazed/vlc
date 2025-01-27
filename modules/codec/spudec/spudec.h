@@ -34,8 +34,11 @@ typedef struct
 
     block_t *p_block;
 
-    /* We will never overflow */
-    uint8_t buffer[65536];
+    uint8_t *buffer;
+
+    vlc_mutex_t         hl_lock;
+    bool                has_highlights;
+    vlc_spu_highlight_t highlights;
 } decoder_sys_t;
 
 /*****************************************************************************
@@ -60,3 +63,4 @@ typedef struct
  * Prototypes
  *****************************************************************************/
 void ParsePacket( decoder_t *, void(*pf_queue)(decoder_t *, subpicture_t *) );
+void PushHighlights( decoder_t *, const struct vlc_spu_highlight_t * );

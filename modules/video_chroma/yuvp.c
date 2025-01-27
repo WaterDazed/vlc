@@ -146,12 +146,12 @@ static void Convert( filter_t *p_filter, picture_t *p_source,
         rgbp.palette[i][a] = p_yuvp->palette[i][3];
     }
 
-    for( unsigned int y = 0; y < p_filter->fmt_in.video.i_height; y++ )
+    for( int y = 0; y < p_source->p->i_visible_lines; y++ )
     {
         const uint8_t *p_line = &p_source->p->p_pixels[y*p_source->p->i_pitch];
         uint8_t *p_pixels = &p_dest->p->p_pixels[y*p_dest->p->i_pitch];
 
-        for( unsigned int x = 0; x < p_filter->fmt_in.video.i_width; x++ )
+        for( int x = 0; x < p_source->p->i_visible_pitch; x++ )
         {
             const int v = p_line[x];
 

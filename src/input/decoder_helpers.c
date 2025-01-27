@@ -43,6 +43,7 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
     p_dec->pf_get_cc = NULL;
     p_dec->pf_packetize = NULL;
     p_dec->pf_flush = NULL;
+    p_dec->push_highlight = NULL;
     p_dec->p_module = NULL;
 
     assert(fmt_in != NULL);

@@ -111,7 +111,7 @@ struct vlc_spu_highlight_t
     int x_end;
     int y_start;
     int y_end;
-    video_palette_t palette;
+    uint8_t palette[4][4];                     /**< 4-byte YUVA palette */
 };
 
 /* Subpicture region position flags */
@@ -313,7 +313,10 @@ VLC_API subpicture_t * subpicture_NewFromPicture( vlc_object_t *, picture_t *, v
  * This function will update the content of a subpicture created with
  * a non NULL subpicture_updater_t.
  */
-VLC_API void subpicture_Update( subpicture_t *, const video_format_t *src, const video_format_t *, vlc_tick_t );
+VLC_API void subpicture_Update( subpicture_t *,
+                                const video_format_t *video_src,
+                                const video_format_t *video_dst,
+                                vlc_tick_t );
 
 /**
  * This function will blend a given subpicture onto a picture.

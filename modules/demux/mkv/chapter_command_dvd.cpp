@@ -687,10 +687,10 @@ void dvd_command_interpretor_c::HandleMousePressed( unsigned x, unsigned y )
             uint8_t i_alpha = (i_palette>>(i*4))&0x0f;
             i_alpha = i_alpha == 0xf ? 0xff : i_alpha << 4;
 
-            spu_hl.palette.palette[i][0] = (i_yuv >> 16) & 0xff;
-            spu_hl.palette.palette[i][1] = (i_yuv >> 0) & 0xff;
-            spu_hl.palette.palette[i][2] = (i_yuv >> 8) & 0xff;
-            spu_hl.palette.palette[i][3] = i_alpha;
+            spu_hl.palette[i][0] = (i_yuv >> 16) & 0xff;
+            spu_hl.palette[i][1] = (i_yuv >> 0) & 0xff;
+            spu_hl.palette[i][2] = (i_yuv >> 8) & 0xff;
+            spu_hl.palette[i][3] = i_alpha;
         }
 
         vm.SetHighlight( spu_hl );

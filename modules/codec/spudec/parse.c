@@ -184,6 +184,182 @@ static void ParsePXCTLI( decoder_t *p_dec, const subpicture_data_t *p_spu_data,
     }
 }
 
+typedef struct
+{
+    picture_t *pic;
+    int i_x;
+    int i_y;
+    int i_y_top_offset;
+
+    decoder_t *dec;
+} render_data;
+
+static void DestroyDvdRenderData(subpicture_t * p_spu)
+{
+    render_data *rd = p_spu->updater.sys;
+    picture_Release(rd->pic);
+    free(rd);
+}
+
+static bool SetPicturePalette(picture_t *pic, const struct vlc_spu_highlight_t *dvd_hl)
+{
+    bool changed_palette = false;
+    video_palette_t *old_palette = pic->format.p_palette;
+    video_palette_t new_palette;
+    bool b_opaque = false;
+    bool b_old_opaque = false;
+
+    /* We suppose DVD palette here */
+    new_palette.i_entries = 4;
+    for (int i = 0; i < 4; i++)
+    {
+        memcpy(new_palette.palette[i], &dvd_hl->palette[i], 4);
+        b_opaque |= (new_palette.palette[i][3] > 0x00);
+    }
+
+    if (old_palette->i_entries == new_palette.i_entries) {
+        for (int i = 0; i < old_palette->i_entries; i++)
+        {
+            changed_palette |= memcmp(old_palette->palette[i], new_palette.palette[i], 4);
+            b_old_opaque |= (old_palette->palette[i][3] > 0x00);
+        }
+    } else {
+        changed_palette = true;
+        b_old_opaque = true;
+    }
+
+    /* Reject or patch fully transparent broken palette used for dvd menus */
+    if( !b_opaque )
+    {
+        if( !b_old_opaque )
+        {
+            /* replace with new one and fixed alpha */
+            old_palette->palette[1][3] = 0x80;
+            old_palette->palette[2][3] = 0x80;
+            old_palette->palette[3][3] = 0x80;
+        }
+        /* keep old visible palette */
+        else changed_palette = false;
+    }
+
+    if( changed_palette )
+        *old_palette = new_palette;
+
+    return changed_palette;
+}
+
+void PushHighlights( decoder_t *p_dec, const struct vlc_spu_highlight_t *dvd_hl )
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+
+    vlc_mutex_lock( &p_sys->hl_lock );
+    p_sys->has_highlights = dvd_hl != NULL;
+    if ( p_sys->has_highlights )
+    {
+        p_sys->highlights = *dvd_hl;
+
+        msg_Dbg(p_dec, "crop: %i,%i,%i,%i",
+                dvd_hl->x_start, dvd_hl->y_start,
+                dvd_hl->x_end - dvd_hl->x_start,
+                dvd_hl->y_end - dvd_hl->y_start);
+    }
+    vlc_mutex_unlock( &p_sys->hl_lock );
+}
+
+static void UpdateDvdSpu(subpicture_t * p_spu,
+                         const struct vlc_spu_updater_configuration * cfg)
+{
+    vlc_spu_regions_Clear( &p_spu->regions );
+
+    render_data *rd = p_spu->updater.sys;
+    decoder_sys_t *p_sys = rd->dec->p_sys;
+    const int x_offset = rd->i_x;
+    const int y_offset = rd->i_y + rd->i_y_top_offset;
+
+    picture_t *region_pic = rd->pic;
+    picture_t *cropped = NULL;
+    int i_x_offset       = rd->pic->format.i_x_offset;
+    int i_y_offset       = rd->pic->format.i_y_offset;
+    int i_visible_width  = rd->pic->format.i_visible_width;
+    int i_visible_height = rd->pic->format.i_visible_height;
+
+    vlc_mutex_lock( &p_sys->hl_lock );
+    if ( p_sys->has_highlights )
+    {
+        const vlc_spu_highlight_t *hl = &p_sys->highlights;
+
+        if (hl->x_end > hl->x_start && hl->y_end > hl->y_start )
+        {
+        // picture area in video coordinates
+        const int video_x_start = x_offset;
+        const int video_y_start = y_offset;
+        const int video_x_end = video_x_start + rd->pic->format.i_x_offset + rd->pic->format.i_visible_width;
+        const int video_y_end = video_y_start + rd->pic->format.i_y_offset + rd->pic->format.i_visible_height;
+
+        // compute the crop coordinates in video dimensions, inside the cropped video
+        const int x_start = __MAX(hl->x_start, video_x_start);
+        const int y_start = __MAX(hl->y_start, video_y_start);
+        const int x_end   = __MIN(hl->x_end,   video_x_end);
+        const int y_end   = __MIN(hl->y_end,   video_y_end);
+
+        if (x_end > x_start && y_end > y_start)
+        {
+            i_x_offset       = x_start - x_offset;
+            i_y_offset       = y_start - y_offset;
+            i_visible_width  = x_end - x_start;
+            i_visible_height = y_end - y_start;
+
+            if ((unsigned)i_visible_width  != rd->pic->format.i_visible_width  ||
+                (unsigned)i_visible_height != rd->pic->format.i_visible_height ||
+                (unsigned)i_x_offset       != rd->pic->format.i_x_offset       ||
+                (unsigned)i_y_offset       != rd->pic->format.i_y_offset)
+            {
+                cropped = picture_Clone( rd->pic );
+                if ( cropped )
+                {
+                    // skip bytes in the YUVP buffer to pretend it is a picture without
+                    // cropping, until we can provide cropped picture formats to the core
+                    region_pic = cropped;
+                    cropped->p[0].p_pixels = &cropped->p[0].p_pixels[i_x_offset + i_y_offset * cropped->p[0].i_pitch];
+                    cropped->p[0].i_lines -= i_y_offset;
+                    cropped->p[0].i_visible_lines -= i_y_offset;
+                    cropped->p[0].i_visible_pitch = i_visible_width;
+                    cropped->format.i_x_offset = 0;
+                    cropped->format.i_y_offset = 0;
+                    cropped->format.i_visible_width = i_visible_width;
+                    cropped->format.i_visible_height = i_visible_height;
+                }
+            }
+
+            if (cropped == NULL)
+            {
+                // region_pic is not shifted
+                i_x_offset = 0;
+                i_y_offset = 0;
+            }
+        }
+        }
+
+        SetPicturePalette(region_pic, hl);
+    }
+    vlc_mutex_unlock( &p_sys->hl_lock );
+
+    subpicture_region_t *p_region = subpicture_region_ForPicture( &region_pic->format, region_pic );
+    if (cropped)
+        picture_Release(cropped);
+    if( !p_region )
+        return;
+
+    p_spu->i_original_picture_width  = cfg->video_src->i_visible_width;
+    p_spu->i_original_picture_height = cfg->video_src->i_visible_height;
+
+    p_region->b_absolute = true;
+    p_region->i_x = x_offset + i_x_offset;
+    p_region->i_y = y_offset + i_y_offset;
+
+    vlc_spu_regions_push(&p_spu->regions, p_region);
+}
+
 /*****************************************************************************
  * OutputPicture:
  *****************************************************************************
@@ -198,7 +374,16 @@ static void OutputPicture( decoder_t *p_dec,
     uint16_t *p_pixeldata;
 
     /* Allocate the subpicture internal data. */
-    p_spu = decoder_NewSubpicture( p_dec, NULL );
+    static const struct vlc_spu_updater_ops spu_ops =
+    {
+        .update = UpdateDvdSpu,
+        .destroy = DestroyDvdRenderData,
+    };
+
+    subpicture_updater_t updater = {
+        .ops = &spu_ops,
+    };
+    p_spu = decoder_NewSubpicture( p_dec, &updater );
     if( !p_spu ) return;
 
     p_spu->i_original_picture_width =
@@ -843,12 +1028,18 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
     video_format_t fmt;
     video_palette_t palette;
     const int width = p_spu_properties->i_width;
-    const int height = p_spu_properties->i_height -
+    const int visible_height = p_spu_properties->i_height -
         p_spu_data->i_y_top_offset - p_spu_data->i_y_bottom_offset;
+    const int height = visible_height
+        + 1; // extra line so the shifted planes doesn't read further than our buffer
+
+    render_data *rd = malloc(sizeof(*rd));
+    if (unlikely(rd == NULL))
+        return VLC_ENOMEM;
 
     /* Create a new subpicture region */
     video_format_Init( &fmt, VLC_CODEC_YUVP );
-    video_format_Setup( &fmt, VLC_CODEC_YUVP, width, height, width, height,
+    video_format_Setup( &fmt, VLC_CODEC_YUVP, width, height, width, visible_height,
                         0, /* 0 means use aspect ratio of background video */
                         1 );
     fmt.p_palette = &palette;
@@ -861,24 +1052,27 @@ static int Render( decoder_t *p_dec, subpicture_t *p_spu,
         fmt.p_palette->palette[i_x][3] = p_spu_data->pi_alpha[i_x] * 0x11;
     }
 
-    subpicture_region_t *p_region = subpicture_region_New( &fmt );
+    rd->pic = picture_NewFromFormat( &fmt );
     fmt.p_palette = NULL;
     video_format_Clean( &fmt );
-    if( !p_region )
+    if( !rd->pic )
     {
-        msg_Err( p_dec, "cannot allocate SPU region" );
+        msg_Err( p_dec, "cannot allocate SPU picture" );
+        free(rd);
         return VLC_EGENERIC;
     }
-    vlc_spu_regions_push(&p_spu->regions, p_region);
 
-    p_region->b_absolute = true;
-    p_region->i_x = p_spu_properties->i_x;
-    p_region->i_y = p_spu_properties->i_y + p_spu_data->i_y_top_offset;
-    p_p = p_region->p_picture->p->p_pixels;
-    i_pitch = p_region->p_picture->p->i_pitch;
+    rd->dec = p_dec;
+    rd->i_x = p_spu_properties->i_x;
+    rd->i_y = p_spu_properties->i_y;
+    rd->i_y_top_offset = p_spu_data->i_y_top_offset;
+    p_spu->updater.sys = rd;
+
+    p_p = rd->pic->p->p_pixels;
+    i_pitch = rd->pic->p->i_pitch;
 
     /* Draw until we reach the bottom of the subtitle */
-    for( i_y = 0; i_y < height * i_pitch; i_y += i_pitch )
+    for( i_y = 0; i_y < visible_height * i_pitch; i_y += i_pitch )
     {
         /* Draw until we reach the end of the line */
         for( i_x = 0 ; i_x < width; i_x += i_len )

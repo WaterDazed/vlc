@@ -95,13 +95,6 @@ struct spu_private_t {
     vlc_mutex_t textlock;
     filter_t *scale_yuvp;                     /**< scaling module for YUVP */
     filter_t *scale;                    /**< scaling module (all but YUVP) */
-    bool crop_highlight;                     /**< force cropping of subpicture */
-    struct {
-        int x;
-        int y;
-        int width;
-        int height;
-    } crop;                                                  /**< cropping */
 
     int margin;                        /**< force position of a subpicture */
     /**
@@ -112,8 +105,6 @@ struct spu_private_t {
     int secondary_margin;
     int secondary_alignment;       /**< Force alignment for secondary subs */
     subtitles_positions_vector subs_pos;
-
-    video_palette_t palette;              /**< force palette of subpicture */
 
     /* Subpiture filters */
     char           *source_chain_current;
@@ -973,19 +964,11 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
     video_format_t region_fmt;
     picture_t *region_picture;
 
-    /* Force palette if requested
-     * FIXME b_force_palette and crop_highlight are applied to all subpictures using palette
-     * instead of only the right one (being the dvd spu).
-     */
     const bool using_palette = region->p_picture->format.i_chroma == VLC_CODEC_YUVP;
-    const bool force_palette = using_palette && sys->palette.i_entries > 0;
-    const bool crop_requested = (force_palette && sys->crop_highlight) ||
-                                region->i_max_width || region->i_max_height;
-    bool changed_palette     = false;
+    const bool crop_requested = region->i_max_width || region->i_max_height;
 
     /* Compute the margin which is expressed in destination pixel unit
-     * The margin is applied only to subtitle and when no forced crop is
-     * requested (dvd menu).
+     * The margin is applied only to subtitle.
      * Note: Margin will also be applied to secondary subtitles if they exist
      * to ensure that overlap does not occur. */
     int y_margin = 0;
@@ -1054,50 +1037,6 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
         return NULL;
 
     /* */
-    if (force_palette) {
-        video_palette_t *old_palette = region->p_picture->format.p_palette;
-        video_palette_t new_palette;
-        bool b_opaque = false;
-        bool b_old_opaque = false;
-
-        /* We suppose DVD palette here */
-        new_palette.i_entries = 4;
-        for (int i = 0; i < 4; i++)
-        {
-            memcpy(new_palette.palette[i], &sys->palette.palette[i], 4);
-            b_opaque |= (new_palette.palette[i][3] > 0x00);
-        }
-
-        if (old_palette->i_entries == new_palette.i_entries) {
-            for (int i = 0; i < old_palette->i_entries; i++)
-            {
-                changed_palette |= memcmp(old_palette->palette[i], new_palette.palette[i], 4);
-                b_old_opaque |= (old_palette->palette[i][3] > 0x00);
-            }
-        } else {
-            changed_palette = true;
-            b_old_opaque = true;
-        }
-
-        /* Reject or patch fully transparent broken palette used for dvd menus */
-        if( !b_opaque )
-        {
-            if( !b_old_opaque )
-            {
-                /* replace with new one and fixed alpha */
-                old_palette->palette[1][3] = 0x80;
-                old_palette->palette[2][3] = 0x80;
-                old_palette->palette[3][3] = 0x80;
-            }
-            /* keep old visible palette */
-            else changed_palette = false;
-        }
-
-        if( changed_palette )
-            *old_palette = new_palette;
-    }
-
-    /* */
     region_fmt = region->fmt;
     region_picture = region->p_picture;
 
@@ -1123,10 +1062,6 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
                 dst_height != private->fmt.i_visible_height)
                 is_changed = true;
 
-            /* Check forced palette changes */
-            if (changed_palette)
-                is_changed = true;
-
             if (convert_chroma && private->fmt.i_chroma != chroma_list[0])
                 is_changed = true;
 
@@ -1142,6 +1077,7 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
             picture_Hold(picture);
 
             /* Convert YUVP to YUVA/RGBA first for better scaling quality */
+            /* and because swscale doesn't understand YUVP */
             if (using_palette) {
                 filter_t *scale_yuvp = sys->scale_yuvp;
 
@@ -1214,20 +1150,8 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
 
     /* Force cropping if requested */
     if (crop_requested) {
-        int crop_x, crop_y, crop_width, crop_height;
-        if(sys->crop_highlight){
-            crop_x     = apply_scale ? spu_scale_w(sys->crop.x, scale_size) : sys->crop.x;
-            crop_y     = apply_scale ? spu_scale_h(sys->crop.y, scale_size) : sys->crop.y;
-            crop_width = apply_scale ? spu_scale_w(sys->crop.width,  scale_size) : sys->crop.width;
-            crop_height= apply_scale ? spu_scale_h(sys->crop.height, scale_size) : sys->crop.height;
-        }
-        else
-        {
-            crop_x = x_offset;
-            crop_y = y_offset;
-            crop_width = dst_width;
-            crop_height = dst_height;
-        }
+        int crop_width = dst_width;
+        int crop_height = dst_height;
 
         if(region->i_max_width && spu_scale_w(region->i_max_width, scale_size) < crop_width)
             crop_width = spu_scale_w(region->i_max_width, scale_size);
@@ -1236,27 +1160,18 @@ static struct subpicture_region_rendered *SpuRenderRegion(spu_t *spu,
             crop_height = spu_scale_h(region->i_max_height, scale_size);
 
         /* Find the intersection */
-        if (crop_x + crop_width <= x_offset ||
-            x_offset + (int)dst_width  < crop_x ||
-            crop_y + crop_height <= y_offset ||
-            y_offset + (int)dst_height < crop_y) {
+        if (crop_width <= 0 || crop_height <= 0) {
             /* No intersection */
             return NULL;
         }
 
-        int x, y, x_end, y_end;
-        x = __MAX(crop_x, x_offset);
-        y = __MAX(crop_y, y_offset);
-        x_end = __MIN(crop_x + crop_width,  x_offset + (int)dst_width);
-        y_end = __MIN(crop_y + crop_height, y_offset + (int)dst_height);
+        region_fmt.i_x_offset       = 0;
+        region_fmt.i_y_offset       = 0;
+        region_fmt.i_visible_width  = __MIN(crop_width,  (int)dst_width);
+        region_fmt.i_visible_height = __MIN(crop_height, (int)dst_height);
 
-        region_fmt.i_x_offset       = x - x_offset;
-        region_fmt.i_y_offset       = y - y_offset;
-        region_fmt.i_visible_width  = x_end - x;
-        region_fmt.i_visible_height = y_end - y;
-
-        x_offset = __MAX(x, 0);
-        y_offset = __MAX(y, 0);
+        x_offset = __MAX(x_offset, 0);
+        y_offset = __MAX(y_offset, 0);
     }
 
     struct subpicture_region_rendered *dst = calloc(1, sizeof(*dst));
@@ -1532,36 +1447,6 @@ static vlc_render_subpicture *SpuRenderSubpictures(spu_t *spu,
 /*****************************************************************************
  * Object variables callbacks
  *****************************************************************************/
-
-/*****************************************************************************
- * SetHighlights: update subpicture settings
- *****************************************************************************/
-static void SetHighlights(spu_t *spu, const vlc_spu_highlight_t *hl)
-{
-    spu_private_t *sys = spu->p;
-
-    vlc_mutex_assert(&sys->lock);
-
-    sys->palette.i_entries = 0;
-    sys->crop_highlight = false;
-
-    if (hl == NULL)
-        return;
-
-    sys->crop_highlight = true;
-    sys->crop.x      = hl->x_start;
-    sys->crop.y      = hl->y_start;
-    sys->crop.width  = hl->x_end - sys->crop.x;
-    sys->crop.height = hl->y_end - sys->crop.y;
-
-    if (hl->palette.i_entries == 4) /* XXX: Only DVD palette for now */
-        memcpy(&sys->palette, &hl->palette, sizeof(sys->palette));
-
-    msg_Dbg(spu, "crop: %i,%i,%i,%i, palette forced: %i",
-            sys->crop.x, sys->crop.y,
-            sys->crop.width, sys->crop.height,
-            sys->palette.i_entries);
-}
 
 /*****************************************************************************
  * Buffers allocation callbacks for the filters
@@ -1982,8 +1867,6 @@ void spu_Attach(spu_t *spu, input_thread_t *input)
 {
     vlc_mutex_lock(&spu->p->lock);
     if (spu->p->input != input) {
-        SetHighlights(spu, NULL);
-
         spu->p->input = input;
 
         vlc_mutex_lock(&spu->p->textlock);
@@ -2447,11 +2330,4 @@ void spu_ChangeChannelOrderMargin(spu_t *spu, enum vlc_vout_order order,
             vlc_assert_unreachable();
     }
     vlc_mutex_unlock(&sys->lock);
-}
-
-void spu_SetHighlight(spu_t *spu, const vlc_spu_highlight_t *hl)
-{
-    vlc_mutex_lock(&spu->p->lock);
-    SetHighlights(spu, hl);
-    vlc_mutex_unlock(&spu->p->lock);
 }
