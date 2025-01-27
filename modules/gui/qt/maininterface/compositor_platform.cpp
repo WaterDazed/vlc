@@ -29,6 +29,18 @@
 #include <objc/runtime.h>
 #endif
 
+#ifdef QT_GUI_PRIVATE
+#include <QtGui/qpa/qplatformnativeinterface.h>
+#include <QtGui/qpa/qplatformwindow.h>
+#include <QtGui/qpa/qplatformwindow_p.h>
+#include <QtGui/qguiapplication_platform.h>
+
+#ifndef X_DISPLAY_MISSING
+#include <X11/Xlib.h>
+#define X_ADJUST_DISPLAY
+#endif
+#endif
+
 using namespace vlc;
 
 
@@ -64,6 +76,15 @@ bool CompositorPlatform::init(bool enforce)
         return true;
     }
 #endif
+
+    if (Q_UNLIKELY(enforce))
+    {
+        if (platformName == QLatin1String("xcb"))
+        {
+            m_windowType = VLC_WINDOW_TYPE_XID;
+            return true;
+        }
+    }
 
     return false;
 }
@@ -148,6 +169,19 @@ bool CompositorPlatform::setupVoutWindow(vlc_window_t *p_wnd, VoutDestroyCb dest
             return true;
         }
 #endif
+
+        if (Q_UNLIKELY(m_windowType == VLC_WINDOW_TYPE_XID))
+        {
+            p_wnd->type = VLC_WINDOW_TYPE_XID;
+            p_wnd->handle.xid = m_videoWindow->winId();
+#ifdef X_ADJUST_DISPLAY
+            assert(qGuiApp);
+            const auto x11App = qGuiApp->nativeInterface<QNativeInterface::QX11Application>();
+            assert(x11App);
+            p_wnd->display.x11 = XDisplayString(x11App->display());
+#endif
+            return true;
+        }
 
         return false;
     };
