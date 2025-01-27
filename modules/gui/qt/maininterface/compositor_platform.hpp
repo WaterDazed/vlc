@@ -53,6 +53,7 @@ public:
 private:
     int windowEnable(const vlc_window_cfg_t *) override;
     void windowDisable() override;
+    void windowDestroy() override;
 
 private slots:
     void onSurfacePositionChanged(const QPointF& position) override;

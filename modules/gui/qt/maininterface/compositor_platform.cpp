@@ -29,6 +29,13 @@
 #include <objc/runtime.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+#if QT_VERSION >= QT_VERSION(6, 5, 0)
+#define EMSCRIPTEN_SUPPORT
+#include <emscripten/html5.h>
+#endif
+#endif
+
 #ifdef QT_GUI_PRIVATE
 #include <QtGui/qpa/qplatformnativeinterface.h>
 #include <QtGui/qpa/qplatformwindow.h>
@@ -79,6 +86,14 @@ bool CompositorPlatform::init(bool enforce)
 
     if (Q_UNLIKELY(enforce))
     {
+#ifdef EMSCRIPTEN_SUPPORT
+        if (platformName == QLatin1String("wasm"))
+        {
+            m_windowType = VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL;
+            return true;
+        }
+#endif
+
         if (platformName == QLatin1String("xcb"))
         {
             m_windowType = VLC_WINDOW_TYPE_XID;
@@ -96,6 +111,11 @@ bool CompositorPlatform::makeMainInterface(MainCtx *mainCtx)
     m_rootWindow = std::make_unique<QWindow>();
 
     m_videoWindow = new QWindow(m_rootWindow.get());
+
+#ifdef EMSCRIPTEN_SUPPORT
+    if (m_windowType == VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL)
+        m_videoWindow->setSurfaceType(QSurface::OpenGLSurface);
+#endif
 
     m_quickWindow = new QQuickView(m_rootWindow.get());
     m_quickWindow->setResizeMode(QQuickView::SizeRootObjectToView);
@@ -166,6 +186,35 @@ bool CompositorPlatform::setupVoutWindow(vlc_window_t *p_wnd, VoutDestroyCb dest
         if (Q_LIKELY(m_windowType == VLC_WINDOW_TYPE_NSOBJECT))
         {
             p_wnd->handle.nsobject = reinterpret_cast<id>(m_videoWindow->winId());
+            return true;
+        }
+#endif
+
+#ifdef EMSCRIPTEN_SUPPORT
+        if (Q_LIKELY(m_windowType == VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL))
+        {
+            // VLC emscripten "window" is actually a OpenGL context, so
+            // providing the DOM canvas is not enough, we need to create
+            // the context. We could use `QOpenGLContext`, but with Qt 6
+            // Qt 6 it does not seem to provide the native handle...
+
+            const WId winId = m_videoWindow->winId();
+
+            // Create OpenGL context, similar to how `QWasmOpenGLContext`
+            // is created:
+            const std::string canvas = "!qtwindow" + std::to_string(winId);
+
+            EmscriptenWebGLContextAttributes attributes;
+            emscripten_webgl_init_context_attributes(&attributes);
+            attributes.explicitSwapControl = 1;
+
+            const EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context(canvas.c_str(), &attributes);
+
+            if (!context)
+                return false;
+
+            p_wnd->handle.em_context = reinterpret_cast<uint32_t>(context);
+
             return true;
         }
 #endif
@@ -242,6 +291,19 @@ int CompositorPlatform::windowEnable(const vlc_window_cfg_t *)
 void CompositorPlatform::windowDisable()
 {
     commonWindowDisable();
+}
+
+void CompositorPlatform::windowDestroy()
+{
+#ifdef EMSCRIPTEN_SUPPORT
+    if (m_wnd && (m_wnd->type == VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL) && m_wnd->handle.em_context)
+    {
+        emscripten_webgl_destroy_context(reinterpret_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(m_wnd->handle.em_context));
+        m_wnd->handle.em_context = 0;
+    }
+#endif
+
+    CompositorVideo::windowDestroy();
 }
 
 void CompositorPlatform::onSurfacePositionChanged(const QPointF &position)
