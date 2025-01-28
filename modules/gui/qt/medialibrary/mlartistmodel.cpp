@@ -21,6 +21,15 @@
 MLArtistModel::MLArtistModel(QObject *parent)
     : MLBaseModel(parent)
 {
+    //Initialize orderedArtistList in alphabetical order
+}
+
+int MLArtistModel::selectedArtistIndex(int artist_id) const
+{
+    const selectedIndex = orderArtistList.value(artist_id);
+    assert( selectedIndex > 0 );
+
+    return selectedIndex;
 }
 
 QVariant MLArtistModel::itemRoleData(MLItem *item, const int role) const

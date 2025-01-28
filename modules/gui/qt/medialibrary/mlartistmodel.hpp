@@ -46,6 +46,8 @@ public:
 
     QHash<int, QByteArray> roleNames() const override;
 
+    Q_INVOKABLE int selectedArtistIndex(int artist_id) const;
+
 protected:
     QVariant itemRoleData(MLItem *item, int role) const override;
 
@@ -62,6 +64,8 @@ private:
         std::vector<std::unique_ptr<MLItem>> load(vlc_medialibrary_t* ml, const vlc_ml_query_params_t* queryParam) const override;
         std::unique_ptr<MLItem> loadItemById(vlc_medialibrary_t* ml, MLItemId itemId) const override;
     };
+
+    static QHash <int, int> orderedArtistList;
 };
 
 #endif // MLARTISTMODEL_HPP

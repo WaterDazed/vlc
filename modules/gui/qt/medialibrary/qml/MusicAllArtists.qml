@@ -97,7 +97,12 @@ MainViewLoader {
                 if (selectionModel.selectedIndexes.length > 1) {
                     artistModel.addAndPlay( selectionModel.selectedIndexes )
                 } else {
-                    currentIndex = index
+                // TODO: Remove the comments once functional
+                // Have a Q_INVOKABLE take the artist_id and return its pos in an 
+                // QHash object having value as the index position when in an arranged
+                // alphabetical order
+                    artist_id = model.data(index, MLArtistModel::ARTIST_ID);
+                    currentIndex = model.selectedArtistIndex(artist_id);
                     requestArtistAlbumView(Qt.TabFocusReason)
                 }
             }
