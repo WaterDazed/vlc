@@ -102,11 +102,11 @@ static int Open (vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_shortname(N_("SDP"))
-    set_description(N_("Session Description Protocol"))
-    set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_set_shortname(N_("SDP"))
+    vlc_set_description(N_("Session Description Protocol"))
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
 
-    set_capability("access", 0)
-    set_callback(Open)
-    add_shortcut("sdp")
+    vlc_set_capability("access", 0)
+    vlc_set_callback(Open)
+    vlc_add_shortcut("sdp")
 vlc_module_end()

@@ -42,8 +42,8 @@ static picture_t *Filter( filter_t *, picture_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("RV32 conversion filter") )
-    set_callback_video_converter( OpenFilter, 1 )
+    vlc_set_description( N_("RV32 conversion filter") )
+    vlc_set_callback_video_converter( OpenFilter, 1 )
 vlc_module_end ()
 
 static const struct vlc_filter_operations filter_ops = {

@@ -39,14 +39,14 @@ static int Open(vlc_object_t *);
 static void Close(vlc_object_t *);
 
 vlc_module_begin ()
-    set_shortname (N_("PulseAudio"))
-    set_description (N_("PulseAudio input"))
-    set_capability ("access", 0)
-    set_subcategory (SUBCAT_INPUT_ACCESS)
-    set_help (HELP_TEXT)
+    vlc_set_shortname (N_("PulseAudio"))
+    vlc_set_description (N_("PulseAudio input"))
+    vlc_set_capability ("access", 0)
+    vlc_set_subcategory (SUBCAT_INPUT_ACCESS)
+    vlc_set_help (HELP_TEXT)
 
-    add_shortcut ("pulse", "pulseaudio", "pa")
-    set_callbacks (Open, Close)
+    vlc_add_shortcut ("pulse", "pulseaudio", "pa")
+    vlc_set_callbacks (Open, Close)
 vlc_module_end ()
 
 typedef struct

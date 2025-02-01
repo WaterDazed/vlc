@@ -331,10 +331,10 @@ static inline NSString* CharsToNSString(char * _Nullable cStr)
 #pragma mark VLC Module descriptor
 
 vlc_module_begin()
-    set_shortname("OSX-Notifications")
-    set_description(N_("macOS notifications plugin"))
-    add_shortcut("growl") // Kept for backwards compatibility
-    set_subcategory(SUBCAT_INTERFACE_CONTROL)
-    set_capability("interface", 0)
-    set_callbacks(Open, Close)
+    vlc_set_shortname("OSX-Notifications")
+    vlc_set_description(N_("macOS notifications plugin"))
+    vlc_add_shortcut("growl") // Kept for backwards compatibility
+    vlc_set_subcategory(SUBCAT_INTERFACE_CONTROL)
+    vlc_set_capability("interface", 0)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end()

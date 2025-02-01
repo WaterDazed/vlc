@@ -72,11 +72,11 @@ static void OpenglSwap (vlc_gl_t *gl);
  */
 vlc_module_begin ()
     /* Will be loaded even without interface module. see voutgl.m */
-    set_shortname ("Mac OS X")
-    set_description (N_("Mac OS X OpenGL video output"))
-    set_subcategory (SUBCAT_VIDEO_VOUT)
-    set_callback_display(Open, 290)
-    add_shortcut ("macosx", "vout_macosx")
+    vlc_set_shortname ("Mac OS X")
+    vlc_set_description (N_("Mac OS X OpenGL video output"))
+    vlc_set_subcategory (SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_display(Open, 290)
+    vlc_add_shortcut ("macosx", "vout_macosx")
     add_glopts ()
 
     add_opengl_submodule_renderer()

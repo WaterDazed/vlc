@@ -47,10 +47,10 @@ static int  Open (vout_display_t *,
 static void Close(vout_display_t *);
 
 vlc_module_begin ()
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_shortname("GDI")
-    set_description(N_("Windows GDI video output"))
-    set_callback_display(Open, 110)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_shortname("GDI")
+    vlc_set_description(N_("Windows GDI video output"))
+    vlc_set_callback_display(Open, 110)
 vlc_module_end ()
 
 

@@ -76,24 +76,24 @@ static void Close( filter_t * );
 #define PREAMP_LONGTEXT N_("Set the global gain in dB (-20 ... 20)." )
 
 vlc_module_begin ()
-    set_description( N_("Equalizer with 10 bands") )
-    set_shortname( N_("Equalizer" ) )
-    set_capability( "audio filter", 0 )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_description( N_("Equalizer with 10 bands") )
+    vlc_set_shortname( N_("Equalizer" ) )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
 
-    add_string( "equalizer-preset", "flat", PRESET_TEXT,
+    vlc_add_string( "equalizer-preset", "flat", PRESET_TEXT,
                 PRESET_LONGTEXT )
-        change_string_list( preset_list, preset_list_text )
-    add_string( "equalizer-bands", NULL, BANDS_TEXT,
+        vlc_change_string_list( preset_list, preset_list_text )
+    vlc_add_string( "equalizer-bands", NULL, BANDS_TEXT,
                 BANDS_LONGTEXT )
-    add_bool( "equalizer-2pass", false, TWOPASS_TEXT,
+    vlc_add_bool( "equalizer-2pass", false, TWOPASS_TEXT,
               TWOPASS_LONGTEXT )
-    add_bool( "equalizer-vlcfreqs", true, VLC_BANDS_TEXT,
+    vlc_add_bool( "equalizer-vlcfreqs", true, VLC_BANDS_TEXT,
               VLC_BANDS_LONGTEXT )
-    add_float( "equalizer-preamp", 12.0f, PREAMP_TEXT,
+    vlc_add_float( "equalizer-preamp", 12.0f, PREAMP_TEXT,
                PREAMP_LONGTEXT )
-    set_callback( Open )
-    add_shortcut( "equalizer" )
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "equalizer" )
 vlc_module_end ()
 
 /*****************************************************************************

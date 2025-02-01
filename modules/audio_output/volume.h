@@ -28,9 +28,9 @@
 #include <vlc_aout.h>
 
 #define add_sw_gain() \
-        add_float(MODULE_STRING"-gain", 1., N_("Software gain"), \
+        vlc_add_float(MODULE_STRING"-gain", 1., N_("Software gain"), \
                   N_("This linear gain will be applied in software.")) \
-             change_float_range(0., 8.)
+             vlc_change_float_range(0., 8.)
 
 static int aout_SoftVolumeSet(audio_output_t *aout, float volume)
 {

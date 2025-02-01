@@ -95,17 +95,17 @@ static const char *const ppsz_pos_descriptions[] =
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Stereo to mono downmixer") )
-    set_capability( "audio filter", 0 )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    set_callback( OpenFilter )
-    set_shortname( "Mono" )
+    vlc_set_description( N_("Stereo to mono downmixer") )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_callback( OpenFilter )
+    vlc_set_shortname( "Mono" )
 
-    add_bool( MONO_CFG "downmix", true, MONO_DOWNMIX_TEXT,
+    vlc_add_bool( MONO_CFG "downmix", true, MONO_DOWNMIX_TEXT,
               MONO_DOWNMIX_LONGTEXT )
-    add_integer( MONO_CFG "channel", -1, MONO_CHANNEL_TEXT,
+    vlc_add_integer( MONO_CFG "channel", -1, MONO_CHANNEL_TEXT,
         MONO_CHANNEL_LONGTEXT )
-        change_integer_list( pi_pos_values, ppsz_pos_descriptions )
+        vlc_change_integer_list( pi_pos_values, ppsz_pos_descriptions )
 
 vlc_module_end ()
 

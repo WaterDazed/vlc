@@ -317,74 +317,74 @@ static const char *const compositor_user[] = {
 
 /**********************************************************************/
 vlc_module_begin ()
-    set_shortname( "Qt" )
-    set_description( N_("Qt interface") )
-    set_subcategory( SUBCAT_INTERFACE_MAIN )
-    set_capability( "interface", 151 )
-    set_callbacks( OpenIntf, Close )
+    vlc_set_shortname( "Qt" )
+    vlc_set_description( N_("Qt interface") )
+    vlc_set_subcategory( SUBCAT_INTERFACE_MAIN )
+    vlc_set_capability( "interface", 151 )
+    vlc_set_callbacks( OpenIntf, Close )
 
-    add_shortcut("qt")
+    vlc_add_shortcut("qt")
 
-    add_bool( "qt-minimal-view", false, QT_MINIMAL_MODE_TEXT,
+    vlc_add_bool( "qt-minimal-view", false, QT_MINIMAL_MODE_TEXT,
               nullptr )
 
-    add_bool( "qt-system-tray", true, SYSTRAY_TEXT, SYSTRAY_LONGTEXT)
+    vlc_add_bool( "qt-system-tray", true, SYSTRAY_TEXT, SYSTRAY_LONGTEXT)
 
-    add_integer( "qt-notification", NOTIFICATION_MINIMIZED,
+    vlc_add_integer( "qt-notification", NOTIFICATION_MINIMIZED,
                  NOTIFICATION_TEXT,
                  NOTIFICATION_LONGTEXT )
-            change_integer_list( i_notification_list, psz_notification_list_text )
+            vlc_change_integer_list( i_notification_list, psz_notification_list_text )
 
-    add_bool( "qt-start-minimized", false, MINIMIZED_TEXT,
+    vlc_add_bool( "qt-start-minimized", false, MINIMIZED_TEXT,
               MINIMIZED_LONGTEXT)
-    add_bool( "qt-pause-minimized", false, QT_PAUSE_MINIMIZED_TEXT,
+    vlc_add_bool( "qt-pause-minimized", false, QT_PAUSE_MINIMIZED_TEXT,
               QT_PAUSE_MINIMIZED_LONGTEXT )
 
-    add_float_with_range( "qt-opacity", 1., 0.1, 1., OPACITY_TEXT,
+    vlc_add_float_with_range( "qt-opacity", 1., 0.1, 1., OPACITY_TEXT,
                           OPACITY_LONGTEXT )
-    add_float_with_range( "qt-fs-opacity", 0.8, 0.1, 1., OPACITY_FS_TEXT,
+    vlc_add_float_with_range( "qt-fs-opacity", 0.8, 0.1, 1., OPACITY_FS_TEXT,
                           OPACITY_FS_LONGTEXT )
 
     //qt-interface-scale is stored in Qt config file
     //this option is here to force an initial scale factor at startup
-    add_float_with_range( "qt-interface-scale", -1.0, 0.3, 3.0, INTERFACE_SCALE_TEXT,
+    vlc_add_float_with_range( "qt-interface-scale", -1.0, 0.3, 3.0, INTERFACE_SCALE_TEXT,
                           nullptr )
-        change_volatile()
+        vlc_change_volatile()
 
-    add_bool( "qt-video-autoresize", true, KEEPSIZE_TEXT,
+    vlc_add_bool( "qt-video-autoresize", true, KEEPSIZE_TEXT,
               KEEPSIZE_LONGTEXT )
-    add_bool( "qt-name-in-title", true, TITLE_TEXT,
+    vlc_add_bool( "qt-name-in-title", true, TITLE_TEXT,
               TITLE_LONGTEXT )
-    add_bool( "qt-fs-controller", true, QT_FULLSCREEN_TEXT,
+    vlc_add_bool( "qt-fs-controller", true, QT_FULLSCREEN_TEXT,
               nullptr )
 
-    add_string("qt-compositor", "auto", QT_COMPOSITOR_TEXT, QT_COMPOSITOR_LONGTEXT)
-            change_string_list(compositor_vlc, compositor_user)
+    vlc_add_string("qt-compositor", "auto", QT_COMPOSITOR_TEXT, QT_COMPOSITOR_LONGTEXT)
+            vlc_change_string_list(compositor_vlc, compositor_user)
 
-    add_obsolete_bool( "qt-recentplay" )
-    add_obsolete_string( "qt-recentplay-filter" )
-    add_obsolete_integer( "qt-continue" )
+    vlc_add_obsolete_bool( "qt-recentplay" )
+    vlc_add_obsolete_string( "qt-recentplay-filter" )
+    vlc_add_obsolete_integer( "qt-continue" )
 
 #ifdef UPDATE_CHECK
-    add_bool( "qt-updates-notif", true, UPDATER_TEXT,
+    vlc_add_bool( "qt-updates-notif", true, UPDATER_TEXT,
               UPDATER_LONGTEXT )
-    add_integer_with_range( "qt-updates-days", 3, 0, 180,
+    vlc_add_integer_with_range( "qt-updates-days", 3, 0, 180,
               UPDATER_DAYS_TEXT, nullptr )
 #endif
 
 #ifdef QT_QML_DEBUG
-    add_string( "qt-qmljsdebugger", NULL,
+    vlc_add_string( "qt-qmljsdebugger", NULL,
                 QT_QML_DEBUG_TEXT, QT_QML_DEBUG_LONGTEXT )
 #endif
 
 #ifdef _WIN32
-    add_bool( "qt-disable-volume-keys"             /* name */,
+    vlc_add_bool( "qt-disable-volume-keys"             /* name */,
               true                                 /* default value */,
               QT_DISABLE_VOLUME_KEYS_TEXT          /* text */,
               QT_DISABLE_VOLUME_KEYS_LONGTEXT      /* longtext */)
 #endif
 
-    add_bool( "qt-titlebar",
+    vlc_add_bool( "qt-titlebar",
 #ifdef _WIN32
               false                              /* use CSD by default on windows */,
 #else
@@ -392,92 +392,92 @@ vlc_module_begin ()
 #endif
               QT_CLIENT_SIDE_DECORATION_TEXT, QT_CLIENT_SIDE_DECORATION_LONGTEXT )
 
-    add_bool( "qt-menubar", false, QT_MENUBAR_TEXT, QT_MENUBAR_LONGTEXT )
+    vlc_add_bool( "qt-menubar", false, QT_MENUBAR_TEXT, QT_MENUBAR_LONGTEXT )
 
-    add_bool( "qt-embedded-open", false, QT_NATIVEOPEN_TEXT,
+    vlc_add_bool( "qt-embedded-open", false, QT_NATIVEOPEN_TEXT,
                nullptr )
 
-    add_bool( "qt-pin-controls", false, QT_PIN_CONTROLS_TEXT, QT_PIN_CONTROLS_LONGTEXT )
+    vlc_add_bool( "qt-pin-controls", false, QT_PIN_CONTROLS_TEXT, QT_PIN_CONTROLS_LONGTEXT )
 
 
-    add_obsolete_bool( "qt-advanced-pref" ) /* since 4.0.0 */
-    add_integer( "qt-initial-prefs-view", 0, INITIAL_PREFS_VIEW_TEXT, INITIAL_PREFS_VIEW_LONGTEXT )
-        change_integer_range( 0, 2 )
-        change_integer_list( initial_prefs_view_list, initial_prefs_view_list_texts )
-    add_bool( "qt-error-dialogs", true, ERROR_TEXT,
+    vlc_add_obsolete_bool( "qt-advanced-pref" ) /* since 4.0.0 */
+    vlc_add_integer( "qt-initial-prefs-view", 0, INITIAL_PREFS_VIEW_TEXT, INITIAL_PREFS_VIEW_LONGTEXT )
+        vlc_change_integer_range( 0, 2 )
+        vlc_change_integer_list( initial_prefs_view_list, initial_prefs_view_list_texts )
+    vlc_add_bool( "qt-error-dialogs", true, ERROR_TEXT,
               nullptr )
 
-    add_obsolete_string( "qt-slider-colours")
+    vlc_add_obsolete_string( "qt-slider-colours")
 
-    add_bool( "qt-privacy-ask", true, PRIVACY_TEXT, nullptr )
-        change_private ()
+    vlc_add_bool( "qt-privacy-ask", true, PRIVACY_TEXT, nullptr )
+        vlc_change_private ()
 
-    add_integer( "qt-fullscreen-screennumber", -1, FULLSCREEN_NUMBER_TEXT,
+    vlc_add_integer( "qt-fullscreen-screennumber", -1, FULLSCREEN_NUMBER_TEXT,
                FULLSCREEN_NUMBER_LONGTEXT )
 
-    add_bool( "qt-autoload-extensions", true,
+    vlc_add_bool( "qt-autoload-extensions", true,
               QT_AUTOLOAD_EXTENSIONS_TEXT, QT_AUTOLOAD_EXTENSIONS_LONGTEXT )
 
-    add_bool( "qt-bgcone", true, QT_BGCONE_TEXT, QT_BGCONE_LONGTEXT )
-    add_bool( "qt-bgcone-expands", false, QT_BGCONE_EXPANDS_TEXT,
+    vlc_add_bool( "qt-bgcone", true, QT_BGCONE_TEXT, QT_BGCONE_LONGTEXT )
+    vlc_add_bool( "qt-bgcone-expands", false, QT_BGCONE_EXPANDS_TEXT,
               QT_BGCONE_EXPANDS_LONGTEXT )
 
-    add_bool( "qt-icon-change", true, ICONCHANGE_TEXT, ICONCHANGE_LONGTEXT )
+    vlc_add_bool( "qt-icon-change", true, ICONCHANGE_TEXT, ICONCHANGE_LONGTEXT )
 
-    add_integer_with_range( "qt-max-volume", 125, 60, 300, VOLUME_MAX_TEXT, nullptr)
+    vlc_add_integer_with_range( "qt-max-volume", 125, 60, 300, VOLUME_MAX_TEXT, nullptr)
 
-    add_integer_with_range( "qt-fs-sensitivity", 3, 0, 4000, FULLSCREEN_CONTROL_PIXELS,
+    vlc_add_integer_with_range( "qt-fs-sensitivity", 3, 0, 4000, FULLSCREEN_CONTROL_PIXELS,
             nullptr)
 
-    add_integer( "qt-auto-raise", MainCtx::RAISE_VIDEO, AUTORAISE_ON_PLAYBACK_TEXT,
+    vlc_add_integer( "qt-auto-raise", MainCtx::RAISE_VIDEO, AUTORAISE_ON_PLAYBACK_TEXT,
                  AUTORAISE_ON_PLAYBACK_LONGTEXT )
-            change_integer_list( i_raise_list, psz_raise_list_text )
+            vlc_change_integer_list( i_raise_list, psz_raise_list_text )
 
-    add_bool( "qt-smooth-scrolling", true, SMOOTH_SCROLLING_TEXT, SMOOTH_SCROLLING_LONGTEXT )
+    vlc_add_bool( "qt-smooth-scrolling", true, SMOOTH_SCROLLING_TEXT, SMOOTH_SCROLLING_LONGTEXT )
 
-    add_bool( "qt-verbose", false, VERBOSE_TEXT, VERBOSE_LONGTEXT )
+    vlc_add_bool( "qt-verbose", false, VERBOSE_TEXT, VERBOSE_LONGTEXT )
 
-    add_bool( "qt-close-to-system-tray", false, HIDE_WINDOW_ON_CLOSE_TEXT, HIDE_WINDOW_ON_CLOSE_LONGTEXT )
+    vlc_add_bool( "qt-close-to-system-tray", false, HIDE_WINDOW_ON_CLOSE_TEXT, HIDE_WINDOW_ON_CLOSE_LONGTEXT )
 
-    add_bool( "qt-backdrop-blur", true, BACKDROP_BLUR_FILTER_TEXT, BACKDROP_BLUR_FILTER_LONGTEXT )
+    vlc_add_bool( "qt-backdrop-blur", true, BACKDROP_BLUR_FILTER_TEXT, BACKDROP_BLUR_FILTER_LONGTEXT )
 
-    add_float_with_range( "qt-safe-area", 0, 0, 100.0, SAFE_AREA_TEXT, SAFE_AREA_LONGTEXT )
+    vlc_add_float_with_range( "qt-safe-area", 0, 0, 100.0, SAFE_AREA_TEXT, SAFE_AREA_LONGTEXT )
 
-    cannot_unload_broken_library()
+    vlc_cannot_unload_broken_library()
 
-    add_submodule ()
-        set_description( "Dialogs provider" )
-        set_capability( "dialogs provider", 51 )
+    vlc_add_submodule ()
+        vlc_set_description( "Dialogs provider" )
+        vlc_set_capability( "dialogs provider", 51 )
 
-        set_callbacks( OpenDialogs, Close )
+        vlc_set_callbacks( OpenDialogs, Close )
 
-    add_submodule ()
-        set_capability( "vout window", 0 )
-        set_callback( WindowOpen )
+    vlc_add_submodule ()
+        vlc_set_capability( "vout window", 0 )
+        vlc_set_callback( WindowOpen )
 
 #ifdef _WIN32
-    add_submodule ()
-        set_capability( "qt theme provider", 10 )
-        set_callback( WindowsThemeProviderOpen )
-        set_description( "Qt Windows theme" )
-        add_shortcut("qt-themeprovider-windows")
+    vlc_add_submodule ()
+        vlc_set_capability( "qt theme provider", 10 )
+        vlc_set_callback( WindowsThemeProviderOpen )
+        vlc_set_description( "Qt Windows theme" )
+        vlc_add_shortcut("qt-themeprovider-windows")
 
-    add_submodule ()
-        add_shortcut( "QtWin32WindowEffects" )
-        set_description( "Provides window effects on Windows." )
-        set_capability( "qtwindoweffects", 10 )
-        set_callback( QtWin32WindowEffectsOpen )
-    add_submodule ()
-        add_shortcut( "QtWin32CSDMenu" )
-        set_description( "Provides csd menu on Windows." )
-        set_capability( "qtcsdmenu", 10 )
-        set_callback( QtWin32CSDMenuOpen )
+    vlc_add_submodule ()
+        vlc_add_shortcut( "QtWin32WindowEffects" )
+        vlc_set_description( "Provides window effects on Windows." )
+        vlc_set_capability( "qtwindoweffects", 10 )
+        vlc_set_callback( QtWin32WindowEffectsOpen )
+    vlc_add_submodule ()
+        vlc_add_shortcut( "QtWin32CSDMenu" )
+        vlc_set_description( "Provides csd menu on Windows." )
+        vlc_set_capability( "qtcsdmenu", 10 )
+        vlc_set_callback( QtWin32CSDMenuOpen )
 #endif
-    add_submodule()
-        set_capability("qt theme provider", 1)
-        set_description( "Qt basic system theme" )
-        set_callback( SystemPaletteThemeProviderOpen )
-        add_shortcut("qt-themeprovider-systempalette")
+    vlc_add_submodule()
+        vlc_set_capability("qt theme provider", 1)
+        vlc_set_description( "Qt basic system theme" )
+        vlc_set_callback( SystemPaletteThemeProviderOpen )
+        vlc_add_shortcut("qt-themeprovider-systempalette")
 vlc_module_end ()
 
 /*****************************************/

@@ -67,16 +67,16 @@ static int RotateCallback( vlc_object_t *p_this, char const *psz_var,
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Rotate video filter") )
-    set_shortname( N_( "Rotate" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Rotate video filter") )
+    vlc_set_shortname( N_( "Rotate" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_float( FILTER_PREFIX "angle", 30., ANGLE_TEXT, ANGLE_LONGTEXT )
-    add_bool( FILTER_PREFIX "use-motion", false, MOTION_TEXT,
+    vlc_add_float( FILTER_PREFIX "angle", 30., ANGLE_TEXT, ANGLE_LONGTEXT )
+    vlc_add_bool( FILTER_PREFIX "use-motion", false, MOTION_TEXT,
               MOTION_LONGTEXT )
 
-    add_shortcut( "rotate" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "rotate" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

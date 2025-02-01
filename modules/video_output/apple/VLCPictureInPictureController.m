@@ -341,8 +341,8 @@ static int OpenController( pip_controller_t *pipcontroller )
  * Module descriptor
  */
 vlc_module_begin()
-    set_description(N_("Picture in picture controller for Apple systems"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_callback(OpenController)
-    set_capability("pictureinpicture", 100)
+    vlc_set_description(N_("Picture in picture controller for Apple systems"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_callback(OpenController)
+    vlc_set_capability("pictureinpicture", 100)
 vlc_module_end()

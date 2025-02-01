@@ -48,12 +48,12 @@ VIDEO_FILTER_WRAPPER(Filter)
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Ripple video filter") )
-    set_shortname( N_( "Ripple" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Ripple video filter") )
+    vlc_set_shortname( N_( "Ripple" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_shortcut( "ripple" )
-    set_callback_video_filter( Create )
+    vlc_add_shortcut( "ripple" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -141,8 +141,8 @@ Open(struct vlc_egl_display *display)
 }
 
 vlc_module_begin()
-    set_description("EGL GBM display")
-    set_capability("egl display", 2)
-    set_callback(Open)
-    add_shortcut("egl_display_gbm")
+    vlc_set_description("EGL GBM display")
+    vlc_set_capability("egl display", 2)
+    vlc_set_callback(Open)
+    vlc_add_shortcut("egl_display_gbm")
 vlc_module_end()

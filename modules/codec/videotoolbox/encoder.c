@@ -392,9 +392,9 @@ error_session:
 #pragma mark - Module descriptor
 
 vlc_module_begin()
-    set_section(N_("Encoding") , NULL)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
-    set_description(N_("VideoToolbox video encoder"))
-    set_capability("video encoder", 1000)
-    set_callback(OpenEncoder)
+    vlc_set_section(N_("Encoding") , NULL)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_description(N_("VideoToolbox video encoder"))
+    vlc_set_capability("video encoder", 1000)
+    vlc_set_callback(OpenEncoder)
 vlc_module_end()

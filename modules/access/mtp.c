@@ -53,12 +53,12 @@ static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 
 vlc_module_begin()
-    set_description( N_("MTP input") )
-    set_shortname( N_("MTP") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    set_capability( "access", 0 )
-    add_shortcut( "mtp" )
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("MTP input") )
+    vlc_set_shortname( N_("MTP") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "mtp" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end()
 
 /*****************************************************************************

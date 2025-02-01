@@ -57,14 +57,14 @@ static int  Open  ( vlc_object_t * );
 static void Close ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_description( N_("ASF/WMV demuxer") )
-    set_capability( "demux", 200 )
-    set_callbacks( Open, Close )
-    add_shortcut( "asf", "wmv" )
-    add_file_extension("asf")
-    add_file_extension("wma")
-    add_file_extension("wmv")
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_description( N_("ASF/WMV demuxer") )
+    vlc_set_capability( "demux", 200 )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "asf", "wmv" )
+    vlc_add_file_extension("asf")
+    vlc_add_file_extension("wma")
+    vlc_add_file_extension("wmv")
 vlc_module_end ()
 
 

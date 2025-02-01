@@ -80,34 +80,34 @@ static int  Open ( filter_t * );
 static void Close( filter_t * );
 
 vlc_module_begin()
-    set_description( N_("Puzzle interactive game video filter") )
-    set_shortname( N_( "Puzzle" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Puzzle interactive game video filter") )
+    vlc_set_shortname( N_( "Puzzle" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_integer_with_range( CFG_PREFIX "rows", 4, 2, 42,
+    vlc_add_integer_with_range( CFG_PREFIX "rows", 4, 2, 42,
                             ROWS_TEXT, NULL )
-    add_integer_with_range( CFG_PREFIX "cols", 4, 2, 42,
+    vlc_add_integer_with_range( CFG_PREFIX "cols", 4, 2, 42,
                             COLS_TEXT, NULL )
-    add_integer_with_range( CFG_PREFIX "border", 3, 0, 40,
+    vlc_add_integer_with_range( CFG_PREFIX "border", 3, 0, 40,
               BORDER_TEXT, BORDER_LONGTEXT )
-    add_bool( CFG_PREFIX "preview", false,
+    vlc_add_bool( CFG_PREFIX "preview", false,
               PREVIEW_TEXT, PREVIEW_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "preview-size", 15, 0, 100,
+    vlc_add_integer_with_range( CFG_PREFIX "preview-size", 15, 0, 100,
               PREVIEWSIZE_TEXT, PREVIEWSIZE_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "shape-size", 90, 0, 100,
+    vlc_add_integer_with_range( CFG_PREFIX "shape-size", 90, 0, 100,
               SHAPE_SIZE_TEXT, SHAPE_SIZE_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "auto-shuffle", 0, 0, 30000,
+    vlc_add_integer_with_range( CFG_PREFIX "auto-shuffle", 0, 0, 30000,
               AUTO_SHUFFLE_TEXT, AUTO_SHUFFLE_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "auto-solve", 0, 0, 30000,
+    vlc_add_integer_with_range( CFG_PREFIX "auto-solve", 0, 0, 30000,
               AUTO_SOLVE_TEXT, AUTO_SOLVE_LONGTEXT )
-    add_integer( CFG_PREFIX "rotation", 0,
+    vlc_add_integer( CFG_PREFIX "rotation", 0,
               ROTATION_TEXT, ROTATION_LONGTEXT )
-        change_integer_list(pi_rotation_values, ppsz_rotation_descriptions )
-    add_integer( CFG_PREFIX "mode", 0,
+        vlc_change_integer_list(pi_rotation_values, ppsz_rotation_descriptions )
+    vlc_add_integer( CFG_PREFIX "mode", 0,
               MODE_TEXT, MODE_LONGTEXT )
-        change_integer_list(pi_mode_values, ppsz_mode_descriptions )
+        vlc_change_integer_list(pi_mode_values, ppsz_mode_descriptions )
 
-    set_callback_video_filter( Open )
+    vlc_set_callback_video_filter( Open )
 vlc_module_end()
 
 /*****************************************************************************

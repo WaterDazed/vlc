@@ -46,18 +46,18 @@ static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 
 vlc_module_begin ()
-    set_shortname( "DV" )
-    set_description( N_("DV (Digital Video) demuxer") )
-    set_capability( "demux", 0 )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    add_bool( "rawdv-hurry-up", false, HURRYUP_TEXT, HURRYUP_LONGTEXT )
-    set_callbacks( Open, Close )
+    vlc_set_shortname( "DV" )
+    vlc_set_description( N_("DV (Digital Video) demuxer") )
+    vlc_set_capability( "demux", 0 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_add_bool( "rawdv-hurry-up", false, HURRYUP_TEXT, HURRYUP_LONGTEXT )
+    vlc_set_callbacks( Open, Close )
     /* It isn't easy to recognize a raw DV stream. The chances that we'll
      * mistake a stream from another type for a raw DV stream are too high, so
      * we'll rely on the file extension to trigger this demux. Alternatively,
      * it is possible to force this demux. */
-    add_shortcut( "rawdv" )
-    add_file_extension("dv")
+    vlc_add_shortcut( "rawdv" )
+    vlc_add_file_extension("dv")
 vlc_module_end ()
 
 

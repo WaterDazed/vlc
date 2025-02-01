@@ -333,17 +333,17 @@ static void make_report( amt_igmpv3_membership_report_t *mr );
 static void make_ip_header( amt_ip_alert_t *p_ipHead );
 
 vlc_module_begin ()
-    set_shortname( N_("AMT" ) )
-    set_description( N_("AMT input") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_shortname( N_("AMT" ) )
+    vlc_set_description( N_("AMT input") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_integer( "amt-native-timeout", 5, TIMEOUT_TEXT, NULL )
-    add_string( "amt-relay", AMT_DEFAULT_RELAY, AMT_RELAY_ADDRESS, AMT_RELAY_ADDR_LONG )
+    vlc_add_integer( "amt-native-timeout", 5, TIMEOUT_TEXT, NULL )
+    vlc_add_string( "amt-relay", AMT_DEFAULT_RELAY, AMT_RELAY_ADDRESS, AMT_RELAY_ADDR_LONG )
 
-    set_capability( "access", 0 )
-    add_shortcut( "amt" )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "amt" )
 
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -76,14 +76,14 @@ static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 
 vlc_module_begin ()
-    set_shortname( N_("DVD without menus") )
-    set_description( N_("DVDRead Input (no menu support)") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    add_integer( "dvdread-angle", 1, ANGLE_TEXT,
+    vlc_set_shortname( N_("DVD without menus") )
+    vlc_set_description( N_("DVDRead Input (no menu support)") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_add_integer( "dvdread-angle", 1, ANGLE_TEXT,
         ANGLE_LONGTEXT )
-    set_capability( "access", 0 )
-    add_shortcut( "dvd", "dvdread", "dvdsimple" )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "dvd", "dvdread", "dvdsimple" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /* how many blocks DVDRead will read in each loop */

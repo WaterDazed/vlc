@@ -66,16 +66,16 @@ static void satip_close(vlc_object_t *);
 #define SATIP_HOST_TEXT N_("Host")
 
 vlc_module_begin()
-    set_shortname("satip")
-    set_description( N_("SAT>IP Receiver Plugin") )
-    set_capability("access", 201)
-    set_callbacks(satip_open, satip_close)
-    set_subcategory(SUBCAT_INPUT_ACCESS)
-    add_obsolete_integer("satip-buffer") /* obsolete since 4.0.0 */
-    add_bool("satip-multicast", false, MULTICAST_TEXT, MULTICAST_LONGTEXT)
-    add_string("satip-host", "", SATIP_HOST_TEXT, NULL)
-    change_safe()
-    add_shortcut("rtsp", "satip")
+    vlc_set_shortname("satip")
+    vlc_set_description( N_("SAT>IP Receiver Plugin") )
+    vlc_set_capability("access", 201)
+    vlc_set_callbacks(satip_open, satip_close)
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_add_obsolete_integer("satip-buffer") /* obsolete since 4.0.0 */
+    vlc_add_bool("satip-multicast", false, MULTICAST_TEXT, MULTICAST_LONGTEXT)
+    vlc_add_string("satip-host", "", SATIP_HOST_TEXT, NULL)
+    vlc_change_safe()
+    vlc_add_shortcut("rtsp", "satip")
 vlc_module_end()
 
 enum rtsp_state {

@@ -484,11 +484,11 @@ static int Open(vlc_window_t *wnd)
 }
 
 vlc_module_begin ()
-    set_shortname("UIView")
-    set_description("iOS UIView vout window provider")
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_capability("vout window", 300)
-    set_callback(Open)
+    vlc_set_shortname("UIView")
+    vlc_set_description("iOS UIView vout window provider")
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_capability("vout window", 300)
+    vlc_set_callback(Open)
 
-    add_shortcut("uiview", "ios")
+    vlc_add_shortcut("uiview", "ios")
 vlc_module_end ()

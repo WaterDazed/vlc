@@ -357,12 +357,12 @@ static void Close( vlc_object_t *p_this )
 VLC_SD_PROBE_HELPER("mtp", N_("MTP devices"), SD_CAT_DEVICES)
 
 vlc_module_begin()
-    set_shortname( "MTP" )
-    set_description( N_( "MTP devices" ) )
-    set_subcategory( SUBCAT_PLAYLIST_SD )
-    set_capability( "services_discovery", 0 )
-    set_callbacks( Open, Close )
-    cannot_unload_broken_library()
+    vlc_set_shortname( "MTP" )
+    vlc_set_description( N_( "MTP devices" ) )
+    vlc_set_subcategory( SUBCAT_PLAYLIST_SD )
+    vlc_set_capability( "services_discovery", 0 )
+    vlc_set_callbacks( Open, Close )
+    vlc_cannot_unload_broken_library()
 
     VLC_SD_PROBE_SUBMODULE
 vlc_module_end()

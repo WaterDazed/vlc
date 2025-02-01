@@ -70,26 +70,26 @@ static void Close  ( vlc_object_t * );
 
 
 vlc_module_begin ()
-    set_description( N_("ASF muxer") )
-    set_subcategory( SUBCAT_SOUT_MUX )
-    set_shortname( "ASF" )
+    vlc_set_description( N_("ASF muxer") )
+    vlc_set_subcategory( SUBCAT_SOUT_MUX )
+    vlc_set_shortname( "ASF" )
 
-    set_capability( "sout mux", 5 )
-    add_shortcut( "asf", "asfh" )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "sout mux", 5 )
+    vlc_add_shortcut( "asf", "asfh" )
+    vlc_set_callbacks( Open, Close )
 
-    add_string( SOUT_CFG_PREFIX "title", "", TITLE_TEXT, TITLE_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "author",   "", AUTHOR_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "title", "", TITLE_TEXT, TITLE_LONGTEXT )
+    vlc_add_string( SOUT_CFG_PREFIX "author",   "", AUTHOR_TEXT,
                                  AUTHOR_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "copyright","", COPYRIGHT_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "copyright","", COPYRIGHT_TEXT,
                                  COPYRIGHT_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "comment",  "", COMMENT_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "comment",  "", COMMENT_TEXT,
                                  COMMENT_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "rating",  "", RATING_TEXT,
+    vlc_add_string( SOUT_CFG_PREFIX "rating",  "", RATING_TEXT,
                                  RATING_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "packet-size", 4096, PACKETSIZE_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "packet-size", 4096, PACKETSIZE_TEXT,
                                  PACKETSIZE_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "bitrate-override", 0, BITRATE_TEXT,
+    vlc_add_integer( SOUT_CFG_PREFIX "bitrate-override", 0, BITRATE_TEXT,
                                  BITRATE_LONGTEXT )
 
 vlc_module_end ()

@@ -42,10 +42,10 @@ static int       ActivateFilter     ( filter_t * );
 static void      Destroy            ( filter_t * );
 
 vlc_module_begin ()
-    set_description( N_("Video filtering using a chain of video filter modules") )
-    set_callback_video_converter( ActivateConverter, 1 )
-    add_submodule ()
-        set_callback_video_filter( ActivateFilter )
+    vlc_set_description( N_("Video filtering using a chain of video filter modules") )
+    vlc_set_callback_video_converter( ActivateConverter, 1 )
+    vlc_add_submodule ()
+        vlc_set_callback_video_filter( ActivateFilter )
 vlc_module_end ()
 
 /*****************************************************************************

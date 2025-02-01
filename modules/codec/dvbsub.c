@@ -130,26 +130,26 @@ static block_t *Encode  ( encoder_t *, subpicture_t * );
 
 vlc_module_begin ()
 #   define DVBSUB_CFG_PREFIX "dvbsub-"
-    set_description( N_("DVB subtitles decoder") )
-    set_shortname( N_("DVB subtitles") )
-    set_capability( "spu decoder", 80 )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("DVB subtitles decoder") )
+    vlc_set_shortname( N_("DVB subtitles") )
+    vlc_set_capability( "spu decoder", 80 )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_callbacks( Open, Close )
 
-    add_integer( DVBSUB_CFG_PREFIX "position", 8, POS_TEXT, POS_LONGTEXT )
-        change_integer_list( pi_pos_values, ppsz_pos_descriptions )
-    add_integer( DVBSUB_CFG_PREFIX "x", -1, POSX_TEXT, POSX_LONGTEXT )
-    add_integer( DVBSUB_CFG_PREFIX "y", -1, POSY_TEXT, POSY_LONGTEXT )
+    vlc_add_integer( DVBSUB_CFG_PREFIX "position", 8, POS_TEXT, POS_LONGTEXT )
+        vlc_change_integer_list( pi_pos_values, ppsz_pos_descriptions )
+    vlc_add_integer( DVBSUB_CFG_PREFIX "x", -1, POSX_TEXT, POSX_LONGTEXT )
+    vlc_add_integer( DVBSUB_CFG_PREFIX "y", -1, POSY_TEXT, POSY_LONGTEXT )
 
 #ifdef ENABLE_SOUT
 #   define ENC_CFG_PREFIX "sout-dvbsub-"
-    add_submodule ()
-    set_description( N_("DVB subtitles encoder") )
-    set_capability( "spu encoder", 100 )
-    set_callback( OpenEncoder )
+    vlc_add_submodule ()
+    vlc_set_description( N_("DVB subtitles encoder") )
+    vlc_set_capability( "spu encoder", 100 )
+    vlc_set_callback( OpenEncoder )
 
-    add_integer( ENC_CFG_PREFIX "x", -1, ENC_POSX_TEXT, ENC_POSX_LONGTEXT )
-    add_integer( ENC_CFG_PREFIX "y", -1, ENC_POSY_TEXT, ENC_POSY_LONGTEXT )
+    vlc_add_integer( ENC_CFG_PREFIX "x", -1, ENC_POSX_TEXT, ENC_POSX_LONGTEXT )
+    vlc_add_integer( ENC_CFG_PREFIX "y", -1, ENC_POSY_TEXT, ENC_POSY_LONGTEXT )
 #endif
 vlc_module_end ()
 

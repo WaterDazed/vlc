@@ -158,18 +158,18 @@ Open(filter_t *filter)
 }
 
 vlc_module_begin()
-    set_shortname("formatcrop")
-    set_description(N_("Video cropping filter"))
-    set_callback_video_filter(Open)
+    vlc_set_shortname("formatcrop")
+    vlc_set_description(N_("Video cropping filter"))
+    vlc_set_callback_video_filter(Open)
 
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
 
-    add_integer_with_range(CFG_PREFIX "top", 0, 0, INT_MAX,
+    vlc_add_integer_with_range(CFG_PREFIX "top", 0, 0, INT_MAX,
                            CROPTOP_TEXT, CROPTOP_LONGTEXT)
-    add_integer_with_range(CFG_PREFIX "bottom", 0, 0, INT_MAX,
+    vlc_add_integer_with_range(CFG_PREFIX "bottom", 0, 0, INT_MAX,
                            CROPBOTTOM_TEXT, CROPTOP_LONGTEXT)
-    add_integer_with_range(CFG_PREFIX "left", 0, 0, INT_MAX,
+    vlc_add_integer_with_range(CFG_PREFIX "left", 0, 0, INT_MAX,
                            CROPLEFT_TEXT, CROPTOP_LONGTEXT)
-    add_integer_with_range(CFG_PREFIX "right", 0, 0, INT_MAX,
+    vlc_add_integer_with_range(CFG_PREFIX "right", 0, 0, INT_MAX,
                            CROPRIGHT_TEXT, CROPTOP_LONGTEXT)
 vlc_module_end()

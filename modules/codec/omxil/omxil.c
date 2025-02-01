@@ -83,23 +83,23 @@ static OMX_ERRORTYPE OmxFillBufferDone( OMX_HANDLETYPE, OMX_PTR,
 
 #define CFG_PREFIX "omxil-"
 vlc_module_begin ()
-    set_description( N_("Audio/Video decoder (using OpenMAX IL)") )
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_section( N_("Decoding") , NULL )
-    set_capability( "video decoder", 80 )
-    set_callbacks( OpenDecoder, CloseGeneric )
+    vlc_set_description( N_("Audio/Video decoder (using OpenMAX IL)") )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_section( N_("Decoding") , NULL )
+    vlc_set_capability( "video decoder", 80 )
+    vlc_set_callbacks( OpenDecoder, CloseGeneric )
 #ifndef __ANDROID__
-    add_submodule()
-    set_capability("audio decoder", 80)
-    set_callbacks(OpenDecoder, CloseGeneric)
+    vlc_add_submodule()
+    vlc_set_capability("audio decoder", 80)
+    vlc_set_callbacks(OpenDecoder, CloseGeneric)
 #endif
 
 #ifdef ENABLE_SOUT
-    add_submodule ()
-    set_section( N_("Encoding") , NULL )
-    set_description( N_("Video encoder (using OpenMAX IL)") )
-    set_capability( "video encoder", 0 )
-    set_callback( OpenEncoder )
+    vlc_add_submodule ()
+    vlc_set_section( N_("Encoding") , NULL )
+    vlc_set_description( N_("Video encoder (using OpenMAX IL)") )
+    vlc_set_capability( "video encoder", 0 )
+    vlc_set_callback( OpenEncoder )
 #endif
 vlc_module_end ()
 

@@ -290,22 +290,22 @@ static int Mouse( filter_t *p_filter,
                                     "Default: Low.")
 
 vlc_module_begin ()
-    set_description( N_("Deinterlacing video filter") )
-    set_shortname( N_("Deinterlace" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Deinterlacing video filter") )
+    vlc_set_shortname( N_("Deinterlace" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_string( FILTER_CFG_PREFIX "mode", "blend", SOUT_MODE_TEXT,
+    vlc_add_string( FILTER_CFG_PREFIX "mode", "blend", SOUT_MODE_TEXT,
                 SOUT_MODE_LONGTEXT )
-        change_string_list( mode_list, mode_list_text )
-        change_safe ()
-    add_integer( FILTER_CFG_PREFIX "phosphor-chroma", 2, PHOSPHOR_CHROMA_TEXT,
+        vlc_change_string_list( mode_list, mode_list_text )
+        vlc_change_safe ()
+    vlc_add_integer( FILTER_CFG_PREFIX "phosphor-chroma", 2, PHOSPHOR_CHROMA_TEXT,
                 PHOSPHOR_CHROMA_LONGTEXT )
-        change_integer_list( phosphor_chroma_list, phosphor_chroma_list_text )
-        change_safe ()
-    add_integer( FILTER_CFG_PREFIX "phosphor-dimmer", 2, PHOSPHOR_DIMMER_TEXT,
+        vlc_change_integer_list( phosphor_chroma_list, phosphor_chroma_list_text )
+        vlc_change_safe ()
+    vlc_add_integer( FILTER_CFG_PREFIX "phosphor-dimmer", 2, PHOSPHOR_DIMMER_TEXT,
                 PHOSPHOR_DIMMER_LONGTEXT )
-        change_integer_list( phosphor_dimmer_list, phosphor_dimmer_list_text )
-        change_safe ()
+        vlc_change_integer_list( phosphor_dimmer_list, phosphor_dimmer_list_text )
+        vlc_change_safe ()
     set_deinterlace_callback( Open )
 vlc_module_end ()
 

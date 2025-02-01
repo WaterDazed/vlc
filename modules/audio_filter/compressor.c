@@ -173,27 +173,27 @@ static int MakeupGainCallback   ( vlc_object_t *, char const *, vlc_value_t,
 #define MAKEUP_GAIN_LONGTEXT N_( "Set the makeup gain in dB (0 ... 24)." )
 
 vlc_module_begin()
-    set_shortname( N_("Compressor") )
-    set_description( N_("Dynamic range compressor") )
-    set_capability( "audio filter", 0 )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_shortname( N_("Compressor") )
+    vlc_set_description( N_("Dynamic range compressor") )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
 
-    add_float_with_range( "compressor-rms-peak", 0.2, 0.0, 1.0,
+    vlc_add_float_with_range( "compressor-rms-peak", 0.2, 0.0, 1.0,
                RMS_PEAK_TEXT, RMS_PEAK_LONGTEXT )
-    add_float_with_range( "compressor-attack", 25.0, 1.5, 400.0,
+    vlc_add_float_with_range( "compressor-attack", 25.0, 1.5, 400.0,
                ATTACK_TEXT, ATTACK_LONGTEXT )
-    add_float_with_range( "compressor-release", 100.0, 2.0, 800.0,
+    vlc_add_float_with_range( "compressor-release", 100.0, 2.0, 800.0,
                RELEASE_TEXT, RELEASE_LONGTEXT )
-    add_float_with_range( "compressor-threshold", -11.0, -30.0, 0.0,
+    vlc_add_float_with_range( "compressor-threshold", -11.0, -30.0, 0.0,
                THRESHOLD_TEXT, THRESHOLD_LONGTEXT )
-    add_float_with_range( "compressor-ratio", 4.0, 1.0, 20.0,
+    vlc_add_float_with_range( "compressor-ratio", 4.0, 1.0, 20.0,
                RATIO_TEXT, RATIO_LONGTEXT )
-    add_float_with_range( "compressor-knee", 5.0, 1.0, 10.0,
+    vlc_add_float_with_range( "compressor-knee", 5.0, 1.0, 10.0,
                KNEE_TEXT, KNEE_LONGTEXT )
-    add_float_with_range( "compressor-makeup-gain", 7.0, 0.0, 24.0,
+    vlc_add_float_with_range( "compressor-makeup-gain", 7.0, 0.0, 24.0,
                MAKEUP_GAIN_TEXT, MAKEUP_GAIN_LONGTEXT )
-    set_callback( Open )
-    add_shortcut( "compressor" )
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "compressor" )
 vlc_module_end ()
 
 /*****************************************************************************

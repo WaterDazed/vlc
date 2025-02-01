@@ -52,8 +52,8 @@ struct dxva2_pic_context
 static int Open(vlc_va_t *va, struct vlc_va_cfg *cfg);
 
 vlc_module_begin()
-    set_description(N_("DirectX Video Acceleration (DXVA) 2.0"))
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_description(N_("DirectX Video Acceleration (DXVA) 2.0"))
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
     set_va_callback(Open, 110)
 vlc_module_end()
 

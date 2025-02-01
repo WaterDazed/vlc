@@ -56,20 +56,20 @@ static void Close( filter_t * );
 static void Flush( filter_t * );
 
 vlc_module_begin()
-    set_shortname("Spatialaudio")
-    set_description(N_("Ambisonics renderer and binauralizer"))
-    set_capability("audio renderer", 1)
-    set_subcategory(SUBCAT_AUDIO_AFILTER)
-    set_callback(Open)
-    add_obsolete_bool("spatialaudio-headphones")
-    add_loadfile("hrtf-file", NULL, HRTF_FILE_TEXT, HRTF_FILE_LONGTEXT)
-    add_shortcut("ambisonics")
+    vlc_set_shortname("Spatialaudio")
+    vlc_set_description(N_("Ambisonics renderer and binauralizer"))
+    vlc_set_capability("audio renderer", 1)
+    vlc_set_subcategory(SUBCAT_AUDIO_AFILTER)
+    vlc_set_callback(Open)
+    vlc_add_obsolete_bool("spatialaudio-headphones")
+    vlc_add_loadfile("hrtf-file", NULL, HRTF_FILE_TEXT, HRTF_FILE_LONGTEXT)
+    vlc_add_shortcut("ambisonics")
 
-    add_submodule()
-    set_shortname(N_("Binauralizer"))
-    set_capability("audio converter", 30)
-    set_callback(OpenBinauralizer)
-    add_shortcut("binauralizer")
+    vlc_add_submodule()
+    vlc_set_shortname(N_("Binauralizer"))
+    vlc_set_capability("audio converter", 30)
+    vlc_set_callback(OpenBinauralizer)
+    vlc_add_shortcut("binauralizer")
 vlc_module_end()
 
 #define AMB_BLOCK_TIME_LEN 1024

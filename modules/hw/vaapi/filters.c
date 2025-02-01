@@ -1119,29 +1119,29 @@ error:
  *********************/
 
 vlc_module_begin()
-    set_shortname(N_("VAAPI filters"))
-    set_description(N_("Video Accelerated API filters"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_shortname(N_("VAAPI filters"))
+    vlc_set_description(N_("Video Accelerated API filters"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
 
-    add_submodule()
-    set_callback_video_filter(OpenAdjust)
-    add_shortcut("adjust")
+    vlc_add_submodule()
+    vlc_set_callback_video_filter(OpenAdjust)
+    vlc_add_shortcut("adjust")
 
-    add_submodule()
+    vlc_add_submodule()
     set_deinterlace_callback(OpenDeinterlace)
 
-    add_submodule()
-    set_callback_video_filter(OpenDenoiseFilter)
+    vlc_add_submodule()
+    vlc_set_callback_video_filter(OpenDenoiseFilter)
     /* Note: Skip label translation - too technical */
-    add_float_with_range("denoise-sigma", 1.f, .0f, 2.f,
+    vlc_add_float_with_range("denoise-sigma", 1.f, .0f, 2.f,
                          "Denoise strength",
                          "Set the Denoise strength. (Defaults to 1).")
-    add_shortcut("denoise")
+    vlc_add_shortcut("denoise")
 
-    add_submodule()
-    set_callback_video_filter(OpenSharpenFilter)
-    add_shortcut("sharpen")
+    vlc_add_submodule()
+    vlc_set_callback_video_filter(OpenSharpenFilter)
+    vlc_add_shortcut("sharpen")
 
-    add_submodule()
-    set_callback_video_converter(vlc_vaapi_OpenChroma, 10)
+    vlc_add_submodule()
+    vlc_set_callback_video_converter(vlc_vaapi_OpenChroma, 10)
 vlc_module_end()

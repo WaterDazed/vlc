@@ -48,14 +48,14 @@
 #define RENDERER_CFG_PREFIX "sout-renderer-"
 
 #define add_renderer_opts(prefix) \
-    add_integer(RENDERER_CFG_PREFIX "show-perf-warning", 1, \
+    vlc_add_integer(RENDERER_CFG_PREFIX "show-perf-warning", 1, \
             PERF_TEXT, PERF_LONGTEXT ) \
-        change_private() \
-    add_bool(prefix "audio-passthrough", false, \
+        vlc_change_private() \
+    vlc_add_bool(prefix "audio-passthrough", false, \
             AUDIO_PASSTHROUGH_TEXT, AUDIO_PASSTHROUGH_LONGTEXT ) \
-    add_integer(prefix "conversion-quality", CONVERSION_QUALITY_DEFAULT, \
+    vlc_add_integer(prefix "conversion-quality", CONVERSION_QUALITY_DEFAULT, \
                 CONVERSION_QUALITY_TEXT, CONVERSION_QUALITY_LONGTEXT ); \
-        change_integer_list(conversion_quality_list, conversion_quality_list_text)
+        vlc_change_integer_list(conversion_quality_list, conversion_quality_list_text)
 
 static const char *const conversion_quality_list_text[] = {
     N_( "High (high quality and high bandwidth)" ),

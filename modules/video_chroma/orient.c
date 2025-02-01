@@ -345,8 +345,8 @@ static int Open(filter_t *filter)
 }
 
 vlc_module_begin()
-    set_description(N_("Video reorientation"))
-    set_shortname(N_("Reorient"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_callback_video_converter(Open, 200)
+    vlc_set_description(N_("Video reorientation"))
+    vlc_set_shortname(N_("Reorient"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_callback_video_converter(Open, 200)
 vlc_module_end()

@@ -953,9 +953,9 @@ Start(aout_stream_t *stream, audio_sample_format_t *fmt,
 }
 
 vlc_module_begin ()
-    set_shortname("AAudio")
-    set_description("Android AAudio output")
-    set_subcategory(SUBCAT_AUDIO_AOUT)
-    set_capability("aout android stream", 190)
-    set_callback(Start)
+    vlc_set_shortname("AAudio")
+    vlc_set_description("Android AAudio output")
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_set_capability("aout android stream", 190)
+    vlc_set_callback(Start)
 vlc_module_end ()

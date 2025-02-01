@@ -39,10 +39,10 @@
 static int  OpenFilter( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("Audio filter for simple channel mixing") )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    set_capability( "audio converter", 10 )
-    set_callback( OpenFilter )
+    vlc_set_description( N_("Audio filter for simple channel mixing") )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_capability( "audio converter", 10 )
+    vlc_set_callback( OpenFilter )
 vlc_module_end ()
 
 static block_t *Filter( filter_t *, block_t * );

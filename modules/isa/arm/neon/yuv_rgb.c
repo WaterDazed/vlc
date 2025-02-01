@@ -33,8 +33,8 @@
 static int Open (filter_t *);
 
 vlc_module_begin ()
-    set_description (N_("ARM NEON video chroma YUV->RGBA"))
-    set_callback_video_converter(Open, 250)
+    vlc_set_description (N_("ARM NEON video chroma YUV->RGBA"))
+    vlc_set_callback_video_converter(Open, 250)
 vlc_module_end ()
 
 /*

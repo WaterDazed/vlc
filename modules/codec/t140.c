@@ -31,9 +31,9 @@
 static int  Open ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("T.140 text encoder") )
-    set_capability( "spu encoder", 100 )
-    set_callback( Open )
+    vlc_set_description( N_("T.140 text encoder") )
+    vlc_set_capability( "spu encoder", 100 )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 

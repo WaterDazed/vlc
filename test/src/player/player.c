@@ -3299,13 +3299,13 @@ vlc_module_begin()
      * delay, in order to be usable for player tests. Indeed, this aout will
      * report timings immediately from Play(), but points will be in the
      * future (like when aout->time_get() is used). */
-    set_capability("audio output", 0)
-    set_callbacks(aout_Open, aout_Close)
-    add_submodule ()
+    vlc_set_capability("audio output", 0)
+    vlc_set_callbacks(aout_Open, aout_Close)
+    vlc_add_submodule ()
     /* aout will insert a resampler that can have samples delay, even for 1:1
      * Insert our own resampler that keeps blocks and pts untouched. */
-        set_capability ("audio resampler", 9999)
-        set_callback (resampler_Open)
+        vlc_set_capability ("audio resampler", 9999)
+        vlc_set_callback (resampler_Open)
 vlc_module_end()
 
 VLC_EXPORT const vlc_plugin_cb vlc_static_modules[] = {

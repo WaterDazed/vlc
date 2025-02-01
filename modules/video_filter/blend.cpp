@@ -40,8 +40,8 @@ static int  Open (filter_t *);
 static void Close(filter_t *);
 
 vlc_module_begin()
-    set_description(N_("Video pictures blending"))
-    set_callback_video_blending(Open, 100)
+    vlc_set_description(N_("Video pictures blending"))
+    vlc_set_callback_video_blending(Open, 100)
 vlc_module_end()
 
 static inline unsigned div255(unsigned v)

@@ -259,29 +259,29 @@ static void SubsdelayEntryNewStopValueUpdated( subsdelay_heap_entry_t *p_entry )
  *****************************************************************************/
 
 vlc_module_begin()
-        set_shortname( N_("Subsdelay") )
-        set_description( N_("Subtitle delay") )
-        set_help( SUBSDELAY_HELP )
-        set_callback_sub_filter( SubsdelayCreate )
-        set_subcategory( SUBCAT_VIDEO_SUBPIC )
+        vlc_set_shortname( N_("Subsdelay") )
+        vlc_set_description( N_("Subtitle delay") )
+        vlc_set_help( SUBSDELAY_HELP )
+        vlc_set_callback_sub_filter( SubsdelayCreate )
+        vlc_set_subcategory( SUBCAT_VIDEO_SUBPIC )
 
-        add_integer( CFG_MODE, 1, MODE_TEXT, MODE_LONGTEXT )
-        change_integer_list( pi_mode_values, ppsz_mode_descriptions )
+        vlc_add_integer( CFG_MODE, 1, MODE_TEXT, MODE_LONGTEXT )
+        vlc_change_integer_list( pi_mode_values, ppsz_mode_descriptions )
 
-        add_float_with_range( CFG_FACTOR, 2, 0, 20, FACTOR_TEXT, FACTOR_LONGTEXT )
+        vlc_add_float_with_range( CFG_FACTOR, 2, 0, 20, FACTOR_TEXT, FACTOR_LONGTEXT )
 
-        add_integer_with_range( CFG_OVERLAP, 3, 1, 4, OVERLAP_TEXT, OVERLAP_LONGTEXT )
+        vlc_add_integer_with_range( CFG_OVERLAP, 3, 1, 4, OVERLAP_TEXT, OVERLAP_LONGTEXT )
 
-        add_integer_with_range( CFG_MIN_ALPHA, 70, 0, 255, MIN_ALPHA_TEXT, MIN_ALPHA_LONGTEXT )
+        vlc_add_integer_with_range( CFG_MIN_ALPHA, 70, 0, 255, MIN_ALPHA_TEXT, MIN_ALPHA_LONGTEXT )
 
-        set_section( N_("Overlap fix"), NULL )
+        vlc_set_section( N_("Overlap fix"), NULL )
 
-        add_integer( CFG_MIN_STOPS_INTERVAL, 1000, MIN_STOPS_INTERVAL_TEXT, MIN_STOPS_INTERVAL_LONGTEXT )
+        vlc_add_integer( CFG_MIN_STOPS_INTERVAL, 1000, MIN_STOPS_INTERVAL_TEXT, MIN_STOPS_INTERVAL_LONGTEXT )
 
-        add_integer( CFG_MIN_START_STOP_INTERVAL, 1000, MIN_START_STOP_INTERVAL_TEXT,
+        vlc_add_integer( CFG_MIN_START_STOP_INTERVAL, 1000, MIN_START_STOP_INTERVAL_TEXT,
                      MIN_START_STOP_INTERVAL_LONGTEXT )
 
-        add_integer( CFG_MIN_STOP_START_INTERVAL, 1000, MIN_STOP_START_INTERVAL_TEXT,
+        vlc_add_integer( CFG_MIN_STOP_START_INTERVAL, 1000, MIN_STOP_START_INTERVAL_TEXT,
                      MIN_STOP_START_INTERVAL_LONGTEXT )
 
     vlc_module_end ()

@@ -480,39 +480,39 @@ error:
 }
 
 vlc_module_begin()
-    set_description(N_("Direct3D9 adjust filter"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_callback_video_filter(D3D9OpenAdjust)
-    add_shortcut( "adjust" )
+    vlc_set_description(N_("Direct3D9 adjust filter"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_callback_video_filter(D3D9OpenAdjust)
+    vlc_add_shortcut( "adjust" )
 
-    add_float_with_range( "contrast", 1.0, 0.0, 2.0,
+    vlc_add_float_with_range( "contrast", 1.0, 0.0, 2.0,
                           CONT_TEXT, CONT_LONGTEXT )
-        change_safe()
-    add_float_with_range( "brightness", 1.0, 0.0, 2.0,
+        vlc_change_safe()
+    vlc_add_float_with_range( "brightness", 1.0, 0.0, 2.0,
                            LUM_TEXT, LUM_LONGTEXT )
-        change_safe()
-    add_float_with_range( "hue", 0, -180., +180.,
+        vlc_change_safe()
+    vlc_add_float_with_range( "hue", 0, -180., +180.,
                             HUE_TEXT, HUE_LONGTEXT )
-        change_safe()
-    add_float_with_range( "saturation", 1.0, 0.0, 3.0,
+        vlc_change_safe()
+    vlc_add_float_with_range( "saturation", 1.0, 0.0, 3.0,
                           SAT_TEXT, SAT_LONGTEXT )
-        change_safe()
-    add_float_with_range( "gamma", 1.0, 0.01, 10.0,
+        vlc_change_safe()
+    vlc_add_float_with_range( "gamma", 1.0, 0.01, 10.0,
                           GAMMA_TEXT, GAMMA_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
-    add_submodule()
-    set_description(N_("Direct3D9 deinterlace filter"))
+    vlc_add_submodule()
+    vlc_set_description(N_("Direct3D9 deinterlace filter"))
     set_deinterlace_callback( D3D9OpenDeinterlace )
 
-    add_submodule()
-    set_callback_video_converter( D3D9OpenConverter, 10 )
+    vlc_add_submodule()
+    vlc_set_callback_video_converter( D3D9OpenConverter, 10 )
 
-    add_submodule()
-    set_callback_video_converter( D3D9OpenCPUConverter, 10 )
+    vlc_add_submodule()
+    vlc_set_callback_video_converter( D3D9OpenCPUConverter, 10 )
 
-    add_submodule()
-    set_description(N_("Direct3D9"))
-    set_callback_dec_device( D3D9OpenDecoderDevice, 10 )
-    add_shortcut ("dxva2")
+    vlc_add_submodule()
+    vlc_set_description(N_("Direct3D9"))
+    vlc_set_callback_dec_device( D3D9OpenDecoderDevice, 10 )
+    vlc_add_shortcut ("dxva2")
 vlc_module_end()

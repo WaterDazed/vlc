@@ -44,11 +44,11 @@ static block_t *DoWork( filter_t *, block_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Simple decoder for Dolby Surround encoded streams") )
-    set_shortname( N_("Dolby Surround decoder") )
-    set_subcategory( SUBCAT_INPUT_ACODEC )
-    set_capability( "audio converter", 5 )
-    set_callback( Create )
+    vlc_set_description( N_("Simple decoder for Dolby Surround encoded streams") )
+    vlc_set_shortname( N_("Dolby Surround decoder") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_set_capability( "audio converter", 5 )
+    vlc_set_callback( Create )
 vlc_module_end ()
 
 /*****************************************************************************

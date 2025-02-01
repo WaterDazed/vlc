@@ -869,9 +869,9 @@ shouldInheritContentsScale:(CGFloat)newScale
  * Module descriptor
  */
 vlc_module_begin()
-    set_description(N_("Core Animation OpenGL Layer (Mac OS X)"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_callback_display(Open, 300)
+    vlc_set_description(N_("Core Animation OpenGL Layer (Mac OS X)"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_display(Open, 300)
 
     add_opengl_submodule_renderer()
 vlc_module_end()

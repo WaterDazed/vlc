@@ -44,12 +44,12 @@
 static int  Open ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_description( N_("AU demuxer") )
-    set_capability( "demux", 10 )
-    set_callback( Open )
-    add_shortcut( "au" )
-    add_file_extension("au")
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_description( N_("AU demuxer") )
+    vlc_set_capability( "demux", 10 )
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "au" )
+    vlc_add_file_extension("au")
 vlc_module_end ()
 
 /*****************************************************************************

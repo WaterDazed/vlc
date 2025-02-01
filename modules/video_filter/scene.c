@@ -92,30 +92,30 @@ static void SavePicture( filter_t *, picture_t * );
 #define CFG_PREFIX "scene-"
 
 vlc_module_begin ()
-    set_shortname( N_( "Scene filter" ) )
-    set_description( N_( "Scene video filter" ) )
-    set_help(SCENE_HELP)
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_shortname( N_( "Scene filter" ) )
+    vlc_set_description( N_( "Scene video filter" ) )
+    vlc_set_help(SCENE_HELP)
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
     /* General options */
-    add_string(  CFG_PREFIX "format", "png",
+    vlc_add_string(  CFG_PREFIX "format", "png",
                  FORMAT_TEXT, FORMAT_LONGTEXT )
-    add_integer( CFG_PREFIX "width", -1,
+    vlc_add_integer( CFG_PREFIX "width", -1,
                  WIDTH_TEXT, WIDTH_LONGTEXT )
-    add_integer( CFG_PREFIX "height", -1,
+    vlc_add_integer( CFG_PREFIX "height", -1,
                  HEIGHT_TEXT, HEIGHT_LONGTEXT )
-    add_string(  CFG_PREFIX "prefix", "scene",
+    vlc_add_string(  CFG_PREFIX "prefix", "scene",
                  PREFIX_TEXT, PREFIX_LONGTEXT )
-    add_string(  CFG_PREFIX "path", NULL,
+    vlc_add_string(  CFG_PREFIX "path", NULL,
                  PATH_TEXT, PATH_LONGTEXT )
-    add_bool(    CFG_PREFIX "replace", false,
+    vlc_add_bool(    CFG_PREFIX "replace", false,
                  REPLACE_TEXT, REPLACE_LONGTEXT )
 
     /* Snapshot method */
-    add_integer_with_range( CFG_PREFIX "ratio", 50, 1, INT_MAX,
+    vlc_add_integer_with_range( CFG_PREFIX "ratio", 50, 1, INT_MAX,
                             RATIO_TEXT, RATIO_LONGTEXT )
 
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_vfilter_options[] = {

@@ -182,36 +182,36 @@ static int  blurayOpen (vlc_object_t *);
 static void blurayClose(vlc_object_t *);
 
 vlc_module_begin ()
-    set_shortname(N_("Blu-ray"))
-    set_description(N_("Blu-ray Disc support (libbluray)"))
+    vlc_set_shortname(N_("Blu-ray"))
+    vlc_set_description(N_("Blu-ray Disc support (libbluray)"))
 
-    set_subcategory(SUBCAT_INPUT_ACCESS)
-    set_capability("access", 500)
-    add_bool("bluray-menu", true, BD_MENU_TEXT, BD_MENU_LONGTEXT)
-    add_string("bluray-region", ppsz_region_code[REGION_DEFAULT], BD_REGION_TEXT, BD_REGION_LONGTEXT)
-        change_string_list(ppsz_region_code, ppsz_region_code_text)
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_set_capability("access", 500)
+    vlc_add_bool("bluray-menu", true, BD_MENU_TEXT, BD_MENU_LONGTEXT)
+    vlc_add_string("bluray-region", ppsz_region_code[REGION_DEFAULT], BD_REGION_TEXT, BD_REGION_LONGTEXT)
+        vlc_change_string_list(ppsz_region_code, ppsz_region_code_text)
 
 #if defined(BLURAY_SET_JAVA_HOME) || defined(BLURAY_ENABLE_PERSISTENT_STORAGE)
-    set_section(BD_BDJ_SETTINGS_TEXT, NULL)
+    vlc_set_section(BD_BDJ_SETTINGS_TEXT, NULL)
 #  ifdef BLURAY_SET_JAVA_HOME
-    add_directory("bluray-java-home", NULL, BD_BDJ_JAVA_HOME_TEXT, BD_BDJ_JAVA_HOME_LONGTEXT)
+    vlc_add_directory("bluray-java-home", NULL, BD_BDJ_JAVA_HOME_TEXT, BD_BDJ_JAVA_HOME_LONGTEXT)
 #  endif
 #  ifdef BLURAY_ENABLE_PERSISTENT_STORAGE
-    add_bool("bluray-persistent-storage", true, BD_BDJ_PERS_STOR_TEXT, BD_BDJ_PERS_STOR_LONGTEXT)
+    vlc_add_bool("bluray-persistent-storage", true, BD_BDJ_PERS_STOR_TEXT, BD_BDJ_PERS_STOR_LONGTEXT)
 #  endif
 #endif
 
-    add_shortcut("bluray", "file")
+    vlc_add_shortcut("bluray", "file")
 
-    set_callbacks(blurayOpen, blurayClose)
+    vlc_set_callbacks(blurayOpen, blurayClose)
 
 #ifdef BLURAY_DEMUX
     /* demux module */
-    add_submodule()
-        set_description( "BluRay demuxer" )
-        set_subcategory( SUBCAT_INPUT_DEMUX )
-        set_capability( "demux", 7 )
-        set_callbacks( blurayOpen, blurayClose )
+    vlc_add_submodule()
+        vlc_set_description( "BluRay demuxer" )
+        vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+        vlc_set_capability( "demux", 7 )
+        vlc_set_callbacks( blurayOpen, blurayClose )
 #endif
 
 vlc_module_end ()

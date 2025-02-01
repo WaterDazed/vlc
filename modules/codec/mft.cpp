@@ -83,28 +83,28 @@ static int OpenMFTVideoEncoder(vlc_object_t *);
 #define MFT_DEBUG_LONGTEXT N_( "Show more MediaFoundation debug info, may be slower to load" )
 
 vlc_module_begin()
-    set_description(N_("Media Foundation Transform decoder"))
-    add_shortcut("mft")
-    set_capability("video decoder", 1)
-    set_callbacks(Open, Close)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
-    add_bool("mft-debug", false, MFT_DEBUG_TEXT, MFT_DEBUG_LONGTEXT)
+    vlc_set_description(N_("Media Foundation Transform decoder"))
+    vlc_add_shortcut("mft")
+    vlc_set_capability("video decoder", 1)
+    vlc_set_callbacks(Open, Close)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_add_bool("mft-debug", false, MFT_DEBUG_TEXT, MFT_DEBUG_LONGTEXT)
 
-    add_submodule()
-    add_shortcut("mft")
-    set_capability("audio decoder", 1)
-    set_callbacks(Open, Close)
+    vlc_add_submodule()
+    vlc_add_shortcut("mft")
+    vlc_set_capability("audio decoder", 1)
+    vlc_set_callbacks(Open, Close)
 
 #ifdef ENABLE_SOUT
-    add_submodule()
-    add_shortcut("mft")
-    set_capability("audio encoder", 10) // less than DMO for now
-    set_callback(OpenMFTAudioEncoder)
+    vlc_add_submodule()
+    vlc_add_shortcut("mft")
+    vlc_set_capability("audio encoder", 10) // less than DMO for now
+    vlc_set_callback(OpenMFTAudioEncoder)
 
-    add_submodule()
-    add_shortcut("mft")
-    set_capability("video encoder", 10) // less than DMO for now
-    set_callback(OpenMFTVideoEncoder)
+    vlc_add_submodule()
+    vlc_add_shortcut("mft")
+    vlc_set_capability("video encoder", 10) // less than DMO for now
+    vlc_set_callback(OpenMFTVideoEncoder)
 #endif
 vlc_module_end()
 

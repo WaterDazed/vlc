@@ -321,8 +321,8 @@ error:
 }
 
 vlc_module_begin ()
-    set_shortname (N_("GLX"))
-    set_description (N_("GLX extension for OpenGL"))
-    set_subcategory (SUBCAT_VIDEO_VOUT)
-    set_callback_opengl(Open, 20)
+    vlc_set_shortname (N_("GLX"))
+    vlc_set_description (N_("GLX extension for OpenGL"))
+    vlc_set_subcategory (SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_opengl(Open, 20)
 vlc_module_end ()

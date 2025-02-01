@@ -51,13 +51,13 @@ static int vlc_sd_probe_Open (vlc_object_t *);
  * Module descriptor
  */
 vlc_module_begin ()
-    set_shortname (N_("Screen capture"))
-    set_description (N_("Screen capture"))
-    set_subcategory (SUBCAT_PLAYLIST_SD)
-    set_capability ("services_discovery", 0)
-    set_callbacks (Open, Close)
+    vlc_set_shortname (N_("Screen capture"))
+    vlc_set_description (N_("Screen capture"))
+    vlc_set_subcategory (SUBCAT_PLAYLIST_SD)
+    vlc_set_capability ("services_discovery", 0)
+    vlc_set_callbacks (Open, Close)
 
-    add_shortcut ("apps", "screen")
+    vlc_add_shortcut ("apps", "screen")
 
     VLC_SD_PROBE_SUBMODULE
 vlc_module_end ()

@@ -55,15 +55,15 @@ static int  Create    ( filter_t * );
 #define FILTER_PREFIX "gaussianblur-"
 
 vlc_module_begin ()
-    set_description( N_("Gaussian blur video filter") )
-    set_shortname( N_( "Gaussian Blur" ))
-    set_help(GAUSSIAN_HELP)
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Gaussian blur video filter") )
+    vlc_set_shortname( N_( "Gaussian Blur" ))
+    vlc_set_help(GAUSSIAN_HELP)
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    add_float_with_range( FILTER_PREFIX "sigma", 2., SIGMA_MIN, SIGMA_MAX,
+    vlc_add_float_with_range( FILTER_PREFIX "sigma", 2., SIGMA_MIN, SIGMA_MAX,
                           SIGMA_TEXT, SIGMA_LONGTEXT )
 
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -103,25 +103,25 @@ static const char *const ppsz_aot_descriptions[] =
 { N_("AAC-LC"), N_("HE-AAC"), N_("HE-AAC-v2"), N_("AAC-LD"), N_("AAC-ELD") };
 
 vlc_module_begin ()
-    set_shortname(N_("FDKAAC"))
-    set_description(N_("FDK-AAC Audio encoder"))
-    set_capability("audio encoder", 150)
-    set_callback(OpenEncoder)
-    add_shortcut("fdkaac")
-    set_subcategory(SUBCAT_INPUT_ACODEC)
-    add_integer(ENC_CFG_PREFIX "profile", PROFILE_AAC_LC, AOT_TEXT,
+    vlc_set_shortname(N_("FDKAAC"))
+    vlc_set_description(N_("FDK-AAC Audio encoder"))
+    vlc_set_capability("audio encoder", 150)
+    vlc_set_callback(OpenEncoder)
+    vlc_add_shortcut("fdkaac")
+    vlc_set_subcategory(SUBCAT_INPUT_ACODEC)
+    vlc_add_integer(ENC_CFG_PREFIX "profile", PROFILE_AAC_LC, AOT_TEXT,
              AOT_LONGTEXT)
-    change_integer_list(pi_aot_values, ppsz_aot_descriptions)
-    add_bool(ENC_CFG_PREFIX "sbr", false, SIDEBAND_TEXT,
+    vlc_change_integer_list(pi_aot_values, ppsz_aot_descriptions)
+    vlc_add_bool(ENC_CFG_PREFIX "sbr", false, SIDEBAND_TEXT,
               SIDEBAND_LONGTEXT)
-    add_integer(ENC_CFG_PREFIX "vbr", 0, VBR_QUALITY_TEXT,
+    vlc_add_integer(ENC_CFG_PREFIX "vbr", 0, VBR_QUALITY_TEXT,
               VBR_QUALITY_LONGTEXT)
-    change_integer_range (0, 5)
-    add_bool(ENC_CFG_PREFIX "afterburner", true, AFTERBURNER_TEXT,
+    vlc_change_integer_range (0, 5)
+    vlc_add_bool(ENC_CFG_PREFIX "afterburner", true, AFTERBURNER_TEXT,
               AFTERBURNER_LONGTEXT)
-    add_integer(ENC_CFG_PREFIX "signaling", SIGNALING_COMPATIBLE, SIGNALING_TEXT,
+    vlc_add_integer(ENC_CFG_PREFIX "signaling", SIGNALING_COMPATIBLE, SIGNALING_TEXT,
              SIGNALING_LONGTEXT)
-    change_integer_range (0, 2)
+    vlc_change_integer_range (0, 2)
 vlc_module_end ()
 
 /*****************************************************************************

@@ -170,11 +170,11 @@ static int Open( vlc_object_t *p_this )
 
 
 vlc_module_begin()
-    set_shortname(N_("Autodel"))
-    set_description(N_("Automatically add/delete input streams"))
-    set_capability("sout filter", 50)
-    add_shortcut("autodel")
-    set_callback(Open)
+    vlc_set_shortname(N_("Autodel"))
+    vlc_set_description(N_("Automatically add/delete input streams"))
+    vlc_set_capability("sout filter", 50)
+    vlc_add_shortcut("autodel")
+    vlc_set_callback(Open)
 
-    add_integer(SOUT_CFG_PREFIX "drop-delay", 0, DROP_DELAY_TEXT, DROP_DELAY_LONGTEXT)
+    vlc_add_integer(SOUT_CFG_PREFIX "drop-delay", 0, DROP_DELAY_TEXT, DROP_DELAY_LONGTEXT)
 vlc_module_end()

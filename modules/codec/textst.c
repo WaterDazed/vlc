@@ -47,10 +47,10 @@ typedef struct
 } decoder_sys_t;
 
 vlc_module_begin()
-    set_description(N_("HDMV TextST subtitles decoder"))
-    set_subcategory(SUBCAT_INPUT_SCODEC)
-    set_capability("spu decoder", 10)
-    set_callback(Open)
+    vlc_set_description(N_("HDMV TextST subtitles decoder"))
+    vlc_set_subcategory(SUBCAT_INPUT_SCODEC)
+    vlc_set_capability("spu decoder", 10)
+    vlc_set_callback(Open)
 vlc_module_end()
 
 #define BD_TEXTST_DATA_STRING      1

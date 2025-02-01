@@ -36,18 +36,18 @@
 #include "../libplacebo/utils.h"
 
 #define add_glopts_placebo() \
-    set_section(N_("Colorspace conversion"), NULL) \
+    vlc_set_section(N_("Colorspace conversion"), NULL) \
     add_placebo_color_map_opts("gl") \
-    add_integer("target-prim", PL_COLOR_PRIM_UNKNOWN, PRIM_TEXT, PRIM_LONGTEXT) \
-            change_integer_list(prim_values, prim_text) \
-    add_integer("target-trc", PL_COLOR_TRC_UNKNOWN, TRC_TEXT, TRC_LONGTEXT) \
-            change_integer_list(trc_values, trc_text) \
-    set_section(N_("Dithering"), NULL) \
-    add_integer("dither-algo", -1, DITHER_TEXT, DITHER_LONGTEXT) \
-            change_integer_list(dither_values, dither_text) \
-    add_integer_with_range("dither-depth", 0, 0, 16, \
+    vlc_add_integer("target-prim", PL_COLOR_PRIM_UNKNOWN, PRIM_TEXT, PRIM_LONGTEXT) \
+            vlc_change_integer_list(prim_values, prim_text) \
+    vlc_add_integer("target-trc", PL_COLOR_TRC_UNKNOWN, TRC_TEXT, TRC_LONGTEXT) \
+            vlc_change_integer_list(trc_values, trc_text) \
+    vlc_set_section(N_("Dithering"), NULL) \
+    vlc_add_integer("dither-algo", -1, DITHER_TEXT, DITHER_LONGTEXT) \
+            vlc_change_integer_list(dither_values, dither_text) \
+    vlc_add_integer_with_range("dither-depth", 0, 0, 16, \
             DITHER_DEPTH_TEXT, DITHER_DEPTH_LONGTEXT) \
-    add_loadfile("gl-lut-file", NULL, LUT_FILE_TEXT, LUT_FILE_LONGTEXT)
+    vlc_add_loadfile("gl-lut-file", NULL, LUT_FILE_TEXT, LUT_FILE_LONGTEXT)
 #else
 #define add_glopts_placebo()
 #endif
@@ -57,7 +57,7 @@
     "Force a \"glinterop\" module.")
 
 #define add_glopts() \
-    add_module("glinterop", "glinterop", "any", GLINTEROP_TEXT, GLINTEROP_LONGTEXT) \
+    vlc_add_module("glinterop", "glinterop", "any", GLINTEROP_TEXT, GLINTEROP_LONGTEXT) \
     add_glscale_opts() \
     add_glopts_placebo ()
 

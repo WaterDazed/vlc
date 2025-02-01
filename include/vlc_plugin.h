@@ -338,11 +338,11 @@ error: \
 VLC_MODULE_NAME_HIDDEN_SYMBOL \
 VLC_METADATA_EXPORTS
 
-#define add_submodule( ) \
+#define vlc_add_submodule( ) \
     if (vlc_plugin_set (VLC_MODULE_CREATE, &module)) \
         goto error;
 
-#define add_shortcut( ... ) \
+#define vlc_add_shortcut( ... ) \
 { \
     const char *shortcuts[] = { __VA_ARGS__ }; \
     if (vlc_module_set (VLC_MODULE_SHORTCUT, \
@@ -350,42 +350,42 @@ VLC_METADATA_EXPORTS
         goto error; \
 }
 
-#define set_shortname( shortname ) \
+#define vlc_set_shortname( shortname ) \
     if (vlc_module_set (VLC_MODULE_SHORTNAME, VLC_CHECKED_TYPE(const char *, shortname))) \
         goto error;
 
-#define set_description( desc ) \
+#define vlc_set_description( desc ) \
     if (vlc_module_set (VLC_MODULE_DESCRIPTION, VLC_CHECKED_TYPE(const char *, desc))) \
         goto error;
 
-#define set_help( help ) \
+#define vlc_set_help( help ) \
     if (vlc_module_set (VLC_MODULE_HELP, VLC_CHECKED_TYPE(const char *, help))) \
         goto error;
 
-#define set_help_html( help_html ) \
+#define vlc_set_help_html( help_html ) \
     if (vlc_module_set (VLC_MODULE_HELP_HTML, VLC_CHECKED_TYPE(const char *, help_html))) \
         goto error;
 
-#define set_capability( cap, score ) \
+#define vlc_set_capability( cap, score ) \
     if (vlc_module_set (VLC_MODULE_CAPABILITY, VLC_CHECKED_TYPE(const char *, cap)) \
      || vlc_module_set (VLC_MODULE_SCORE, VLC_CHECKED_TYPE(int, score))) \
         goto error;
 
-#define set_callback(activate) \
+#define vlc_set_callback(activate) \
     if (vlc_module_set(VLC_MODULE_CB_OPEN, #activate, (void *)(activate))) \
         goto error;
 
-#define set_callbacks( activate, deactivate ) \
-    set_callback(activate) \
+#define vlc_set_callbacks( activate, deactivate ) \
+    vlc_set_callback(activate) \
     if (vlc_module_set(VLC_MODULE_CB_CLOSE, #deactivate, \
                        (void (*)(vlc_object_t *))( deactivate ))) \
         goto error;
 
-#define cannot_unload_broken_library( ) \
+#define vlc_cannot_unload_broken_library( ) \
     if (vlc_module_set (VLC_MODULE_NO_UNLOAD)) \
         goto error;
 
-#define set_text_domain( dom ) \
+#define vlc_set_text_domain( dom ) \
     if (vlc_plugin_set (VLC_MODULE_TEXTDOMAIN, VLC_CHECKED_TYPE(const char *, dom))) \
         goto error;
 
@@ -402,141 +402,141 @@ VLC_METADATA_EXPORTS
  *   allow for a more user friendly interface.
  *****************************************************************************/
 
-#define add_type_inner( type ) \
+#define vlc_add_type_inner( type ) \
     vlc_plugin_set (VLC_CONFIG_CREATE, (type), &config);
 
-#define add_typedesc_inner( type, text, longtext ) \
-    add_type_inner( type ) \
+#define vlc_add_typedesc_inner( type, text, longtext ) \
+    vlc_add_type_inner( type ) \
     vlc_config_set (VLC_CONFIG_DESC, VLC_CHECKED_TYPE(const char *, text), \
                                      VLC_CHECKED_TYPE(const char *, longtext));
 
-#define add_typename_inner(type, name, text, longtext) \
-    add_typedesc_inner(type, text, longtext) \
+#define vlc_add_typename_inner(type, name, text, longtext) \
+    vlc_add_typedesc_inner(type, text, longtext) \
     vlc_config_set (VLC_CONFIG_NAME, VLC_CHECKED_TYPE(const char *, name));
 
-#define add_string_inner(type, name, text, longtext, v) \
-    add_typename_inner(type, name, text, longtext) \
+#define vlc_add_string_inner(type, name, text, longtext, v) \
+    vlc_add_typename_inner(type, name, text, longtext) \
     vlc_config_set (VLC_CONFIG_VALUE, VLC_CHECKED_TYPE(const char *, v));
 
-#define add_int_inner(type, name, text, longtext, v) \
-    add_typename_inner(type, name, text, longtext) \
+#define vlc_add_int_inner(type, name, text, longtext, v) \
+    vlc_add_typename_inner(type, name, text, longtext) \
     vlc_config_set (VLC_CONFIG_VALUE, VLC_CHECKED_TYPE(int64_t, v));
 
 
-#define set_subcategory( id ) \
-    add_type_inner( CONFIG_SUBCATEGORY ) \
+#define vlc_set_subcategory( id ) \
+    vlc_add_type_inner( CONFIG_SUBCATEGORY ) \
     vlc_config_set (VLC_CONFIG_VALUE, VLC_CHECKED_TYPE(int64_t, id));
 
-#define set_section( text, longtext ) \
-    add_typedesc_inner( CONFIG_SECTION, text, longtext )
+#define vlc_set_section( text, longtext ) \
+    vlc_add_typedesc_inner( CONFIG_SECTION, text, longtext )
 
-#define add_string( name, value, text, longtext ) \
-    add_string_inner(CONFIG_ITEM_STRING, name, text, longtext, value)
+#define vlc_add_string( name, value, text, longtext ) \
+    vlc_add_string_inner(CONFIG_ITEM_STRING, name, text, longtext, value)
 
-#define add_password(name, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_PASSWORD, name, text, longtext, value)
+#define vlc_add_password(name, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_PASSWORD, name, text, longtext, value)
 
-#define add_loadfile(name, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_LOADFILE, name, text, longtext, value)
+#define vlc_add_loadfile(name, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_LOADFILE, name, text, longtext, value)
 
-#define add_savefile(name, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_SAVEFILE, name, text, longtext, value)
+#define vlc_add_savefile(name, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_SAVEFILE, name, text, longtext, value)
 
-#define add_directory(name, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_DIRECTORY, name, text, longtext, value)
+#define vlc_add_directory(name, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_DIRECTORY, name, text, longtext, value)
 
-#define add_font(name, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_FONT, name, text, longtext, value)
+#define vlc_add_font(name, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_FONT, name, text, longtext, value)
 
-#define add_module(name, cap, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_MODULE, name, text, longtext, value) \
+#define vlc_add_module(name, cap, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_MODULE, name, text, longtext, value) \
     vlc_config_set (VLC_CONFIG_CAPABILITY, VLC_CHECKED_TYPE(const char *, cap));
 
-#define add_module_list(name, cap, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_MODULE_LIST, name, text, longtext, value) \
+#define vlc_add_module_list(name, cap, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_MODULE_LIST, name, text, longtext, value) \
     vlc_config_set (VLC_CONFIG_CAPABILITY, VLC_CHECKED_TYPE(const char *, cap));
 
-#define add_integer( name, value, text, longtext ) \
-    add_int_inner(CONFIG_ITEM_INTEGER, name, text, longtext, value)
+#define vlc_add_integer( name, value, text, longtext ) \
+    vlc_add_int_inner(CONFIG_ITEM_INTEGER, name, text, longtext, value)
 
-#define add_rgb(name, value, text, longtext) \
-    add_int_inner(CONFIG_ITEM_RGB, name, text, longtext, value) \
-    change_integer_range( 0, 0xFFFFFF )
+#define vlc_add_rgb(name, value, text, longtext) \
+    vlc_add_int_inner(CONFIG_ITEM_RGB, name, text, longtext, value) \
+    vlc_change_integer_range( 0, 0xFFFFFF )
 
-#define add_key(name, value, text, longtext) \
-    add_string_inner(CONFIG_ITEM_KEY, "global-" name, text, longtext, \
+#define vlc_add_key(name, value, text, longtext) \
+    vlc_add_string_inner(CONFIG_ITEM_KEY, "global-" name, text, longtext, \
                      KEY_UNSET) \
-    add_string_inner(CONFIG_ITEM_KEY, name, text, longtext, value)
+    vlc_add_string_inner(CONFIG_ITEM_KEY, name, text, longtext, value)
 
-#define add_integer_with_range( name, value, min, max, text, longtext ) \
-    add_integer( name, value, text, longtext ) \
-    change_integer_range( min, max )
+#define vlc_add_integer_with_range( name, value, min, max, text, longtext ) \
+    vlc_add_integer( name, value, text, longtext ) \
+    vlc_change_integer_range( min, max )
 
-#define add_float( name, v, text, longtext ) \
-    add_typename_inner(CONFIG_ITEM_FLOAT, name, text, longtext) \
+#define vlc_add_float( name, v, text, longtext ) \
+    vlc_add_typename_inner(CONFIG_ITEM_FLOAT, name, text, longtext) \
     vlc_config_set (VLC_CONFIG_VALUE, VLC_CHECKED_TYPE(double, v));
 
-#define add_float_with_range( name, value, min, max, text, longtext ) \
-    add_float( name, value, text, longtext ) \
-    change_float_range( min, max )
+#define vlc_add_float_with_range( name, value, min, max, text, longtext ) \
+    vlc_add_float( name, value, text, longtext ) \
+    vlc_change_float_range( min, max )
 
-#define add_bool( name, v, text, longtext ) \
-    add_typename_inner(CONFIG_ITEM_BOOL, name, text, longtext) \
+#define vlc_add_bool( name, v, text, longtext ) \
+    vlc_add_typename_inner(CONFIG_ITEM_BOOL, name, text, longtext) \
     if (v) vlc_config_set (VLC_CONFIG_VALUE, (int64_t)true);
 
 /* For removed option */
-#define add_obsolete_inner( name, type ) \
-    add_type_inner( type ) \
+#define vlc_add_obsolete_inner( name, type ) \
+    vlc_add_type_inner( type ) \
     vlc_config_set (VLC_CONFIG_NAME, VLC_CHECKED_TYPE(const char *, name)); \
     vlc_config_set (VLC_CONFIG_REMOVED);
 
-#define add_obsolete_bool( name ) \
-        add_obsolete_inner( name, CONFIG_ITEM_BOOL )
+#define vlc_add_obsolete_bool( name ) \
+        vlc_add_obsolete_inner( name, CONFIG_ITEM_BOOL )
 
-#define add_obsolete_integer( name ) \
-        add_obsolete_inner( name, CONFIG_ITEM_INTEGER )
+#define vlc_add_obsolete_integer( name ) \
+        vlc_add_obsolete_inner( name, CONFIG_ITEM_INTEGER )
 
-#define add_obsolete_float( name ) \
-        add_obsolete_inner( name, CONFIG_ITEM_FLOAT )
+#define vlc_add_obsolete_float( name ) \
+        vlc_add_obsolete_inner( name, CONFIG_ITEM_FLOAT )
 
-#define add_obsolete_string( name ) \
-        add_obsolete_inner( name, CONFIG_ITEM_STRING )
+#define vlc_add_obsolete_string( name ) \
+        vlc_add_obsolete_inner( name, CONFIG_ITEM_STRING )
 
 /* Modifier macros for the config options (used for fine tuning) */
 
-#define change_short( ch ) \
+#define vlc_change_short( ch ) \
     vlc_config_set (VLC_CONFIG_SHORTCUT, VLC_CHECKED_TYPE(char, ch));
 
-#define change_string_list( list, list_text ) \
+#define vlc_change_string_list( list, list_text ) \
     vlc_config_set (VLC_CONFIG_LIST, \
                     ARRAY_SIZE(list), \
                     VLC_CHECKED_TYPE(const char *const *, list), \
                     VLC_CHECKED_TYPE(const char *const *, list_text));
 
-#define change_integer_list( list, list_text ) \
+#define vlc_change_integer_list( list, list_text ) \
     vlc_config_set (VLC_CONFIG_LIST, \
                     ARRAY_SIZE(list), \
                     VLC_CHECKED_TYPE(const int *, list), \
                     VLC_CHECKED_TYPE(const char *const *, list_text));
 
-#define change_integer_range( minv, maxv ) \
+#define vlc_change_integer_range( minv, maxv ) \
     vlc_config_set (VLC_CONFIG_RANGE, VLC_CHECKED_TYPE(int64_t, minv), \
                                       VLC_CHECKED_TYPE(int64_t, maxv));
 
-#define change_float_range( minv, maxv ) \
+#define vlc_change_float_range( minv, maxv ) \
     vlc_config_set (VLC_CONFIG_RANGE, VLC_CHECKED_TYPE(double, minv), \
                                       VLC_CHECKED_TYPE(double, maxv));
 
 /* For options that are saved but hidden from the preferences panel */
-#define change_private() \
+#define vlc_change_private() \
     vlc_config_set (VLC_CONFIG_PRIVATE);
 
 /* For options that cannot be saved in the configuration */
-#define change_volatile() \
-    change_private() \
+#define vlc_change_volatile() \
+    vlc_change_private() \
     vlc_config_set (VLC_CONFIG_VOLATILE);
 
-#define change_safe() \
+#define vlc_change_safe() \
     vlc_config_set (VLC_CONFIG_SAFE);
 
 /* Configuration item choice enumerators */

@@ -454,33 +454,33 @@ static void Close( vlc_object_t * p_this )
 
 /* Module descriptor */
 vlc_module_begin()
-    set_shortname( N_( "SRT" ) )
-    set_description( N_( "SRT stream output" ) )
-    set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_set_shortname( N_( "SRT" ) )
+    vlc_set_description( N_( "SRT stream output" ) )
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
 
-    add_obsolete_integer( SRT_PARAM_CHUNK_SIZE )
-    add_integer( SRT_PARAM_POLL_TIMEOUT, SRT_DEFAULT_POLL_TIMEOUT,
+    vlc_add_obsolete_integer( SRT_PARAM_CHUNK_SIZE )
+    vlc_add_integer( SRT_PARAM_POLL_TIMEOUT, SRT_DEFAULT_POLL_TIMEOUT,
             N_( "Return poll wait after timeout milliseconds (-1 = infinite)" ),
             NULL )
-    add_integer( SRT_PARAM_LATENCY, SRT_DEFAULT_LATENCY, N_( "SRT latency (ms)" ),
+    vlc_add_integer( SRT_PARAM_LATENCY, SRT_DEFAULT_LATENCY, N_( "SRT latency (ms)" ),
             NULL )
-    add_password( SRT_PARAM_PASSPHRASE, "", N_( "Password for stream encryption" ),
+    vlc_add_password( SRT_PARAM_PASSPHRASE, "", N_( "Password for stream encryption" ),
             NULL )
-    add_integer( SRT_PARAM_PAYLOAD_SIZE, SRT_DEFAULT_PAYLOAD_SIZE,
+    vlc_add_integer( SRT_PARAM_PAYLOAD_SIZE, SRT_DEFAULT_PAYLOAD_SIZE,
             N_( "SRT maximum payload size (bytes)" ), NULL )
-        change_integer_range( 1, SRT_LIVE_MAX_PLSIZE )
-    add_integer( SRT_PARAM_BANDWIDTH_OVERHEAD_LIMIT,
+        vlc_change_integer_range( 1, SRT_LIVE_MAX_PLSIZE )
+    vlc_add_integer( SRT_PARAM_BANDWIDTH_OVERHEAD_LIMIT,
             SRT_DEFAULT_BANDWIDTH_OVERHEAD_LIMIT,
             N_( "SRT maximum bandwidth ceiling (bytes)" ), NULL )
-    add_integer( SRT_PARAM_KEY_LENGTH, SRT_DEFAULT_KEY_LENGTH, SRT_KEY_LENGTH_TEXT,
+    vlc_add_integer( SRT_PARAM_KEY_LENGTH, SRT_DEFAULT_KEY_LENGTH, SRT_KEY_LENGTH_TEXT,
             NULL )
-    change_integer_list( srt_key_lengths, srt_key_length_names )
-    add_string(SRT_PARAM_STREAMID, "",
+    vlc_change_integer_list( srt_key_lengths, srt_key_length_names )
+    vlc_add_string(SRT_PARAM_STREAMID, "",
             N_(" SRT Stream ID"), NULL)
-    change_safe()
+    vlc_change_safe()
 
-    set_capability( "sout access", 0 )
-    add_shortcut( "srt" )
+    vlc_set_capability( "sout access", 0 )
+    vlc_add_shortcut( "srt" )
 
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()

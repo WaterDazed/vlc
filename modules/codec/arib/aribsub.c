@@ -49,14 +49,14 @@ static int Decode( decoder_t *, block_t * );
 
 vlc_module_begin ()
 #   define ARIBSUB_CFG_PREFIX "aribsub-"
-    set_description( N_("ARIB subtitles decoder") )
-    set_shortname( N_("ARIB subtitles") )
-    set_capability( "spu decoder", 50 )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("ARIB subtitles decoder") )
+    vlc_set_shortname( N_("ARIB subtitles") )
+    vlc_set_capability( "spu decoder", 50 )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_callbacks( Open, Close )
 
-    add_bool( ARIBSUB_CFG_PREFIX "ignore-ruby", false, IGNORE_RUBY_TEXT, IGNORE_RUBY_LONGTEXT )
-    add_bool( ARIBSUB_CFG_PREFIX "use-coretext", false, USE_CORETEXT_TEXT, USE_CORETEXT_LONGTEXT )
+    vlc_add_bool( ARIBSUB_CFG_PREFIX "ignore-ruby", false, IGNORE_RUBY_TEXT, IGNORE_RUBY_LONGTEXT )
+    vlc_add_bool( ARIBSUB_CFG_PREFIX "use-coretext", false, USE_CORETEXT_TEXT, USE_CORETEXT_LONGTEXT )
 vlc_module_end ()
 
 

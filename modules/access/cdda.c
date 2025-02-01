@@ -1026,32 +1026,32 @@ static void Close(vlc_object_t *obj)
 #define HELP_TEXT N_("Usage hint: [cdda:][device][@[track]]")
 
 vlc_module_begin ()
-    set_shortname( N_("Audio CD") )
-    set_description( N_("Audio CD input") )
-    set_help( HELP_TEXT )
-    set_capability( "access", 0 )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    set_callbacks(Open, Close)
+    vlc_set_shortname( N_("Audio CD") )
+    vlc_set_description( N_("Audio CD input") )
+    vlc_set_help( HELP_TEXT )
+    vlc_set_capability( "access", 0 )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_callbacks(Open, Close)
 
-    add_loadfile("cd-audio", CD_DEVICE, CDAUDIO_DEV_TEXT, CDAUDIO_DEV_LONGTEXT)
+    vlc_add_loadfile("cd-audio", CD_DEVICE, CDAUDIO_DEV_TEXT, CDAUDIO_DEV_LONGTEXT)
 
-    add_integer( "cdda-track", 0 , NULL, NULL )
-        change_volatile ()
-    add_integer( "cdda-first-sector", INVALID_SECTOR, NULL, NULL )
-        change_volatile ()
-    add_integer( "cdda-last-sector", INVALID_SECTOR, NULL, NULL )
-        change_volatile ()
+    vlc_add_integer( "cdda-track", 0 , NULL, NULL )
+        vlc_change_volatile ()
+    vlc_add_integer( "cdda-first-sector", INVALID_SECTOR, NULL, NULL )
+        vlc_change_volatile ()
+    vlc_add_integer( "cdda-last-sector", INVALID_SECTOR, NULL, NULL )
+        vlc_change_volatile ()
 
-    add_string( "musicbrainz-server", MUSICBRAINZ_DEFAULT_SERVER,
+    vlc_add_string( "musicbrainz-server", MUSICBRAINZ_DEFAULT_SERVER,
                 N_( "Musicbrainz Server" ),
                 N_( "Address of the musicbrainz server to use." ) )
 #ifdef HAVE_LIBCDDB
-    add_string( "cddb-server", "freedb.videolan.org", N_( "CDDB Server" ),
+    vlc_add_string( "cddb-server", "freedb.videolan.org", N_( "CDDB Server" ),
             N_( "Address of the CDDB server to use." ) )
-    add_integer( "cddb-port", 80, N_( "CDDB port" ),
+    vlc_add_integer( "cddb-port", 80, N_( "CDDB port" ),
             N_( "CDDB Server port to use." ) )
-        change_integer_range( 1, 65535 )
+        vlc_change_integer_range( 1, 65535 )
 #endif
 
-    add_shortcut( "cdda", "cddasimple" )
+    vlc_add_shortcut( "cdda", "cddasimple" )
 vlc_module_end ()

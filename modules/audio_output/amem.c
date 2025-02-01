@@ -48,24 +48,24 @@ static const vlc_fourcc_t format_list_fourcc[AMEM_NB_FORMATS] = {
 };
 
 vlc_module_begin ()
-    set_shortname (N_("Audio memory"))
-    set_description (N_("Audio memory output"))
-    set_capability ("audio output", 0)
-    set_subcategory (SUBCAT_AUDIO_AOUT)
-    set_callbacks (Open, Close)
+    vlc_set_shortname (N_("Audio memory"))
+    vlc_set_description (N_("Audio memory output"))
+    vlc_set_capability ("audio output", 0)
+    vlc_set_subcategory (SUBCAT_AUDIO_AOUT)
+    vlc_set_callbacks (Open, Close)
 
-    add_string ("amem-format", "S16N",
+    vlc_add_string ("amem-format", "S16N",
                 N_("Sample format"), NULL)
-        change_string_list( format_list, format_list )
-        change_private()
-    add_integer ("amem-rate", 44100,
+        vlc_change_string_list( format_list, format_list )
+        vlc_change_private()
+    vlc_add_integer ("amem-rate", 44100,
                  N_("Sample rate"), NULL)
-        change_integer_range (1, AMEM_SAMPLE_RATE_MAX)
-        change_private()
-    add_integer ("amem-channels", 2,
+        vlc_change_integer_range (1, AMEM_SAMPLE_RATE_MAX)
+        vlc_change_private()
+    vlc_add_integer ("amem-channels", 2,
                  N_("Channels count"), NULL)
-        change_integer_range (1, AMEM_CHAN_MAX)
-        change_private()
+        vlc_change_integer_range (1, AMEM_CHAN_MAX)
+        vlc_change_private()
 
 vlc_module_end ()
 

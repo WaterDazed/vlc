@@ -85,29 +85,29 @@ static block_t *EncodeBlock(encoder_t *, picture_t *);
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_description( N_("PNG video decoder") )
-    set_capability( "video decoder", 1000 )
-    set_callback( OpenDecoder )
-    add_shortcut( "png" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_description( N_("PNG video decoder") )
+    vlc_set_capability( "video decoder", 1000 )
+    vlc_set_callback( OpenDecoder )
+    vlc_add_shortcut( "png" )
 
 #ifdef ENABLE_SOUT
     /* video encoder submodule */
-    add_submodule()
-    add_shortcut("png")
-    set_section(N_("Encoding"), NULL)
-    set_description(N_("PNG video encoder"))
-    set_capability("video encoder", 1000)
-    set_callback(OpenEncoder)
+    vlc_add_submodule()
+    vlc_add_shortcut("png")
+    vlc_set_section(N_("Encoding"), NULL)
+    vlc_set_description(N_("PNG video encoder"))
+    vlc_set_capability("video encoder", 1000)
+    vlc_set_callback(OpenEncoder)
 #endif
 
     /* image encoder submodule */
-    add_submodule()
-    add_shortcut("png")
-    set_section(N_("Encoding"), NULL)
-    set_description(N_("PNG image encoder"))
-    set_capability("image encoder", 1000)
-    set_callback(OpenEncoder)
+    vlc_add_submodule()
+    vlc_add_shortcut("png")
+    vlc_set_section(N_("Encoding"), NULL)
+    vlc_set_description(N_("PNG image encoder"))
+    vlc_set_capability("image encoder", 1000)
+    vlc_set_callback(OpenEncoder)
 vlc_module_end ()
 
 /*****************************************************************************

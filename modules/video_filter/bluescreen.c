@@ -75,20 +75,20 @@ static int BluescreenCallback( vlc_object_t *, char const *,
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Bluescreen video filter") )
-    set_shortname( N_("Bluescreen" ))
-    set_help( BLUESCREEN_HELP )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_shortcut( "bluescreen" )
-    set_callback_video_filter( Create )
+    vlc_set_description( N_("Bluescreen video filter") )
+    vlc_set_shortname( N_("Bluescreen" ))
+    vlc_set_help( BLUESCREEN_HELP )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_shortcut( "bluescreen" )
+    vlc_set_callback_video_filter( Create )
 
-    add_integer_with_range( CFG_PREFIX "u", 120, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "u", 120, 0, 255,
                             BLUESCREENU_TEXT, BLUESCREENU_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "v", 90, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "v", 90, 0, 255,
                             BLUESCREENV_TEXT, BLUESCREENV_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "ut", 17, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "ut", 17, 0, 255,
                             BLUESCREENUTOL_TEXT, BLUESCREENUTOL_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "vt", 17, 0, 255,
+    vlc_add_integer_with_range( CFG_PREFIX "vt", 17, 0, 255,
                             BLUESCREENVTOL_TEXT, BLUESCREENVTOL_LONGTEXT )
 vlc_module_end ()
 

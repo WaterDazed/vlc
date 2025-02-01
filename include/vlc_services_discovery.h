@@ -208,9 +208,9 @@ static inline void services_discovery_RemoveItem(services_discovery_t *sd,
 VLC_API int vlc_sd_probe_Add(vlc_probe_t *, const char *, const char *, int category);
 
 #define VLC_SD_PROBE_SUBMODULE \
-    add_submodule() \
-        set_capability( "services probe", 100 ) \
-        set_callback( vlc_sd_probe_Open )
+    vlc_add_submodule() \
+        vlc_set_capability( "services probe", 100 ) \
+        vlc_set_callback( vlc_sd_probe_Open )
 
 #define VLC_SD_PROBE_HELPER(name, longname, cat) \
 static int vlc_sd_probe_Open (vlc_object_t *obj) \

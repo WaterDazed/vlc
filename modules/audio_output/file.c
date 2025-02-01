@@ -109,22 +109,22 @@ static const int format_int[] = {
 #define FILE_LONGTEXT N_("File to which the audio samples will be written to (\"-\" for stdout).")
 
 vlc_module_begin ()
-    set_description( N_("File audio output") )
-    set_shortname( N_("File") )
-    set_subcategory( SUBCAT_AUDIO_AOUT )
+    vlc_set_description( N_("File audio output") )
+    vlc_set_shortname( N_("File") )
+    vlc_set_subcategory( SUBCAT_AUDIO_AOUT )
 
-    add_savefile("audiofile-file", "audiofile.wav", FILE_TEXT, FILE_LONGTEXT)
-    add_string( "audiofile-format", "s16",
+    vlc_add_savefile("audiofile-file", "audiofile.wav", FILE_TEXT, FILE_LONGTEXT)
+    vlc_add_string( "audiofile-format", "s16",
                 FORMAT_TEXT, NULL )
-        change_string_list( format_list, format_list )
-    add_integer( "audiofile-channels", 0,
+        vlc_change_string_list( format_list, format_list )
+    vlc_add_integer( "audiofile-channels", 0,
                  CHANNELS_TEXT, CHANNELS_LONGTEXT )
-        change_integer_range( 0, 6 )
-    add_bool( "audiofile-wav", true, WAV_TEXT, WAV_LONGTEXT )
+        vlc_change_integer_range( 0, 6 )
+    vlc_add_bool( "audiofile-wav", true, WAV_TEXT, WAV_LONGTEXT )
 
-    set_capability( "audio output", 0 )
-    add_shortcut( "file", "audiofile" )
-    set_callback( Open )
+    vlc_set_capability( "audio output", 0 )
+    vlc_add_shortcut( "file", "audiofile" )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 static int Start( audio_output_t *p_aout, audio_sample_format_t *restrict fmt )

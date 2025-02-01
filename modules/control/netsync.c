@@ -78,23 +78,23 @@ static void AutoRun(libvlc_int_t *libvlc)
 }
 
 vlc_module_begin()
-    set_shortname(N_("Network Sync"))
-    set_description(N_("Network synchronization"))
-    set_subcategory(SUBCAT_ADVANCED_MISC)
+    vlc_set_shortname(N_("Network Sync"))
+    vlc_set_description(N_("Network synchronization"))
+    vlc_set_subcategory(SUBCAT_ADVANCED_MISC)
 
-    add_bool("network-synchronisation", false, NETSYNC_TEXT, NETSYNC_LONGTEXT)
-    add_bool("netsync-master", false,
+    vlc_add_bool("network-synchronisation", false, NETSYNC_TEXT, NETSYNC_LONGTEXT)
+    vlc_add_bool("netsync-master", false,
               NETSYNC_TEXT, NETSYNC_LONGTEXT)
-    add_string("netsync-master-ip", NULL, MIP_TEXT, MIP_LONGTEXT)
-    add_integer("netsync-timeout", 500,
+    vlc_add_string("netsync-master-ip", NULL, MIP_TEXT, MIP_LONGTEXT)
+    vlc_add_integer("netsync-timeout", 500,
                  NETSYNC_TIMEOUT_TEXT, NETSYNC_TIMEOUT_LONGTEXT)
 
-    set_capability("interface", 0)
-    set_callbacks(Open, Close)
+    vlc_set_capability("interface", 0)
+    vlc_set_callbacks(Open, Close)
 
-    add_submodule()
-    set_capability("autorun", 40)
-    set_callback(AutoRun)
+    vlc_add_submodule()
+    vlc_set_capability("autorun", 40)
+    vlc_set_callback(AutoRun)
 vlc_module_end()
 
 /*****************************************************************************

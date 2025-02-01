@@ -127,8 +127,8 @@ static int Probe(vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_subcategory(SUBCAT_AUDIO_AFILTER)
-    set_description("RISC-V V optimisation for audio volume")
-    set_capability("audio volume", 20)
-    set_callback(Probe)
+    vlc_set_subcategory(SUBCAT_AUDIO_AFILTER)
+    vlc_set_description("RISC-V V optimisation for audio volume")
+    vlc_set_capability("audio volume", 20)
+    vlc_set_callback(Probe)
 vlc_module_end()

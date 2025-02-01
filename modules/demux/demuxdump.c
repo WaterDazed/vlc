@@ -41,17 +41,17 @@ static int  Open( vlc_object_t * );
 static void Close ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_shortname("Dump")
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_description( N_("File dumper") )
-    set_capability( "demux", 0 )
-    add_module("demuxdump-access", "sout access", "file",
+    vlc_set_shortname("Dump")
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_description( N_("File dumper") )
+    vlc_set_capability( "demux", 0 )
+    vlc_add_module("demuxdump-access", "sout access", "file",
                ACCESS_TEXT, NULL)
-    add_savefile("demuxdump-file", "stream-demux.dump",
+    vlc_add_savefile("demuxdump-file", "stream-demux.dump",
                  FILE_TEXT, FILE_LONGTEXT)
-    add_bool( "demuxdump-append", false, APPEND_TEXT, APPEND_LONGTEXT )
-    set_callbacks( Open, Close )
-    add_shortcut( "dump" )
+    vlc_add_bool( "demuxdump-append", false, APPEND_TEXT, APPEND_LONGTEXT )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "dump" )
 vlc_module_end ()
 
 #define DUMP_BLOCKSIZE  16384

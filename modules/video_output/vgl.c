@@ -222,15 +222,15 @@ static int Open(vlc_gl_t *gl, unsigned width, unsigned height,
  *****************************************************************************/
 
 vlc_module_begin()
-    set_shortname("GL texture")
-    set_description("GL texture output")
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_shortname("GL texture")
+    vlc_set_description("GL texture output")
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 
-    set_callback_opengl(Open, 0)
+    vlc_set_callback_opengl(Open, 0)
 
-    add_shortcut("vglmem")
+    vlc_add_shortcut("vglmem")
 
-    add_submodule()
-    set_callback_opengl_es2(Open, 0)
-    add_shortcut("vglmem")
+    vlc_add_submodule()
+    vlc_set_callback_opengl_es2(Open, 0)
+    vlc_add_shortcut("vglmem")
 vlc_module_end()

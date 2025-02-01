@@ -64,16 +64,16 @@ static void Close( vlc_object_t * );
     "disconnect." )
 
 vlc_module_begin ()
-    set_description( N_("HTTP input") )
-    set_capability( "access", 0 )
-    set_shortname( N_( "HTTP(S)" ) )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_description( N_("HTTP input") )
+    vlc_set_capability( "access", 0 )
+    vlc_set_shortname( N_( "HTTP(S)" ) )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_bool( "http-reconnect", false, RECONNECT_TEXT,
+    vlc_add_bool( "http-reconnect", false, RECONNECT_TEXT,
               RECONNECT_LONGTEXT )
     /* 'itpc' = iTunes Podcast */
-    add_shortcut( "http", "unsv", "itpc", "icyx" )
-    set_callbacks( Open, Close )
+    vlc_add_shortcut( "http", "unsv", "itpc", "icyx" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

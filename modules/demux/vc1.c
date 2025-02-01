@@ -43,13 +43,13 @@ static void Close( vlc_object_t * );
 #define FPS_LONGTEXT N_("Desired frame rate for the VC-1 stream.")
 
 vlc_module_begin ()
-    set_shortname( "VC-1")
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_description( N_("VC1 video demuxer" ) )
-    set_capability( "demux", 0 )
-    add_float( "vc1-fps", 25.0, FPS_TEXT, FPS_LONGTEXT )
-    set_callbacks( Open, Close )
-    add_shortcut( "vc1" )
+    vlc_set_shortname( "VC-1")
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_description( N_("VC1 video demuxer" ) )
+    vlc_set_capability( "demux", 0 )
+    vlc_add_float( "vc1-fps", 25.0, FPS_TEXT, FPS_LONGTEXT )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "vc1" )
 vlc_module_end ()
 
 /*****************************************************************************

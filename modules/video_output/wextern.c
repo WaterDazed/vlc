@@ -39,11 +39,11 @@
 static int Open(vlc_window_t *);
 
 vlc_module_begin()
-    set_shortname(N_("Callback window"))
-    set_description(N_("External callback window"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_capability("vout window", 0)
-    set_callback(Open)
+    vlc_set_shortname(N_("Callback window"))
+    vlc_set_description(N_("External callback window"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_capability("vout window", 0)
+    vlc_set_callback(Open)
 vlc_module_end()
 
 typedef struct {

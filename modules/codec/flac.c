@@ -158,19 +158,19 @@ static void Flush( decoder_t * );
  *****************************************************************************/
 vlc_module_begin ()
 
-    set_subcategory( SUBCAT_INPUT_ACODEC )
-    add_shortcut( "flac" )
+    vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_add_shortcut( "flac" )
 
-    set_description( N_("Flac audio decoder") )
-    set_capability( "audio decoder", 100 )
-    set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_set_description( N_("Flac audio decoder") )
+    vlc_set_capability( "audio decoder", 100 )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
 
 #ifdef ENABLE_SOUT
-    add_submodule ()
-    add_shortcut( "flac" )
-    set_description( N_("Flac audio encoder") )
-    set_capability( "audio encoder", 100 )
-    set_callback( OpenEncoder )
+    vlc_add_submodule ()
+    vlc_add_shortcut( "flac" )
+    vlc_set_description( N_("Flac audio encoder") )
+    vlc_set_capability( "audio encoder", 100 )
+    vlc_set_callback( OpenEncoder )
 #endif
 
 vlc_module_end ()

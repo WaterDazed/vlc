@@ -58,19 +58,19 @@ static void Close( vlc_object_t * );
 #define TIMEOUT_LONGTEXT N_("Amount of time (in ms) to wait before aborting network reception of data. Note that there will be 10 retries before completely giving up.")
 
 vlc_module_begin ()
-    set_shortname( "MMS" )
-    set_description( N_("Microsoft Media Server (MMS) input") )
-    set_capability( "access", -1 )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_shortname( "MMS" )
+    vlc_set_description( N_("Microsoft Media Server (MMS) input") )
+    vlc_set_capability( "access", -1 )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_integer( "mms-timeout", 5000, TIMEOUT_TEXT, TIMEOUT_LONGTEXT )
+    vlc_add_integer( "mms-timeout", 5000, TIMEOUT_TEXT, TIMEOUT_LONGTEXT )
 
-    add_bool( "mms-all", false, ALL_TEXT, ALL_LONGTEXT )
-    add_integer( "mms-maxbitrate", 0, BITRATE_TEXT, BITRATE_LONGTEXT  )
-    add_obsolete_string( "mmsh-proxy" ) /* since 3.0.0 */
+    vlc_add_bool( "mms-all", false, ALL_TEXT, ALL_LONGTEXT )
+    vlc_add_integer( "mms-maxbitrate", 0, BITRATE_TEXT, BITRATE_LONGTEXT  )
+    vlc_add_obsolete_string( "mmsh-proxy" ) /* since 3.0.0 */
 
-    add_shortcut( "mms", "mmsu", "mmst", "mmsh" )
-    set_callbacks( Open, Close )
+    vlc_add_shortcut( "mms", "mmsu", "mmst", "mmsh" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

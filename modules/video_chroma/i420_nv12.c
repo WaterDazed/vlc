@@ -228,6 +228,6 @@ static int Create( filter_t *p_filter )
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("YUV planar to semiplanar conversions") )
-    set_callback_video_converter( Create, 160 )
+    vlc_set_description( N_("YUV planar to semiplanar conversions") )
+    vlc_set_callback_video_converter( Create, 160 )
 vlc_module_end ()

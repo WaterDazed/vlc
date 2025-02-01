@@ -858,8 +858,8 @@ static int Open(vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_description(N_("RTP raw video decoder"))
-    set_capability("video decoder", 50)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
-    set_callbacks(Open, Close)
+    vlc_set_description(N_("RTP raw video decoder"))
+    vlc_set_capability("video decoder", 50)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end()

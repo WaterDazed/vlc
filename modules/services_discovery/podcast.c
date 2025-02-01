@@ -58,15 +58,15 @@ VLC_SD_PROBE_HELPER("podcast", N_("Podcasts"), SD_CAT_INTERNET)
                          "separated by '|' (pipe)." )
 
 vlc_module_begin ()
-    set_shortname( "Podcast")
-    set_description( N_("Podcasts") )
-    set_subcategory( SUBCAT_PLAYLIST_SD )
+    vlc_set_shortname( "Podcast")
+    vlc_set_description( N_("Podcasts") )
+    vlc_set_subcategory( SUBCAT_PLAYLIST_SD )
 
-    add_string( "podcast-urls", NULL,
+    vlc_add_string( "podcast-urls", NULL,
                 URLS_TEXT, URLS_LONGTEXT )
 
-    set_capability( "services_discovery", 0 )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "services_discovery", 0 )
+    vlc_set_callbacks( Open, Close )
 
     VLC_SD_PROBE_SUBMODULE
 

@@ -752,23 +752,23 @@ static const char *const priorities_text[] = {
 };
 
 vlc_module_begin ()
-    set_shortname( "GNU TLS" )
-    set_description( N_("GNU TLS transport layer security") )
-    set_capability( "tls client", 1 )
-    set_callback(OpenClient)
-    set_subcategory( SUBCAT_ADVANCED_NETWORK )
-    add_bool("gnutls-system-trust", true, SYSTEM_TRUST_TEXT,
+    vlc_set_shortname( "GNU TLS" )
+    vlc_set_description( N_("GNU TLS transport layer security") )
+    vlc_set_capability( "tls client", 1 )
+    vlc_set_callback(OpenClient)
+    vlc_set_subcategory( SUBCAT_ADVANCED_NETWORK )
+    vlc_add_bool("gnutls-system-trust", true, SYSTEM_TRUST_TEXT,
              SYSTEM_TRUST_LONGTEXT)
-    add_string("gnutls-dir-trust", NULL, DIR_TRUST_TEXT,
+    vlc_add_string("gnutls-dir-trust", NULL, DIR_TRUST_TEXT,
                DIR_TRUST_LONGTEXT)
-    add_string ("gnutls-priorities", "NORMAL", PRIORITIES_TEXT,
+    vlc_add_string ("gnutls-priorities", "NORMAL", PRIORITIES_TEXT,
                 PRIORITIES_LONGTEXT)
-        change_string_list (priorities_values, priorities_text)
+        vlc_change_string_list (priorities_values, priorities_text)
 #ifdef ENABLE_SOUT
-    add_submodule ()
-        set_description( N_("GNU TLS server") )
-        set_capability( "tls server", 1 )
-        set_subcategory( SUBCAT_ADVANCED_NETWORK )
-        set_callback(OpenServer)
+    vlc_add_submodule ()
+        vlc_set_description( N_("GNU TLS server") )
+        vlc_set_capability( "tls server", 1 )
+        vlc_set_subcategory( SUBCAT_ADVANCED_NETWORK )
+        vlc_set_callback(OpenServer)
 #endif
 vlc_module_end ()

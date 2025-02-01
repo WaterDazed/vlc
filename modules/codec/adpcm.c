@@ -44,10 +44,10 @@ static int DecodeAudio( decoder_t *, block_t * );
 static void Flush( decoder_t * );
 
 vlc_module_begin ()
-    set_description( N_("ADPCM audio decoder") )
-    set_capability( "audio decoder", 50 )
-    set_subcategory( SUBCAT_INPUT_ACODEC )
-    set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_set_description( N_("ADPCM audio decoder") )
+    vlc_set_capability( "audio decoder", 50 )
+    vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
 vlc_module_end ()
 
 /*****************************************************************************

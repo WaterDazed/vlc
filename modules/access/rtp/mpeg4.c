@@ -383,9 +383,9 @@ static int rtp_mpeg4_open(vlc_object_t *obj, struct vlc_rtp_pt *pt,
 }
 
 vlc_module_begin()
-    set_shortname(N_("RTP MPEG-4"))
-    set_description(N_("RTP MPEG-4 Visual and Audio payload parser"))
-    set_subcategory(SUBCAT_INPUT_DEMUX)
+    vlc_set_shortname(N_("RTP MPEG-4"))
+    vlc_set_description(N_("RTP MPEG-4 Visual and Audio payload parser"))
+    vlc_set_subcategory(SUBCAT_INPUT_DEMUX)
     set_rtp_parser_callback(rtp_mpeg4_open)
-    add_shortcut("video/MP4V-ES", "audio/MP4A-LATM", "video/MPEG4-GENERIC", "audio/MPEG4-GENERIC")
+    vlc_add_shortcut("video/MP4V-ES", "audio/MP4A-LATM", "video/MPEG4-GENERIC", "audio/MPEG4-GENERIC")
     vlc_module_end()

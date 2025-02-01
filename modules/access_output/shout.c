@@ -108,32 +108,32 @@ static void Close( vlc_object_t * );
                            "shoutcast. Requires Ogg streaming for icecast." )
 
 vlc_module_begin ()
-    set_description( N_("IceCAST output") )
-    set_shortname( "Shoutcast" )
-    set_capability( "sout access", 0 )
-    set_subcategory( SUBCAT_SOUT_ACO )
-    add_shortcut( "shout" )
-    add_string( SOUT_CFG_PREFIX "name", "VLC media player - Live stream",
+    vlc_set_description( N_("IceCAST output") )
+    vlc_set_shortname( "Shoutcast" )
+    vlc_set_capability( "sout access", 0 )
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_add_shortcut( "shout" )
+    vlc_add_string( SOUT_CFG_PREFIX "name", "VLC media player - Live stream",
                 NAME_TEXT, NAME_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "description", "Live stream from VLC media player",
+    vlc_add_string( SOUT_CFG_PREFIX "description", "Live stream from VLC media player",
                 DESCRIPTION_TEXT, DESCRIPTION_LONGTEXT )
-    add_bool(   SOUT_CFG_PREFIX "mp3", false,
+    vlc_add_bool(   SOUT_CFG_PREFIX "mp3", false,
                 MP3_TEXT, MP3_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "genre", "Alternative",
+    vlc_add_string( SOUT_CFG_PREFIX "genre", "Alternative",
                 GENRE_TEXT, GENRE_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "url", "https://www.videolan.org/vlc",
+    vlc_add_string( SOUT_CFG_PREFIX "url", "https://www.videolan.org/vlc",
                 URL_TEXT, URL_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "bitrate", "",
+    vlc_add_string( SOUT_CFG_PREFIX "bitrate", "",
                 BITRATE_TEXT, BITRATE_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "samplerate", "",
+    vlc_add_string( SOUT_CFG_PREFIX "samplerate", "",
                 SAMPLERATE_TEXT, SAMPLERATE_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "channels", "",
+    vlc_add_string( SOUT_CFG_PREFIX "channels", "",
                 CHANNELS_TEXT, CHANNELS_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "quality", "",
+    vlc_add_string( SOUT_CFG_PREFIX "quality", "",
                 QUALITY_TEXT, QUALITY_LONGTEXT )
-    add_bool(   SOUT_CFG_PREFIX "public", false,
+    vlc_add_bool(   SOUT_CFG_PREFIX "public", false,
                 PUBLIC_TEXT, PUBLIC_LONGTEXT )
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

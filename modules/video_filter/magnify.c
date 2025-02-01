@@ -45,11 +45,11 @@ static int  Create    ( filter_t * );
 static void Destroy   ( filter_t * );
 
 vlc_module_begin ()
-    set_description( N_("Magnify/Zoom interactive video filter") )
-    set_shortname( N_( "Magnify" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Magnify/Zoom interactive video filter") )
+    vlc_set_shortname( N_( "Magnify" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 

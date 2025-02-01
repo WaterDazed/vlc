@@ -73,8 +73,8 @@ static int Open( vlc_object_t *p_this )
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin()
-    set_description(N_("Dummy stream output"))
-    set_capability("sout output", 50)
-    add_shortcut("dummy", "drop")
-    set_callback(Open )
+    vlc_set_description(N_("Dummy stream output"))
+    vlc_set_capability("sout output", 50)
+    vlc_add_shortcut("dummy", "drop")
+    vlc_set_callback(Open )
 vlc_module_end()

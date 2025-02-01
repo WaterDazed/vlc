@@ -38,10 +38,10 @@
 static int Create( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("Audio filter for trivial channel mixing") )
-    set_capability( "audio converter", 1 )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
-    set_callback( Create )
+    vlc_set_description( N_("Audio filter for trivial channel mixing") )
+    vlc_set_capability( "audio converter", 1 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_callback( Create )
 vlc_module_end ()
 
 typedef struct

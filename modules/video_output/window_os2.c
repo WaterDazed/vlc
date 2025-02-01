@@ -43,11 +43,11 @@
 static int Open( vlc_window_t *wnd );
 
 vlc_module_begin ()
-    set_shortname( N_("OS/2 window"))
-    set_description( N_("OS/2 non-embeded window video"))
-    set_subcategory( SUBCAT_VIDEO_VOUT )
-    set_capability ("vout window", 30 )
-    set_callback( Open )
+    vlc_set_shortname( N_("OS/2 window"))
+    vlc_set_description( N_("OS/2 non-embeded window video"))
+    vlc_set_subcategory( SUBCAT_VIDEO_VOUT )
+    vlc_set_capability ("vout window", 30 )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 typedef struct vout_window_sys_t

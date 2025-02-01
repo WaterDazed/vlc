@@ -45,14 +45,14 @@ static block_t *DoWork( filter_t *, block_t * );
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Nearest-neighbor audio resampler") )
-    set_capability( "audio converter", 2 )
-    set_subcategory( SUBCAT_AUDIO_RESAMPLER )
-    set_callback( Create )
+    vlc_set_description( N_("Nearest-neighbor audio resampler") )
+    vlc_set_capability( "audio converter", 2 )
+    vlc_set_subcategory( SUBCAT_AUDIO_RESAMPLER )
+    vlc_set_callback( Create )
 
-    add_submodule()
-    set_capability( "audio resampler", 2 )
-    set_callback( CreateResampler )
+    vlc_add_submodule()
+    vlc_set_capability( "audio resampler", 2 )
+    vlc_set_callback( CreateResampler )
 vlc_module_end ()
 
 /*****************************************************************************

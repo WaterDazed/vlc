@@ -60,17 +60,17 @@ VIDEO_FILTER_WRAPPER_CLOSE(Filter, Close)
 #define PERIOD_MAX_LONGTEXT N_("Maximal period of the noise grain in pixel")
 
 vlc_module_begin()
-    set_description(N_("Grain video filter"))
-    set_shortname( N_("Grain"))
-    set_help(N_("Adds filtered gaussian noise"))
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    add_float_with_range(CFG_PREFIX "variance", 2.0, VARIANCE_MIN, VARIANCE_MAX,
+    vlc_set_description(N_("Grain video filter"))
+    vlc_set_shortname( N_("Grain"))
+    vlc_set_help(N_("Adds filtered gaussian noise"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_add_float_with_range(CFG_PREFIX "variance", 2.0, VARIANCE_MIN, VARIANCE_MAX,
                          VARIANCE_TEXT, VARIANCE_LONGTEXT)
-    add_integer_with_range(CFG_PREFIX "period-min", 1, PERIOD_MIN, PERIOD_MAX,
+    vlc_add_integer_with_range(CFG_PREFIX "period-min", 1, PERIOD_MIN, PERIOD_MAX,
                            PERIOD_MIN_TEXT, PERIOD_MIN_LONGTEXT)
-    add_integer_with_range(CFG_PREFIX "period-max", 3*PERIOD_MAX/4, PERIOD_MIN, PERIOD_MAX,
+    vlc_add_integer_with_range(CFG_PREFIX "period-max", 3*PERIOD_MAX/4, PERIOD_MIN, PERIOD_MAX,
                            PERIOD_MAX_TEXT, PERIOD_MAX_LONGTEXT)
-    set_callback_video_filter(Open)
+    vlc_set_callback_video_filter(Open)
 vlc_module_end()
 
 /*****************************************************************************

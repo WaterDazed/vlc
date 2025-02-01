@@ -45,8 +45,8 @@ VIDEO_FILTER_WRAPPER(Filter)
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Video scaling filter") )
-    set_callback_video_converter( OpenFilter, 10 )
+    vlc_set_description( N_("Video scaling filter") )
+    vlc_set_callback_video_converter( OpenFilter, 10 )
 vlc_module_end ()
 
 /*****************************************************************************

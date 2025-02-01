@@ -404,9 +404,9 @@ error:
  * Module descriptor
  */
 vlc_module_begin()
-    set_shortname(N_("X11"))
-    set_description(N_("X11 video output (XCB)"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_callback_display(Open, 100)
-    add_shortcut("xcb-x11", "x11")
+    vlc_set_shortname(N_("X11"))
+    vlc_set_description(N_("X11 video output (XCB)"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_display(Open, 100)
+    vlc_add_shortcut("xcb-x11", "x11")
 vlc_module_end()

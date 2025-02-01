@@ -52,45 +52,45 @@ static void Close( vlc_object_t * );
 
 using namespace mkv;
 vlc_module_begin ()
-    set_shortname( "Matroska" )
-    set_description( N_("Matroska stream demuxer" ) )
-    set_capability( "demux", 50 )
-    set_callbacks( Open, Close )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_shortname( "Matroska" )
+    vlc_set_description( N_("Matroska stream demuxer" ) )
+    vlc_set_capability( "demux", 50 )
+    vlc_set_callbacks( Open, Close )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
 
-    add_bool( "mkv-use-ordered-chapters", true,
+    vlc_add_bool( "mkv-use-ordered-chapters", true,
             N_("Respect ordered chapters"),
             N_("Play chapters in the order specified in the segment.") )
 
-    add_bool( "mkv-use-chapter-codec", true,
+    vlc_add_bool( "mkv-use-chapter-codec", true,
             N_("Chapter codecs"),
             N_("Use chapter codecs found in the segment.") )
 
-    add_bool( "mkv-preload-local-dir", true,
+    vlc_add_bool( "mkv-preload-local-dir", true,
             N_("Preload MKV files in the same directory"),
             N_("Preload matroska files in the same directory to find linked segments (not good for broken files).") )
 
-    add_bool( "mkv-seek-percent", false,
+    vlc_add_bool( "mkv-seek-percent", false,
             N_("Seek based on percent not time"),
             nullptr )
 
-    add_bool( "mkv-use-dummy", false,
+    vlc_add_bool( "mkv-use-dummy", false,
             N_("Dummy Elements"),
             N_("Read and discard unknown EBML elements (not good for broken files).") )
 
-    add_bool( "mkv-preload-clusters", false,
+    vlc_add_bool( "mkv-preload-clusters", false,
             N_("Preload clusters"),
             N_("Find all cluster positions by jumping cluster-to-cluster before playback") )
 
-    add_shortcut( "mka", "mkv" )
-    add_file_extension("mka")
-    add_file_extension("mks")
-    add_file_extension("mkv")
+    vlc_add_shortcut( "mka", "mkv" )
+    vlc_add_file_extension("mka")
+    vlc_add_file_extension("mks")
+    vlc_add_file_extension("mkv")
 
-    add_submodule()
-        set_callbacks( OpenTrusted, Close )
-        set_capability( "demux", 0 )
-        add_shortcut( "mka_trusted", "mkv_trusted" )
+    vlc_add_submodule()
+        vlc_set_callbacks( OpenTrusted, Close )
+        vlc_set_capability( "demux", 0 )
+        vlc_add_shortcut( "mka_trusted", "mkv_trusted" )
 vlc_module_end ()
 
 namespace mkv {

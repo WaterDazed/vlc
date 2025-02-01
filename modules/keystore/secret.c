@@ -36,13 +36,13 @@ static int Open(vlc_object_t *);
 static void Close(vlc_object_t *);
 
 vlc_module_begin()
-    set_shortname(N_("libsecret keystore"))
-    set_description(N_("Secrets are stored via libsecret"))
-    set_subcategory(SUBCAT_ADVANCED_MISC)
-    set_capability("keystore", 100)
-    set_callbacks(Open, Close)
+    vlc_set_shortname(N_("libsecret keystore"))
+    vlc_set_description(N_("Secrets are stored via libsecret"))
+    vlc_set_subcategory(SUBCAT_ADVANCED_MISC)
+    vlc_set_capability("keystore", 100)
+    vlc_set_callbacks(Open, Close)
     /* Since we can't destroy gdbus_shared_thread_func */
-    cannot_unload_broken_library()
+    vlc_cannot_unload_broken_library()
 vlc_module_end ()
 
 static const char *const ppsz_keys[] = {

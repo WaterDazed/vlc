@@ -65,22 +65,22 @@ static void Close   ( vlc_object_t * );
     "(common values are: logger, sap, rc, http)")
 
 vlc_module_begin ()
-    set_shortname( N_("NT Service"))
-    set_description( N_("Windows Service interface") )
-    set_subcategory( SUBCAT_INTERFACE_CONTROL )
-    add_bool( "ntservice-install", false,
+    vlc_set_shortname( N_("NT Service"))
+    vlc_set_description( N_("Windows Service interface") )
+    vlc_set_subcategory( SUBCAT_INTERFACE_CONTROL )
+    vlc_add_bool( "ntservice-install", false,
               INSTALL_TEXT, INSTALL_LONGTEXT )
-    add_bool( "ntservice-uninstall", false,
+    vlc_add_bool( "ntservice-uninstall", false,
               UNINSTALL_TEXT, UNINSTALL_LONGTEXT )
-    add_string ( "ntservice-name", VLCSERVICENAME,
+    vlc_add_string ( "ntservice-name", VLCSERVICENAME,
                  NAME_TEXT, NAME_LONGTEXT )
-    add_string ( "ntservice-options", NULL,
+    vlc_add_string ( "ntservice-options", NULL,
                  OPTIONS_TEXT, OPTIONS_LONGTEXT )
-    add_string ( "ntservice-extraintf", NULL,
+    vlc_add_string ( "ntservice-extraintf", NULL,
                  EXTRAINTF_TEXT, EXTRAINTF_LONGTEXT )
 
-    set_capability( "interface", 0 )
-    set_callbacks( Activate, Close )
+    vlc_set_capability( "interface", 0 )
+    vlc_set_callbacks( Activate, Close )
 vlc_module_end ()
 
 struct intf_sys_t

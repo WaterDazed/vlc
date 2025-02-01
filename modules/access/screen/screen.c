@@ -96,38 +96,38 @@ static void Close( vlc_object_t * );
 #endif
 
 vlc_module_begin ()
-    set_description( N_("Screen Input") )
-    set_shortname( N_("Screen" ))
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_description( N_("Screen Input") )
+    vlc_set_shortname( N_("Screen" ))
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_float( "screen-fps", SCREEN_FPS, FPS_TEXT, FPS_LONGTEXT )
+    vlc_add_float( "screen-fps", SCREEN_FPS, FPS_TEXT, FPS_LONGTEXT )
 
 #ifdef SCREEN_SUBSCREEN
-    add_integer( "screen-top", 0, TOP_TEXT, TOP_LONGTEXT )
-    add_integer( "screen-left", 0, LEFT_TEXT, LEFT_LONGTEXT )
-    add_integer( "screen-width", 0, WIDTH_TEXT, NULL )
-    add_integer( "screen-height", 0, HEIGHT_TEXT, NULL )
+    vlc_add_integer( "screen-top", 0, TOP_TEXT, TOP_LONGTEXT )
+    vlc_add_integer( "screen-left", 0, LEFT_TEXT, LEFT_LONGTEXT )
+    vlc_add_integer( "screen-width", 0, WIDTH_TEXT, NULL )
+    vlc_add_integer( "screen-height", 0, HEIGHT_TEXT, NULL )
 
-    add_bool( "screen-follow-mouse", false, FOLLOW_MOUSE_TEXT,
+    vlc_add_bool( "screen-follow-mouse", false, FOLLOW_MOUSE_TEXT,
               FOLLOW_MOUSE_LONGTEXT )
 #endif
 
 #ifdef SCREEN_MOUSE
-    add_loadfile("screen-mouse-image", "", MOUSE_TEXT, MOUSE_LONGTEXT)
+    vlc_add_loadfile("screen-mouse-image", "", MOUSE_TEXT, MOUSE_LONGTEXT)
 #endif
 
 #ifdef _WIN32
-    add_integer( "screen-fragment-size", 0, FRAGS_TEXT, FRAGS_LONGTEXT )
+    vlc_add_integer( "screen-fragment-size", 0, FRAGS_TEXT, FRAGS_LONGTEXT )
 #endif
 
 #ifdef __APPLE__
-    add_integer( "screen-display-id", 0, DISPLAY_ID_TEXT, DISPLAY_ID_LONGTEXT )
-    add_integer( "screen-index", 0, INDEX_TEXT, INDEX_LONGTEXT )
+    vlc_add_integer( "screen-display-id", 0, DISPLAY_ID_TEXT, DISPLAY_ID_LONGTEXT )
+    vlc_add_integer( "screen-index", 0, INDEX_TEXT, INDEX_LONGTEXT )
 #endif
 
-    set_capability( "access", 0 )
-    add_shortcut( "screen" )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "screen" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -31,9 +31,9 @@
 static int OpenRenderer( filter_t * );
 
 vlc_module_begin ()
-    set_shortname( N_("Dummy") )
-    set_description( N_("Dummy font renderer") )
-    set_callback_text_renderer( OpenRenderer, 1 )
+    vlc_set_shortname( N_("Dummy") )
+    vlc_set_description( N_("Dummy font renderer") )
+    vlc_set_callback_text_renderer( OpenRenderer, 1 )
 vlc_module_end ()
 
 

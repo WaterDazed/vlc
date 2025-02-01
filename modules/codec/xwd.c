@@ -133,8 +133,8 @@ static int Open(vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_description(N_("XWD image decoder"))
-    set_capability("video decoder", 50)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
-    set_callback(Open)
+    vlc_set_description(N_("XWD image decoder"))
+    vlc_set_capability("video decoder", 50)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_callback(Open)
 vlc_module_end()

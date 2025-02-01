@@ -205,41 +205,41 @@ static int OpenSDIOutput(vlc_object_t *p_this)
 
 vlc_module_begin ()
 
-    set_shortname(N_("SDI output"))
-    set_description(N_("SDI stream output"))
-    set_capability("sout output", 0)
-    add_shortcut("sdiout")
-    set_subcategory(SUBCAT_SOUT_STREAM)
-    set_callback(OpenSDIOutput)
+    vlc_set_shortname(N_("SDI output"))
+    vlc_set_description(N_("SDI stream output"))
+    vlc_set_capability("sout output", 0)
+    vlc_add_shortcut("sdiout")
+    vlc_set_subcategory(SUBCAT_SOUT_STREAM)
+    vlc_set_callback(OpenSDIOutput)
 
-    set_section(N_("DeckLink General Options"), NULL)
-    add_integer(CFG_PREFIX "card-index", 0,
+    vlc_set_section(N_("DeckLink General Options"), NULL)
+    vlc_add_integer(CFG_PREFIX "card-index", 0,
                 CARD_INDEX_TEXT, CARD_INDEX_LONGTEXT)
 
-    set_section(N_("DeckLink Video Options"), NULL)
-    add_string(CFG_PREFIX "video-connection", "sdi",
+    vlc_set_section(N_("DeckLink Video Options"), NULL)
+    vlc_add_string(CFG_PREFIX "video-connection", "sdi",
                 VIDEO_CONNECTION_TEXT, VIDEO_CONNECTION_LONGTEXT)
-                change_string_list(ppsz_videoconns, ppsz_videoconns_text)
-    add_string(CFG_PREFIX "mode", "",
+                vlc_change_string_list(ppsz_videoconns, ppsz_videoconns_text)
+    vlc_add_string(CFG_PREFIX "mode", "",
                 MODE_TEXT, MODE_LONGTEXT)
-    add_bool(CFG_PREFIX "tenbits", true,
+    vlc_add_bool(CFG_PREFIX "tenbits", true,
                 VIDEO_TENBITS_TEXT, VIDEO_TENBITS_LONGTEXT)
-    add_integer(CFG_PREFIX "nosignal-delay", 5,
+    vlc_add_integer(CFG_PREFIX "nosignal-delay", 5,
                 NOSIGNAL_INDEX_TEXT, NOSIGNAL_INDEX_LONGTEXT)
-    add_integer(CFG_PREFIX "afd-line", 16,
+    vlc_add_integer(CFG_PREFIX "afd-line", 16,
                 AFDLINE_INDEX_TEXT, AFDLINE_INDEX_LONGTEXT)
-    add_integer_with_range(CFG_PREFIX "afd", 8, 0, 16,
+    vlc_add_integer_with_range(CFG_PREFIX "afd", 8, 0, 16,
                 AFD_INDEX_TEXT, nullptr)
-                change_integer_list(rgi_afd_values, rgsz_afd_text)
-    add_integer_with_range(CFG_PREFIX "ar", 1, 0, 1,
+                vlc_change_integer_list(rgi_afd_values, rgsz_afd_text)
+    vlc_add_integer_with_range(CFG_PREFIX "ar", 1, 0, 1,
                 AR_INDEX_TEXT, AR_INDEX_LONGTEXT)
-                change_integer_list(rgi_ar_values, rgsz_ar_text)
-    add_loadfile(CFG_PREFIX "nosignal-image", NULL,
+                vlc_change_integer_list(rgi_ar_values, rgsz_ar_text)
+    vlc_add_loadfile(CFG_PREFIX "nosignal-image", NULL,
                  NOSIGNAL_IMAGE_TEXT, nullptr)
 
-    set_section(N_("DeckLink Audio Options"), NULL)
-    add_integer_with_range(CFG_PREFIX "channels", 2, 0, 16,
+    vlc_set_section(N_("DeckLink Audio Options"), NULL)
+    vlc_add_integer_with_range(CFG_PREFIX "channels", 2, 0, 16,
                 CHANNELS_TEXT, CHANNELS_LONGTEXT)
-    add_string(CFG_PREFIX "audio", "", AUDIO_TEXT, AUDIO_LONGTEXT)
+    vlc_add_string(CFG_PREFIX "audio", "", AUDIO_TEXT, AUDIO_LONGTEXT)
 
 vlc_module_end ()

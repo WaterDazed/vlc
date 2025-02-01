@@ -48,17 +48,17 @@ static int      Open                    (vlc_object_t *);
 static void     Close                   (vlc_object_t *);
 
 vlc_module_begin ()
-    set_shortname("auhal")
-    set_description(N_("HAL AudioUnit output"))
-    set_capability("audio output", 101)
-    set_subcategory(SUBCAT_AUDIO_AOUT)
-    set_callbacks(Open, Close)
-    add_integer("auhal-volume", AOUT_VOLUME_DEFAULT,
+    vlc_set_shortname("auhal")
+    vlc_set_description(N_("HAL AudioUnit output"))
+    vlc_set_capability("audio output", 101)
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_set_callbacks(Open, Close)
+    vlc_add_integer("auhal-volume", AOUT_VOLUME_DEFAULT,
                 VOLUME_TEXT, NULL)
-    change_integer_range(0, AOUT_VOLUME_MAX)
-    add_string("auhal-audio-device", "", DEVICE_TEXT, NULL)
-    add_string("auhal-warned-devices", "", NULL, NULL)
-    change_private()
+    vlc_change_integer_range(0, AOUT_VOLUME_MAX)
+    vlc_add_string("auhal-audio-device", "", DEVICE_TEXT, NULL)
+    vlc_add_string("auhal-warned-devices", "", NULL, NULL)
+    vlc_change_private()
 vlc_module_end ()
 
 #pragma mark -

@@ -117,54 +117,54 @@ static int  Open         ( vlc_object_t * );
 static void Close        ( filter_t * );
 
 vlc_module_begin ()
-    set_shortname( N_("Visualizer"))
-    set_subcategory( SUBCAT_AUDIO_VISUAL )
-    set_description( N_("Visualizer filter") )
-    set_section( N_( "General") , NULL )
-    add_string("effect-list", "spectrum",
+    vlc_set_shortname( N_("Visualizer"))
+    vlc_set_subcategory( SUBCAT_AUDIO_VISUAL )
+    vlc_set_description( N_("Visualizer filter") )
+    vlc_set_section( N_( "General") , NULL )
+    vlc_add_string("effect-list", "spectrum",
             ELIST_TEXT, ELIST_LONGTEXT )
-    add_integer("effect-width",VOUT_WIDTH,
+    vlc_add_integer("effect-width",VOUT_WIDTH,
              WIDTH_TEXT, WIDTH_LONGTEXT )
-    add_integer("effect-height" , VOUT_HEIGHT ,
+    vlc_add_integer("effect-height" , VOUT_HEIGHT ,
              HEIGHT_TEXT, HEIGHT_LONGTEXT )
-    add_string("effect-fft-window", "none",
+    vlc_add_string("effect-fft-window", "none",
             FFT_WINDOW_TEXT, FFT_WINDOW_LONGTEXT )
-        change_string_list( window_list, window_list_text )
-    add_float("effect-kaiser-param", 3.0f,
+        vlc_change_string_list( window_list, window_list_text )
+    vlc_add_float("effect-kaiser-param", 3.0f,
             KAISER_PARAMETER_TEXT, KAISER_PARAMETER_LONGTEXT )
-    set_section( N_("Spectrum analyser") , NULL )
-    add_bool("visual-80-bands", true,
+    vlc_set_section( N_("Spectrum analyser") , NULL )
+    vlc_add_bool("visual-80-bands", true,
              NBBANDS_TEXT, NULL )
-    add_bool("visual-peaks", true,
+    vlc_add_bool("visual-peaks", true,
              PEAKS_TEXT, NULL )
-    set_section( N_("Spectrometer") , NULL )
-    add_bool("spect-show-original", false,
+    vlc_set_section( N_("Spectrometer") , NULL )
+    vlc_add_bool("spect-show-original", false,
              ORIG_TEXT, ORIG_LONGTEXT )
-    add_bool("spect-show-base", true,
+    vlc_add_bool("spect-show-base", true,
              BASE_TEXT, NULL )
-    add_integer("spect-radius", 42,
+    vlc_add_integer("spect-radius", 42,
              RADIUS_TEXT, RADIUS_LONGTEXT )
-    add_integer_with_range("spect-sections", 3, 1, INT_MAX,
+    vlc_add_integer_with_range("spect-sections", 3, 1, INT_MAX,
              SSECT_TEXT, SSECT_LONGTEXT )
-    add_integer("spect-color", 80,
+    vlc_add_integer("spect-color", 80,
              COLOR1_TEXT, COLOR1_LONGTEXT )
-    add_bool("spect-show-bands", true,
+    vlc_add_bool("spect-show-bands", true,
              BANDS_TEXT, NULL )
-    add_bool("spect-80-bands", true,
+    vlc_add_bool("spect-80-bands", true,
              NBBANDS_TEXT, NULL )
-    add_integer("spect-separ", 1,
+    vlc_add_integer("spect-separ", 1,
              SEPAR_TEXT, NULL )
-    add_integer("spect-amp", 8,
+    vlc_add_integer("spect-amp", 8,
              AMP_TEXT, AMP_LONGTEXT )
-    add_bool("spect-show-peaks", true,
+    vlc_add_bool("spect-show-peaks", true,
              PEAKS_TEXT, NULL )
-    add_integer("spect-peak-width", 61,
+    vlc_add_integer("spect-peak-width", 61,
              PEAK_WIDTH_TEXT, PEAK_WIDTH_LONGTEXT )
-    add_integer("spect-peak-height", 1,
+    vlc_add_integer("spect-peak-height", 1,
              PEAK_HEIGHT_TEXT, PEAK_HEIGHT_LONGTEXT )
-    set_capability( "visualization", 0 )
-    set_callback( Open )
-    add_shortcut( "visualizer")
+    vlc_set_capability( "visualization", 0 )
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "visualizer")
 vlc_module_end ()
 
 

@@ -61,12 +61,12 @@ static const char *const ppsz_mode_descriptions[] =
   N_("SincR"), N_("Lanczos"), N_("Bicubic spline") };
 
 vlc_module_begin ()
-    set_description( N_("Video scaling filter") )
-    set_shortname( N_("Swscale" ) )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    set_callback_video_converter( OpenScaler, 150 )
-    add_integer( "swscale-mode", 2, SCALEMODE_TEXT, SCALEMODE_LONGTEXT )
-        change_integer_list( pi_mode_values, ppsz_mode_descriptions )
+    vlc_set_description( N_("Video scaling filter") )
+    vlc_set_shortname( N_("Swscale" ) )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_callback_video_converter( OpenScaler, 150 )
+    vlc_add_integer( "swscale-mode", 2, SCALEMODE_TEXT, SCALEMODE_LONGTEXT )
+        vlc_change_integer_list( pi_mode_values, ppsz_mode_descriptions )
 vlc_module_end ()
 
 /* Version checking */

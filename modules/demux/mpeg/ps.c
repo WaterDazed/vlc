@@ -58,22 +58,22 @@ static int  Open   ( vlc_object_t * );
 static void Close  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("MPEG-PS demuxer") )
-    set_shortname( N_("PS") )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_capability( "demux", 1 )
-    set_callbacks( OpenForce, Close )
-    add_shortcut( "ps" )
+    vlc_set_description( N_("MPEG-PS demuxer") )
+    vlc_set_shortname( N_("PS") )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_capability( "demux", 1 )
+    vlc_set_callbacks( OpenForce, Close )
+    vlc_add_shortcut( "ps" )
 
-    add_bool( "ps-trust-timestamps", true, TIME_TEXT,
+    vlc_add_bool( "ps-trust-timestamps", true, TIME_TEXT,
                  TIME_LONGTEXT )
-        change_safe ()
+        vlc_change_safe ()
 
-    add_submodule ()
-    set_description( N_("MPEG-PS demuxer") )
-    set_capability( "demux", 9 )
-    set_callbacks( Open, Close )
-    add_shortcut( "ps" )
+    vlc_add_submodule ()
+    vlc_set_description( N_("MPEG-PS demuxer") )
+    vlc_set_capability( "demux", 9 )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "ps" )
 vlc_module_end ()
 
 /*****************************************************************************

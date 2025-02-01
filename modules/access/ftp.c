@@ -82,25 +82,25 @@ static void OutClose( vlc_object_t * );
         "the FTP connection to %s")
 
 vlc_module_begin ()
-    set_shortname( "FTP" )
-    set_description( N_("FTP input") )
-    set_capability( "access", 0 )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    add_string( "ftp-user", NULL, USER_TEXT, USER_LONGTEXT )
-    add_password( "ftp-pwd", NULL, PASS_TEXT, PASS_LONGTEXT )
-    add_string( "ftp-account", "anonymous", ACCOUNT_TEXT,
+    vlc_set_shortname( "FTP" )
+    vlc_set_description( N_("FTP input") )
+    vlc_set_capability( "access", 0 )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_add_string( "ftp-user", NULL, USER_TEXT, USER_LONGTEXT )
+    vlc_add_password( "ftp-pwd", NULL, PASS_TEXT, PASS_LONGTEXT )
+    vlc_add_string( "ftp-account", "anonymous", ACCOUNT_TEXT,
                 ACCOUNT_LONGTEXT )
-    add_shortcut( "ftp", "ftps", "ftpes" )
-    set_callbacks( InOpen, InClose )
+    vlc_add_shortcut( "ftp", "ftps", "ftpes" )
+    vlc_set_callbacks( InOpen, InClose )
 
 #ifdef ENABLE_SOUT
-    add_submodule ()
-        set_shortname( "FTP" )
-        set_description( N_("FTP upload output") )
-        set_capability( "sout access", 0 )
-        set_subcategory( SUBCAT_SOUT_ACO )
-        add_shortcut( "ftp", "ftps", "ftpes" )
-        set_callbacks( OutOpen, OutClose )
+    vlc_add_submodule ()
+        vlc_set_shortname( "FTP" )
+        vlc_set_description( N_("FTP upload output") )
+        vlc_set_capability( "sout access", 0 )
+        vlc_set_subcategory( SUBCAT_SOUT_ACO )
+        vlc_add_shortcut( "ftp", "ftps", "ftpes" )
+        vlc_set_callbacks( OutOpen, OutClose )
 #endif
 vlc_module_end ()
 

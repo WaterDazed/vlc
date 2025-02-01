@@ -58,17 +58,17 @@ static const int ppsi_deinterlace_type[] = {
 };
 
 vlc_module_begin ()
-    set_description(N_("NVDEC video decoder"))
-    set_shortname("nvdec")
-    set_capability("video decoder", 60)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
-    add_integer( "nvdec-deint", cudaVideoDeinterlaceMode_Bob,
+    vlc_set_description(N_("NVDEC video decoder"))
+    vlc_set_shortname("nvdec")
+    vlc_set_capability("video decoder", 60)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_add_integer( "nvdec-deint", cudaVideoDeinterlaceMode_Bob,
                  DEINTERLACE_MODULE_TEXT, DEINTERLACE_MODULE_LONGTEXT )
-        change_integer_list( ppsi_deinterlace_type, ppsz_deinterlace_type )
-    set_callbacks(OpenDecoder, CloseDecoder)
-    add_submodule()
-        set_callback_dec_device(DecoderContextOpen, 3)
-        add_shortcut("nvdec")
+        vlc_change_integer_list( ppsi_deinterlace_type, ppsz_deinterlace_type )
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_add_submodule()
+        vlc_set_callback_dec_device(DecoderContextOpen, 3)
+        vlc_add_shortcut("nvdec")
 vlc_module_end ()
 
 /* */

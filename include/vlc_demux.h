@@ -51,7 +51,7 @@
 #define INPUT_UPDATE_TITLE_LIST 0x0100
 
 /* Demux module descriptor helpers */
-#define add_file_extension(ext) add_shortcut("ext-" ext)
+#define vlc_add_file_extension(ext) vlc_add_shortcut("ext-" ext)
 
 /* demux_meta_t is returned by "meta reader" module to the demuxer */
 typedef struct demux_meta_t

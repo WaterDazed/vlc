@@ -59,13 +59,13 @@ static void Close( vlc_object_t * );
         "makes the text to be boxed and maybe easier to read." )
 
 vlc_module_begin ()
-    set_shortname( N_("CC 608/708"))
-    set_description( N_("Closed Captions decoder") )
-    set_capability( "spu decoder", 50 )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_callbacks( Open, Close )
+    vlc_set_shortname( N_("CC 608/708"))
+    vlc_set_description( N_("Closed Captions decoder") )
+    vlc_set_capability( "spu decoder", 50 )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_callbacks( Open, Close )
 
-    add_bool( "cc-opaque", true,
+    vlc_add_bool( "cc-opaque", true,
                  OPAQUE_TEXT, OPAQUE_LONGTEXT )
 vlc_module_end ()
 

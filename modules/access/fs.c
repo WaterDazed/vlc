@@ -31,24 +31,24 @@
 #include <vlc_plugin.h>
 
 vlc_module_begin ()
-    set_description( N_("File input") )
-    set_shortname( N_("File") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    set_capability( "access", 50 )
-    add_shortcut( "file", "fd", "stream" )
-    set_callbacks( FileOpen, FileClose )
+    vlc_set_description( N_("File input") )
+    vlc_set_shortname( N_("File") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_capability( "access", 50 )
+    vlc_add_shortcut( "file", "fd", "stream" )
+    vlc_set_callbacks( FileOpen, FileClose )
 
-    add_submodule()
-    set_section( N_("Directory" ), NULL )
-    set_capability( "access", 55 )
+    vlc_add_submodule()
+    vlc_set_section( N_("Directory" ), NULL )
+    vlc_set_capability( "access", 55 )
 #ifndef HAVE_FDOPENDIR
-    add_shortcut( "file", "directory", "dir" )
+    vlc_add_shortcut( "file", "directory", "dir" )
 #else
-    add_shortcut( "directory", "dir" )
+    vlc_add_shortcut( "directory", "dir" )
 #endif
-    set_callbacks( DirOpen, DirClose )
+    vlc_set_callbacks( DirOpen, DirClose )
 
-    add_bool("list-special-files", false, N_("List special files"),
+    vlc_add_bool("list-special-files", false, N_("List special files"),
              N_("Include devices and pipes when listing directories"))
-    add_obsolete_string("directory-sort") /* since 3.0.0 */
+    vlc_add_obsolete_string("directory-sort") /* since 3.0.0 */
 vlc_module_end ()

@@ -43,12 +43,12 @@ static void Close(vlc_object_t *);
 
 /* Module descriptor */
 vlc_module_begin ()
-    set_description( N_("Gopher input") )
-    set_capability( "access", 0 )
-    set_shortname( "gopher" )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
-    add_shortcut( "gopher")
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("Gopher input") )
+    vlc_set_capability( "access", 0 )
+    vlc_set_shortname( "gopher" )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_add_shortcut( "gopher")
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 

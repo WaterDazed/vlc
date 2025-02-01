@@ -308,8 +308,8 @@ static int DemuxOpen(vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_capability("demux", 0)
-    set_callbacks(DemuxOpen, DemuxClose)
+    vlc_set_capability("demux", 0)
+    vlc_set_callbacks(DemuxOpen, DemuxClose)
 vlc_module_end()
 
 VLC_EXPORT const vlc_plugin_cb vlc_static_modules[] = {

@@ -482,16 +482,16 @@ error_end:
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_shortname("kms")
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_shortname("kms")
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 
-    add_obsolete_string("kms") /* Since 4.0.0 */
-    add_loadfile(KMS_DEVICE_VAR, DRM_DIR_NAME "/" DRM_PRIMARY_MINOR_NAME "0",
+    vlc_add_obsolete_string("kms") /* Since 4.0.0 */
+    vlc_add_loadfile(KMS_DEVICE_VAR, DRM_DIR_NAME "/" DRM_PRIMARY_MINOR_NAME "0",
                  DEVICE_TEXT, DEVICE_LONGTEXT)
-    add_string("kms-connector", "", KMS_CONNECTOR_TEXT, KMS_CONNECTOR_LONGTEXT)
+    vlc_add_string("kms-connector", "", KMS_CONNECTOR_TEXT, KMS_CONNECTOR_LONGTEXT)
 
-    set_description("Linux kernel mode setting window provider")
-    set_callback(OpenWindow)
-    set_capability("vout window", 9)
+    vlc_set_description("Linux kernel mode setting window provider")
+    vlc_set_callback(OpenWindow)
+    vlc_set_capability("vout window", 9)
 
 vlc_module_end ()

@@ -98,40 +98,40 @@ static const char *const ppsz_rc_end_usage_text [] =
 #define CPU_USED_LONGTEXT "CPU speed setting. Ranges differ depending upon usage mode (good quality: 0-5, realtime: 6-10, all-intra: 7-9)."
 
 vlc_module_begin ()
-    set_shortname("aom")
-    set_description(N_("AOM video decoder"))
-    set_capability("video decoder", 100)
-    set_callbacks(OpenDecoder, CloseDecoder)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_shortname("aom")
+    vlc_set_description(N_("AOM video decoder"))
+    vlc_set_capability("video decoder", 100)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
 #ifdef ENABLE_SOUT
-    add_submodule()
-        set_shortname("aom")
-        set_capability("video encoder", 101)
-        set_description(N_("AOM video encoder"))
-        set_callback(OpenEncoder)
+    vlc_add_submodule()
+        vlc_set_shortname("aom")
+        vlc_set_capability("video encoder", 101)
+        vlc_set_description(N_("AOM video encoder"))
+        vlc_set_callback(OpenEncoder)
         /* Note: Skip label translation for these - too technical */
-        add_integer( SOUT_CFG_PREFIX "profile", 0, "Profile", PROFILE_LONGTEXT )
-            change_integer_range( 0, 2 )
-            change_integer_list( pi_profile_values_list, ppsz_profile_text )
-        add_integer( SOUT_CFG_PREFIX "bitdepth", 8, "Bit Depth", NULL )
-            change_integer_list( pi_enc_bitdepth_values_list, ppsz_enc_bitdepth_text )
-        add_integer( SOUT_CFG_PREFIX "tile-rows", 0, "Tile Rows (in log2 units)", NULL )
-            change_integer_range( 0, 6 ) /* 1 << 6 == MAX_TILE_ROWS */
-        add_integer( SOUT_CFG_PREFIX "tile-columns", 0, "Tile Columns (in log2 units)", NULL )
-            change_integer_range( 0, 6 ) /* 1 << 6 == MAX_TILE_COLS */
-        add_integer( SOUT_CFG_PREFIX "cpu-used", 1, "Speed setting", CPU_USED_LONGTEXT )
-            change_integer_range( 0, 10 )
-        add_integer( SOUT_CFG_PREFIX "lag-in-frames", 19, "Maximum number of lookahead frames", NULL )
-            change_integer_range(0, 70 /* MAX_LAG_BUFFERS + MAX_LAP_BUFFERS */ )
-        add_integer( SOUT_CFG_PREFIX "usage", 0, "Usage", NULL )
-            change_integer_range( 0, 2 )
-            change_integer_list( pi_usage_values_list, ppsz_usage_text )
-        add_obsolete_integer( "sout-aom-rc-end-usage" ) /* since 4.0.0 */
-        add_integer( SOUT_CFG_PREFIX "rate-control", AOM_CBR, "Rate control mode", NULL )
-            change_integer_range( 0, 3 )
-            change_integer_list( pi_rc_end_usage_values_list, ppsz_rc_end_usage_text )
+        vlc_add_integer( SOUT_CFG_PREFIX "profile", 0, "Profile", PROFILE_LONGTEXT )
+            vlc_change_integer_range( 0, 2 )
+            vlc_change_integer_list( pi_profile_values_list, ppsz_profile_text )
+        vlc_add_integer( SOUT_CFG_PREFIX "bitdepth", 8, "Bit Depth", NULL )
+            vlc_change_integer_list( pi_enc_bitdepth_values_list, ppsz_enc_bitdepth_text )
+        vlc_add_integer( SOUT_CFG_PREFIX "tile-rows", 0, "Tile Rows (in log2 units)", NULL )
+            vlc_change_integer_range( 0, 6 ) /* 1 << 6 == MAX_TILE_ROWS */
+        vlc_add_integer( SOUT_CFG_PREFIX "tile-columns", 0, "Tile Columns (in log2 units)", NULL )
+            vlc_change_integer_range( 0, 6 ) /* 1 << 6 == MAX_TILE_COLS */
+        vlc_add_integer( SOUT_CFG_PREFIX "cpu-used", 1, "Speed setting", CPU_USED_LONGTEXT )
+            vlc_change_integer_range( 0, 10 )
+        vlc_add_integer( SOUT_CFG_PREFIX "lag-in-frames", 19, "Maximum number of lookahead frames", NULL )
+            vlc_change_integer_range(0, 70 /* MAX_LAG_BUFFERS + MAX_LAP_BUFFERS */ )
+        vlc_add_integer( SOUT_CFG_PREFIX "usage", 0, "Usage", NULL )
+            vlc_change_integer_range( 0, 2 )
+            vlc_change_integer_list( pi_usage_values_list, ppsz_usage_text )
+        vlc_add_obsolete_integer( "sout-aom-rc-end-usage" ) /* since 4.0.0 */
+        vlc_add_integer( SOUT_CFG_PREFIX "rate-control", AOM_CBR, "Rate control mode", NULL )
+            vlc_change_integer_range( 0, 3 )
+            vlc_change_integer_list( pi_rc_end_usage_values_list, ppsz_rc_end_usage_text )
 #ifdef AOM_CTRL_AV1E_SET_ROW_MT
-        add_bool( SOUT_CFG_PREFIX "row-mt", false, "Row Multithreading", NULL )
+        vlc_add_bool( SOUT_CFG_PREFIX "row-mt", false, "Row Multithreading", NULL )
 #endif
 #endif
 vlc_module_end ()

@@ -98,28 +98,28 @@ static void Close        ( filter_t * );
 #endif
 
 vlc_module_begin ()
-    set_shortname( N_("projectM"))
-    set_description( N_("libprojectM effect") )
-    set_capability( "visualization", 0 )
-    set_subcategory( SUBCAT_AUDIO_VISUAL )
+    vlc_set_shortname( N_("projectM"))
+    vlc_set_description( N_("libprojectM effect") )
+    vlc_set_capability( "visualization", 0 )
+    vlc_set_subcategory( SUBCAT_AUDIO_VISUAL )
 #ifndef HAVE_PROJECTM2
-    add_loadfile("projectm-config", "/usr/share/projectM/config.inp",
+    vlc_add_loadfile("projectm-config", "/usr/share/projectM/config.inp",
                  CONFIG_TEXT, CONFIG_LONGTEXT)
 #else
-    add_directory("projectm-preset-path", PRESET_PATH,
+    vlc_add_directory("projectm-preset-path", PRESET_PATH,
                   PRESET_PATH_TXT, PRESET_PATH_LONGTXT)
-    add_loadfile("projectm-title-font", FONT_PATH,
+    vlc_add_loadfile("projectm-title-font", FONT_PATH,
                  TITLE_FONT_TXT, TITLE_FONT_LONGTXT)
-    add_loadfile("projectm-menu-font", FONT_PATH_MENU,
+    vlc_add_loadfile("projectm-menu-font", FONT_PATH_MENU,
                  MENU_FONT_TXT, MENU_FONT_LONGTXT)
 #endif
-    add_integer( "projectm-width", 800, WIDTH_TEXT, WIDTH_LONGTEXT )
-    add_integer( "projectm-height", 500, HEIGHT_TEXT, HEIGHT_LONGTEXT )
-    add_integer( "projectm-meshx", 32, MESHX_TEXT, MESHX_LONGTEXT )
-    add_integer( "projectm-meshy", 24, MESHY_TEXT, MESHY_LONGTEXT )
-    add_integer( "projectm-texture-size", 1024, TEXTURE_TEXT, TEXTURE_LONGTEXT )
-    add_shortcut( "projectm" )
-    set_callback( Open )
+    vlc_add_integer( "projectm-width", 800, WIDTH_TEXT, WIDTH_LONGTEXT )
+    vlc_add_integer( "projectm-height", 500, HEIGHT_TEXT, HEIGHT_LONGTEXT )
+    vlc_add_integer( "projectm-meshx", 32, MESHX_TEXT, MESHX_LONGTEXT )
+    vlc_add_integer( "projectm-meshy", 24, MESHY_TEXT, MESHY_LONGTEXT )
+    vlc_add_integer( "projectm-texture-size", 1024, TEXTURE_TEXT, TEXTURE_LONGTEXT )
+    vlc_add_shortcut( "projectm" )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 

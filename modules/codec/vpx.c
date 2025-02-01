@@ -70,29 +70,29 @@ static const char* const quality_desc[] = {
  *****************************************************************************/
 
 vlc_module_begin ()
-    set_shortname("vpx")
-    set_description(N_("WebM video decoder"))
-    set_capability("video decoder", 60)
-    set_callbacks(OpenDecoder, CloseDecoder)
-    add_integer( "vpx-threads", 0, THREADS_TEXT, THREADS_LONGTEXT );
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_shortname("vpx")
+    vlc_set_description(N_("WebM video decoder"))
+    vlc_set_capability("video decoder", 60)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_add_integer( "vpx-threads", 0, THREADS_TEXT, THREADS_LONGTEXT );
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
 #ifdef ENABLE_SOUT
-    add_submodule()
-    set_shortname("vpx")
-    set_capability("video encoder", 60)
-    set_description(N_("WebM video encoder"))
-    set_callback(OpenEncoder)
+    vlc_add_submodule()
+    vlc_set_shortname("vpx")
+    vlc_set_capability("video encoder", 60)
+    vlc_set_description(N_("WebM video encoder"))
+    vlc_set_callback(OpenEncoder)
 
-    add_submodule()
-    set_shortname("vpx")
-    set_capability("image encoder", 60)
-    set_description(N_("WebP image encoder"))
-    set_callback(OpenEncoder)
+    vlc_add_submodule()
+    vlc_set_shortname("vpx")
+    vlc_set_capability("image encoder", 60)
+    vlc_set_description(N_("WebP image encoder"))
+    vlc_set_callback(OpenEncoder)
 
 #   define ENC_CFG_PREFIX "sout-vpx-"
-    add_integer( ENC_CFG_PREFIX "quality-mode", VPX_DL_BEST_QUALITY, QUALITY_MODE_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "quality-mode", VPX_DL_BEST_QUALITY, QUALITY_MODE_TEXT,
                  QUALITY_MODE_LONGTEXT )
-        change_integer_list( quality_values, quality_desc )
+        vlc_change_integer_list( quality_values, quality_desc )
 #endif
 vlc_module_end ()
 

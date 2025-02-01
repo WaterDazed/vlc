@@ -29,20 +29,20 @@ int  OutOpenAvio (vlc_object_t *);
 void OutCloseAvio(vlc_object_t *);
 
 #define AVIO_MODULE \
-    set_shortname(N_("AVIO"))                                                    \
-    set_description(N_("libavformat AVIO access") )                              \
-    set_subcategory(SUBCAT_INPUT_ACCESS)                                         \
-    set_capability("access", -1)                                                 \
-    add_shortcut("avio", "rtmp", "rtmpe", "rtmps", "rtmpt", "rtmpte", "rtmpts")  \
-    set_callbacks(OpenAvio, CloseAvio)                                           \
-    set_section(N_("Input"), NULL )                                              \
-    add_string("avio-options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT) \
-    add_submodule ()                                                             \
-        set_shortname( "AVIO" )                                                  \
-        set_description( N_("libavformat AVIO access output") )                  \
-        set_capability( "sout access", -1 )                                      \
-        set_subcategory( SUBCAT_SOUT_ACO )                                       \
-        add_shortcut( "avio", "rtmp" )                                           \
-        set_callbacks( OutOpenAvio, OutCloseAvio)                                \
-        set_section(N_("Stream output"), NULL )                                  \
-        add_string("sout-avio-options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT)
+    vlc_set_shortname(N_("AVIO"))                                                \
+    vlc_set_description(N_("libavformat AVIO access") )                          \
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)                                     \
+    vlc_set_capability("access", -1)                                             \
+    vlc_add_shortcut("avio", "rtmp", "rtmpe", "rtmps", "rtmpt", "rtmpte", "rtmpts")  \
+    vlc_set_callbacks(OpenAvio, CloseAvio)                                       \
+    vlc_set_section(N_("Input"), NULL )                                          \
+    vlc_add_string("avio-options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT)   \
+    vlc_add_submodule ()                                                         \
+        vlc_set_shortname( "AVIO" )                                              \
+        vlc_set_description( N_("libavformat AVIO access output") )              \
+        vlc_set_capability( "sout access", -1 )                                  \
+        vlc_set_subcategory( SUBCAT_SOUT_ACO )                                   \
+        vlc_add_shortcut( "avio", "rtmp" )                                       \
+        vlc_set_callbacks( OutOpenAvio, OutCloseAvio)                            \
+        vlc_set_section(N_("Stream output"), NULL )                              \
+        vlc_add_string("sout-avio-options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT)

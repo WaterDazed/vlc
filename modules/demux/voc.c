@@ -40,11 +40,11 @@
 static int  Open ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("VOC demuxer") )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_capability( "demux", 10 )
-    set_callback( Open )
-    add_file_extension("voc")
+    vlc_set_description( N_("VOC demuxer") )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_capability( "demux", 10 )
+    vlc_set_callback( Open )
+    vlc_add_file_extension("voc")
 vlc_module_end ()
 
 /*****************************************************************************

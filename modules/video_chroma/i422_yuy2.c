@@ -54,13 +54,13 @@ static int  Activate ( filter_t * );
  *****************************************************************************/
 vlc_module_begin ()
 #if defined (PLUGIN_SSE2)
-    set_description( N_("SSE2 conversions from " SRC_FOURCC " to " DEST_FOURCC) )
-    set_callback_video_converter( Activate, 120 )
+    vlc_set_description( N_("SSE2 conversions from " SRC_FOURCC " to " DEST_FOURCC) )
+    vlc_set_callback_video_converter( Activate, 120 )
 # define vlc_CPU_capable() vlc_CPU_SSE2()
 # define VLC_TARGET VLC_SSE
 #else
-    set_description( N_("Conversions from " SRC_FOURCC " to " DEST_FOURCC) )
-    set_callback_video_converter( Activate, 80 )
+    vlc_set_description( N_("Conversions from " SRC_FOURCC " to " DEST_FOURCC) )
+    vlc_set_callback_video_converter( Activate, 80 )
 # define PLUGIN_PLAIN
 # define vlc_CPU_capable() (true)
 # define VLC_TARGET

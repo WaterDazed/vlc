@@ -1930,11 +1930,11 @@ error:
 }
 
 vlc_module_begin ()
-    set_shortname("AudioTrack")
-    set_description("Android AudioTrack audio output")
+    vlc_set_shortname("AudioTrack")
+    vlc_set_description("Android AudioTrack audio output")
 
-    set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
 
-    set_capability("aout android stream", 180)
-    set_callback(Start)
+    vlc_set_capability("aout android stream", 180)
+    vlc_set_callback(Start)
 vlc_module_end ()

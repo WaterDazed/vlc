@@ -39,10 +39,10 @@
 static int  Open ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_description( N_("XA demuxer") )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_capability( "demux", 10 )
-    set_callback( Open )
+    vlc_set_description( N_("XA demuxer") )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_capability( "demux", 10 )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 /*****************************************************************************

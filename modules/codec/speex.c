@@ -92,46 +92,46 @@ static const char * const ppsz_enc_mode_descriptions[] = {
 };
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
 
-    set_description( N_("Speex audio decoder") )
-    set_capability( "audio decoder", 100 )
-    set_shortname( N_("Speex") )
-    set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_set_description( N_("Speex audio decoder") )
+    vlc_set_capability( "audio decoder", 100 )
+    vlc_set_shortname( N_("Speex") )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
 
-    add_submodule ()
-    set_description( N_("Speex audio packetizer") )
-    set_capability( "packetizer", 100 )
-    set_callbacks( OpenPacketizer, CloseDecoder )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Speex audio packetizer") )
+    vlc_set_capability( "packetizer", 100 )
+    vlc_set_callbacks( OpenPacketizer, CloseDecoder )
 
 #ifdef ENABLE_SOUT
-    add_submodule ()
-    set_description( N_("Speex audio encoder") )
-    set_capability( "audio encoder", 100 )
-    set_callback( OpenEncoder )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Speex audio encoder") )
+    vlc_set_capability( "audio encoder", 100 )
+    vlc_set_callback( OpenEncoder )
 
-    add_integer( ENC_CFG_PREFIX "mode", 0, ENC_MODE_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "mode", 0, ENC_MODE_TEXT,
                  ENC_MODE_LONGTEXT )
-        change_integer_list( pi_enc_mode_values, ppsz_enc_mode_descriptions )
+        vlc_change_integer_list( pi_enc_mode_values, ppsz_enc_mode_descriptions )
 
-    add_integer( ENC_CFG_PREFIX "complexity", 3, ENC_COMPLEXITY_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "complexity", 3, ENC_COMPLEXITY_TEXT,
                  ENC_COMPLEXITY_LONGTEXT )
-        change_integer_range( 1, 10 )
+        vlc_change_integer_range( 1, 10 )
 
-    add_bool( ENC_CFG_PREFIX "cbr", false, ENC_CBR_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "cbr", false, ENC_CBR_TEXT,
                  ENC_CBR_LONGTEXT )
 
-    add_float( ENC_CFG_PREFIX "quality", 8.0, ENC_QUALITY_TEXT,
+    vlc_add_float( ENC_CFG_PREFIX "quality", 8.0, ENC_QUALITY_TEXT,
                ENC_QUALITY_LONGTEXT )
-        change_float_range( 0.0, 10.0 )
+        vlc_change_float_range( 0.0, 10.0 )
 
-    add_integer( ENC_CFG_PREFIX "max-bitrate", 0, ENC_MAXBITRATE_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "max-bitrate", 0, ENC_MAXBITRATE_TEXT,
                  ENC_MAXBITRATE_LONGTEXT )
 
-    add_bool( ENC_CFG_PREFIX "vad", true, ENC_VAD_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "vad", true, ENC_VAD_TEXT,
                  ENC_VAD_LONGTEXT )
 
-    add_bool( ENC_CFG_PREFIX "dtx", false, ENC_DTX_TEXT,
+    vlc_add_bool( ENC_CFG_PREFIX "dtx", false, ENC_DTX_TEXT,
                  ENC_DTX_LONGTEXT )
 
     /* TODO agc, noise suppression, */

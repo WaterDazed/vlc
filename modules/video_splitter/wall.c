@@ -59,20 +59,20 @@ static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 
 vlc_module_begin()
-    set_description( N_("Wall video filter") )
-    set_shortname( N_("Image wall" ))
-    set_capability( "video splitter", 0 )
-    set_subcategory( SUBCAT_VIDEO_SPLITTER )
+    vlc_set_description( N_("Wall video filter") )
+    vlc_set_shortname( N_("Image wall" ))
+    vlc_set_capability( "video splitter", 0 )
+    vlc_set_subcategory( SUBCAT_VIDEO_SPLITTER )
 
-    add_integer( CFG_PREFIX "cols", 3, COLS_TEXT, COLS_LONGTEXT )
-    change_integer_range( 1, COL_MAX )
-    add_integer( CFG_PREFIX "rows", 3, ROWS_TEXT, ROWS_LONGTEXT )
-    change_integer_range( 1, ROW_MAX )
-    add_string( CFG_PREFIX "active", NULL, ACTIVE_TEXT, ACTIVE_LONGTEXT )
-    add_obsolete_string( CFG_PREFIX "element-aspect" ) /* since 4.0.0 */
+    vlc_add_integer( CFG_PREFIX "cols", 3, COLS_TEXT, COLS_LONGTEXT )
+    vlc_change_integer_range( 1, COL_MAX )
+    vlc_add_integer( CFG_PREFIX "rows", 3, ROWS_TEXT, ROWS_LONGTEXT )
+    vlc_change_integer_range( 1, ROW_MAX )
+    vlc_add_string( CFG_PREFIX "active", NULL, ACTIVE_TEXT, ACTIVE_LONGTEXT )
+    vlc_add_obsolete_string( CFG_PREFIX "element-aspect" ) /* since 4.0.0 */
 
-    add_shortcut( "wall" )
-    set_callbacks( Open, Close )
+    vlc_add_shortcut( "wall" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end()
 
 /*****************************************************************************

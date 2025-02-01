@@ -72,28 +72,28 @@ static void Close( vlc_object_t * );
     "separated with a comma." )
 
 vlc_module_begin ()
-     set_description( N_("JACK audio input") )
-     set_capability( "access", 0 )
-     set_shortname( N_( "JACK Input" ) )
-     set_subcategory( SUBCAT_INPUT_ACCESS )
+     vlc_set_description( N_("JACK audio input") )
+     vlc_set_capability( "access", 0 )
+     vlc_set_shortname( N_( "JACK Input" ) )
+     vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-     add_bool( "jack-input-use-vlc-pace", false,
+     vlc_add_bool( "jack-input-use-vlc-pace", false,
          PACE_TEXT, PACE_LONGTEXT )
-     add_bool( "jack-input-auto-connect", false,
+     vlc_add_bool( "jack-input-auto-connect", false,
          AUTO_CONNECT_TEXT, AUTO_CONNECT_LONGTEXT )
 
      /* Channels, potentially from MRL. */
-     add_integer( "jack-input-channels", 0,
+     vlc_add_integer( "jack-input-channels", 0,
          CHANNELS_TEXT, CHANNELS_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
     /* Ports, potentially from MRL. */
-     add_string( "jack-input-ports", NULL,
+     vlc_add_string( "jack-input-ports", NULL,
          PORTS_TEXT, PORTS_LONGTEXT )
-        change_safe()
+        vlc_change_safe()
 
-     add_shortcut( "jack" )
-     set_callbacks( Open, Close )
+     vlc_add_shortcut( "jack" )
+     vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

@@ -956,11 +956,11 @@ error:
     "handled by VLC.")
 
 vlc_module_begin()
-    set_shortname("WASAPI")
-    set_description(N_("Windows Audio Session API output"))
-    set_capability("aout stream", 50)
-    add_bool("wasapi-exclusive", false, WASAPI_EXCLUSIVE_TEXT,
+    vlc_set_shortname("WASAPI")
+    vlc_set_description(N_("Windows Audio Session API output"))
+    vlc_set_capability("aout stream", 50)
+    vlc_add_bool("wasapi-exclusive", false, WASAPI_EXCLUSIVE_TEXT,
              WASAPI_EXCLUSIVE_LONGTEXT)
-    set_subcategory(SUBCAT_AUDIO_AOUT)
-    set_callback(Start)
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_set_callback(Start)
 vlc_module_end()

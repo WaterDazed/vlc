@@ -50,15 +50,15 @@
 static int  Open  ( vlc_object_t * );
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_description( N_("MusePack demuxer") )
-    set_capability( "demux", 145 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_description( N_("MusePack demuxer") )
+    vlc_set_capability( "demux", 145 )
 
-    set_callback( Open )
-    add_shortcut( "mpc" )
-    add_file_extension("mpc")
-    add_file_extension("mp+")
-    add_file_extension("mpp")
+    vlc_set_callback( Open )
+    vlc_add_shortcut( "mpc" )
+    vlc_add_file_extension("mpc")
+    vlc_add_file_extension("mp+")
+    vlc_add_file_extension("mpp")
 vlc_module_end ()
 
 /*****************************************************************************

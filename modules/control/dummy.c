@@ -36,12 +36,12 @@
 static int Open( vlc_object_t * );
 
 vlc_module_begin ()
-    set_shortname( N_("Dummy") )
-    set_description( N_("Dummy interface") )
-    set_capability( "interface", 0 )
-    set_callback( Open )
+    vlc_set_shortname( N_("Dummy") )
+    vlc_set_description( N_("Dummy interface") )
+    vlc_set_capability( "interface", 0 )
+    vlc_set_callback( Open )
 #if defined(_WIN32)
-    add_obsolete_bool( "dummy-quiet" ) /* since 4.0.0 */
+    vlc_add_obsolete_bool( "dummy-quiet" ) /* since 4.0.0 */
 #endif
 vlc_module_end ()
 

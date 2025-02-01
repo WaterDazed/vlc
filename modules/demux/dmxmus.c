@@ -471,8 +471,8 @@ static int Open(vlc_object_t *obj)
 }
 
 vlc_module_begin()
-    set_description(N_("DMX music demuxer"))
-    set_subcategory(SUBCAT_INPUT_DEMUX)
-    set_capability("demux", 20)
-    set_callbacks(Open, NULL)
+    vlc_set_description(N_("DMX music demuxer"))
+    vlc_set_subcategory(SUBCAT_INPUT_DEMUX)
+    vlc_set_capability("demux", 20)
+    vlc_set_callbacks(Open, NULL)
 vlc_module_end()

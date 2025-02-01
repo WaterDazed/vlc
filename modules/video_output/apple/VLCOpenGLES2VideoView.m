@@ -526,9 +526,9 @@ static int Open(vlc_gl_t *gl, unsigned width, unsigned height,
 }
 
 vlc_module_begin ()
-    set_shortname (N_("CAEAGL"))
-    set_description (N_("CAEAGL provider for OpenGL"))
-    set_subcategory (SUBCAT_VIDEO_VOUT)
-    set_callback_opengl_es2 (Open, 50)
-    add_shortcut ("caeagl")
+    vlc_set_shortname (N_("CAEAGL"))
+    vlc_set_description (N_("CAEAGL provider for OpenGL"))
+    vlc_set_subcategory (SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_opengl_es2 (Open, 50)
+    vlc_add_shortcut ("caeagl")
 vlc_module_end ()

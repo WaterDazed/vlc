@@ -115,38 +115,38 @@ static const char *const enc_chromafmt_list_text[] = {
   "Enforce a keyframe interval between 1 and 1000." )
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_shortname( "Daala" )
-    set_description( N_("Daala video decoder") )
-    set_capability( "video decoder", 100 )
-    set_callbacks( OpenDecoder, CloseDecoder )
-    add_shortcut( "daala" )
-    add_submodule ()
-    set_description( N_("Daala video packetizer") )
-    set_capability( "packetizer", 100 )
-    set_callbacks( OpenPacketizer, CloseDecoder )
-    add_shortcut( "daala" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_shortname( "Daala" )
+    vlc_set_description( N_("Daala video decoder") )
+    vlc_set_capability( "video decoder", 100 )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_add_shortcut( "daala" )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Daala video packetizer") )
+    vlc_set_capability( "packetizer", 100 )
+    vlc_set_callbacks( OpenPacketizer, CloseDecoder )
+    vlc_add_shortcut( "daala" )
 
 #ifdef ENABLE_SOUT
-    add_submodule ()
-    set_description( N_("Daala video encoder") )
-    set_capability( "video encoder", 150 )
-    set_callback( OpenEncoder )
-    add_shortcut( "daala" )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Daala video encoder") )
+    vlc_set_capability( "video encoder", 150 )
+    vlc_set_callback( OpenEncoder )
+    vlc_add_shortcut( "daala" )
 
 #   define ENC_CFG_PREFIX "sout-daala-"
-    add_integer_with_range( ENC_CFG_PREFIX "quality", 10, 0, 511,
+    vlc_add_integer_with_range( ENC_CFG_PREFIX "quality", 10, 0, 511,
                  ENC_QUALITY_TEXT, ENC_QUALITY_LONGTEXT )
-    add_integer_with_range( ENC_CFG_PREFIX "keyint", 256, 1, 1000,
+    vlc_add_integer_with_range( ENC_CFG_PREFIX "keyint", 256, 1, 1000,
                  ENC_KEYINT_TEXT, ENC_KEYINT_LONGTEXT )
 
 #   define ENC_CHROMAFMT_TEXT N_("Chroma format")
 #   define ENC_CHROMAFMT_LONGTEXT N_("Picking chroma format will force a " \
                                      "conversion of the video into that format")
 
-    add_string( ENC_CFG_PREFIX "chroma-fmt", "420", ENC_CHROMAFMT_TEXT,
+    vlc_add_string( ENC_CFG_PREFIX "chroma-fmt", "420", ENC_CHROMAFMT_TEXT,
                 ENC_CHROMAFMT_LONGTEXT )
-    change_string_list( enc_chromafmt_list, enc_chromafmt_list_text )
+    vlc_change_string_list( enc_chromafmt_list, enc_chromafmt_list_text )
 #endif
 vlc_module_end ()
 

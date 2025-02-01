@@ -45,10 +45,10 @@
 static int  Open(vlc_object_t *);
 
 vlc_module_begin()
-    set_description(N_("Audio filter for PCM format conversion"))
-    set_subcategory(SUBCAT_AUDIO_AFILTER)
-    set_capability("audio converter", 1)
-    set_callback(Open)
+    vlc_set_description(N_("Audio filter for PCM format conversion"))
+    vlc_set_subcategory(SUBCAT_AUDIO_AFILTER)
+    vlc_set_capability("audio converter", 1)
+    vlc_set_callback(Open)
 vlc_module_end()
 
 /*****************************************************************************

@@ -67,22 +67,22 @@ static int  Open  (vlc_object_t *);
 static void Close (vlc_object_t *);
 
 vlc_module_begin ()
-    set_description (N_("FluidSynth MIDI synthesizer"))
-    set_capability ("audio decoder", 100)
-    set_shortname (N_("FluidSynth"))
-    set_subcategory (SUBCAT_INPUT_ACODEC)
-    set_callbacks (Open, Close)
-    add_loadfile("soundfont", "", SOUNDFONT_TEXT, SOUNDFONT_LONGTEXT)
-    add_bool ("synth-chorus", true, CHORUS_TEXT, NULL)
-    add_float ("synth-gain", .5, GAIN_TEXT, GAIN_LONGTEXT)
-        change_float_range (0., 10.)
-    add_integer ("synth-polyphony", 256,
+    vlc_set_description (N_("FluidSynth MIDI synthesizer"))
+    vlc_set_capability ("audio decoder", 100)
+    vlc_set_shortname (N_("FluidSynth"))
+    vlc_set_subcategory (SUBCAT_INPUT_ACODEC)
+    vlc_set_callbacks (Open, Close)
+    vlc_add_loadfile("soundfont", "", SOUNDFONT_TEXT, SOUNDFONT_LONGTEXT)
+    vlc_add_bool ("synth-chorus", true, CHORUS_TEXT, NULL)
+    vlc_add_float ("synth-gain", .5, GAIN_TEXT, GAIN_LONGTEXT)
+        vlc_change_float_range (0., 10.)
+    vlc_add_integer ("synth-polyphony", 256,
                  POLYPHONY_TEXT, POLYPHONY_LONGTEXT)
-        change_integer_range (1, 65535)
-    add_bool ("synth-reverb", true, REVERB_TEXT, NULL)
-    add_integer ("synth-sample-rate", 44100,
+        vlc_change_integer_range (1, 65535)
+    vlc_add_bool ("synth-reverb", true, REVERB_TEXT, NULL)
+    vlc_add_integer ("synth-sample-rate", 44100,
                  SAMPLE_RATE_TEXT, NULL)
-        change_integer_range (22050, 96000)
+        vlc_change_integer_range (22050, 96000)
 vlc_module_end ()
 
 

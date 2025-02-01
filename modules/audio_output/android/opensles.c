@@ -550,11 +550,11 @@ error:
 }
 
 vlc_module_begin ()
-    set_description("OpenSLES audio output")
-    set_shortname("OpenSLES")
-    set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_set_description("OpenSLES audio output")
+    vlc_set_shortname("OpenSLES")
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
 
-    set_capability("audio output", 170)
-    add_shortcut("opensles", "android")
-    set_callbacks(Open, Close)
+    vlc_set_capability("audio output", 170)
+    vlc_add_shortcut("opensles", "android")
+    vlc_set_callbacks(Open, Close)
 vlc_module_end ()

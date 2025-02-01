@@ -243,47 +243,47 @@ static void CloseAudio          (vlc_object_t *);
  *****************************************************************************/
 
 vlc_module_begin()
-    set_shortname(N_("DecklinkOutput"))
-    set_description(N_("Output module to write to Blackmagic SDI card"))
-    set_section(N_("DeckLink General Options"), NULL)
-    add_integer(CFG_PREFIX "card-index", 0,
+    vlc_set_shortname(N_("DecklinkOutput"))
+    vlc_set_description(N_("Output module to write to Blackmagic SDI card"))
+    vlc_set_section(N_("DeckLink General Options"), NULL)
+    vlc_add_integer(CFG_PREFIX "card-index", 0,
                 CARD_INDEX_TEXT, CARD_INDEX_LONGTEXT)
 
-    add_submodule ()
-    set_description (N_("DeckLink Video Output module"))
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_callback_display(OpenVideo, 0)
-    set_section(N_("DeckLink Video Options"), NULL)
-    add_string(VIDEO_CFG_PREFIX "video-connection", "sdi",
+    vlc_add_submodule ()
+    vlc_set_description (N_("DeckLink Video Output module"))
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_display(OpenVideo, 0)
+    vlc_set_section(N_("DeckLink Video Options"), NULL)
+    vlc_add_string(VIDEO_CFG_PREFIX "video-connection", "sdi",
                 VIDEO_CONNECTION_TEXT, VIDEO_CONNECTION_LONGTEXT)
-                change_string_list(ppsz_videoconns, ppsz_videoconns_text)
-    add_string(VIDEO_CFG_PREFIX "mode", "",
+                vlc_change_string_list(ppsz_videoconns, ppsz_videoconns_text)
+    vlc_add_string(VIDEO_CFG_PREFIX "mode", "",
                 MODE_TEXT, MODE_LONGTEXT)
-    add_bool(VIDEO_CFG_PREFIX "tenbits", true,
+    vlc_add_bool(VIDEO_CFG_PREFIX "tenbits", true,
                 VIDEO_TENBITS_TEXT, VIDEO_TENBITS_LONGTEXT)
-    add_integer(VIDEO_CFG_PREFIX "nosignal-delay", 5,
+    vlc_add_integer(VIDEO_CFG_PREFIX "nosignal-delay", 5,
                 NOSIGNAL_INDEX_TEXT, NOSIGNAL_INDEX_LONGTEXT)
-    add_integer(VIDEO_CFG_PREFIX "afd-line", 16,
+    vlc_add_integer(VIDEO_CFG_PREFIX "afd-line", 16,
                 AFDLINE_INDEX_TEXT, AFDLINE_INDEX_LONGTEXT)
-    add_integer_with_range(VIDEO_CFG_PREFIX "afd", 8, 0, 16,
+    vlc_add_integer_with_range(VIDEO_CFG_PREFIX "afd", 8, 0, 16,
                 AFD_INDEX_TEXT, nullptr)
-                change_integer_list(rgi_afd_values, rgsz_afd_text)
-    add_integer_with_range(VIDEO_CFG_PREFIX "ar", 1, 0, 1,
+                vlc_change_integer_list(rgi_afd_values, rgsz_afd_text)
+    vlc_add_integer_with_range(VIDEO_CFG_PREFIX "ar", 1, 0, 1,
                 AR_INDEX_TEXT, AR_INDEX_LONGTEXT)
-                change_integer_list(rgi_ar_values, rgsz_ar_text)
-    add_loadfile(VIDEO_CFG_PREFIX "nosignal-image", NULL,
+                vlc_change_integer_list(rgi_ar_values, rgsz_ar_text)
+    vlc_add_loadfile(VIDEO_CFG_PREFIX "nosignal-image", NULL,
                  NOSIGNAL_IMAGE_TEXT, nullptr)
 
 
-    add_submodule ()
-    set_description (N_("DeckLink Audio Output module"))
-    set_subcategory(SUBCAT_AUDIO_AOUT)
-    set_capability("audio output", 0)
-    set_callbacks (OpenAudio, CloseAudio)
-    set_section(N_("DeckLink Audio Options"), NULL)
-    add_integer(AUDIO_CFG_PREFIX "audio-rate", 48000,
+    vlc_add_submodule ()
+    vlc_set_description (N_("DeckLink Audio Output module"))
+    vlc_set_subcategory(SUBCAT_AUDIO_AOUT)
+    vlc_set_capability("audio output", 0)
+    vlc_set_callbacks (OpenAudio, CloseAudio)
+    vlc_set_section(N_("DeckLink Audio Options"), NULL)
+    vlc_add_integer(AUDIO_CFG_PREFIX "audio-rate", 48000,
                 RATE_TEXT, RATE_LONGTEXT)
-    add_integer(AUDIO_CFG_PREFIX "audio-channels", 2,
+    vlc_add_integer(AUDIO_CFG_PREFIX "audio-channels", 2,
                 CHANNELS_TEXT, CHANNELS_LONGTEXT)
 vlc_module_end ()
 

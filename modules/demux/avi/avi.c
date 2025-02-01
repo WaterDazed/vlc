@@ -73,19 +73,19 @@ static const char *const ppsz_indexes[] = { N_("Ask for action"),
                                             N_("Fix when necessary")};
 
 vlc_module_begin ()
-    set_shortname( "AVI" )
-    set_description( N_("AVI demuxer") )
-    set_capability( "demux", 212 )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    add_file_extension("avi")
+    vlc_set_shortname( "AVI" )
+    vlc_set_description( N_("AVI demuxer") )
+    vlc_set_capability( "demux", 212 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_add_file_extension("avi")
 
-    add_bool( "avi-interleaved", false,
+    vlc_add_bool( "avi-interleaved", false,
               INTERLEAVE_TEXT, NULL )
-    add_integer( "avi-index", 0,
+    vlc_add_integer( "avi-index", 0,
               INDEX_TEXT, INDEX_LONGTEXT )
-        change_integer_list( pi_index, ppsz_indexes )
+        vlc_change_integer_list( pi_index, ppsz_indexes )
 
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /*****************************************************************************

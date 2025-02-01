@@ -70,22 +70,22 @@ static int OpenMmalWindow(vlc_window_t *);
 
 
 vlc_module_begin()
-    set_shortname(N_("MMAL vout"))
-    set_description(N_("MMAL-based vout plugin for Raspberry Pi"))
-    add_shortcut("mmal_vout")
-    set_subcategory( SUBCAT_VIDEO_VOUT )
+    vlc_set_shortname(N_("MMAL vout"))
+    vlc_set_description(N_("MMAL-based vout plugin for Raspberry Pi"))
+    vlc_add_shortcut("mmal_vout")
+    vlc_set_subcategory( SUBCAT_VIDEO_VOUT )
 
-    add_integer(MMAL_LAYER_NAME, 1, MMAL_LAYER_TEXT, MMAL_LAYER_LONGTEXT)
-    add_bool(MMAL_ADJUST_REFRESHRATE_NAME, false, MMAL_ADJUST_REFRESHRATE_TEXT,
+    vlc_add_integer(MMAL_LAYER_NAME, 1, MMAL_LAYER_TEXT, MMAL_LAYER_LONGTEXT)
+    vlc_add_bool(MMAL_ADJUST_REFRESHRATE_NAME, false, MMAL_ADJUST_REFRESHRATE_TEXT,
                     NULL)
-    add_bool(MMAL_NATIVE_INTERLACED, false, MMAL_NATIVE_INTERLACE_TEXT,
+    vlc_add_bool(MMAL_NATIVE_INTERLACED, false, MMAL_NATIVE_INTERLACE_TEXT,
                     MMAL_NATIVE_INTERLACE_LONGTEXT)
-    set_callback_display(OpenMmalVout, 16)  // 1 point better than ASCII art
+    vlc_set_callback_display(OpenMmalVout, 16)  // 1 point better than ASCII art
 
-    add_submodule()
-        set_capability("vout window", 10)
-        set_callback(OpenMmalWindow)
-        add_string(MMAL_DISPLAY_NAME, "auto", MMAL_DISPLAY_TEXT,
+    vlc_add_submodule()
+        vlc_set_capability("vout window", 10)
+        vlc_set_callback(OpenMmalWindow)
+        vlc_add_string(MMAL_DISPLAY_NAME, "auto", MMAL_DISPLAY_TEXT,
                         MMAL_DISPLAY_LONGTEXT)
 vlc_module_end()
 

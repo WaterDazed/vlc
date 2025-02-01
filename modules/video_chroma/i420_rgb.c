@@ -60,14 +60,14 @@ static void Deactivate ( filter_t * );
 
 vlc_module_begin ()
 #if defined (PLUGIN_SSE2)
-    set_description( N_( "SSE2 I420,IYUV,YV12 to "
+    vlc_set_description( N_( "SSE2 I420,IYUV,YV12 to "
                         "RV15,RV16,RV24,RV32 conversions") )
-    set_callback_video_converter( Activate, 120 )
+    vlc_set_callback_video_converter( Activate, 120 )
 # define vlc_CPU_capable() vlc_CPU_SSE2()
 #else
-    set_description( N_("I420,IYUV,YV12 to "
+    vlc_set_description( N_("I420,IYUV,YV12 to "
                        "RGB8,RV15,RV16,RV24,RV32 conversions") )
-    set_callback_video_converter( Activate, 80 )
+    vlc_set_callback_video_converter( Activate, 80 )
 # define vlc_CPU_capable() (true)
 #endif
 vlc_module_end ()

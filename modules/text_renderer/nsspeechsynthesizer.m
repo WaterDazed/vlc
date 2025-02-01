@@ -42,10 +42,10 @@ static subpicture_region_t *RenderText(filter_t *,
                       const vlc_fourcc_t *);
 
 vlc_module_begin ()
-set_description(N_("Speech synthesis for Mac OS X"))
-set_subcategory(SUBCAT_VIDEO_SUBPIC)
+vlc_set_description(N_("Speech synthesis for Mac OS X"))
+vlc_set_subcategory(SUBCAT_VIDEO_SUBPIC)
 
-set_callback_text_renderer(Create, 0)
+vlc_set_callback_text_renderer(Create, 0)
 vlc_module_end ()
 
 typedef struct filter_sys_t

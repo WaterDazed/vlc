@@ -767,14 +767,14 @@ static int OpenGL(vlc_gl_t *gl, unsigned width, unsigned height,
 #endif
 
 vlc_module_begin ()
-    set_shortname (N_("EGL"))
-    set_description (N_("EGL extension for OpenGL"))
-    set_subcategory (SUBCAT_VIDEO_VOUT)
-    set_callback_opengl(OpenGL, VLC_PRIORITY)
-    add_shortcut ("egl")
+    vlc_set_shortname (N_("EGL"))
+    vlc_set_description (N_("EGL extension for OpenGL"))
+    vlc_set_subcategory (SUBCAT_VIDEO_VOUT)
+    vlc_set_callback_opengl(OpenGL, VLC_PRIORITY)
+    vlc_add_shortcut ("egl")
 
-    add_submodule ()
-    set_callback_opengl_es2(OpenGLES2, VLC_PRIORITY)
-    add_shortcut ("egl")
+    vlc_add_submodule ()
+    vlc_set_callback_opengl_es2(OpenGLES2, VLC_PRIORITY)
+    vlc_add_shortcut ("egl")
 
 vlc_module_end ()

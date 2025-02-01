@@ -108,31 +108,31 @@ static block_t *EncodeBlock(encoder_t *, picture_t *);
  * Module descriptor
  */
 vlc_module_begin()
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
     /* decoder main module */
-    set_description(N_("JPEG image decoder"))
-    set_capability("video decoder", 1000)
-    set_callbacks(OpenDecoder, CloseDecoder)
-    add_shortcut("jpeg")
+    vlc_set_description(N_("JPEG image decoder"))
+    vlc_set_capability("video decoder", 1000)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_add_shortcut("jpeg")
 
 #ifdef ENABLE_SOUT
     /* video encoder submodule */
-    add_submodule()
-    add_shortcut("jpeg")
-    set_section(N_("Encoding"), NULL)
-    set_description(N_("JPEG video encoder"))
-    set_capability("video encoder", 1000)
-    set_callback(OpenEncoder)
-    add_integer_with_range(ENC_CFG_PREFIX "quality", 95, 0, 100,
+    vlc_add_submodule()
+    vlc_add_shortcut("jpeg")
+    vlc_set_section(N_("Encoding"), NULL)
+    vlc_set_description(N_("JPEG video encoder"))
+    vlc_set_capability("video encoder", 1000)
+    vlc_set_callback(OpenEncoder)
+    vlc_add_integer_with_range(ENC_CFG_PREFIX "quality", 95, 0, 100,
                            ENC_QUALITY_TEXT, ENC_QUALITY_LONGTEXT)
 #endif
     /* image encoder submodule */
-    add_submodule()
-    add_shortcut("jpeg")
-    set_section(N_("Encoding"), NULL)
-    set_description(N_("JPEG image encoder"))
-    set_capability("image encoder", 1000)
-    set_callback(OpenEncoder)
+    vlc_add_submodule()
+    vlc_add_shortcut("jpeg")
+    vlc_set_section(N_("Encoding"), NULL)
+    vlc_set_description(N_("JPEG image encoder"))
+    vlc_set_capability("image encoder", 1000)
+    vlc_set_callback(OpenEncoder)
 vlc_module_end()
 
 

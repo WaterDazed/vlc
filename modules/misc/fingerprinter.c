@@ -79,11 +79,11 @@ static void *Run(void *);
  * Module descriptor
  ****************************************************************************/
 vlc_module_begin ()
-    set_subcategory(SUBCAT_ADVANCED_MISC)
-    set_shortname(N_("acoustid"))
-    set_description(N_("Track fingerprinter (based on Acoustid)"))
-    set_capability("fingerprinter", 10)
-    set_callbacks(Open, Close)
+    vlc_set_subcategory(SUBCAT_ADVANCED_MISC)
+    vlc_set_shortname(N_("acoustid"))
+    vlc_set_description(N_("Track fingerprinter (based on Acoustid)"))
+    vlc_set_capability("fingerprinter", 10)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end ()
 
 /*****************************************************************************

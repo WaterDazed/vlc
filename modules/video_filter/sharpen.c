@@ -63,15 +63,15 @@ VIDEO_FILTER_WRAPPER_CLOSE(Filter, Destroy)
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin ()
-    set_description( N_("Sharpen video filter") )
-    set_shortname( N_("Sharpen") )
-    set_help(SHARPEN_HELP)
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_float_with_range( FILTER_PREFIX "sigma", 0.05, 0.0, 2.0,
+    vlc_set_description( N_("Sharpen video filter") )
+    vlc_set_shortname( N_("Sharpen") )
+    vlc_set_help(SHARPEN_HELP)
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_float_with_range( FILTER_PREFIX "sigma", 0.05, 0.0, 2.0,
         SIG_TEXT, SIG_LONGTEXT )
-    change_safe()
-    add_shortcut( "sharpen" )
-    set_callback_video_filter( Create )
+    vlc_change_safe()
+    vlc_add_shortcut( "sharpen" )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

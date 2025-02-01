@@ -68,18 +68,18 @@ static int Open(vout_display_t *vd,
 static void Close(vout_display_t *vd);
 
 vlc_module_begin ()
-    set_shortname( N_("Flaschen") )
-    set_description( N_("Flaschen-Taschen video output") )
-    set_callback_display( Open, 0 )
-    add_shortcut( "flaschen" )
+    vlc_set_shortname( N_("Flaschen") )
+    vlc_set_description( N_("Flaschen-Taschen video output") )
+    vlc_set_callback_display( Open, 0 )
+    vlc_add_shortcut( "flaschen" )
 
-    set_subcategory( SUBCAT_VIDEO_VOUT )
-    add_string( "flaschen-display", NULL, T_FLDISPLAY, LT_FLDISPLAY )
-    add_integer("flaschen-width", 25, T_WIDTH, LT_WIDTH)
-    add_integer("flaschen-height", 20, T_HEIGHT, LT_HEIGHT)
-    add_integer("flaschen-offset-x", 0, T_OFFSET_X, LT_OFFSET_X)
-    add_integer("flaschen-offset-y", 0, T_OFFSET_Y, LT_OFFSET_Y)
-    add_integer("flaschen-offset-z", 0, T_OFFSET_Z, LT_OFFSET_Z)
+    vlc_set_subcategory( SUBCAT_VIDEO_VOUT )
+    vlc_add_string( "flaschen-display", NULL, T_FLDISPLAY, LT_FLDISPLAY )
+    vlc_add_integer("flaschen-width", 25, T_WIDTH, LT_WIDTH)
+    vlc_add_integer("flaschen-height", 20, T_HEIGHT, LT_HEIGHT)
+    vlc_add_integer("flaschen-offset-x", 0, T_OFFSET_X, LT_OFFSET_X)
+    vlc_add_integer("flaschen-offset-y", 0, T_OFFSET_Y, LT_OFFSET_Y)
+    vlc_add_integer("flaschen-offset-z", 0, T_OFFSET_Z, LT_OFFSET_Z)
 vlc_module_end ()
 
 

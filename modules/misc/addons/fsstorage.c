@@ -79,19 +79,19 @@ static bool  FileBelongsToManagedAddon( addons_finder_t *p_finder,
  ****************************************************************************/
 
 vlc_module_begin ()
-    set_subcategory(SUBCAT_ADVANCED_MISC)
-    set_shortname(N_("addons local storage"))
-    add_shortcut("addons.store.install")
-    set_description(N_("Addons local storage installer"))
-    set_capability("addons storage", 10)
-    set_callbacks(OpenStorage, CloseStorage)
+    vlc_set_subcategory(SUBCAT_ADVANCED_MISC)
+    vlc_set_shortname(N_("addons local storage"))
+    vlc_add_shortcut("addons.store.install")
+    vlc_set_description(N_("Addons local storage installer"))
+    vlc_set_capability("addons storage", 10)
+    vlc_set_callbacks(OpenStorage, CloseStorage)
 
-add_submodule ()
-    set_subcategory(SUBCAT_ADVANCED_MISC)
-    add_shortcut("addons.store.list")
-    set_description( N_("Addons local storage lister") )
-    set_capability( "addons finder", 0 )
-    set_callbacks( OpenLister, CloseLister )
+vlc_add_submodule ()
+    vlc_set_subcategory(SUBCAT_ADVANCED_MISC)
+    vlc_add_shortcut("addons.store.list")
+    vlc_set_description( N_("Addons local storage lister") )
+    vlc_set_capability( "addons finder", 0 )
+    vlc_set_callbacks( OpenLister, CloseLister )
 
 vlc_module_end ()
 

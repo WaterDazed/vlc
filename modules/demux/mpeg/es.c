@@ -57,27 +57,27 @@ static void Close    ( vlc_object_t * );
     "playing MPEG video elementary streams.")
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_description( N_("MPEG-I/II/4 / A52 / DTS / MLP audio" ) )
-    set_shortname( N_("Audio ES") )
-    set_capability( "demux", 155 )
-    set_callbacks( OpenAudio, Close )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_description( N_("MPEG-I/II/4 / A52 / DTS / MLP audio" ) )
+    vlc_set_shortname( N_("Audio ES") )
+    vlc_set_capability( "demux", 155 )
+    vlc_set_callbacks( OpenAudio, Close )
 
-    add_shortcut( "mpga", "mp3",
+    vlc_add_shortcut( "mpga", "mp3",
                   "m4a", "mp4a", "aac",
                   "ac3", "a52",
                   "eac3",
                   "dts",
                   "mlp", "thd" )
 
-    add_submodule()
-    set_description( N_("MPEG-4 video" ) )
-    set_capability( "demux", 7 )
-    set_callbacks( OpenVideo, Close )
-    add_float( "es-fps", 25, FPS_TEXT, FPS_LONGTEXT )
+    vlc_add_submodule()
+    vlc_set_description( N_("MPEG-4 video" ) )
+    vlc_set_capability( "demux", 7 )
+    vlc_set_callbacks( OpenVideo, Close )
+    vlc_add_float( "es-fps", 25, FPS_TEXT, FPS_LONGTEXT )
 
-    add_shortcut( "m4v" )
-    add_shortcut( "mp4v" )
+    vlc_add_shortcut( "m4v" )
+    vlc_add_shortcut( "mp4v" )
 vlc_module_end ()
 
 /*****************************************************************************

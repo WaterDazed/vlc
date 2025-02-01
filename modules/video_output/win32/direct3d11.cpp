@@ -84,21 +84,21 @@ static const char *const ppsz_hdr_mode_text[] = {
     N_("Auto"), N_("Never out HDR"), N_("Always output HDR"), N_("Generate HDR from SDR") };
 
 vlc_module_begin ()
-    set_shortname("Direct3D11")
-    set_description(N_("Direct3D11 video output"))
-    set_help(D3D11_HELP)
-    set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_shortname("Direct3D11")
+    vlc_set_description(N_("Direct3D11 video output"))
+    vlc_set_help(D3D11_HELP)
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
 
-    add_bool("direct3d11-hw-blending", true, HW_BLENDING_TEXT, HW_BLENDING_LONGTEXT)
+    vlc_add_bool("direct3d11-hw-blending", true, HW_BLENDING_TEXT, HW_BLENDING_LONGTEXT)
 
-    add_string("d3d11-upscale-mode", "linear", UPSCALE_MODE_TEXT, UPSCALE_MODE_LONGTEXT)
-        change_string_list(ppsz_upscale_mode, ppsz_upscale_mode_text)
+    vlc_add_string("d3d11-upscale-mode", "linear", UPSCALE_MODE_TEXT, UPSCALE_MODE_LONGTEXT)
+        vlc_change_string_list(ppsz_upscale_mode, ppsz_upscale_mode_text)
 
-    add_string("d3d11-hdr-mode", "auto", HDR_MODE_TEXT, HDR_MODE_LONGTEXT)
-        change_string_list(ppsz_hdr_mode, ppsz_hdr_mode_text)
+    vlc_add_string("d3d11-hdr-mode", "auto", HDR_MODE_TEXT, HDR_MODE_LONGTEXT)
+        vlc_change_string_list(ppsz_hdr_mode, ppsz_hdr_mode_text)
 
-    add_shortcut("direct3d11")
-    set_callback_display(Open, 300)
+    vlc_add_shortcut("direct3d11")
+    vlc_set_callback_display(Open, 300)
 vlc_module_end ()
 
 enum d3d11_upscale

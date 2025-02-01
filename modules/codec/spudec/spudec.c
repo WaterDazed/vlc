@@ -46,18 +46,18 @@ static void Close         ( vlc_object_t * );
                                         "used in DVD subtitles.")
 
 vlc_module_begin ()
-    set_description( N_("DVD subtitles decoder") )
-    set_shortname( N_("DVD subtitles") )
-    set_capability( "spu decoder", 75 )
-    set_subcategory( SUBCAT_INPUT_SCODEC )
-    set_callbacks( DecoderOpen, Close )
+    vlc_set_description( N_("DVD subtitles decoder") )
+    vlc_set_shortname( N_("DVD subtitles") )
+    vlc_set_capability( "spu decoder", 75 )
+    vlc_set_subcategory( SUBCAT_INPUT_SCODEC )
+    vlc_set_callbacks( DecoderOpen, Close )
 
-    add_bool( "dvdsub-transparency", false,
+    vlc_add_bool( "dvdsub-transparency", false,
               DVDSUBTRANS_DISABLE_TEXT, DVDSUBTRANS_DISABLE_LONGTEXT )
-    add_submodule ()
-    set_description( N_("DVD subtitles packetizer") )
-    set_capability( "packetizer", 50 )
-    set_callbacks( PacketizerOpen, Close )
+    vlc_add_submodule ()
+    vlc_set_description( N_("DVD subtitles packetizer") )
+    vlc_set_capability( "packetizer", 50 )
+    vlc_set_callbacks( PacketizerOpen, Close )
 vlc_module_end ()
 
 /*****************************************************************************

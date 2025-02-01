@@ -129,16 +129,16 @@ static void *Run            (void *);
 #define CLIENT_VERSION  VERSION
 
 vlc_module_begin ()
-    set_subcategory(SUBCAT_INTERFACE_CONTROL)
-    set_shortname(N_("Audioscrobbler"))
-    set_description(N_("Submission of played songs to last.fm"))
-    add_string("lastfm-username", "",
+    vlc_set_subcategory(SUBCAT_INTERFACE_CONTROL)
+    vlc_set_shortname(N_("Audioscrobbler"))
+    vlc_set_description(N_("Submission of played songs to last.fm"))
+    vlc_add_string("lastfm-username", "",
                 USERNAME_TEXT, USERNAME_LONGTEXT)
-    add_password("lastfm-password", "", PASSWORD_TEXT, PASSWORD_LONGTEXT)
-    add_string("scrobbler-url", "post.audioscrobbler.com",
+    vlc_add_password("lastfm-password", "", PASSWORD_TEXT, PASSWORD_LONGTEXT)
+    vlc_add_string("scrobbler-url", "post.audioscrobbler.com",
                 URL_TEXT, URL_LONGTEXT)
-    set_capability("interface", 0)
-    set_callbacks(Open, Close)
+    vlc_set_capability("interface", 0)
+    vlc_set_callbacks(Open, Close)
 vlc_module_end ()
 
 /*****************************************************************************

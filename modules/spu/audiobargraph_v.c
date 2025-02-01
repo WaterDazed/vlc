@@ -57,28 +57,28 @@ static void Close    (filter_t *);
 
 vlc_module_begin ()
 
-    set_subcategory(SUBCAT_VIDEO_SUBPIC)
+    vlc_set_subcategory(SUBCAT_VIDEO_SUBPIC)
 
-    set_callback_sub_source(OpenSub, 0)
-    set_description(N_("Audio Bar Graph Video sub source"))
-    set_shortname(N_("Audio Bar Graph Video"))
-    add_shortcut("audiobargraph_v")
+    vlc_set_callback_sub_source(OpenSub, 0)
+    vlc_set_description(N_("Audio Bar Graph Video sub source"))
+    vlc_set_shortname(N_("Audio Bar Graph Video"))
+    vlc_add_shortcut("audiobargraph_v")
 
-    add_integer(CFG_PREFIX "x", -1, POSX_TEXT, POSX_LONGTEXT)
-    add_integer(CFG_PREFIX "y", -1, POSY_TEXT, POSY_LONGTEXT)
-    add_obsolete_integer(CFG_PREFIX "transparency") /* since 4.0.0 */
-    add_integer_with_range(CFG_PREFIX "opacity", 255, 0, 255,
+    vlc_add_integer(CFG_PREFIX "x", -1, POSX_TEXT, POSX_LONGTEXT)
+    vlc_add_integer(CFG_PREFIX "y", -1, POSY_TEXT, POSY_LONGTEXT)
+    vlc_add_obsolete_integer(CFG_PREFIX "transparency") /* since 4.0.0 */
+    vlc_add_integer_with_range(CFG_PREFIX "opacity", 255, 0, 255,
         OPACITY_TEXT, OPACITY_LONGTEXT)
-    add_integer(CFG_PREFIX "position", -1, POS_TEXT, POS_LONGTEXT)
-        change_integer_list(pi_pos_values, ppsz_pos_descriptions)
-    add_integer(CFG_PREFIX "barWidth", 10, BARWIDTH_TEXT, BARWIDTH_LONGTEXT)
-    add_integer(CFG_PREFIX "barHeight", 400, BARHEIGHT_TEXT, BARHEIGHT_LONGTEXT)
+    vlc_add_integer(CFG_PREFIX "position", -1, POS_TEXT, POS_LONGTEXT)
+        vlc_change_integer_list(pi_pos_values, ppsz_pos_descriptions)
+    vlc_add_integer(CFG_PREFIX "barWidth", 10, BARWIDTH_TEXT, BARWIDTH_LONGTEXT)
+    vlc_add_integer(CFG_PREFIX "barHeight", 400, BARHEIGHT_TEXT, BARHEIGHT_LONGTEXT)
 
     /* video output filter submodule */
-    add_submodule ()
-    set_callback_video_filter(OpenVideo)
-    set_description(N_("Audio Bar Graph Video sub source"))
-    add_shortcut("audiobargraph_v")
+    vlc_add_submodule ()
+    vlc_set_callback_video_filter(OpenVideo)
+    vlc_set_description(N_("Audio Bar Graph Video sub source"))
+    vlc_add_shortcut("audiobargraph_v")
 vlc_module_end ()
 
 

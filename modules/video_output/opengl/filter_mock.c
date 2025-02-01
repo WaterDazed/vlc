@@ -591,20 +591,20 @@ error:
 }
 
 vlc_module_begin()
-    set_shortname("mock")
-    set_description("mock OpenGL filter")
-    set_subcategory(SUBCAT_VIDEO_VFILTER)
-    set_capability("opengl filter", 0)
-    set_callback_opengl_filter(Open)
-    add_shortcut("mock")
-    add_float(MOCK_CFG_PREFIX "angle", 0.f, NULL, NULL) /* in degrees */
-        change_volatile()
-    add_float(MOCK_CFG_PREFIX "speed", 0.f, NULL, NULL) /* in rotations per minute */
-        change_volatile()
-    add_bool(MOCK_CFG_PREFIX "mask", false, NULL, NULL)
-        change_volatile()
-    add_bool(MOCK_CFG_PREFIX "plane", false, NULL, NULL)
-        change_volatile()
-    add_integer(MOCK_CFG_PREFIX "msaa", 4, NULL, NULL)
-        change_volatile()
+    vlc_set_shortname("mock")
+    vlc_set_description("mock OpenGL filter")
+    vlc_set_subcategory(SUBCAT_VIDEO_VFILTER)
+    vlc_set_capability("opengl filter", 0)
+    vlc_set_callback_opengl_filter(Open)
+    vlc_add_shortcut("mock")
+    vlc_add_float(MOCK_CFG_PREFIX "angle", 0.f, NULL, NULL) /* in degrees */
+        vlc_change_volatile()
+    vlc_add_float(MOCK_CFG_PREFIX "speed", 0.f, NULL, NULL) /* in rotations per minute */
+        vlc_change_volatile()
+    vlc_add_bool(MOCK_CFG_PREFIX "mask", false, NULL, NULL)
+        vlc_change_volatile()
+    vlc_add_bool(MOCK_CFG_PREFIX "plane", false, NULL, NULL)
+        vlc_change_volatile()
+    vlc_add_integer(MOCK_CFG_PREFIX "msaa", 4, NULL, NULL)
+        vlc_change_volatile()
 vlc_module_end()

@@ -108,35 +108,35 @@ static void Close( vlc_object_t * );
 #define INITIAL_SEG_LONGTEXT N_("The number of the first segment generated")
 
 vlc_module_begin ()
-    set_description( N_("HTTP Live streaming output") )
-    set_shortname( N_("LiveHTTP" ))
-    add_shortcut( "livehttp" )
-    set_capability( "sout access", 0 )
-    set_subcategory( SUBCAT_SOUT_ACO )
-    add_integer( SOUT_CFG_PREFIX "seglen", 10, SEGLEN_TEXT, SEGLEN_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "numsegs", 0, NUMSEGS_TEXT, NUMSEGS_LONGTEXT )
-    add_integer( SOUT_CFG_PREFIX "initial-segment-number", 1, INTITIAL_SEG_TEXT, INITIAL_SEG_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "splitanywhere", false,
+    vlc_set_description( N_("HTTP Live streaming output") )
+    vlc_set_shortname( N_("LiveHTTP" ))
+    vlc_add_shortcut( "livehttp" )
+    vlc_set_capability( "sout access", 0 )
+    vlc_set_subcategory( SUBCAT_SOUT_ACO )
+    vlc_add_integer( SOUT_CFG_PREFIX "seglen", 10, SEGLEN_TEXT, SEGLEN_LONGTEXT )
+    vlc_add_integer( SOUT_CFG_PREFIX "numsegs", 0, NUMSEGS_TEXT, NUMSEGS_LONGTEXT )
+    vlc_add_integer( SOUT_CFG_PREFIX "initial-segment-number", 1, INTITIAL_SEG_TEXT, INITIAL_SEG_LONGTEXT )
+    vlc_add_bool( SOUT_CFG_PREFIX "splitanywhere", false,
               SPLITANYWHERE_TEXT, SPLITANYWHERE_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "delsegs", true,
+    vlc_add_bool( SOUT_CFG_PREFIX "delsegs", true,
               DELSEGS_TEXT, DELSEGS_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "ratecontrol", false,
+    vlc_add_bool( SOUT_CFG_PREFIX "ratecontrol", false,
               RATECONTROL_TEXT, NULL )
-    add_bool( SOUT_CFG_PREFIX "caching", false,
+    vlc_add_bool( SOUT_CFG_PREFIX "caching", false,
               NOCACHE_TEXT, NOCACHE_LONGTEXT )
-    add_bool( SOUT_CFG_PREFIX "generate-iv", false,
+    vlc_add_bool( SOUT_CFG_PREFIX "generate-iv", false,
               RANDOMIV_TEXT, RANDOMIV_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "index", NULL,
+    vlc_add_string( SOUT_CFG_PREFIX "index", NULL,
                 INDEX_TEXT, INDEX_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "index-url", NULL,
+    vlc_add_string( SOUT_CFG_PREFIX "index-url", NULL,
                 INDEXURL_TEXT, INDEXURL_LONGTEXT )
-    add_string( SOUT_CFG_PREFIX "key-uri", NULL,
+    vlc_add_string( SOUT_CFG_PREFIX "key-uri", NULL,
                 KEYURI_TEXT, NULL )
-    add_loadfile(SOUT_CFG_PREFIX "key-file", NULL,
+    vlc_add_loadfile(SOUT_CFG_PREFIX "key-file", NULL,
                  KEYFILE_TEXT, KEYFILE_LONGTEXT)
-    add_loadfile(SOUT_CFG_PREFIX "key-loadfile", NULL,
+    vlc_add_loadfile(SOUT_CFG_PREFIX "key-loadfile", NULL,
                  KEYLOADFILE_TEXT, KEYLOADFILE_LONGTEXT)
-    set_callbacks( Open, Close )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 

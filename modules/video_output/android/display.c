@@ -501,13 +501,13 @@ static int Open(vout_display_t *vd,
 }
 
 vlc_module_begin()
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_description("Android video output")
-    add_shortcut("android-display")
-    add_obsolete_string("android-display-chroma") /* since 4.0.0 */
-    set_callback_display(Open, 280)
-    add_submodule ()
-        set_capability("vout window", 0)
-        set_callback(subpicture_window_Open)
-        add_shortcut("android-subpicture")
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_description("Android video output")
+    vlc_add_shortcut("android-display")
+    vlc_add_obsolete_string("android-display-chroma") /* since 4.0.0 */
+    vlc_set_callback_display(Open, 280)
+    vlc_add_submodule ()
+        vlc_set_capability("vout window", 0)
+        vlc_set_callback(subpicture_window_Open)
+        vlc_add_shortcut("android-subpicture")
 vlc_module_end()

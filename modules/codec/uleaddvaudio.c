@@ -36,10 +36,10 @@
 static int  Open(vlc_object_t *);
 
 vlc_module_begin()
-    set_description(N_("Ulead DV audio decoder"))
-    set_capability("audio decoder", 50)
-    set_subcategory(SUBCAT_INPUT_ACODEC)
-    set_callback(Open)
+    vlc_set_description(N_("Ulead DV audio decoder"))
+    vlc_set_capability("audio decoder", 50)
+    vlc_set_subcategory(SUBCAT_INPUT_ACODEC)
+    vlc_set_callback(Open)
 vlc_module_end()
 
 typedef struct

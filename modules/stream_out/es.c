@@ -373,32 +373,32 @@ static int Open( vlc_object_t *p_this )
     "This is the output URI that will be used for video." )
 
 vlc_module_begin()
-    set_shortname("ES")
-    set_description(N_("Elementary stream output"))
-    set_capability("sout output", 50)
-    add_shortcut("es")
-    set_subcategory(SUBCAT_SOUT_STREAM)
+    vlc_set_shortname("ES")
+    vlc_set_description(N_("Elementary stream output"))
+    vlc_set_capability("sout output", 50)
+    vlc_add_shortcut("es")
+    vlc_set_subcategory(SUBCAT_SOUT_STREAM)
 
-    set_section(N_("Generic"), NULL)
-    add_string(SOUT_CFG_PREFIX "access", "",
+    vlc_set_section(N_("Generic"), NULL)
+    vlc_add_string(SOUT_CFG_PREFIX "access", "",
                ACCESS_TEXT, ACCESS_LONGTEXT)
-    add_string(SOUT_CFG_PREFIX "mux", "", MUX_TEXT, MUX_LONGTEXT)
-    add_string(SOUT_CFG_PREFIX "dst", "", DEST_TEXT, DEST_LONGTEXT )
+    vlc_add_string(SOUT_CFG_PREFIX "mux", "", MUX_TEXT, MUX_LONGTEXT)
+    vlc_add_string(SOUT_CFG_PREFIX "dst", "", DEST_TEXT, DEST_LONGTEXT )
 
-    set_section(N_("Audio"), NULL)
-    add_string(SOUT_CFG_PREFIX "access-audio", "",
+    vlc_set_section(N_("Audio"), NULL)
+    vlc_add_string(SOUT_CFG_PREFIX "access-audio", "",
                ACCESSA_TEXT, ACCESSA_LONGTEXT )
-    add_string(SOUT_CFG_PREFIX "mux-audio", "", MUXA_TEXT, MUXA_LONGTEXT)
-    add_string(SOUT_CFG_PREFIX "dst-audio", "",
+    vlc_add_string(SOUT_CFG_PREFIX "mux-audio", "", MUXA_TEXT, MUXA_LONGTEXT)
+    vlc_add_string(SOUT_CFG_PREFIX "dst-audio", "",
                DESTA_TEXT, DESTA_LONGTEXT)
 
-    set_section(N_("Video"), NULL)
-    add_string(SOUT_CFG_PREFIX "access-video", "", ACCESSV_TEXT,
+    vlc_set_section(N_("Video"), NULL)
+    vlc_add_string(SOUT_CFG_PREFIX "access-video", "", ACCESSV_TEXT,
                ACCESSV_LONGTEXT)
-    add_string(SOUT_CFG_PREFIX "mux-video", "", MUXV_TEXT,
+    vlc_add_string(SOUT_CFG_PREFIX "mux-video", "", MUXV_TEXT,
                MUXV_LONGTEXT)
-    add_string(SOUT_CFG_PREFIX "dst-video", "", DESTV_TEXT,
+    vlc_add_string(SOUT_CFG_PREFIX "dst-video", "", DESTV_TEXT,
                DESTV_LONGTEXT)
 
-    set_callback(Open)
+    vlc_set_callback(Open)
 vlc_module_end()

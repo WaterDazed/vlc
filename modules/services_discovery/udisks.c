@@ -549,11 +549,11 @@ VLC_SD_PROBE_HELPER("udisks", N_("UDisks2"), SD_CAT_DEVICES)
  * Module descriptor
  */
 vlc_module_begin()
-    set_shortname( "UDisks" )
-    set_description( N_( "Local Drives (UDisks)" ) )
-    set_subcategory( SUBCAT_PLAYLIST_SD )
-    set_capability( "services_discovery", 0 )
-    set_callbacks( Open, Close )
-    add_shortcut( "udisks" )
+    vlc_set_shortname( "UDisks" )
+    vlc_set_description( N_( "Local Drives (UDisks)" ) )
+    vlc_set_subcategory( SUBCAT_PLAYLIST_SD )
+    vlc_set_capability( "services_discovery", 0 )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "udisks" )
     VLC_SD_PROBE_SUBMODULE
 vlc_module_end ()

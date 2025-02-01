@@ -69,36 +69,36 @@ static void Close  ( vlc_object_t * );
                 "from 5 to 40 ms." )
 
 vlc_module_begin ()
-    set_shortname( "MOD")
-    set_description( N_("MOD demuxer (libmodplug)" ) )
-    set_capability( "demux", 10 )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_shortname( "MOD")
+    vlc_set_description( N_("MOD demuxer (libmodplug)" ) )
+    vlc_set_capability( "demux", 10 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
 
-    add_bool( "mod-noisereduction", true, N_("Noise reduction"),
+    vlc_add_bool( "mod-noisereduction", true, N_("Noise reduction"),
               NOISE_LONGTEXT )
 
-    add_bool( "mod-reverb", false, N_("Reverb"),
+    vlc_add_bool( "mod-reverb", false, N_("Reverb"),
               REVERB_LONGTEXT )
-    add_integer_with_range( "mod-reverb-level", 0, 0, 100,
+    vlc_add_integer_with_range( "mod-reverb-level", 0, 0, 100,
              N_("Reverberation level"), REVERB_LEVEL_LONGTEXT )
-    add_integer_with_range( "mod-reverb-delay", 40, 0, 1000,
+    vlc_add_integer_with_range( "mod-reverb-delay", 40, 0, 1000,
              N_("Reverberation delay"), REVERB_DELAY_LONGTEXT )
 
-    add_bool( "mod-megabass", false, N_("Mega bass"),
+    vlc_add_bool( "mod-megabass", false, N_("Mega bass"),
                     MEGABASS_LONGTEXT )
-    add_integer_with_range( "mod-megabass-level", 0, 0, 100,
+    vlc_add_integer_with_range( "mod-megabass-level", 0, 0, 100,
               N_("Mega bass level"), MEGABASS_LEVEL_LONGTEXT )
-    add_integer_with_range( "mod-megabass-range", 10, 10, 100,
+    vlc_add_integer_with_range( "mod-megabass-range", 10, 10, 100,
               N_("Mega bass cutoff"), MEGABASS_RANGE_LONGTEXT )
 
-    add_bool( "mod-surround", false, N_("Surround"), N_("Surround") )
-    add_integer_with_range( "mod-surround-level", 0, 0, 100,
+    vlc_add_bool( "mod-surround", false, N_("Surround"), N_("Surround") )
+    vlc_add_integer_with_range( "mod-surround-level", 0, 0, 100,
               N_("Surround level"), SURROUND_LEVEL_LONGTEXT )
-    add_integer_with_range( "mod-surround-delay", 5, 0, 1000,
+    vlc_add_integer_with_range( "mod-surround-delay", 5, 0, 1000,
               N_("Surround delay (ms)"), SURROUND_DELAY_LONGTEXT )
 
-    set_callbacks( Open, Close )
-    add_shortcut( "mod" )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "mod" )
 vlc_module_end ()
 
 /*****************************************************************************

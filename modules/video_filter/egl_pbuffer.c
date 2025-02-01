@@ -467,11 +467,11 @@ error1:
 }
 
 vlc_module_begin()
-    add_shortcut( "egl_pbuffer" )
-    set_shortname( N_("egl_pbuffer") )
-    set_description( N_("EGL PBuffer offscreen opengl provider") )
-    set_callback_opengl_offscreen( Open, 1 )
+    vlc_add_shortcut( "egl_pbuffer" )
+    vlc_set_shortname( N_("egl_pbuffer") )
+    vlc_set_description( N_("EGL PBuffer offscreen opengl provider") )
+    vlc_set_callback_opengl_offscreen( Open, 1 )
 
-    add_submodule()
-    set_callback_opengl_es2_offscreen( Open, 1 )
+    vlc_add_submodule()
+    vlc_set_callback_opengl_es2_offscreen( Open, 1 )
 vlc_module_end()

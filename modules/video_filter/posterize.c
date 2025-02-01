@@ -64,13 +64,13 @@ static const char *const ppsz_filter_options[] = {
 #define CFG_PREFIX "posterize-"
 
 vlc_module_begin ()
-    set_description( N_("Posterize video filter") )
-    set_shortname( N_("Posterize" ) )
-    set_help( N_("Posterize video by lowering the number of colors") )
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
-    add_integer_with_range( CFG_PREFIX "level", 6, 2, 256,
+    vlc_set_description( N_("Posterize video filter") )
+    vlc_set_shortname( N_("Posterize" ) )
+    vlc_set_help( N_("Posterize video by lowering the number of colors") )
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_add_integer_with_range( CFG_PREFIX "level", 6, 2, 256,
                            POSTERIZE_LEVEL_TEXT, POSTERIZE_LEVEL_LONGTEXT )
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 /*****************************************************************************

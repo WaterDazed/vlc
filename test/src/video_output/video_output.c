@@ -259,29 +259,29 @@ static int OpenIntf(vlc_object_t *obj)
  *  - encoder to check the previous video format and context
  **/
 vlc_module_begin()
-    set_callbacks(OpenDecoder, CloseDecoder)
-    set_capability("video decoder", INT_MAX)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_set_capability("video decoder", INT_MAX)
 
-    add_submodule()
-        set_callback_dec_device(OpenDecoderDevice, 0)
+    vlc_add_submodule()
+        vlc_set_callback_dec_device(OpenDecoderDevice, 0)
 
-    add_submodule()
-        set_callback_video_filter(OpenFilter)
+    vlc_add_submodule()
+        vlc_set_callback_video_filter(OpenFilter)
 
-    add_submodule()
-        set_callback_video_converter(OpenConverter, INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callback_video_converter(OpenConverter, INT_MAX)
 
-    add_submodule()
-        set_callback(OpenWindow)
-        set_capability("vout window", INT_MAX)
+    vlc_add_submodule()
+        vlc_set_callback(OpenWindow)
+        vlc_set_capability("vout window", INT_MAX)
 
-    add_submodule()
-        set_callback_display(OpenDisplay, 0)
+    vlc_add_submodule()
+        vlc_set_callback_display(OpenDisplay, 0)
 
     /* Interface module to avoid casting libvlc_instance_t to object */
-    add_submodule()
-        set_callback(OpenIntf)
-        set_capability("interface", 0)
+    vlc_add_submodule()
+        vlc_set_callback(OpenIntf)
+        vlc_set_capability("interface", 0)
 
 vlc_module_end()
 

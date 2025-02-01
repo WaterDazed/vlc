@@ -62,15 +62,15 @@ static void Close   ( vlc_object_t * );
 #define TIMEOUT_LONGTEXT N_("How long the notification will be displayed.")
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INTERFACE_CONTROL )
-    set_shortname( N_( "Notify" ) )
-    set_description( N_("LibNotify Notification Plugin") )
+    vlc_set_subcategory( SUBCAT_INTERFACE_CONTROL )
+    vlc_set_shortname( N_( "Notify" ) )
+    vlc_set_description( N_("LibNotify Notification Plugin") )
 
-    add_integer( "notify-timeout", 4000,
+    vlc_add_integer( "notify-timeout", 4000,
                  TIMEOUT_TEXT, TIMEOUT_LONGTEXT )
 
-    set_capability( "interface", 0 )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "interface", 0 )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 

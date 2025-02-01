@@ -219,7 +219,7 @@ static inline void vlc_CPU_functions_init_once(const char *name,
 # endif
 
 #define set_cpu_funcs(name, activate, priority) \
-    set_callback(VLC_CHECKED_TYPE(void (*)(void *), activate)) \
-    set_capability(name, priority)
+    vlc_set_callback(VLC_CHECKED_TYPE(void (*)(void *), activate)) \
+    vlc_set_capability(name, priority)
 
 #endif /* !VLC_CPU_H */

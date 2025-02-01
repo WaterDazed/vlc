@@ -48,13 +48,13 @@ static int OpenDecoder(vlc_object_t *);
 static void CloseDecoder(vlc_object_t *);
 
 vlc_module_begin()
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_shortname(N_("MMAL decoder"))
-    set_description(N_("MMAL-based decoder plugin for Raspberry Pi"))
-    set_capability("video decoder", 90)
-    add_shortcut("mmal_decoder")
-    add_obsolete_bool("mmal-opaque") /* since 4.0.0 */
-    set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_shortname(N_("MMAL decoder"))
+    vlc_set_description(N_("MMAL-based decoder plugin for Raspberry Pi"))
+    vlc_set_capability("video decoder", 90)
+    vlc_add_shortcut("mmal_decoder")
+    vlc_add_obsolete_bool("mmal-opaque") /* since 4.0.0 */
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
 vlc_module_end()
 
 typedef struct

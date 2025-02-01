@@ -67,19 +67,19 @@ static void Close( filter_t * );
 static block_t *DoWork( filter_t *, block_t * );
 
 vlc_module_begin ()
-    set_description( N_("Audio part of the BarGraph function") )
-    set_shortname( N_("Audiobar Graph") )
-    set_capability( "audio filter", 0 )
-    set_subcategory( SUBCAT_AUDIO_AFILTER )
+    vlc_set_description( N_("Audio part of the BarGraph function") )
+    vlc_set_shortname( N_("Audiobar Graph") )
+    vlc_set_capability( "audio filter", 0 )
+    vlc_set_subcategory( SUBCAT_AUDIO_AFILTER )
 
-    add_integer( CFG_PREFIX "bargraph", 1, BARGRAPH_TEXT, BARGRAPH_LONGTEXT ) // FIXME: this is a bool
-    add_integer( CFG_PREFIX "bargraph_repetition", 4, BARGRAPH_REPETITION_TEXT, BARGRAPH_REPETITION_LONGTEXT )
-    add_integer( CFG_PREFIX "silence", 1, SILENCE_TEXT, SILENCE_LONGTEXT ) // FIXME: this is a bool
-    add_integer( CFG_PREFIX "time_window", 5000, TIME_WINDOW_TEXT, TIME_WINDOW_LONGTEXT )
-    add_float( CFG_PREFIX "alarm_threshold", 0.02, ALARM_THRESHOLD_TEXT, ALARM_THRESHOLD_LONGTEXT )
-    add_integer( CFG_PREFIX "repetition_time", 2000, REPETITION_TIME_TEXT, REPETITION_TIME_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "bargraph", 1, BARGRAPH_TEXT, BARGRAPH_LONGTEXT ) // FIXME: this is a bool
+    vlc_add_integer( CFG_PREFIX "bargraph_repetition", 4, BARGRAPH_REPETITION_TEXT, BARGRAPH_REPETITION_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "silence", 1, SILENCE_TEXT, SILENCE_LONGTEXT ) // FIXME: this is a bool
+    vlc_add_integer( CFG_PREFIX "time_window", 5000, TIME_WINDOW_TEXT, TIME_WINDOW_LONGTEXT )
+    vlc_add_float( CFG_PREFIX "alarm_threshold", 0.02, ALARM_THRESHOLD_TEXT, ALARM_THRESHOLD_LONGTEXT )
+    vlc_add_integer( CFG_PREFIX "repetition_time", 2000, REPETITION_TIME_TEXT, REPETITION_TIME_LONGTEXT )
 
-    set_callback( Open )
+    vlc_set_callback( Open )
 vlc_module_end ()
 
 typedef struct ValueDate_t {

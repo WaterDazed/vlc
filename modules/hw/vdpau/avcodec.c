@@ -245,8 +245,8 @@ error:
 }
 
 vlc_module_begin()
-    set_description(N_("VDPAU video decoder"))
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_description(N_("VDPAU video decoder"))
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
     set_va_callback(Open, 100)
-    add_shortcut("vdpau")
+    vlc_add_shortcut("vdpau")
 vlc_module_end()

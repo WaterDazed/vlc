@@ -42,12 +42,12 @@ static void Close       ( vlc_object_t * );
 #include <vlc_modules.h>
 
 vlc_module_begin ()
-    set_shortname( "PulseAudio" )
-    set_description( N_("Pulseaudio audio output") )
-    set_capability( "audio output", 160 + DISTRO_KLUDGE )
-    set_subcategory( SUBCAT_AUDIO_AOUT )
-    add_shortcut( "pulseaudio", "pa" )
-    set_callbacks( Open, Close )
+    vlc_set_shortname( "PulseAudio" )
+    vlc_set_description( N_("Pulseaudio audio output") )
+    vlc_set_capability( "audio output", 160 + DISTRO_KLUDGE )
+    vlc_set_subcategory( SUBCAT_AUDIO_AOUT )
+    vlc_add_shortcut( "pulseaudio", "pa" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()
 
 /* NOTE:

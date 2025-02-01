@@ -71,29 +71,29 @@ static picture_t *Filter( filter_t *, picture_t * );
 #define CFG_PREFIX "blendbench-"
 
 vlc_module_begin ()
-    set_description( N_("Blending benchmark filter") )
-    set_shortname( N_("Blendbench" ))
-    set_subcategory( SUBCAT_VIDEO_VFILTER )
+    vlc_set_description( N_("Blending benchmark filter") )
+    vlc_set_shortname( N_("Blendbench" ))
+    vlc_set_subcategory( SUBCAT_VIDEO_VFILTER )
 
-    set_section( N_("Benchmarking"), NULL )
-    add_integer( CFG_PREFIX "loops", 1000, LOOPS_TEXT,
+    vlc_set_section( N_("Benchmarking"), NULL )
+    vlc_add_integer( CFG_PREFIX "loops", 1000, LOOPS_TEXT,
               LOOPS_LONGTEXT )
-    add_integer_with_range( CFG_PREFIX "alpha", 128, 0, 255, ALPHA_TEXT,
+    vlc_add_integer_with_range( CFG_PREFIX "alpha", 128, 0, 255, ALPHA_TEXT,
               ALPHA_LONGTEXT )
 
-    set_section( N_("Base image"), NULL )
-    add_loadfile(CFG_PREFIX "base-image", NULL,
+    vlc_set_section( N_("Base image"), NULL )
+    vlc_add_loadfile(CFG_PREFIX "base-image", NULL,
                  BASE_IMAGE_TEXT, BASE_IMAGE_LONGTEXT)
-    add_string( CFG_PREFIX "base-chroma", "I420", BASE_CHROMA_TEXT,
+    vlc_add_string( CFG_PREFIX "base-chroma", "I420", BASE_CHROMA_TEXT,
               BASE_CHROMA_LONGTEXT )
 
-    set_section( N_("Blend image"), NULL )
-    add_loadfile(CFG_PREFIX "blend-image", NULL,
+    vlc_set_section( N_("Blend image"), NULL )
+    vlc_add_loadfile(CFG_PREFIX "blend-image", NULL,
                  BLEND_IMAGE_TEXT, BLEND_IMAGE_LONGTEXT)
-    add_string( CFG_PREFIX "blend-chroma", "YUVA", BLEND_CHROMA_TEXT,
+    vlc_add_string( CFG_PREFIX "blend-chroma", "YUVA", BLEND_CHROMA_TEXT,
               BLEND_CHROMA_LONGTEXT )
 
-    set_callback_video_filter( Create )
+    vlc_set_callback_video_filter( Create )
 vlc_module_end ()
 
 static const char *const ppsz_filter_options[] = {

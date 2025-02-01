@@ -40,15 +40,15 @@ static int  OpenPacketizer( vlc_object_t * );
 
 vlc_module_begin ()
 
-    set_subcategory( SUBCAT_INPUT_ACODEC )
-    set_description( N_("AES3/SMPTE 302M audio decoder") )
-    set_capability( "audio decoder", 100 )
-    set_callback( OpenDecoder )
+    vlc_set_subcategory( SUBCAT_INPUT_ACODEC )
+    vlc_set_description( N_("AES3/SMPTE 302M audio decoder") )
+    vlc_set_capability( "audio decoder", 100 )
+    vlc_set_callback( OpenDecoder )
 
-    add_submodule ()
-    set_description( N_("AES3/SMPTE 302M audio packetizer") )
-    set_capability( "packetizer", 100 )
-    set_callback( OpenPacketizer )
+    vlc_add_submodule ()
+    vlc_set_description( N_("AES3/SMPTE 302M audio packetizer") )
+    vlc_set_capability( "packetizer", 100 )
+    vlc_set_callback( OpenPacketizer )
 
 vlc_module_end ()
 

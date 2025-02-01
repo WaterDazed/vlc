@@ -531,8 +531,8 @@ error:
  * Module descriptor
  *****************************************************************************/
 vlc_module_begin()
-    set_shortname("Caca")
-    set_subcategory(SUBCAT_VIDEO_VOUT)
-    set_description(N_("Color ASCII art video output"))
-    set_callback_display(Open, 15)
+    vlc_set_shortname("Caca")
+    vlc_set_subcategory(SUBCAT_VIDEO_VOUT)
+    vlc_set_description(N_("Color ASCII art video output"))
+    vlc_set_callback_display(Open, 15)
 vlc_module_end()

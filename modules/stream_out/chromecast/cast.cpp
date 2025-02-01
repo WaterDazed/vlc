@@ -212,34 +212,34 @@ static const char *const ppsz_sout_options[] = {
 
 vlc_module_begin ()
 
-    set_shortname(N_("Chromecast"))
-    set_description(N_("Chromecast stream output"))
-    set_capability("sout output", 0)
-    add_shortcut("chromecast")
-    set_subcategory(SUBCAT_SOUT_STREAM)
-    set_callback(Open)
+    vlc_set_shortname(N_("Chromecast"))
+    vlc_set_description(N_("Chromecast stream output"))
+    vlc_set_capability("sout output", 0)
+    vlc_add_shortcut("chromecast")
+    vlc_set_subcategory(SUBCAT_SOUT_STREAM)
+    vlc_set_callback(Open)
 
-    add_string(SOUT_CFG_PREFIX "ip", NULL, NULL, NULL)
-        change_private()
-    add_integer(SOUT_CFG_PREFIX "port", CHROMECAST_CONTROL_PORT, NULL, NULL)
-        change_private()
-    add_bool(SOUT_CFG_PREFIX "video", true, NULL, NULL)
-        change_private()
-    add_integer(SOUT_CFG_PREFIX "http-port", HTTP_PORT, HTTP_PORT_TEXT, HTTP_PORT_LONGTEXT)
-    add_obsolete_string(SOUT_CFG_PREFIX "mux") /* since 4.0.0 */
-    add_obsolete_string(SOUT_CFG_PREFIX "mime") /* since 4.0.0 */
+    vlc_add_string(SOUT_CFG_PREFIX "ip", NULL, NULL, NULL)
+        vlc_change_private()
+    vlc_add_integer(SOUT_CFG_PREFIX "port", CHROMECAST_CONTROL_PORT, NULL, NULL)
+        vlc_change_private()
+    vlc_add_bool(SOUT_CFG_PREFIX "video", true, NULL, NULL)
+        vlc_change_private()
+    vlc_add_integer(SOUT_CFG_PREFIX "http-port", HTTP_PORT, HTTP_PORT_TEXT, HTTP_PORT_LONGTEXT)
+    vlc_add_obsolete_string(SOUT_CFG_PREFIX "mux") /* since 4.0.0 */
+    vlc_add_obsolete_string(SOUT_CFG_PREFIX "mime") /* since 4.0.0 */
     add_renderer_opts(SOUT_CFG_PREFIX)
 
-    add_submodule()
+    vlc_add_submodule()
         /* sout proxy that start the cc input when all streams are loaded */
-        add_shortcut("chromecast-proxy")
-        set_capability("sout filter", 0)
-        set_callback(ProxyOpen)
-    add_submodule()
-        set_subcategory(SUBCAT_SOUT_ACO)
-        add_shortcut("chromecast-http")
-        set_capability("sout access", 0)
-        set_callbacks(AccessOpen, AccessClose)
+        vlc_add_shortcut("chromecast-proxy")
+        vlc_set_capability("sout filter", 0)
+        vlc_set_callback(ProxyOpen)
+    vlc_add_submodule()
+        vlc_set_subcategory(SUBCAT_SOUT_ACO)
+        vlc_add_shortcut("chromecast-http")
+        vlc_set_capability("sout access", 0)
+        vlc_set_callbacks(AccessOpen, AccessClose)
 vlc_module_end ()
 
 static void *ProxyAdd(sout_stream_t *p_stream, const es_format_t *p_fmt, const char* es_id)

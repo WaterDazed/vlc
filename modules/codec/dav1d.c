@@ -58,23 +58,23 @@ static void CloseDecoder(vlc_object_t *);
 
 
 vlc_module_begin ()
-    set_shortname("dav1d")
-    set_description(N_("Dav1d video decoder"))
-    set_capability("video decoder", 10000)
-    set_callbacks(OpenDecoder, CloseDecoder)
-    set_subcategory(SUBCAT_INPUT_VCODEC)
+    vlc_set_shortname("dav1d")
+    vlc_set_description(N_("Dav1d video decoder"))
+    vlc_set_capability("video decoder", 10000)
+    vlc_set_callbacks(OpenDecoder, CloseDecoder)
+    vlc_set_subcategory(SUBCAT_INPUT_VCODEC)
 
 #if DAV1D_API_VERSION_MAJOR >= 6
-    add_integer_with_range("dav1d-thread-frames", 0, 0, DAV1D_MAX_THREADS,
+    vlc_add_integer_with_range("dav1d-thread-frames", 0, 0, DAV1D_MAX_THREADS,
                 THREAD_FRAMES_TEXT, THREAD_FRAMES_LONGTEXT)
-    add_obsolete_string("dav1d-thread-tiles") // unused with dav1d 1.0
+    vlc_add_obsolete_string("dav1d-thread-tiles") // unused with dav1d 1.0
 #else
-    add_integer_with_range("dav1d-thread-frames", 0, 0, DAV1D_MAX_FRAME_THREADS,
+    vlc_add_integer_with_range("dav1d-thread-frames", 0, 0, DAV1D_MAX_FRAME_THREADS,
                 THREAD_FRAMES_TEXT, THREAD_FRAMES_LONGTEXT)
-    add_integer_with_range("dav1d-thread-tiles", 0, 0, DAV1D_MAX_TILE_THREADS,
+    vlc_add_integer_with_range("dav1d-thread-tiles", 0, 0, DAV1D_MAX_TILE_THREADS,
                 THREAD_TILES_TEXT, THREAD_TILES_LONGTEXT)
 #endif
-    add_bool( "dav1d-all-layers", false, "Display all spatial layers", NULL )
+    vlc_add_bool( "dav1d-all-layers", false, "Display all spatial layers", NULL )
 vlc_module_end ()
 
 /*****************************************************************************

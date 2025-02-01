@@ -459,8 +459,8 @@ static int Open(vlc_object_t* p_this)
 }
 
 vlc_module_begin()
-    add_shortcut("qt-themeprovider-gtk")
-    set_description( "Qt GTK system theme" )
-    set_capability("qt theme provider", 0)
-    set_callback(Open)
+    vlc_add_shortcut("qt-themeprovider-gtk")
+    vlc_set_description( "Qt GTK system theme" )
+    vlc_set_capability("qt theme provider", 0)
+    vlc_set_callback(Open)
 vlc_module_end()

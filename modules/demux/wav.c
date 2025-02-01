@@ -716,8 +716,8 @@ error:
 }
 
 vlc_module_begin ()
-    set_description( N_("WAV demuxer") )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_capability( "demux", 142 )
-    set_callbacks( Open, Close )
+    vlc_set_description( N_("WAV demuxer") )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_capability( "demux", 142 )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end ()

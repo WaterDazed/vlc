@@ -493,31 +493,31 @@ static void WindowClose( vlc_window_t *pWnd )
     " to play back video even though no video tag is implemented")
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INTERFACE_MAIN )
-    add_loadfile("skins2-last", "", SKINS2_LAST, SKINS2_LAST_LONG)
-    add_string( "skins2-config", "", SKINS2_CONFIG, SKINS2_CONFIG_LONG )
-        change_private ()
+    vlc_set_subcategory( SUBCAT_INTERFACE_MAIN )
+    vlc_add_loadfile("skins2-last", "", SKINS2_LAST, SKINS2_LAST_LONG)
+    vlc_add_string( "skins2-config", "", SKINS2_CONFIG, SKINS2_CONFIG_LONG )
+        vlc_change_private ()
 #ifdef _WIN32
-    add_bool( "skins2-systray", true, SKINS2_SYSTRAY,
+    vlc_add_bool( "skins2-systray", true, SKINS2_SYSTRAY,
               SKINS2_SYSTRAY_LONG )
-    add_bool( "skins2-taskbar", true, SKINS2_TASKBAR,
+    vlc_add_bool( "skins2-taskbar", true, SKINS2_TASKBAR,
               nullptr )
 #endif
-    add_bool( "skins2-transparency", false, SKINS2_TRANSPARENCY,
+    vlc_add_bool( "skins2-transparency", false, SKINS2_TRANSPARENCY,
               SKINS2_TRANSPARENCY_LONG )
 
-    add_bool( "skinned-playlist", true, SKINS2_PLAYLIST,
+    vlc_add_bool( "skinned-playlist", true, SKINS2_PLAYLIST,
               nullptr )
-    add_bool( "skinned-video", true, SKINS2_VIDEO,
+    vlc_add_bool( "skinned-video", true, SKINS2_VIDEO,
               SKINS2_VIDEO_LONG )
-    set_shortname( N_("Skins"))
-    set_description( N_("Skinnable Interface") )
-    set_capability( "interface", 30 )
-    set_callbacks( Open, Close )
-    add_shortcut( "skins" )
+    vlc_set_shortname( N_("Skins"))
+    vlc_set_description( N_("Skinnable Interface") )
+    vlc_set_capability( "interface", 30 )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "skins" )
 
-    add_submodule ()
-        set_capability( "vout window", 51 )
-        set_callback( WindowOpen )
+    vlc_add_submodule ()
+        vlc_set_capability( "vout window", 51 )
+        vlc_set_callback( WindowOpen )
 
 vlc_module_end ()

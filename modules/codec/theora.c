@@ -110,30 +110,30 @@ static block_t *Encode( encoder_t *p_enc, picture_t *p_pict );
 #define ENC_POSTPROCESS_TEXT N_("Post processing quality")
 
 vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_VCODEC )
-    set_shortname( "Theora" )
-    set_description( N_("Theora video decoder") )
-    set_capability( "video decoder", 100 )
-    set_callbacks( OpenDecoder, CloseDecoder )
-    add_shortcut( "theora" )
+    vlc_set_subcategory( SUBCAT_INPUT_VCODEC )
+    vlc_set_shortname( "Theora" )
+    vlc_set_description( N_("Theora video decoder") )
+    vlc_set_capability( "video decoder", 100 )
+    vlc_set_callbacks( OpenDecoder, CloseDecoder )
+    vlc_add_shortcut( "theora" )
 #   define DEC_CFG_PREFIX "theora-"
-    add_integer( DEC_CFG_PREFIX "postproc", -1, ENC_POSTPROCESS_TEXT, NULL )
+    vlc_add_integer( DEC_CFG_PREFIX "postproc", -1, ENC_POSTPROCESS_TEXT, NULL )
 
-    add_submodule ()
-    set_description( N_("Theora video packetizer") )
-    set_capability( "packetizer", 100 )
-    set_callbacks( OpenPacketizer, CloseDecoder )
-    add_shortcut( "theora" )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Theora video packetizer") )
+    vlc_set_capability( "packetizer", 100 )
+    vlc_set_callbacks( OpenPacketizer, CloseDecoder )
+    vlc_add_shortcut( "theora" )
 
 #ifdef ENABLE_SOUT
-    add_submodule ()
-    set_description( N_("Theora video encoder") )
-    set_capability( "video encoder", 150 )
-    set_callback( OpenEncoder )
-    add_shortcut( "theora" )
+    vlc_add_submodule ()
+    vlc_set_description( N_("Theora video encoder") )
+    vlc_set_capability( "video encoder", 150 )
+    vlc_set_callback( OpenEncoder )
+    vlc_add_shortcut( "theora" )
 
 #   define ENC_CFG_PREFIX "sout-theora-"
-    add_integer( ENC_CFG_PREFIX "quality", 2, ENC_QUALITY_TEXT,
+    vlc_add_integer( ENC_CFG_PREFIX "quality", 2, ENC_QUALITY_TEXT,
                  ENC_QUALITY_LONGTEXT )
 #endif
 vlc_module_end ()

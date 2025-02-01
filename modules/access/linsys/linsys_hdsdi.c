@@ -87,23 +87,23 @@ static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 
 vlc_module_begin()
-    set_description( N_("HD-SDI Input") )
-    set_shortname( N_("HD-SDI") )
-    set_subcategory( SUBCAT_INPUT_ACCESS )
+    vlc_set_description( N_("HD-SDI Input") )
+    vlc_set_shortname( N_("HD-SDI") )
+    vlc_set_subcategory( SUBCAT_INPUT_ACCESS )
 
-    add_integer( "linsys-hdsdi-link", 0,
+    vlc_add_integer( "linsys-hdsdi-link", 0,
         LINK_TEXT, LINK_LONGTEXT )
 
-    add_integer( "linsys-hdsdi-id-video", 0,
+    vlc_add_integer( "linsys-hdsdi-id-video", 0,
         VIDEO_TEXT, VIDEO_LONGTEXT )
-    add_string( "linsys-hdsdi-aspect-ratio", "",
+    vlc_add_string( "linsys-hdsdi-aspect-ratio", "",
         VIDEO_ASPECT_TEXT, VIDEO_ASPECT_LONGTEXT )
-    add_string( "linsys-hdsdi-audio", "0=1,1",
+    vlc_add_string( "linsys-hdsdi-audio", "0=1,1",
         AUDIO_TEXT, AUDIO_LONGTEXT )
 
-    set_capability( "access", 0 )
-    add_shortcut( "linsys-hdsdi" )
-    set_callbacks( Open, Close )
+    vlc_set_capability( "access", 0 )
+    vlc_add_shortcut( "linsys-hdsdi" )
+    vlc_set_callbacks( Open, Close )
 vlc_module_end()
 
 /*****************************************************************************

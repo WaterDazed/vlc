@@ -54,13 +54,13 @@ static int Open(vlc_object_t *);
 static void Close(vlc_object_t *);
 
 vlc_module_begin()
-    set_shortname(N_("NFS"))
-    set_description(N_("NFS input"))
-    set_subcategory(SUBCAT_INPUT_ACCESS)
-    add_bool("nfs-auto-guid", true, AUTO_GUID_TEXT, AUTO_GUID_LONGTEXT)
-    set_capability("access", 0)
-    add_shortcut("nfs")
-    set_callbacks(Open, Close)
+    vlc_set_shortname(N_("NFS"))
+    vlc_set_description(N_("NFS input"))
+    vlc_set_subcategory(SUBCAT_INPUT_ACCESS)
+    vlc_add_bool("nfs-auto-guid", true, AUTO_GUID_TEXT, AUTO_GUID_LONGTEXT)
+    vlc_set_capability("access", 0)
+    vlc_add_shortcut("nfs")
+    vlc_set_callbacks(Open, Close)
 vlc_module_end()
 
 typedef struct

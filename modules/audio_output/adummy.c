@@ -33,11 +33,11 @@ static int Open(vlc_object_t *);
 static void Close(vlc_object_t *);
 
 vlc_module_begin ()
-    set_shortname( N_("Dummy") )
-    set_description( N_("Dummy audio output") )
-    set_capability( "audio output", 0 )
-    set_callbacks( Open, Close )
-    add_shortcut( "dummy" )
+    vlc_set_shortname( N_("Dummy") )
+    vlc_set_description( N_("Dummy audio output") )
+    vlc_set_capability( "audio output", 0 )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "dummy" )
 vlc_module_end ()
 
 struct aout_sys

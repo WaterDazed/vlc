@@ -59,20 +59,20 @@ static void Close( vlc_object_t * );
 #endif
 
 vlc_module_begin()
-    set_shortname( "Raw Audio" )
-    set_description( N_("Raw audio demuxer") )
-    set_capability( "demux", 0 )
-    set_subcategory( SUBCAT_INPUT_DEMUX )
-    set_callbacks( Open, Close )
-    add_shortcut( "rawaud" )
-    add_integer_with_range( "rawaud-channels", 2, 1, 32, CHANNELS_TEXT, CHANNELS_LONGTEXT )
-        change_safe()
-    add_integer_with_range( "rawaud-samplerate", 48000, 1, 384000, SAMPLERATE_TEXT, SAMPLERATE_LONGTEXT )
-        change_safe()
-    add_string( "rawaud-fourcc", FOURCC_DEFAULT,
+    vlc_set_shortname( "Raw Audio" )
+    vlc_set_description( N_("Raw audio demuxer") )
+    vlc_set_capability( "demux", 0 )
+    vlc_set_subcategory( SUBCAT_INPUT_DEMUX )
+    vlc_set_callbacks( Open, Close )
+    vlc_add_shortcut( "rawaud" )
+    vlc_add_integer_with_range( "rawaud-channels", 2, 1, 32, CHANNELS_TEXT, CHANNELS_LONGTEXT )
+        vlc_change_safe()
+    vlc_add_integer_with_range( "rawaud-samplerate", 48000, 1, 384000, SAMPLERATE_TEXT, SAMPLERATE_LONGTEXT )
+        vlc_change_safe()
+    vlc_add_string( "rawaud-fourcc", FOURCC_DEFAULT,
                 FOURCC_TEXT, FOURCC_LONGTEXT )
-        change_safe()
-    add_string( "rawaud-lang", "eng", LANG_TEXT, LANG_LONGTEXT)
+        vlc_change_safe()
+    vlc_add_string( "rawaud-lang", "eng", LANG_TEXT, LANG_LONGTEXT)
 vlc_module_end()
 
 /*****************************************************************************
