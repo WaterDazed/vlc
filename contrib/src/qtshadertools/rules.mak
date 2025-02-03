@@ -6,10 +6,6 @@ QTSHADERTOOLS_URL := $(QT)/$(QTSHADERTOOLS_VERSION)/submodules/qtshadertools-eve
 
 DEPS_qtshadertools-tools = qt-tools $(DEPS_qt-tools)
 
-ifdef HAVE_WIN32
-DEPS_qtshadertools-tools += fxc2 $(DEPS_fxc2)
-endif
-
 ifneq ($(findstring qt,$(PKGS)),)
 PKGS_TOOLS += qtshadertools-tools
 endif
