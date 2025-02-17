@@ -251,9 +251,10 @@ static inline bool vlc_tick_from_ns(vlc_tick_t *out, int64_t ns)
     *out = ns;
     return false;
 }
-static inline int64_t vlc_tick_to_ns(vlc_tick_t vtk)
+static inline bool vlc_tick_to_ns(int64_t *out, vlc_tick_t vtk)
 {
-    return vtk;
+    *out = vtk;
+    return false;
 }
 #elif (CLOCK_FREQ % 1000000000) == 0
 #define VLC_TICK_FROM_NS(ns)    ((ns)  * (CLOCK_FREQ / (INT64_C(1000000000))))
@@ -262,9 +263,10 @@ static inline bool vlc_tick_from_ns(vlc_tick_t *out, int64_t ns)
 {
     return ckd_mul(out, ns, CLOCK_FREQ / INT64_C(1000000000));
 }
-static inline int64_t vlc_tick_to_ns(vlc_tick_t vtk)
+static inline bool vlc_tick_to_ns(int64_t *out, vlc_tick_t vtk)
 {
-    return vtk / (CLOCK_FREQ / (INT64_C(1000000000)));
+    *out = vtk / (CLOCK_FREQ / (INT64_C(1000000000)));
+    return false;
 }
 #elif (1000000000 % CLOCK_FREQ) == 0
 #define VLC_TICK_FROM_NS(ns)    ((ns)  / (INT64_C(1000000000) / CLOCK_FREQ))
@@ -274,9 +276,9 @@ static inline bool vlc_tick_from_ns(vlc_tick_t *out, int64_t ns)
     *out = ns / (INT64_C(1000000000) / CLOCK_FREQ);
     return false;
 }
-static inline int64_t vlc_tick_to_ns(vlc_tick_t vtk)
+static inline bool vlc_tick_to_ns(int64_t *out, vlc_tick_t vtk)
 {
-    return vtk * (INT64_C(1000000000) / CLOCK_FREQ);
+    return ckd_mul(out, vtk, INT64_C(1000000000) / CLOCK_FREQ);
 }
 #else /* rounded overflowing conversion */
 #define VLC_TICK_FROM_NS(ns)    (CLOCK_FREQ * (ns) / INT64_C(1000000000))
@@ -288,9 +290,12 @@ static inline bool vlc_tick_from_ns(vlc_tick_t *out, int64_t ns)
     *out = *out / INT64_C(1000000000);
     return false;
 }
-static inline int64_t vlc_tick_to_ns(vlc_tick_t vtk)
+static inline bool vlc_tick_to_ns(int64_t *out, vlc_tick_t vtk)
 {
-    return vtk * INT64_C(1000000000) / CLOCK_FREQ;
+    if (ckd_mul(out, vtk, INT64_C(1000000000)))
+        return true;
+    *out = *out / CLOCK_FREQ;
+    return false;
 }
 #endif /* CLOCK_FREQ / 1000000000 */
 
