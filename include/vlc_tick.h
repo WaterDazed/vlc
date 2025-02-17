@@ -87,6 +87,11 @@ static inline vlc_tick_t vlc_tick_from_secf(double secf)
         double:  vlc_tick_from_secf(sec), \
         float:   vlc_tick_from_secf(sec), \
         default: vlc_tick_from_seci(sec) )
+
+static inline bool vlc_tick_from_seconds(vlc_tick_t *out, int64_t sec)
+{
+    return ckd_mul(out, CLOCK_FREQ, sec);
+}
 #endif /* !__cplusplus */
 
 /* seconds in floating point from vlc_tick_t */
