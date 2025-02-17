@@ -181,9 +181,10 @@ static inline int64_t vlc_tick_to_ms(vlc_tick_t vtk)
 #if CLOCK_FREQ == 1000000
 #define VLC_TICK_FROM_US(us)  (us)
 #define US_FROM_VLC_TICK(vtk) (vtk)
-static inline vlc_tick_t vlc_tick_from_us(int64_t us)
+static inline bool vlc_tick_from_us(vlc_tick_t *tick, int64_t us)
 {
-    return us;
+    *tick = us;
+    return false;
 }
 static inline int64_t vlc_tick_to_us(vlc_tick_t vtk)
 {
@@ -192,9 +193,9 @@ static inline int64_t vlc_tick_to_us(vlc_tick_t vtk)
 #elif (CLOCK_FREQ % 1000000) == 0
 #define VLC_TICK_FROM_US(us)    ((CLOCK_FREQ / INT64_C(1000000)) * (us))
 #define US_FROM_VLC_TICK(vtk)   ((vtk) / (CLOCK_FREQ / INT64_C(1000000)))
-static inline vlc_tick_t vlc_tick_from_us(int64_t us)
+static inline bool vlc_tick_from_us(vlc_tick_t *tick, int64_t us)
 {
-    return us * (CLOCK_FREQ / INT64_C(1000000));
+    return ckd_mul(tick, us, CLOCK_FREQ / INT64_C(1000000));
 }
 static inline int64_t vlc_tick_to_us(vlc_tick_t vtk)
 {
@@ -203,9 +204,10 @@ static inline int64_t vlc_tick_to_us(vlc_tick_t vtk)
 #elif (1000000 % CLOCK_FREQ) == 0
 #define VLC_TICK_FROM_US(us)    ((us)  / (INT64_C(1000000) / CLOCK_FREQ))
 #define US_FROM_VLC_TICK(vtk)   ((vtk) * (INT64_C(1000000) / CLOCK_FREQ))
-static inline vlc_tick_t vlc_tick_from_us(int64_t us)
+static inline bool vlc_tick_from_us(vlc_tick_t *tick, int64_t us)
 {
-    return us / (INT64_C(1000000) / CLOCK_FREQ);
+    *tick = us / (INT64_C(1000000) / CLOCK_FREQ);
+    return false;
 }
 static inline int64_t vlc_tick_to_us(vlc_tick_t vtk)
 {
@@ -214,9 +216,12 @@ static inline int64_t vlc_tick_to_us(vlc_tick_t vtk)
 #else /* rounded overflowing conversion */
 #define VLC_TICK_FROM_US(us)    (CLOCK_FREQ * (us) / INT64_C(1000000))
 #define US_FROM_VLC_TICK(vtk)   ((vtk) * INT64_C(1000000) / CLOCK_FREQ)
-static inline vlc_tick_t vlc_tick_from_us(int64_t us)
+static inline bool vlc_tick_from_us(vlc_tick_t *tick, int64_t us)
 {
-    return us * CLOCK_FREQ / INT64_C(1000000);
+    if (ckd_mul(tick, us, CLOCK_FREQ))
+        return true;
+    *tick = *tick / INT64_C(1000000);
+    return false;
 }
 static inline int64_t vlc_tick_to_us(vlc_tick_t vtk)
 {
