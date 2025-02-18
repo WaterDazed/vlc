@@ -55,7 +55,7 @@ install_headers(
     'vlc_fs.h',
     'vlc_gcrypt.h',
     'vlc_http.h',
-    'vlc_httpd.h',
+    'vlc_httpd_legacy.h',
     'vlc_image.h',
     'vlc_inhibit.h',
     'vlc_input.h',

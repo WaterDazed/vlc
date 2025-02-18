@@ -26,7 +26,7 @@
 #include <vlc_block.h>
 #include <vlc_configuration.h>
 #include <vlc_frame.h>
-#include <vlc_httpd.h>
+#include <vlc_httpd_legacy.h>
 #include <vlc_iso_lang.h>
 #include <vlc_list.h>
 #include <vlc_memstream.h>

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * httpd.c
+ * httpd_legacy.c
  *****************************************************************************
  * Copyright (C) 2004-2006 VLC authors and VideoLAN
  * Copyright © 2004-2007 Rémi Denis-Courmont
@@ -31,7 +31,7 @@
 #include <vlc_common.h>
 #include <vlc_threads.h>
 #include <vlc_poll.h>
-#include <vlc_httpd.h>
+#include <vlc_httpd_legacy.h>
 
 #include <assert.h>
 

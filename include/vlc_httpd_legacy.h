@@ -1,5 +1,5 @@
 /*****************************************************************************
- * vlc_httpd.h: builtin HTTP/RTSP server.
+ * vlc_httpd_legacy.h: builtin HTTP/RTSP server.
  *****************************************************************************
  * Copyright (C) 2004-2006 VLC authors and VideoLAN
  *
@@ -20,8 +20,8 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-#ifndef VLC_HTTPD_H
-#define VLC_HTTPD_H 1
+#ifndef VLC_HTTPD_LEGACY_H
+#define VLC_HTTPD_LEGACY_H 1
 
 /**
  * \file
@@ -148,4 +148,4 @@ VLC_API void httpd_MsgAdd( httpd_message_t *, const char *psz_name, const char *
 /* return "" if not found. The string is not allocated */
 VLC_API const char * httpd_MsgGet( const httpd_message_t *, const char *psz_name );
 
-#endif /* _VLC_HTTPD_H */
+#endif /* _VLC_HTTPD_LEGACY_H */

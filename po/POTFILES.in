@@ -21,7 +21,7 @@ include/vlc_filter.h
 include/vlc_fixups.h
 include/vlc_frame.h
 include/vlc_gcrypt.h
-include/vlc_httpd.h
+include/vlc_httpd_legacy.h
 include/vlc_image.h
 include/vlc_input.h
 include/vlc_intf_strings.h
@@ -108,7 +108,7 @@ src/modules/entry.c
 src/modules/modules.c
 src/modules/modules.h
 src/network/getaddrinfo.c
-src/network/httpd.c
+src/network/httpd_legacy.c
 src/network/io.c
 src/network/rootbind.c
 src/network/tcp.c

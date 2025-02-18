@@ -38,7 +38,7 @@
 #include <vlc_block.h>
 
 
-#include <vlc_httpd.h>
+#include <vlc_httpd_legacy.h>
 
 /*****************************************************************************
  * Module descriptor
