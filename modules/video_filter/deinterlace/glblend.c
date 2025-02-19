@@ -260,8 +260,7 @@ vlc_module_begin()
     set_description("OpenGL blend deinterlace filter")
     set_subcategory(SUBCAT_VIDEO_VFILTER)
 
-    set_callback_video_filter(OpenVideoFilter)
-    add_shortcut("glblend")
+    set_deinterlace_callback(OpenVideoFilter, 1)
 
     add_submodule()
         set_capability("opengl filter", 0)
