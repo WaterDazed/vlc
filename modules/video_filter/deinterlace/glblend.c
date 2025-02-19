@@ -235,6 +235,10 @@ error:
 
 static int OpenVideoFilter(filter_t *filter)
 {
+    if (!vlc_gl_IsFilterEnabled(VLC_OBJECT(filter),
+                                filter->fmt_out.video.i_chroma))
+        return VLC_EGENERIC;
+
     char *mode = var_InheritString(filter, "deinterlace-mode");
     bool is_supported = !mode
         || !strcmp(mode, "auto")
