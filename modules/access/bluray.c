@@ -1849,17 +1849,19 @@ static void blurayDrawOverlay(demux_t *p_demux, const BD_OVERLAY* const eventov)
             found->p_picture->format.i_height == eventov->h &&
             found->p_picture->format.i_chroma == VLC_CODEC_YUVP)
         {
+            if (!eventov->img) {
+                /* drop region */
+                vlc_spu_regions_remove(&ov->regions, found);
+                subpicture_region_Delete(found);
+                vlc_mutex_unlock(&ov->lock);
+                return;
+            }
             p_reg = found;
             break;
         }
     }
 
     if (!eventov->img) {
-        if (p_reg) {
-            /* drop region */
-            vlc_spu_regions_remove(&ov->regions, p_reg);
-            subpicture_region_Delete(p_reg);
-        }
         vlc_mutex_unlock(&ov->lock);
         return;
     }
