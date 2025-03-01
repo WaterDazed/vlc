@@ -1060,7 +1060,6 @@ static int ParseSubRipSubViewer( vlc_object_t *p_obj, subs_properties_t *p_props
 {
     VLC_UNUSED(p_obj);
     VLC_UNUSED(p_props);
-    char    *psz_text;
 
     for( ;; )
     {
@@ -1076,43 +1075,55 @@ static int ParseSubRipSubViewer( vlc_object_t *p_obj, subs_properties_t *p_props
         }
     }
 
+    p_subtitle->psz_text = NULL;
     /* Now read text until an empty line */
-    psz_text = strdup("");
-    if( !psz_text )
-        return VLC_ENOMEM;
-
-    for( ;; )
+    for( size_t i_written = 0, i_len = 0;; i_written += i_len )
     {
         const char *s = TextGetLine( txt );
-        size_t i_len;
-        size_t i_old;
+        i_len = s ? strlen( s ) : 0; /* can't tell if we're eof or just a \n */
 
-        i_len = s ? strlen( s ) : 0;
-        if( i_len <= 0 )
-        {
-            p_subtitle->psz_text = psz_text;
+        /* Pass first content or blank line, and return on *next* blank */
+        if( p_subtitle->psz_text && i_len < 1 )
             return VLC_SUCCESS;
-        }
 
-        i_old = strlen( psz_text );
-        psz_text = realloc_or_free( psz_text, i_old + i_len + 1 + 1 );
+        char *psz_text = realloc_or_free( p_subtitle->psz_text, i_written + i_len + 1 + 1 );
         if( !psz_text )
-        {
-            return VLC_ENOMEM;
-        }
-        strcat( psz_text, s );
-        strcat( psz_text, "\n" );
+            return VLC_ENOMEM; /* sub->psz_text must be freed for caller */
+        p_subtitle->psz_text = psz_text;
 
-        /* replace [br] by \n */
-        if( b_replace_br )
-        {
-            char *p;
+        if( i_written == 0 )
+            *psz_text = '\0';
 
-            while( ( p = strstr( psz_text, "[br]" ) ) )
+        if( s ) /* text can be null (\n) */
+        {
+            if( i_written ) /* next line */
             {
-                *p++ = '\n';
-                memmove( p, &p[3], strlen(&p[3])+1 );
+                strcat( psz_text, "\n" );
+                i_written++;
             }
+
+            /* replace [br] by \n */
+            if( b_replace_br )
+            {
+                const char *src = s;
+                char *dst = &psz_text[i_written];
+                for( ;; )
+                {
+                    char *p = strstr( src, "[br]" );
+                    if( !p )
+                    {
+                        strcat( dst, src );
+                        break;
+                    }
+                    memcpy( dst, src, p - src );
+                    dst[p - src] = '\n';
+                    dst[p - src + 1] = '\0';
+                    dst += p - src + 1;
+                    src = p + 4; /* + [br] */
+                    i_len -= 3; /* - [br] + \n */
+                }
+            }
+            else strcat( psz_text, s );
         }
     }
 }
