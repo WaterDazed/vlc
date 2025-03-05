@@ -277,7 +277,7 @@ T.Pane {
             implicitHeight: MainCtx.pinVideoControls ? VLCStyle.controlLayoutHeightPinned
                                                      : VLCStyle.controlLayoutHeight
 
-            visible: !model?.empty ?? false
+            visible: !(model?.empty ?? true)
 
             Navigation.upItem: trackPositionSlider.enabled ? trackPositionSlider : root.Navigation.upItem
 
