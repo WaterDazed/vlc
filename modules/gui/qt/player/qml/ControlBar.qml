@@ -52,6 +52,7 @@ T.Pane {
     property real sliderHeight: VLCStyle.heightBar_xxsmall
     property real bookmarksHeight: VLCStyle.controlBarBookmarksHeight
     property bool showRemainingTime: true
+    property bool pinned: MainCtx.pinVideoControls
 
     property var menu: undefined
 
@@ -274,8 +275,8 @@ T.Pane {
 
             identifier: root.identifier
 
-            implicitHeight: MainCtx.pinVideoControls ? VLCStyle.controlLayoutHeightPinned
-                                                     : VLCStyle.controlLayoutHeight
+            implicitHeight: root.pinned ? VLCStyle.controlLayoutHeightPinned
+                                        : VLCStyle.controlLayoutHeight
 
             visible: !(model?.empty ?? true)
 
