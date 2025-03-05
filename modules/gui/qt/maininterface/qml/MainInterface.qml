@@ -64,6 +64,9 @@ Item {
         case MainCtx.MINIMAL_MODE:
             viewLoader.source = "qrc:///qt/qml/VLC/Player/MinimalView.qml"
             break
+        case MainCtx.IMMERSIVE_MODE:
+            viewLoader.source = "qrc:///qt/qml/VLC/Player/ImmersiveView.qml"
+            break;
         case  MainCtx.PLAYER_MODE:
             viewLoader.source = "qrc:///qt/qml/VLC/Player/Player.qml"
             break

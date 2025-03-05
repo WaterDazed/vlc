@@ -422,6 +422,10 @@ FocusScope{
 
         visible: root._showTopBar
 
+        ImmersiveView.ImmersiveModeToggleButton {
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
         Widgets.IconToolButton {
             id: menuSelector
 

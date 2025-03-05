@@ -113,7 +113,7 @@ class MainCtx : public QObject
     Q_PROPERTY(Grouping grouping READ grouping WRITE setGrouping NOTIFY groupingChanged FINAL)
     Q_PROPERTY(ColorSchemeModel* colorScheme READ getColorScheme CONSTANT FINAL)
     Q_PROPERTY(bool hasVLM READ hasVLM CONSTANT FINAL)
-    Q_PROPERTY(bool clientSideDecoration READ useClientSideDecoration NOTIFY useClientSideDecorationChanged FINAL)
+    Q_PROPERTY(bool clientSideDecoration READ useClientSideDecoration WRITE setUseClientSideDecoration NOTIFY useClientSideDecorationChanged FINAL)
     Q_PROPERTY(bool hasFirstrun READ hasFirstrun CONSTANT FINAL)
     Q_PROPERTY(int  csdBorderSize READ CSDBorderSize NOTIFY useClientSideDecorationChanged FINAL)
     Q_PROPERTY(bool hasToolbarMenu READ hasToolbarMenu WRITE setHasToolbarMenu NOTIFY hasToolbarMenuChanged FINAL)
@@ -140,6 +140,7 @@ class MainCtx : public QObject
     // Expose Property Minimal View for Player View
     Q_PROPERTY(bool minimalView READ isMinimalView WRITE setMinimalView NOTIFY minimalViewChanged FINAL)
     Q_PROPERTY(bool playerView READ isPlayerView WRITE setPlayerView NOTIFY playerViewChanged FINAL)
+    Q_PROPERTY(bool immersiveMode READ immersiveMode WRITE setImmersiveMode NOTIFY immersiveModeChanged FINAL)
 
     // This Property only works if hasAcrylicSurface is set
     Q_PROPERTY(bool acrylicActive READ acrylicActive WRITE setAcrylicActive NOTIFY acrylicActiveChanged FINAL)
@@ -210,7 +211,8 @@ public:
     enum MainViewMode {
         MEDIALIB_MODE = 1,
         PLAYER_MODE = 2,
-        MINIMAL_MODE = 4
+        MINIMAL_MODE = 4,
+        IMMERSIVE_MODE = 8
     };
     Q_FLAG(MainViewMode);
     Q_DECLARE_FLAGS(MainViewModes, MainViewMode)
@@ -235,6 +237,7 @@ public:
     inline ColorSchemeModel* getColorScheme() const { return m_colorScheme; }
     bool hasVLM() const;
     bool useClientSideDecoration() const;
+    void setUseClientSideDecoration(bool);
     bool hasFirstrun() const;
     inline bool hasToolbarMenu() const { return m_hasToolbarMenu; }
     inline bool canShowVideoPIP() const { return m_canShowVideoPIP; }
@@ -272,6 +275,9 @@ public:
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
     int mouseHideTimeout() const { return m_mouseHideTimeout; }
+
+    bool immersiveMode() const;
+    void setImmersiveMode(bool);
 
     Q_INVOKABLE static inline bool useTopLevelWindowForToolTip() {
         assert(qGuiApp);
@@ -472,6 +478,9 @@ protected:
     SearchCtx* m_search = nullptr;
     SortCtx* m_sort = nullptr;
 
+    bool m_immersiveModeRestoreIntfOnTop = false;
+    bool m_immersiveModeRestoreTitleBar = false;
+
 #ifdef UPDATE_CHECK
     //m_updateModel is created on first access
     mutable std::unique_ptr<UpdateModel> m_updateModel;
@@ -575,6 +584,8 @@ signals:
     void safeAreaChanged();
 
     void mouseHideTimeoutChanged();
+
+    void immersiveModeChanged();
 
     void navBoxToggled();
 
