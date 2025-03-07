@@ -42,65 +42,19 @@ class ModelRecoveryAgent
     bool m_conditionDismissInitialDirtiness = false;
     std::unique_ptr<QLockFile> m_lockFile;
 
-public:
-    // NOTE: settings and model must outlive the instance of this class.
+private:
+
     template<class T>
-    ModelRecoveryAgent(class QSettings *settings, const QString& modelIdentifier, T* model)
-        : m_settings(settings), m_key(modelIdentifier + QStringLiteral("/RecoveryFilePath"))
+    ModelRecoveryAgent(class QSettings *settings,
+                       const QString& modelIdentifier,
+                       const QString& recoveryFileName,
+                       bool conditionDismissInitialDirtiness,
+                       T* model)
+        : m_settings(settings)
+        , m_key(modelIdentifier + QStringLiteral("/RecoveryFilePath"))
+        , m_recoveryFileName(recoveryFileName)
+        , m_conditionDismissInitialDirtiness(conditionDismissInitialDirtiness)
     {
-        assert(settings);
-        assert(model);
-        settings->sync();
-        if (settings->contains(m_key))
-        {
-            assert(settings->value(m_key).typeId() == QMetaType::QString);
-            QString recoveryFileName = settings->value(m_key).toString();
-            if (!recoveryFileName.isEmpty())
-            {
-                m_recoveryFileName = std::move(recoveryFileName);
-                {
-                    m_lockFile = std::make_unique<QLockFile>(m_recoveryFileName + QStringLiteral(".lock"));
-                    m_lockFile->setStaleLockTime(0); // if the process crashed, QLockFile considers the lock stale regardless of the lock time
-                    if (!m_lockFile->tryLock()) // if the older instance is still alive, it would have the lock
-                        throw std::exception(); // Older instance is managing the recovery, don't take over. We don't support recovering multiple models at the moment.
-                }
-                const QFileInfo fileInfo(m_recoveryFileName);
-                if (fileInfo.size() > 0)
-                {
-                    QMessageBox msgBox;
-                    msgBox.setText(qtr("The application closed abruptly."));
-                    msgBox.setInformativeText(qtr("Do you want to restore the %1 model from %2?").arg(modelIdentifier.toLower(),
-                                                                                                      fileInfo.lastModified().toString()));
-                    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-                    msgBox.setDefaultButton(QMessageBox::Yes);
-                    if (msgBox.exec() == QMessageBox::Yes)
-                    {
-                        model->append(m_recoveryFileName);
-                        m_conditionDismissInitialDirtiness = true;
-                    }
-                }
-            }
-        }
-
-        if (m_recoveryFileName.isEmpty())
-        {
-            QTemporaryFile temporaryFile;
-            temporaryFile.setAutoRemove(false);
-            if (!temporaryFile.open())
-                throw std::exception();
-            m_recoveryFileName = temporaryFile.fileName();
-            {
-                assert(!m_lockFile);
-                m_lockFile = std::make_unique<QLockFile>(m_recoveryFileName + QStringLiteral(".lock"));
-                m_lockFile->setStaleLockTime(0); // if the process crashed, QLockFile considers the lock stale regardless of the lock time
-                assert(!m_lockFile->isLocked()); // the file name is new here, it can not be locked before
-                if (!m_lockFile->tryLock())
-                    throw std::exception();
-            }
-            settings->setValue(m_key, m_recoveryFileName);
-            settings->sync();
-        }
-
         m_timer.setInterval(10000); // 10 seconds
         m_timer.setSingleShot(true);
 
@@ -148,6 +102,77 @@ public:
         QObject::connect(model, &T::itemsMoved, &m_timer, QOverload<>::of(&QTimer::start));
         QObject::connect(model, &T::itemsRemoved, &m_timer, QOverload<>::of(&QTimer::start));
         QObject::connect(model, &T::itemsUpdated, &m_timer, QOverload<>::of(&QTimer::start));
+    }
+
+public:
+    // NOTE: settings and model must outlive the instance of this class.
+    template<class T>
+    static std::unique_ptr<ModelRecoveryAgent>
+    recover(class QSettings *settings, const QString& modelIdentifier, T* model)
+    {
+        assert(settings);
+        assert(model);
+
+        QString key(modelIdentifier + QStringLiteral("/RecoveryFilePath"));
+        QString recoveryFileName;
+        std::unique_ptr<QLockFile> lockFile;
+        bool conditionDismissInitialDirtiness = false;
+
+        settings->sync();
+        if (settings->contains(key))
+        {
+            assert(settings->value(key).typeId() == QMetaType::QString);
+            recoveryFileName = settings->value(key).toString();
+            if (!recoveryFileName.isEmpty())
+            {
+                {
+                    lockFile = std::make_unique<QLockFile>(recoveryFileName + QStringLiteral(".lock"));
+                    lockFile->setStaleLockTime(0); // if the process crashed, QLockFile considers the lock stale regardless of the lock time
+                    if (!lockFile->tryLock()) // if the older instance is still alive, it would have the lock
+                        return nullptr;
+                }
+                const QFileInfo fileInfo(recoveryFileName);
+                if (fileInfo.size() > 0)
+                {
+                    QMessageBox msgBox;
+                    msgBox.setText(qtr("The application closed abruptly."));
+                    msgBox.setInformativeText(qtr("Do you want to restore the %1 model from %2?").arg(modelIdentifier.toLower(),
+                                                                                                      fileInfo.lastModified().toString()));
+                    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                    msgBox.setDefaultButton(QMessageBox::Yes);
+                    if (msgBox.exec() == QMessageBox::Yes)
+                    {
+                        model->append(recoveryFileName);
+                        conditionDismissInitialDirtiness = true;
+                    }
+                }
+            }
+        }
+
+        if (recoveryFileName.isEmpty())
+        {
+            QTemporaryFile temporaryFile;
+            temporaryFile.setAutoRemove(false);
+            if (!temporaryFile.open())
+                return nullptr;
+            recoveryFileName = temporaryFile.fileName();
+            {
+                assert(!lockFile);
+                lockFile = std::make_unique<QLockFile>(recoveryFileName + QStringLiteral(".lock"));
+                lockFile->setStaleLockTime(0); // if the process crashed, QLockFile considers the lock stale regardless of the lock time
+                assert(!lockFile->isLocked()); // the file name is new here, it can not be locked before
+                if (!lockFile->tryLock())
+                    return nullptr;
+            }
+            settings->setValue(key, recoveryFileName);
+            settings->sync();
+        }
+
+        auto agent = std::unique_ptr<ModelRecoveryAgent>(new ModelRecoveryAgent(
+            settings, std::move(key), std::move(recoveryFileName),
+            conditionDismissInitialDirtiness, model));
+        agent->m_lockFile = std::move(lockFile);
+        return agent;
     }
 
     ~ModelRecoveryAgent()

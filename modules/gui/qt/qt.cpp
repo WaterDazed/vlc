@@ -1014,11 +1014,9 @@ static void *Thread( void *obj )
 
     std::unique_ptr<ModelRecoveryAgent> playlistModelRecoveryAgent;
     QMetaObject::invokeMethod(&app, [&playlistModelRecoveryAgent, p_intf]() {
-        try {
-            playlistModelRecoveryAgent = std::make_unique<ModelRecoveryAgent>(p_intf->mainSettings,
-                                                                              QStringLiteral("Playlist"),
-                                                                              p_intf->p_mainPlaylistController);
-        } catch (...){ }
+        playlistModelRecoveryAgent = ModelRecoveryAgent::recover(p_intf->mainSettings,
+                                                                 QStringLiteral("Playlist"),
+                                                                 p_intf->p_mainPlaylistController);
     }, Qt::QueuedConnection);
 
     /* Create the normal interface in non-DP mode */
