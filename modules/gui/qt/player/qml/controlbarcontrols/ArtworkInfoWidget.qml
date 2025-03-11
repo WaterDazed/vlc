@@ -86,7 +86,7 @@ AbstractButton {
     // Events
 
     onClicked: {
-        if (History.match(History.viewPath, ["player"])) {
+        if (MainCtx.mainViewModes & MainCtx.PLAYER_MODE) {
             MainCtx.requestShowMainView()
         } else {
             MainCtx.requestShowPlayerView()

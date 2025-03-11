@@ -26,7 +26,7 @@ Widgets.IconToolButton {
     text: VLCIcons.fullscreen
 
     onClicked: {
-        if (History.match(History.viewPath, ["player"]))
+        if (MainCtx.mainViewModes & MainCtx.PLAYER_MODE)
             MainCtx.requestShowMainView()
         else
             MainCtx.requestShowPlayerView()
