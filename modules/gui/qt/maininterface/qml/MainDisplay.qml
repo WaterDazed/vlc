@@ -595,7 +595,7 @@ FocusScope {
         target: Player
         function onHasVideoOutputChanged() {
             if (Player.hasVideoOutput && MainCtx.hasEmbededVideo) {
-                MainCtx.requestShowPlayerView()
+                MainCtx.playerView = true
             } else {
                 _showMiniPlayer = false;
             }

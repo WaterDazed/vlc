@@ -49,7 +49,7 @@ Item {
 
     function setInitialView() {
         if (!MainCtx.minimalView && !MainPlaylistController.empty)
-            MainCtx.requestShowPlayerView()
+            MainCtx.playerView = true
         else
             _loadView()
     }
@@ -158,7 +158,7 @@ Item {
             target: Player
             function onPlayingStateChanged() {
                 if (Player.playingState === Player.PLAYING_STATE_STOPPED) {
-                    MainCtx.requestShowMainView()
+                    MainCtx.playerView = false
                 }
             }
         }

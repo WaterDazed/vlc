@@ -38,7 +38,6 @@ Widgets.IconToolButton {
         id: contextMenu
 
         ctx: MainCtx
-        playerViewVisible: MainCtx.mainViewModes & MainCtx.PLAYER_MODE
 
         onAboutToShow: menuBtn.requestLockUnlockAutoHide(true)
         onAboutToHide: menuBtn.requestLockUnlockAutoHide(false)
