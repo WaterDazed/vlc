@@ -52,6 +52,8 @@ FocusScope {
 
     property bool _showMiniPlayer: false
 
+    property var _oldHistoryPath: ([])
+
     // functions
 
     //MainDisplay behave as a PageLoader
@@ -81,9 +83,28 @@ FocusScope {
             _showMiniPlayer = true
     }
 
+    function loadCurrentHistoryView(focusReason) {
+        contextSaver.save(_oldHistoryPath)
+        loadView(History.viewPath, History.viewProp, focusReason)
+        contextSaver.restore(History.viewPath)
+        _oldHistoryPath = History.viewPath
+    }
+
     Component.onCompleted: {
-        if (MainCtx.canShowVideoPIP)
+        if (MainCtx.canShowVideoPIP) {
             pipPlayerComponent.createObject(this)
+        } else {
+            if (MainCtx.hasEmbededVideo)
+                MainPlaylistController.stop()
+        }
+
+        if (History.previousEmpty) {
+            if (MainCtx.mediaLibraryAvailable)
+                History.update(["video"])
+            else
+                History.update(["home"])
+        }
+        loadCurrentHistoryView(Qt.OtherFocusReason)
     }
 
     Navigation.cancelAction: function() {
@@ -154,6 +175,17 @@ FocusScope {
         }
     }
 
+    ModelSortSettingHandler {
+        id: contextSaver
+    }
+
+    Connections {
+        target: History
+        function onNavigate(focusReason) {
+            loadCurrentHistoryView(focusReason)
+        }
+    }
+
     ColorContext {
         id: theme
         palette: VLCStyle.palette
@@ -187,13 +219,12 @@ FocusScope {
             onItemClicked: (index) => {
                 const name = g_mainDisplay.tabModel.get(index).name
 
-                //don't add the ["mc"] prefix as we are only testing subviers from MainDisplay
                 if (stackView.isDefaulLoadedForPath([name])) {
                     return
                 }
 
                 selectedIndex = index
-                History.push(["mc", name])
+                History.push([name])
             }
 
             Navigation.parentItem: mainColumn
@@ -569,5 +600,13 @@ FocusScope {
                 _showMiniPlayer = false;
             }
         }
+    }
+
+    MouseArea {
+        /// handles mouse navigation buttons
+        anchors.fill: parent
+        acceptedButtons: Qt.BackButton
+        cursorShape: undefined
+        onClicked: History.previous()
     }
 }
