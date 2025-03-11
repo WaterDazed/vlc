@@ -141,6 +141,7 @@ class MainCtx : public QObject
 
     // Expose Property Minimal View for Player View
     Q_PROPERTY(bool minimalView READ isMinimalView WRITE setMinimalView NOTIFY minimalViewChanged FINAL)
+    Q_PROPERTY(bool playerView READ isPlayerView WRITE setPlayerView NOTIFY playerViewChanged FINAL)
 
     // This Property only works if hasAcrylicSurface is set
     Q_PROPERTY(bool acrylicActive READ acrylicActive WRITE setAcrylicActive NOTIFY acrylicActiveChanged FINAL)
@@ -261,6 +262,8 @@ public:
 
     inline bool isbgCone() const {return m_bgCone; }
     inline bool isMinimalView() const {return m_mainViewModes & MINIMAL_MODE; }
+    inline bool isPlayerView() const {return m_mainViewModes & PLAYER_MODE; }
+
 
     inline bool windowSuportExtendedFrame() const { return m_windowSuportExtendedFrame; }
     inline unsigned windowExtendedMargin() const { return m_windowExtendedMargin; }
@@ -514,6 +517,7 @@ public slots:
     void setHasAcrylicSurface(bool);
 
     void setMinimalView(bool);
+    void setPlayerView(bool);
 
     void sendHotkey(Qt::Key key, Qt::KeyboardModifiers modifiers );
     void sendVLCHotkey(int vlcHotkey);
@@ -572,6 +576,7 @@ signals:
     void hasAcrylicSurfaceChanged(bool);
 
     void minimalViewChanged();
+    void playerViewChanged();
 
     void acrylicActiveChanged();
 
@@ -592,9 +597,6 @@ signals:
     void bgConeToggled();
     void windowSuportExtendedFrameChanged();
     void windowExtendedMarginChanged(unsigned margin);
-
-    void requestShowMainView();
-    void requestShowPlayerView();
 
     void artistAlbumsWidthFactorChanged( double );
 

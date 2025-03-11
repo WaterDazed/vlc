@@ -187,20 +187,6 @@ MainCtx::MainCtx(qt_intf_t *_p_intf)
     loadPrefs(false);
     loadFromSettingsImpl(false);
 
-    connect(this, &MainCtx::requestShowMainView, this, [this](){
-        if (!m_mainViewModes.testFlag(MainViewMode::PLAYER_MODE))
-            return;
-        m_mainViewModes.setFlag(PLAYER_MODE, false);
-        emit mainViewModesChanged(m_mainViewModes);
-    });
-
-    connect(this, &MainCtx::requestShowPlayerView, this, [this](){
-        if (m_mainViewModes.testFlag(MainViewMode::PLAYER_MODE))
-            return;
-        m_mainViewModes.setFlag(PLAYER_MODE, true);
-        emit mainViewModesChanged(m_mainViewModes);
-    });
-
     /* Get the available interfaces */
     m_extraInterfaces = new VLCVarChoiceModel(VLC_OBJECT(p_intf->intf), "intf-add", this);
 
@@ -720,6 +706,16 @@ void MainCtx::setMinimalView(bool minimalView)
     m_mainViewModes.setFlag(MINIMAL_MODE, minimalView);
     emit mainViewModesChanged(m_mainViewModes);
     emit minimalViewChanged();
+}
+
+void MainCtx::setPlayerView(bool enable)
+{
+    if (m_mainViewModes.testFlag(PLAYER_MODE) == enable)
+        return;
+
+    m_mainViewModes.setFlag(PLAYER_MODE, enable);
+    emit mainViewModesChanged(m_mainViewModes);
+    emit playerViewChanged();
 }
 
 void MainCtx::setShowRemainingTime( bool show )
