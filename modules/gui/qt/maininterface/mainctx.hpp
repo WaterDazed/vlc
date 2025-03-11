@@ -131,8 +131,9 @@ class MainCtx : public QObject
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ getVideoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(int mouseHideTimeout READ mouseHideTimeout NOTIFY mouseHideTimeoutChanged FINAL)
     Q_PROPERTY(bool albumSections READ albumSections WRITE setAlbumSections NOTIFY albumSectionsChanged FINAL)
-
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
+    Q_PROPERTY(MainViewModes mainViewModes READ getMainViewModes NOTIFY mainViewModesChanged FINAL)
+    Q_PROPERTY(MainViewMode effectiveMainViewMode READ getEffectiveMainViewMode NOTIFY mainViewModesChanged FINAL)
 
     //Property to get Operating System info
     Q_PROPERTY(OsType osName READ getOSName CONSTANT)
@@ -204,6 +205,17 @@ public:
     };
     Q_ENUM(OsType)
 
+    //what should the main view display
+    //multiple modes may be enabled, priority applies across modes
+    //minimal > player > medialib
+    enum MainViewMode {
+        MEDIALIB_MODE = 1,
+        PLAYER_MODE = 2,
+        MINIMAL_MODE = 4
+    };
+    Q_FLAG(MainViewMode);
+    Q_DECLARE_FLAGS(MainViewModes, MainViewMode)
+
     inline QWindow::Visibility interfaceVisibility() const { return m_windowVisibility; }
     bool isPlaylistDocked() { return b_playlistDocked; }
     bool isPlaylistVisible() { return m_playlistVisible; }
@@ -248,7 +260,7 @@ public:
     inline int getOSVersion() const {return m_osVersion;}
 
     inline bool isbgCone() const {return m_bgCone; }
-    inline bool isMinimalView() const {return m_minimalView; }
+    inline bool isMinimalView() const {return m_mainViewModes & MINIMAL_MODE; }
 
     inline bool windowSuportExtendedFrame() const { return m_windowSuportExtendedFrame; }
     inline unsigned windowExtendedMargin() const { return m_windowExtendedMargin; }
@@ -366,6 +378,9 @@ public:
 
     CSDButtonModel *csdButtonModel() { return m_csdButtonModel.get(); }
 
+    inline MainViewModes getMainViewModes() const { return m_mainViewModes; };
+    MainViewMode getEffectiveMainViewMode() const;
+
     Q_INVOKABLE static double dp(const double px, const double scale);
     Q_INVOKABLE double dp(const double px) const;
 
@@ -432,7 +447,7 @@ protected:
     bool                 m_playlistVisible = false;       ///< Is the playlist visible ?
     double               m_playlistWidthFactor = 4.;   ///< playlist size: root.width / playlistScaleFactor
     double               m_playerPlaylistWidthFactor = 4.;
-    bool                 m_minimalView = false;
+    MainViewModes        m_mainViewModes = { MEDIALIB_MODE };
 
     double               m_artistAlbumsWidthFactor = 4.;
 
@@ -583,9 +598,13 @@ signals:
 
     void artistAlbumsWidthFactorChanged( double );
 
+    void mainViewModesChanged(MainViewModes);
+
 private:
     void loadPrefs(bool callSignals);
     void loadFromSettingsImpl(bool callSignals);
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(MainCtx::MainViewModes)
 
 #endif
