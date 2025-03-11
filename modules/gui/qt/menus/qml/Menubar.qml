@@ -116,7 +116,6 @@ Item {
         id: menubar
         ctx: MainCtx
         menubar: menubarLayout
-        playerViewVisible: MainCtx.mainViewModes & MainCtx.PLAYER_MODE
 
         onMenuClosed: _menuIndex = -1
         onNavigateMenu: (direction) => {

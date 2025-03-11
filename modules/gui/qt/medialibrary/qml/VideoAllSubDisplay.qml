@@ -147,12 +147,12 @@ VideoAll {
 
             function onAction(indexes) {
                 model.addAndPlay( indexes )
-                MainCtx.requestShowPlayerView()
+                MainCtx.playerView = true
             }
 
             function onDoubleClick(object) {
                 MediaLib.addAndPlay(object.id)
-                MainCtx.requestShowPlayerView()
+                MainCtx.playerView = true
             }
 
             function isInfoExpandPanelAvailable(modelIndexData) { return true }
@@ -196,7 +196,7 @@ VideoAll {
 
                 if (object.isVideo) {
                     model.addAndPlay( indexes )
-                    MainCtx.requestShowPlayerView()
+                    MainCtx.playerView = true
 
                     return
                 }
@@ -207,7 +207,7 @@ VideoAll {
             function onDoubleClick(object) {
                 if (object.isVideo) {
                     MediaLib.addAndPlay(object.id)
-                    MainCtx.requestShowPlayerView()
+                    MainCtx.playerView = true
                     return
                 }
 

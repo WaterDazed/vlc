@@ -450,7 +450,6 @@ FocusScope{
                 id: contextMenu
 
                 ctx: MainCtx
-                playerViewVisible: MainCtx.mainViewModes & MainCtx.PLAYER_MODE
 
                 onAboutToShow: root.requestLockUnlockAutoHide(true)
                 onAboutToHide: root.requestLockUnlockAutoHide(false)
