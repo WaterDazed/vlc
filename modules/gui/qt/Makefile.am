@@ -341,6 +341,8 @@ libqt_plugin_la_SOURCES = \
 	util/vlcqtmessagehandler.hpp \
 	util/colorizedsvgicon.cpp \
 	util/colorizedsvgicon.hpp \
+	util/focusreasonforwarder.cpp \
+	util/focusreasonforwarder.hpp \
 	widgets/native/animators.cpp \
 	widgets/native/animators.hpp \
 	widgets/native/customwidgets.cpp widgets/native/customwidgets.hpp \
@@ -498,6 +500,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	util/list_selection_model.moc.cpp \
 	util/vlchotkeyconverter.moc.cpp \
 	util/qsgtextureview.moc.cpp \
+	util/focusreasonforwarder.moc.cpp \
 	widgets/native/animators.moc.cpp \
 	widgets/native/csdthemeimage.moc.cpp \
 	widgets/native/customwidgets.moc.cpp \
