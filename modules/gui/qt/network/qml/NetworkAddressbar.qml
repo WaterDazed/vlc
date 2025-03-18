@@ -78,11 +78,7 @@ T.Control {
         enabled: control.enabled
     }
 
-    background: Rectangle {
-        border.width: VLCStyle.dp(1, VLCStyle.scale)
-        border.color: theme.border
-        color: theme.bg.primary
-    }
+    background: null
 
     contentItem: RowLayout {
         spacing: VLCStyle.margin_xxsmall
@@ -193,7 +189,7 @@ T.Control {
 
     FontMetrics {
         id: fontMetrics
-        font.pixelSize: VLCStyle.fontSize_large
+        font.pixelSize: VLCStyle.fontSize_xxxlarge
     }
 
     FontMetrics {
