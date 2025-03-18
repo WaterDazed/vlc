@@ -115,6 +115,7 @@ moc_headers = files(
     'network/networkmediamodel.hpp',
     'network/standardpathmodel.hpp',
     'style/systempalette.hpp',
+    'style/vlcicons.hpp',
     'style/colorcontext.hpp',
     'player/input_models.hpp',
     'player/delay_estimator.hpp',
@@ -397,6 +398,8 @@ qt_plugin_sources = files(
     'style/colorcontext.hpp',
     'style/systempalette.cpp',
     'style/systempalette.hpp',
+    'style/vlcicons.cpp',
+    'style/vlcicons.hpp',
     'style/defaultthemeproviders.hpp',
     'style/systempalettethemeprovider.cpp',
     'player/input_models.cpp',
@@ -796,7 +799,6 @@ qml_modules += {
     'outdir' : 'VLC/Style',
     'singletons': files(
         'style/AcrylicController.qml',
-        'style/VLCIcons.qml',
         'style/VLCStyle.qml',
     ),
 }
