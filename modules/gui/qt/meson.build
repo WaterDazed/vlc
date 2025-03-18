@@ -607,7 +607,9 @@ qml_modules += {
         'maininterface/qml/MainInterface.qml',
         'maininterface/qml/MainViewLoader.qml',
         'maininterface/qml/MainDisplay.qml',
-        'maininterface/qml/NoMedialibHome.qml'
+        'maininterface/qml/NoMedialibHome.qml',
+        'maininterface/qml/SideNavigation.qml',
+        'maininterface/qml/SideNavigationDelegate.qml',
     ),
 }
 qml_modules += {
