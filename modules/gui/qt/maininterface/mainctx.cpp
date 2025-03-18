@@ -167,6 +167,7 @@ MainCtx::MainCtx(qt_intf_t *_p_intf)
 
     m_sort = new SortCtx(this);
     m_search = new SearchCtx(this);
+    m_playqueuePanel = new PlayqueuePanelCtx(this);
 
     // getOSInfo();
     QOperatingSystemVersion currentOS = QOperatingSystemVersion::current();
@@ -303,15 +304,14 @@ MainCtx::~MainCtx()
     m_threadRunner->destroy();
 
     settings->beginGroup("MainWindow");
-    settings->setValue( "pl-dock-status", b_playlistDocked );
     settings->setValue( "ShowRemainingTime", m_showRemainingTime );
     settings->setValue( "interface-scale", QString::number( m_intfUserScaleFactor ) );
 
     /* Save playlist state */
-    settings->setValue( "playlist-visible", m_playlistVisible );
-    settings->setValue( "playlist-width-factor", QString::number( m_playlistWidthFactor ) );
+    settings->setValue( "pl-dock-status", m_playqueuePanel->m_docked );
+    settings->setValue( "playlist-visible", m_playqueuePanel->m_visible );
+    settings->setValue( "playlist-width-factor", QString::number( m_playqueuePanel->m_widthFactor ) );
     settings->setValue( "player-playlist-width-factor", QString::number( m_playerPlaylistWidthFactor ) );
-
     settings->setValue( "artist-albums-width-factor", QString::number( m_artistAlbumsWidthFactor ) );
 
     settings->setValue( "grid-view", m_gridView );
@@ -448,11 +448,11 @@ void MainCtx::loadFromSettingsImpl(const bool callSignals)
             (obj->*signal)(variable);
     };
 
-    loadFromSettings(b_playlistDocked, "MainWindow/pl-dock-status", true, this, &MainCtx::playlistDockedChanged);
+    loadFromSettings(m_playqueuePanel->m_docked, "MainWindow/pl-dock-status", true, m_playqueuePanel, &PlayqueuePanelCtx::dockedChanged);
 
-    loadFromSettings(m_playlistVisible, "MainWindow/playlist-visible", false, this, &MainCtx::playlistVisibleChanged);
+    loadFromSettings(m_playqueuePanel->m_visible, "MainWindow/playlist-visible", false, m_playqueuePanel, &PlayqueuePanelCtx::visibleChanged);
 
-    loadFromSettings(m_playlistWidthFactor, "MainWindow/playlist-width-factor", 4.0, this, &MainCtx::playlistWidthFactorChanged);
+    loadFromSettings(m_playqueuePanel->m_widthFactor, "MainWindow/playlist-width-factor", 4.0, m_playqueuePanel, &PlayqueuePanelCtx::widthFactorChanged);
 
     loadFromSettings(m_playerPlaylistWidthFactor, "MainWindow/player-playlist-width-factor", 4.0, this, &MainCtx::playerPlaylistFactorChanged);
 
@@ -640,29 +640,6 @@ QUrl MainCtx::folderMRL(const QUrl &fileMRL) const
 QString MainCtx::displayMRL(const QUrl &mrl) const
 {
     return urlToDisplayString(mrl);
-}
-
-void MainCtx::setPlaylistDocked( bool docked )
-{
-    b_playlistDocked = docked;
-
-    emit playlistDockedChanged(docked);
-}
-
-void MainCtx::setPlaylistVisible( bool visible )
-{
-    m_playlistVisible = visible;
-
-    emit playlistVisibleChanged(visible);
-}
-
-void MainCtx::setPlaylistWidthFactor( double factor )
-{
-    if (factor > 0.0)
-    {
-        m_playlistWidthFactor = factor;
-        emit playlistWidthFactorChanged(factor);
-    }
 }
 
 void MainCtx::setPlayerPlaylistWidthFactor( double factor )
