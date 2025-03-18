@@ -883,6 +883,8 @@ qml_modules += {
         'widgets/qml/SpinBoxExt.qml',
         'widgets/qml/StackViewExt.qml',
         'widgets/qml/PageLoader.qml',
+        'widgets/qml/PageExt.qml',
+        'widgets/qml/DefaultPageHeader.qml',
         'widgets/qml/ButtonExt.qml',
         'widgets/qml/TableColumns.qml',
         'widgets/qml/TextFieldExt.qml',

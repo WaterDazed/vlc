@@ -1292,6 +1292,7 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/SpinBoxExt.qml \
 	widgets/qml/StackViewExt.qml \
 	widgets/qml/PageLoader.qml \
+	widgets/qml/PageExt.qml \
 	widgets/qml/ButtonExt.qml \
 	widgets/qml/TableColumns.qml \
 	widgets/qml/MLTableColumns.qml \
@@ -1311,6 +1312,7 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/PopupIconToolButton.qml \
 	widgets/qml/PartialEffect.qml \
 	widgets/qml/ViewHeader.qml \
+	widgets/qml/DefaultPageHeader.qml \
 	widgets/qml/ProgressIndicator.qml \
 	widgets/qml/ImageExt.qml \
 	widgets/qml/ScrollBarExt.qml \
