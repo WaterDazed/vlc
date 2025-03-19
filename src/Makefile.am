@@ -755,6 +755,67 @@ stamp-revision:
 	fi
 #2>&1
 
+####
+# Android support library
+###
+
+# TODOLIST:
+# - configure.ac: find android path
+# - configure.ac: find javac
+# - configure.ac: find dx/dex, compatibility between both?
+# - Makefile.am: classpath for android?
+# - Makefile.am: path where to generate
+# - Makefile.am: install?
+# - Malefile.am: sources directories for java package handling
+
+if HAVE_ANDROID_JAR
+AM_V_JAVAC	  = $(AM_V_JAVAC_$(V))
+AM_V_JAVAC_   = $(AM_V_JAVAC_$(AM_DEFAULT_VERBOSITY))
+AM_V_JAVAC_0  = @echo "  JAVAC    $@";
+AM_V_JAVAC__0 = $(AM_V_JAVAC_0)
+
+AM_V_DEX	  = $(AM_V_DEX_$(V))
+AM_V_DEX_   = $(AM_V_DEX_$(AM_DEFAULT_VERBOSITY))
+AM_V_DEX__0 = $(AM_V_DEX_0)
+
+vlc_android_support_jar_JAVASOURCES = \
+	android/java/org/videolan/vlccore/SurfaceTextureListener.java
+
+$(vlc_android_support_jar_JAVASOURCES:%.java=%.class) \
+$(vlc_android_support_jar_JAVASOURCES:%.java=%.dex) \
+	: JAVA_PACKAGE_ROOT=android/java/
+
+%.class: %.java
+	$(AM_V_at)mkdir -p "$(builddir)/$(dirname "$<")"
+	$(AM_V_JAVAC)$(JAVAC) -source 1.7 -target 1.7 \
+		-d $(builddir)/$(JAVA_PACKAGE_ROOT) \
+		-sourcepath $(srcdir)/$(JAVA_PACKAGE_ROOT) \
+		-cp $(ANDROID_SDK_PATH)/ $^
+
+if HAVE_ANDROID_D8
+AM_V_DEX_0  = @echo "  D8       $@";
+%.dex: %.class
+	$(AM_V_DEX)$(ANDROID_D8) \
+		--output $(builddir)/$(JAVA_PACKAGE_ROOT)/$(dirname "$^") \
+		--classpath $(ANDROID_SDK_PATH)/ \
+		--file-per-class-file $^
+else
+AM_V_DEX_0  = @echo "  DX       $@";
+%.dex: %.class
+	$(AM_V_DEX)cd $(builddir)/$(JAVA_PACKAGE_ROOT) && $(ANDROID_DX) \
+		--dex --output=$(abs_builddir)/$(dirname "$^")/$@ \
+		$(^:$(JAVA_PACKAGE_ROOT)%=%)
+endif
+
+vlc_android_support.jar: $(vlc_android_support_jar_JAVASOURCES:%.java=%.dex)
+	$(AM_V_GEN)zip -r $@.tmp $(vlc_android_support_jar_JAVASOURCES:%.java=$(builddir)/%.dex)
+	$(AM_V_at)mv $@.tmp $@
+
+androidsupportdir = $(libdir)
+androidsupport_DATA = vlc_android_support.jar
+MOSTLYCLEANFILES += $(vlc_android_support_jar_JAVASOURCES:%.java=%.dex)
+endif
+
 ###############################################################################
 # Unit/regression test
 ###############################################################################

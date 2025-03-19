@@ -49,6 +49,15 @@ static struct {
         jclass clazz;
         jmethodID getProperty;
     } System;
+    struct {
+        jobject instance;
+        jmethodID getClassLoader;
+    } ClassLoader;
+    struct {
+        jclass clazz;
+        jmethodID currentThread;
+        jmethodID getContextClassLoader;
+    } Thread;
 } fields = { .Environment.clazz = NULL };
 
 static char *
@@ -87,6 +96,12 @@ JNI_OnUnload(JavaVM* vm, void* reserved)
     JNIEnv* env = NULL;
     if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_2) != JNI_OK)
         return;
+
+    if (fields.ClassLoader.instance)
+        (*env)->DeleteGlobalRef(env, fields.ClassLoader.instance);
+
+    if (fields.Thread.clazz)
+        (*env)->DeleteGlobalRef(env, fields.Thread.clazz);
 
     if (fields.Environment.clazz)
         (*env)->DeleteGlobalRef(env, fields.Environment.clazz);
@@ -155,6 +170,37 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
                                   "(Ljava/lang/String;)Ljava/lang/String;");
     (*env)->DeleteLocalRef(env, clazz);
 
+    clazz = (*env)->FindClass(env, "java/lang/Thread");
+    if((*env)->ExceptionCheck(env))
+        goto error;
+
+    fields.Thread.clazz = (*env)->NewGlobalRef(env, clazz);
+    if((*env)->ExceptionCheck(env))
+        goto error;
+
+    fields.Thread.currentThread = (*env)->GetStaticMethodID(env,
+            fields.Thread.clazz, "currentThread", "()Ljava/lang/Thread;");
+    fields.Thread.getContextClassLoader = (*env)->GetMethodID(env,
+            fields.Thread.clazz, "getContextClassLoader", "()Ljava/lang/ClassLoader;");
+
+    jobject current_thread = (*env)->CallStaticObjectMethod(env,
+            fields.Thread.clazz,
+            fields.Thread.currentThread);
+    if((*env)->ExceptionCheck(env))
+        goto error;
+
+    jobject classloader_instance = (*env)->CallObjectMethod(env,
+            current_thread, fields.Thread.getContextClassLoader);
+    if((*env)->ExceptionCheck(env))
+        goto error;
+
+    (*env)->DeleteLocalRef(env, current_thread);
+
+    fields.ClassLoader.instance = (*env)->NewGlobalRef(env, classloader_instance);
+    (*env)->DeleteLocalRef(env, classloader_instance);
+    if (fields.ClassLoader.instance == NULL)
+        goto error;
+
     return JNI_VERSION_1_2;
 
 error:
@@ -176,6 +222,9 @@ system_Configure(libvlc_int_t *p_libvlc, int i_argc, const char *const pp_argv[]
     assert(s_jvm != NULL);
     var_Create(p_libvlc, "android-jvm", VLC_VAR_ADDRESS);
     var_SetAddress(p_libvlc, "android-jvm", s_jvm);
+
+    var_Create(p_libvlc, "android-classloader", VLC_VAR_ADDRESS);
+    var_SetAddress(p_libvlc, "android-classloader", fields.ClassLoader.instance);
 }
 
 static char *config_GetHomeDir(const char *psz_dir, const char *psz_default_dir)
