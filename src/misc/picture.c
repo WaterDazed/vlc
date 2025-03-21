@@ -39,7 +39,7 @@
 #include <vlc_image.h>
 #include <vlc_block.h>
 
-#include "ancillary.h"
+#include <vlc_ancillary.h>
 
 static void PictureDestroyContext( picture_t *p_picture )
 {
@@ -482,6 +482,20 @@ picture_t *picture_Clone(picture_t *picture)
     picture_priv_t *clone_priv = container_of(clone, picture_priv_t, picture);
     vlc_ancillary_array_Dup(&clone_priv->ancillaries, &priv->ancillaries);
     return clone;
+}
+
+int
+picture_AttachAncillaries(picture_t *pic, const vlc_ancillary_array *src_array)
+{
+    picture_priv_t *priv = container_of(pic, picture_priv_t, picture);
+    return vlc_ancillary_array_Dup(&priv->ancillaries, src_array);
+}
+
+int
+picture_MoveAncillaries(picture_t *pic, vlc_ancillary_array *src_array)
+{
+    picture_priv_t *priv = container_of(pic, picture_priv_t, picture);
+    return vlc_ancillary_array_Move(&priv->ancillaries, src_array);
 }
 
 int
