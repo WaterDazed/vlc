@@ -408,7 +408,8 @@ static block_t *Packetize( decoder_t *p_dec, block_t **pp_block )
 
             /* Copy the whole frame into the buffer */
             block_GetBytes( &p_sys->bytestream,
-                            p_out_buffer->p_buffer, p_out_buffer->i_buffer );
+                            p_out_buffer->p_buffer, p_out_buffer->i_buffer,
+                            &p_out_buffer->ancillaries );
 
             /* Just ignore (E)AC3 frames */
             if( SyncInfoDolby( p_out_buffer->p_buffer ) > 0 )

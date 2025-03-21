@@ -411,7 +411,8 @@ static block_t *DecodeBlock( decoder_t *p_dec, block_t **pp_block )
             /* Copy the whole frame into the buffer. */
             if ( block_GetBytes( &p_sys->bytestream, p_buf,
                                  __MIN( p_sys->header.i_frame_size,
-                                        p_out_buffer->i_buffer ) ) )
+                                        p_out_buffer->i_buffer ),
+                                 &p_out_buffer->ancillaries ) )
             {
                 block_Release(p_out_buffer);
                 return NULL;

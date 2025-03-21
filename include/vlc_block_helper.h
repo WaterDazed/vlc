@@ -182,7 +182,8 @@ static inline int block_PeekBytes( block_bytestream_t *p_bytestream,
 }
 
 static inline int block_GetBytes( block_bytestream_t *p_bytestream,
-                                  uint8_t *p_data, size_t i_data )
+                                  uint8_t *p_data, size_t i_data,
+                                  vlc_ancillary_array *ancillary_array )
 {
     if( block_BytestreamRemaining( p_bytestream ) < i_data )
         return VLC_EGENERIC;
@@ -197,6 +198,14 @@ static inline int block_GetBytes( block_bytestream_t *p_bytestream,
     {
         i_copy = __MIN( i_size, p_block->i_buffer - i_offset );
         i_size -= i_copy;
+
+        if( ancillary_array != NULL )
+        {
+            int ret = vlc_ancillary_array_Move( ancillary_array,
+                                                &p_block->ancillaries );
+            if( ret != VLC_SUCCESS )
+                return ret;
+        }
 
         if( i_copy && p_data != NULL )
         {
@@ -220,12 +229,12 @@ static inline int block_GetBytes( block_bytestream_t *p_bytestream,
 static inline int block_SkipBytes( block_bytestream_t *p_bytestream,
                                    size_t i_data )
 {
-    return block_GetBytes( p_bytestream, NULL, i_data );
+    return block_GetBytes( p_bytestream, NULL, i_data, NULL );
 }
 
 static inline int block_SkipByte( block_bytestream_t *p_bytestream )
 {
-    return block_GetBytes( p_bytestream, NULL, 1 );
+    return block_GetBytes( p_bytestream, NULL, 1, NULL );
 }
 
 static inline int block_PeekOffsetBytes( block_bytestream_t *p_bytestream,
