@@ -2003,7 +2003,7 @@ CreateDecoder( vlc_object_t *p_parent, const struct vlc_input_decoder_cfg *cfg )
     vlc_cond_init( &p_owner->wait_fifo );
 
     /* Load a packetizer module if the input is not already packetized */
-    if( cfg->sout == NULL && !fmt->b_packetized )
+    if( cfg->sout == NULL )
     {
         p_owner->p_packetizer =
             vlc_custom_create( p_parent, sizeof( decoder_t ), "packetizer" );

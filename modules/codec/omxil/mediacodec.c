@@ -36,7 +36,6 @@
 #include <vlc_plugin.h>
 #include <vlc_codec.h>
 #include <vlc_block_helper.h>
-#include <vlc_timestamp_helper.h>
 #include <vlc_threads.h>
 #include <vlc_bits.h>
 
@@ -122,6 +121,8 @@ typedef struct decoder_sys_t
 
     int             i_decode_flags;
 
+    bool b_warned_pts;
+
     enum es_format_category_e cat;
     union
     {
@@ -137,7 +138,6 @@ typedef struct decoder_sys_t
             unsigned int i_stride, i_slice_height;
             int i_pixel_format;
             struct hxxx_helper hh;
-            timestamp_fifo_t *timestamp_fifo;
             int i_mpeg_dar_num, i_mpeg_dar_den;
             struct vlc_asurfacetexture *surfacetexture;
         } video;
@@ -912,6 +912,7 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
     p_sys->video.i_mpeg_dar_den = 0;
     p_sys->video.surfacetexture = NULL;
     p_sys->b_decoder_dead = false;
+    p_sys->b_warned_pts = false;
 
     if (pf_init(&p_sys->api) != 0)
     {
@@ -959,10 +960,6 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
         p_sys->pf_on_new_block = Video_OnNewBlock;
         p_sys->pf_on_flush = Video_OnFlush;
         p_sys->pf_process_output = Video_ProcessOutput;
-
-        p_sys->video.timestamp_fifo = timestamp_FifoNew(32);
-        if (!p_sys->video.timestamp_fifo)
-            goto bailout;
 
         if (var_InheritBool(p_dec, CFG_PREFIX "dr"))
         {
@@ -1111,9 +1108,6 @@ static void CleanDecoder(decoder_sys_t *p_sys)
     if (p_sys->video.surfacetexture)
         vlc_asurfacetexture_Delete(p_sys->video.surfacetexture);
 
-    if (p_sys->video.timestamp_fifo)
-        timestamp_FifoRelease(p_sys->video.timestamp_fifo);
-
     free(p_sys);
 }
 
@@ -1164,13 +1158,6 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
     {
         picture_t *p_pic = NULL;
 
-        /* If the oldest input block had no PTS, the timestamp of
-         * the frame returned by MediaCodec might be wrong so we
-         * overwrite it with the corresponding dts. Call FifoGet
-         * first in order to avoid a gap if buffers are released
-         * due to an invalid format or a preroll */
-        int64_t forced_ts = timestamp_FifoGet(p_sys->video.timestamp_fifo);
-
         if (!p_sys->b_has_format) {
             msg_Warn(p_dec, "Buffers returned before output format is set, dropping frame");
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
@@ -1192,10 +1179,7 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
         }
 
-        if (forced_ts == VLC_TICK_INVALID)
-            p_pic->date = p_out->buf.i_ts;
-        else
-            p_pic->date = forced_ts;
+        p_pic->date = p_out->buf.i_ts;
         p_pic->b_progressive = true;
 
         if (p_sys->api.b_direct_rendering)
@@ -1444,6 +1428,7 @@ static void DecodeFlushLocked(decoder_sys_t *p_sys)
     p_sys->b_output_ready = false;
     /* Resend CODEC_CONFIG buffer after a flush */
     p_sys->i_csd_send = 0;
+    p_sys->b_warned_pts = false;
 
     p_sys->pf_on_flush(p_sys);
 
@@ -1618,7 +1603,15 @@ static int QueueBlockLocked(decoder_t *p_dec, block_t *p_in_block,
                 {
                     i_ts = p_block->i_pts;
                     if (!i_ts && p_block->i_dts)
+                    {
+                        if (!p_sys->b_warned_pts)
+                        {
+                            msg_Warn(p_dec, "no valid PTS, video ordering "
+                                     "might be bogus");
+                            p_sys->b_warned_pts = true;
+                        }
                         i_ts = p_block->i_dts;
+                    }
                 }
                 p_buf = p_block->p_buffer;
                 i_size = p_block->i_buffer;
@@ -1793,11 +1786,8 @@ reload:
 
 static int Video_OnNewBlock(decoder_t *p_dec, block_t **pp_block)
 {
-    decoder_sys_t *p_sys = p_dec->p_sys;
-    block_t *p_block = *pp_block;
-
-    timestamp_FifoPut(p_sys->video.timestamp_fifo,
-                      p_block->i_pts ? VLC_TICK_INVALID : p_block->i_dts);
+    (void) p_dec;
+    (void) pp_block;
 
     return 1;
 }
@@ -1898,7 +1888,6 @@ static int VideoVC1_OnNewBlock(decoder_t *p_dec, block_t **pp_block)
 
 static void Video_OnFlush(decoder_sys_t *p_sys)
 {
-    timestamp_FifoEmpty(p_sys->video.timestamp_fifo);
     /* Invalidate all pictures that are currently in flight
      * since flushing make all previous indices returned by
      * MediaCodec invalid. */
