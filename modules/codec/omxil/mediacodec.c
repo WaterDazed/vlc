@@ -38,6 +38,7 @@
 #include <vlc_block_helper.h>
 #include <vlc_threads.h>
 #include <vlc_bits.h>
+#include <vlc_ancillary_queue.h>
 
 #include "mediacodec.h"
 #include "../codec/hxxx_helper.h"
@@ -150,6 +151,8 @@ typedef struct decoder_sys_t
             int pi_extraction[AOUT_CHAN_MAX];
         } audio;
     };
+
+    struct vlc_ancillary_queue ancillary_queue;
 } decoder_sys_t;
 
 /*****************************************************************************
@@ -913,6 +916,7 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
     p_sys->video.surfacetexture = NULL;
     p_sys->b_decoder_dead = false;
     p_sys->b_warned_pts = false;
+    vlc_ancillary_queue_Init(&p_sys->ancillary_queue);
 
     if (pf_init(&p_sys->api) != 0)
     {
@@ -1108,6 +1112,8 @@ static void CleanDecoder(decoder_sys_t *p_sys)
     if (p_sys->video.surfacetexture)
         vlc_asurfacetexture_Delete(p_sys->video.surfacetexture);
 
+    vlc_ancillary_queue_Clear(&p_sys->ancillary_queue);
+
     free(p_sys);
 }
 
@@ -1158,26 +1164,38 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
     {
         picture_t *p_pic = NULL;
 
+        vlc_ancillary_array ancillaries;
+        vlc_ancillary_queue_DequeueUntilPts(&p_sys->ancillary_queue,
+                                            p_out->buf.i_ts, &ancillaries);
+
         if (!p_sys->b_has_format) {
             msg_Warn(p_dec, "Buffers returned before output format is set, dropping frame");
+            vlc_ancillary_array_Clear(&ancillaries);
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
         }
 
         if (p_out->buf.i_ts <= p_sys->i_preroll_end)
+        {
+            vlc_ancillary_array_Clear(&ancillaries);
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
+        }
 
         if (!p_sys->api.b_direct_rendering && p_out->buf.p_ptr == NULL)
         {
             /* This can happen when receiving an EOS buffer */
             msg_Warn(p_dec, "Invalid buffer, dropping frame");
+            vlc_ancillary_array_Clear(&ancillaries);
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
         }
 
         p_pic = decoder_NewPicture(p_dec);
         if (!p_pic) {
             msg_Warn(p_dec, "NewPicture failed");
+            vlc_ancillary_array_Clear(&ancillaries);
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
         }
+
+        picture_MoveAncillaries(p_pic, &ancillaries);
 
         p_pic->date = p_out->buf.i_ts;
         p_pic->b_progressive = true;
@@ -1429,6 +1447,7 @@ static void DecodeFlushLocked(decoder_sys_t *p_sys)
     /* Resend CODEC_CONFIG buffer after a flush */
     p_sys->i_csd_send = 0;
     p_sys->b_warned_pts = false;
+    vlc_ancillary_queue_Reset(&p_sys->ancillary_queue);
 
     p_sys->pf_on_flush(p_sys);
 
@@ -1611,6 +1630,15 @@ static int QueueBlockLocked(decoder_t *p_dec, block_t *p_in_block,
                             p_sys->b_warned_pts = true;
                         }
                         i_ts = p_block->i_dts;
+                    }
+                    if (p_block->ancillaries.size != 0)
+                    {
+                        struct vlc_ancillary_array_pts elm = {
+                            .pts = i_ts,
+                            .ancillaries = VLC_ANCILLARY_ARRAY_INITIALIZER,
+                        };
+                        vlc_ancillary_array_Move(&elm.ancillaries,
+                                                 &p_block->ancillaries);
                     }
                 }
                 p_buf = p_block->p_buffer;
