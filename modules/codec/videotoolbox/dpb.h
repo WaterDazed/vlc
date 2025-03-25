@@ -25,6 +25,7 @@
 #include <vlc_common.h>
 #include <vlc_tick.h>
 #include <vlc_picture.h>
+#include <vlc_ancillary.h>
 
 typedef struct frame_info_t frame_info_t;
 
@@ -54,6 +55,8 @@ struct frame_info_t
     uint8_t i_latency;
     unsigned i_length;
     frame_info_t *p_next;
+
+    vlc_ancillary_array ancillaries;
 };
 
 struct dpb_s
@@ -69,6 +72,14 @@ struct dpb_s
     bool b_poc_based_reorder;
     void (*pf_release)(picture_t *);
 };
+
+static inline void FrameInfoFree(frame_info_t *info)
+{
+    if (info == NULL)
+        return;
+    vlc_ancillary_array_Clear(&info->ancillaries);
+    free(info);
+}
 
 void InsertIntoDPB(struct dpb_s *, frame_info_t *);
 
