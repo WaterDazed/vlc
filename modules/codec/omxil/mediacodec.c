@@ -266,10 +266,22 @@ static int CSDDup(decoder_sys_t *p_sys, const void *p_buf, size_t i_buf)
 
 static void HXXXInitSize(decoder_t *p_dec, bool *p_size_changed)
 {
+    decoder_sys_t *p_sys = p_dec->p_sys;
+    struct hxxx_helper *hh = &p_sys->video.hh;
+
+    unsigned frame_rate, frame_rate_base;
+    int ret = hxxx_helper_get_current_frame_rate(hh, &frame_rate, &frame_rate_base);
+    if (ret == VLC_SUCCESS)
+    {
+        frame_rate_base *= 2;
+        p_dec->fmt_out.video.i_frame_rate = frame_rate;
+        p_dec->fmt_out.video.i_frame_rate_base = frame_rate_base;
+    }
+    else
+        msg_Warn(p_dec, "could not parse video frame_rate");
+
     if (p_size_changed)
     {
-        decoder_sys_t *p_sys = p_dec->p_sys;
-        struct hxxx_helper *hh = &p_sys->video.hh;
         unsigned i_ox, i_oy, i_w, i_h, i_vw, i_vh;
         if(hxxx_helper_get_current_picture_size(hh, &i_ox, &i_oy, &i_w, &i_h, &i_vw, &i_vh)
            == VLC_SUCCESS)
