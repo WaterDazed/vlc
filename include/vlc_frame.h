@@ -626,6 +626,13 @@ static inline vlc_frame_t *vlc_frame_ChainGather( vlc_frame_t *p_list )
     if( !g )
         return NULL;
     vlc_frame_ChainExtract( p_list, g->p_buffer, g->i_buffer );
+    int ret = vlc_frame_ChainGatherAncillaries( p_list, &g->ancillaries,
+                                                g->i_buffer );
+    if( ret != VLC_SUCCESS )
+    {
+        vlc_frame_Release( g );
+        return NULL;
+    }
 
     g->i_flags = p_list->i_flags;
     g->i_pts   = p_list->i_pts;
