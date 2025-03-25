@@ -596,6 +596,8 @@ static int DecodeBlock( decoder_t *p_dec, block_t *p_block )
                 p_sys->b_discontinuity = false;
             }
 
+            vlc_frame_MoveAncillaries( p_out, &p_sys->p_block->ancillaries );
+
             decoder_QueueAudio( p_dec, p_out );
         }
         else
