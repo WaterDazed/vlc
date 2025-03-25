@@ -140,6 +140,8 @@ typedef struct decoder_sys_t
             timestamp_fifo_t *timestamp_fifo;
             int i_mpeg_dar_num, i_mpeg_dar_den;
             struct vlc_asurfacetexture *surfacetexture;
+            date_t pts;
+            bool pts_warned;
         } video;
         struct {
             date_t i_end_date;
@@ -276,6 +278,8 @@ static void HXXXInitSize(decoder_t *p_dec, bool *p_size_changed)
         frame_rate_base *= 2;
         p_dec->fmt_out.video.i_frame_rate = frame_rate;
         p_dec->fmt_out.video.i_frame_rate_base = frame_rate_base;
+
+        date_Change(&p_sys->video.pts, frame_rate, frame_rate_base);
     }
     else
         msg_Warn(p_dec, "could not parse video frame_rate");
@@ -1031,6 +1035,8 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
             p_dec->fmt_out.video.i_height = p_dec->fmt_in->video.i_height;
         }
         p_sys->cat = VIDEO_ES;
+        date_Init(&p_sys->video.pts, 1, 0);
+        p_sys->video.pts_warned = false;
     }
     else
     {
@@ -1627,11 +1633,7 @@ static int QueueBlockLocked(decoder_t *p_dec, block_t *p_in_block,
             {
                 b_config = (p_block->i_flags & BLOCK_FLAG_CSD);
                 if (!b_config)
-                {
                     i_ts = p_block->i_pts;
-                    if (!i_ts && p_block->i_dts)
-                        i_ts = p_block->i_dts;
-                }
                 p_buf = p_block->p_buffer;
                 i_size = p_block->i_buffer;
             }
@@ -1811,6 +1813,34 @@ static int Video_OnNewBlock(decoder_t *p_dec, block_t **pp_block)
     timestamp_FifoPut(p_sys->video.timestamp_fifo,
                       p_block->i_pts ? VLC_TICK_INVALID : p_block->i_dts);
 
+    if (p_block->i_pts != VLC_TICK_INVALID)
+        return 1;
+
+    /* PTS fallback: calculate it from first_dts + frame_rate */
+    if (p_sys->video.pts.i_divider_den == 0)
+    {
+        p_block->i_pts = p_block->i_dts;
+        goto nopts;
+    }
+
+    if (date_Get(&p_sys->video.pts) == VLC_TICK_INVALID)
+        date_Set(&p_sys->video.pts, p_block->i_dts);
+
+    p_block->i_pts = date_Get(&p_sys->video.pts);
+
+    if (p_block->i_pts == VLC_TICK_INVALID)
+        goto nopts;
+
+    date_Increment(&p_sys->video.pts, 1);
+
+    return 1;
+
+nopts:
+    if (!p_sys->video.pts_warned)
+    {
+        msg_Warn(p_dec, "no valid PTS, video timing might be bogus");
+        p_sys->video.pts_warned = true;
+    }
     return 1;
 }
 
@@ -1910,6 +1940,7 @@ static int VideoVC1_OnNewBlock(decoder_t *p_dec, block_t **pp_block)
 
 static void Video_OnFlush(decoder_sys_t *p_sys)
 {
+    date_Set(&p_sys->video.pts, VLC_TICK_INVALID);
     timestamp_FifoEmpty(p_sys->video.timestamp_fifo);
     /* Invalidate all pictures that are currently in flight
      * since flushing make all previous indices returned by
