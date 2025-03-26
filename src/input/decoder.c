@@ -245,6 +245,8 @@ struct vlc_input_decoder_t
     vlc_mutex_t     mouse_lock;
     vlc_mouse_event mouse_event;
     void           *mouse_opaque;
+
+    struct vlc_gyroscope *gyro;
 };
 
 /* Pictures which are DECODER_BOGUS_VIDEO_DELAY or more in advance probably have
@@ -570,6 +572,14 @@ static int ModuleThread_UpdateAudioFormat( decoder_t *p_dec )
         else
             p_astream = NULL;
 
+        if (p_aout != NULL &&
+            p_owner->gyro == NULL &&
+            format.channel_type == AUDIO_CHANNEL_TYPE_AMBISONICS)
+        {
+            p_owner->gyro = input_resource_RequestGyroscope(p_owner->p_resource);
+        }
+        aout_SetViewpointDevice(p_aout, p_owner->gyro);
+
         vlc_fifo_Lock(p_owner->p_fifo);
         p_owner->p_aout = p_aout;
         p_owner->p_astream = p_astream;
@@ -676,6 +686,13 @@ static int ModuleThread_UpdateVideoFormat( decoder_t *p_dec, vlc_video_context *
     {
         assert(vout_state == INPUT_RESOURCE_VOUT_NOTCHANGED ||
                vout_state == INPUT_RESOURCE_VOUT_STARTED);
+
+        if (cfg.fmt->projection_mode != PROJECTION_MODE_RECTANGULAR &&
+            p_owner->gyro == NULL)
+        {
+            p_owner->gyro = input_resource_RequestGyroscope(p_owner->p_resource);
+        }
+        vout_SetViewpointDevice(p_vout, p_owner->gyro);
 
         vlc_fifo_Lock(p_owner->p_fifo);
         p_owner->vout_started = true;
@@ -2107,6 +2124,11 @@ static void DeleteDecoder( vlc_input_decoder_t *p_owner, enum es_format_category
         free( p_owner->cc.sout_es_id );
     }
 
+    if (p_owner->gyro != NULL)
+    {
+        input_resource_PutGyroscope(p_owner->p_resource, p_owner->gyro);
+        p_owner->gyro = NULL;
+    }
     switch( i_cat )
     {
         case AUDIO_ES:
