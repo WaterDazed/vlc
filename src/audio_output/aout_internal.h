@@ -67,6 +67,7 @@ typedef struct
         atomic_bool update;
         vlc_mutex_t lock;
         vlc_viewpoint_t value;
+        struct vlc_gyroscope *device;
     } vp;
 
     int requested_stereo_mode; /**< Requested stereo mode set by the user */
@@ -110,6 +111,9 @@ void aout_volume_Delete(aout_volume_t *);
 /* From output.c : */
 audio_output_t *aout_New (vlc_object_t *);
 #define aout_New(a) aout_New(VLC_OBJECT(a))
+
+void aout_SetViewpointDevice(audio_output_t *aout,
+                             struct vlc_gyroscope *device);
 
 /**
  * Starts an audio output stream.

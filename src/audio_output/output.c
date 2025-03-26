@@ -955,6 +955,16 @@ static void aout_ChangeViewpoint(audio_output_t *aout,
     vlc_mutex_unlock(&owner->vp.lock);
 }
 
+void aout_SetViewpointDevice(audio_output_t *aout,
+                             struct vlc_gyroscope *device)
+{
+    aout_owner_t *owner = aout_owner(aout);
+
+    vlc_mutex_lock(&owner->vp.lock);
+    owner->vp.device = device;
+    vlc_mutex_unlock(&owner->vp.lock);
+}
+
 vlc_audio_meter_plugin *
 aout_AddMeterPlugin(audio_output_t *aout, const char *chain,
                     const struct vlc_audio_meter_plugin_owner *meter_plugin_owner)
