@@ -199,24 +199,26 @@ void *HookWindowsSensors(vlc_logger *vd, const vout_display_owner_t *move, HWND 
         vlc_viewpoint_init(&start_viewpoint);
         PROPVARIANT pvRot;
         PropVariantInit(&pvRot);
+        float yaw = 0.f, pitch = 0.f, roll = 0.f;
         hr = pSensor->GetProperty(SENSOR_DATA_TYPE_TILT_X_DEGREES, &pvRot);
         if (SUCCEEDED(hr) && pvRot.vt == VT_R4)
         {
-            start_viewpoint.pitch = pvRot.fltVal;
+            pitch = pvRot.fltVal;
             PropVariantClear(&pvRot);
         }
         hr = pSensor->GetProperty(SENSOR_DATA_TYPE_TILT_Y_DEGREES, &pvRot);
         if (SUCCEEDED(hr) && pvRot.vt == VT_R4)
         {
-            start_viewpoint.roll = pvRot.fltVal;
+            roll = pvRot.fltVal;
             PropVariantClear(&pvRot);
         }
         hr = pSensor->GetProperty(SENSOR_DATA_TYPE_TILT_Z_DEGREES, &pvRot);
         if (SUCCEEDED(hr) && pvRot.vt == VT_R4)
         {
-            start_viewpoint.yaw = pvRot.fltVal;
+            yaw = pvRot.fltVal;
             PropVariantClear(&pvRot);
         }
+        vlc_viewpoint_from_euler(&start_viewpoint, yaw, pitch, roll);
 
         SensorReceiver *received = new(std::nothrow) SensorReceiver(move, start_viewpoint);
         if (received)
