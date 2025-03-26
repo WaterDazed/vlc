@@ -36,6 +36,7 @@
 #include <vlc_spu.h>
 #include <vlc_aout.h>
 #include <vlc_sout.h>
+#include <vlc_gyroscope.h>
 #include "../libvlc.h"
 #include "../stream_output/stream_output.h"
 #include "../audio_output/aout_internal.h"
@@ -84,6 +85,11 @@ struct input_resource_t
 
     bool            b_aout_busy;
     audio_output_t *p_aout;
+
+    struct {
+        uintptr_t rc;
+        struct vlc_gyroscope *device;
+    } gyro;
 };
 
 #define resource_GetFirstVoutRsc(resource) \
@@ -322,6 +328,9 @@ input_resource_t *input_resource_New( vlc_object_t *p_parent )
     p_resource->p_parent = p_parent;
     vlc_mutex_init( &p_resource->lock );
     vlc_mutex_init( &p_resource->lock_hold );
+
+    p_resource->gyro.rc = 0;
+    p_resource->gyro.device = NULL;
     return p_resource;
 }
 
@@ -336,6 +345,10 @@ void input_resource_Release( input_resource_t *p_resource )
         aout_Release( p_resource->p_aout );
 
     vout_Release( p_resource->p_vout_dummy );
+
+    /* Should already be freed by resource clients. */
+    assert(p_resource->gyro.rc == 0);
+    assert(p_resource->gyro.device == NULL);
     free( p_resource );
 }
 
@@ -644,4 +657,42 @@ void input_resource_TerminateSout( input_resource_t *p_resource )
     vlc_mutex_lock( &p_resource->lock );
     DestroySout(p_resource);
     vlc_mutex_unlock( &p_resource->lock );
+}
+
+struct vlc_gyroscope *
+input_resource_RequestGyroscope(input_resource_t *resource)
+{
+    struct vlc_gyroscope *device = NULL;
+    vlc_mutex_lock(&resource->lock);
+    if (resource->gyro.device == NULL)
+    {
+        assert(resource->gyro.rc == 0);
+        resource->gyro.device = vlc_gyroscope_New(resource->p_parent, "any", NULL, NULL);
+    }
+    device = resource->gyro.device;
+    if (device != NULL)
+        resource->gyro.rc++;
+    vlc_mutex_unlock(&resource->lock);
+    return device;
+}
+
+void
+input_resource_PutGyroscope(input_resource_t *resource, struct vlc_gyroscope *gyroscope)
+{
+    vlc_mutex_lock(&resource->lock);
+
+    /* Avoid recycling gyroscope device we don't own. */
+    assert(gyroscope == resource->gyro.device);
+    assert(resource->gyro.rc > 0);
+
+    /* We currently don't recycle gyro across playback, but we still need to
+     * check every client released it before destroying. */
+    resource->gyro.rc--;
+    if (resource->gyro.rc == 0)
+    {
+        assert(resource->gyro.device != NULL);
+        vlc_gyroscope_Delete(resource->gyro.device);
+        resource->gyro.device = NULL;
+    }
+    vlc_mutex_unlock(&resource->lock);
 }
