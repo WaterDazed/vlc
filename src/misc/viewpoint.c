@@ -107,8 +107,6 @@ static void QuaternionToEuler(float *yaw, float *pitch, float *roll, const float
      * fallback method to get the other angles in the singularity. */
     float test = -q[3]*q[0] - q[1]*q[2];
 
-    const float M_11 = 1.f - 2.f * (sqy + sqz) / unit;
-
     /* TODO not used currently */
     /* Diagonal values. */
     float V_11 = 1 - 2 * (sqy + sqz);
@@ -121,8 +119,6 @@ static void QuaternionToEuler(float *yaw, float *pitch, float *roll, const float
 
     /* Values with only plus sign. */
     float V_23 = 2 * (gw * gx + gy * gz);
-    float V_12 = 2 * (gx * gy + gw * gz);
-    float V_31 = 2 * (gw * gy + gx * gz);
 
     if (test > 0.499f * unit)
     {
