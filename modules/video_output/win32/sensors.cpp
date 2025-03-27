@@ -26,6 +26,10 @@
 # include "config.h"
 #endif
 
+#include <vlc_common.h>
+#include <vlc_gyroscope.h>
+#include <vlc_plugin.h>
+
 #include "events.h"
 #include "sensors.h"
 
@@ -34,6 +38,7 @@
 #include <propsys.h> /* stupid mingw headers don't include this */
 #include <sensors.h>
 #include <sensorsapi.h>
+#include <functional>
 
 #include <new>
 
@@ -42,9 +47,10 @@ using Microsoft::WRL::ComPtr;
 class SensorReceiver : public ISensorEvents
 {
 public:
-    SensorReceiver(const vout_display_owner_t *o, const vlc_viewpoint_t & init_viewpoint)
-        :owner(*o)
-        ,current_pos(init_viewpoint)
+    template<typename T>
+    SensorReceiver(const vlc_viewpoint_t & init_viewpoint, T fnOnViewpointChanged)
+        : on_viewpoint_changed(std::move(fnOnViewpointChanged))
+        , current_pos(init_viewpoint)
     {}
 
     virtual ~SensorReceiver()
@@ -103,37 +109,35 @@ public:
         HRESULT hr;
         PROPVARIANT pvRot;
 
+        float yaw = 0.f, pitch = 90.f, roll = 0.f;
         PropVariantInit(&pvRot);
         hr = pNewData->GetSensorValue(SENSOR_DATA_TYPE_TILT_X_DEGREES, &pvRot);
         if (SUCCEEDED(hr) && pvRot.vt == VT_R4)
         {
-            current_pos.pitch = pvRot.fltVal;
+            pitch = pvRot.fltVal;
             PropVariantClear(&pvRot);
         }
         hr = pNewData->GetSensorValue(SENSOR_DATA_TYPE_TILT_Y_DEGREES, &pvRot);
         if (SUCCEEDED(hr) && pvRot.vt == VT_R4)
         {
-            current_pos.roll = pvRot.fltVal;
+            roll = pvRot.fltVal;
             PropVariantClear(&pvRot);
         }
         hr = pNewData->GetSensorValue(SENSOR_DATA_TYPE_TILT_Z_DEGREES, &pvRot);
         if (SUCCEEDED(hr) && pvRot.vt == VT_R4)
         {
-            current_pos.yaw = pvRot.fltVal;
+            yaw = pvRot.fltVal;
             PropVariantClear(&pvRot);
         }
 
         // TODO: use current_pos directly?
         /* Zero initialize vp for field of view. */
         vlc_viewpoint_t vp {};
-        vp.fov = 0.f;
-        vlc_viewpoint_from_euler(&vp,
-            old_pos.yaw   - current_pos.yaw,
-            old_pos.pitch - current_pos.pitch,
-            old_pos.roll  - current_pos.roll
-        );
-        if (owner.viewpoint_moved)
-            owner.viewpoint_moved(owner.sys, &vp);
+        vp.fov = FIELD_OF_VIEW_DEGREES_DEFAULT;
+        vlc_viewpoint_from_euler(&vp, yaw, pitch, roll);
+
+        if (this->on_viewpoint_changed)
+            this->on_viewpoint_changed(&vp);
 
         return S_OK;
     }
@@ -152,13 +156,20 @@ public:
         return S_OK;
     }
 
+    void ReadViewpoint(vlc_viewpoint_t *vp)
+    {
+        // TODO
+        memcpy(vp->quat, m_quat, sizeof vp->quat);
+    }
+
 private:
-    vout_display_owner_t owner;
+    std::function<void(vlc_viewpoint_t *)> on_viewpoint_changed;
     vlc_viewpoint_t current_pos;
     long m_cRef;
+    float m_quat[4];
 };
 
-void *HookWindowsSensorsInternal(vlc_logger *vd, const void *move, HWND hwnd)
+void *HookWindowsSensorsInternal(vlc_logger *vd, std::function<void(const vlc_viewpoint_t *)> onViewpointChanged, HWND hwnd)
 {
     ComPtr<ISensorManager> pSensorManager;
     HRESULT hr = CoCreateInstance( __uuidof(SensorManager),
@@ -221,8 +232,8 @@ void *HookWindowsSensorsInternal(vlc_logger *vd, const void *move, HWND hwnd)
         }
         vlc_viewpoint_from_euler(&start_viewpoint, yaw, pitch, roll);
 
-        SensorReceiver *received = new(std::nothrow) SensorReceiver(move, start_viewpoint);
-        if (received)
+        SensorReceiver *received = new(std::nothrow) SensorReceiver(start_viewpoint, std::move(onViewpointChanged));
+        if (received == NULL)
         {
             pSensor->SetEventSink(received);
             return pSensor.Detach();
@@ -231,9 +242,14 @@ void *HookWindowsSensorsInternal(vlc_logger *vd, const void *move, HWND hwnd)
     return NULL;
 }
 
-void *HookWindowsSensors(vlc_logger *logger, const vout_display_owner_t *move, HWND hwnd)
+void *HookWindowsSensors(vlc_logger *logger, const vout_display_owner_t *owner, HWND hwnd)
 {
-    HookWindowsSensorsInternal(logger, move, hwnd);
+    HookWindowsSensorsInternal(logger, [owner](const vlc_viewpoint_t *vp){
+        if (owner && owner->viewpoint_moved)
+            owner->viewpoint_moved(owner->sys, vp);
+    }, hwnd);
+
+    return NULL;
 }
 
 void UnhookWindowsSensors(void *vSensor)
@@ -246,7 +262,19 @@ void UnhookWindowsSensors(void *vSensor)
     pSensor->Release();
 }
 
-static void DestroySensors(struct vlc_gyroscope *gyroscope)
+static void SensorsEnable(struct vlc_gyroscope *gyroscope, bool enabled)
+{
+    (void)gyroscope; (void)enabled;
+    /* No enable / disable function implemented right now. */
+}
+
+static void SensorsGetViewpoint(struct vlc_gyroscope *gyroscope, vlc_viewpoint_t *out)
+{
+    auto *sensors = static_cast<SensorReceiver*>(gyroscope->sys);
+    sensors->ReadViewpoint(out);
+}
+
+static void SensorsDestroy(struct vlc_gyroscope *gyroscope)
 {
     UnhookWindowsSensors(gyroscope->sys);
 }
@@ -256,25 +284,26 @@ static int OpenSensors(struct vlc_gyroscope *gyroscope)
     struct vlc_logger *logger = vlc_object_logger(gyroscope);
 
     HWND window = nullptr;
-    if (gyroscope->surface != NULL && gyroscope->surface->type == VLC_WINDOW_TYPE_HWND)
-        window = gyroscope->surface->handle.hwnd;
+    //if (gyroscope->surface != NULL && gyroscope->surface->type == VLC_WINDOW_TYPE_HWND)
+    //    window = gyroscope->surface->handle.hwnd;
 
-    void *sensor = HookWindowsSensorsInternal(logger, gyroscope, window);
-    if (sensors == nullptr)
+    void *sensor = HookWindowsSensorsInternal(logger, nullptr, window);
+    if (sensor== nullptr)
         return VLC_EGENERIC;
 
     static const struct vlc_gyroscope_operations ops = {
-        .destroy = DestroySensors,
+        .enable = SensorsEnable,
+        .get_viewpoint = SensorsGetViewpoint,
+        .destroy = SensorsDestroy,
     };
 
     gyroscope->ops = &ops;
-    gyroscope->sys = sensors;
+    gyroscope->sys = sensor;
 
     return VLC_SUCCESS;
 }
 
 vlc_module_begin()
-    set_subcategory(SUBCAT_VIDEO)
     set_description("Windows gyroscope")
     set_callback(OpenSensors)
     set_capability("gyroscope", 100)
