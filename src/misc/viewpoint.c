@@ -49,17 +49,19 @@ static void QuaternionToEuler(float *yaw, float *pitch, float *roll, const float
      *
      *     ⎡s(p)⋅s(r)⋅s(y) + c(r)⋅c(y)  s(r)⋅c(p)  s(p)⋅s(r)⋅c(y) - s(y)⋅c(r)⎤
      * V = ⎢s(p)⋅s(y)⋅c(r) - s(r)⋅c(y)  c(p)⋅c(r)  s(p)⋅c(r)⋅c(y) + s(r)⋅s(y)⎥
-     *     ⎣           s(y)⋅c(p)          -s(p)           c(p)⋅c(y)          ⎦
+     *     ⎣                 s(y)⋅c(p)      -s(p)                   c(p)⋅c(y)⎦
      *
      * We can first extract pitch = atan2( -V_32, sqrt(V_31^2 + V_33^2) )
      *
-     * By taking the case |pitch| = 90 degree, it simplify c(y) and s(y) and:
-     *      roll = atan2( V_11, -V_21 )
-     *      yaw  = atan2( V_11, -V_13 )
+     * By taking the case pitch = 0 or 180 degree, it simplify c(p) and s(p).
+     * By noting c = sign(c(p)), we have
      *
-     * Otherwise, |pitch| != 90 degree and we can get:
-     *      roll = atan2( V_12, V_22 )
-     *      yaw  = atan2( V_31, V_33 )
+     *     ⎡   c(r)⋅c(y)    c⋅s(r)    - s(y)⋅c(r) ⎤
+     * V = ⎢ - s(r)⋅c(y)    c⋅c(r)      s(r)⋅s(y) ⎥
+     *     ⎣      c⋅s(y)         0         c⋅c(y) ⎦
+     *
+     * It also means that yaw and roll are referring to the same axis, so we set
+     * yaw in priority and set roll to 0.
      *
      * By identifying the coefficient in this matrix and the matrix obtained
      * from converting the quaternion to 3x3 matrix, we get the following
