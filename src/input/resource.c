@@ -89,6 +89,7 @@ struct input_resource_t
     struct {
         uintptr_t rc;
         struct vlc_gyroscope *device;
+        struct vlc_gyroscope wrapper;
     } gyro;
 };
 
@@ -659,6 +660,14 @@ void input_resource_TerminateSout( input_resource_t *p_resource )
     vlc_mutex_unlock( &p_resource->lock );
 }
 
+static void GyroReadViewpoint(struct vlc_gyroscope *gyroscope, vlc_viewpoint_t *vp)
+{
+    input_resource_t *resource = gyroscope->sys;
+    assert(resource->gyro.device != NULL);
+
+    vlc_gyroscope_ReadViewpoint(resource->gyro.device, vp);
+}
+
 struct vlc_gyroscope *
 input_resource_RequestGyroscope(input_resource_t *resource)
 {
@@ -668,11 +677,20 @@ input_resource_RequestGyroscope(input_resource_t *resource)
     {
         assert(resource->gyro.rc == 0);
         resource->gyro.device = vlc_gyroscope_New(resource->p_parent, "any", NULL, NULL);
+
+        static const struct vlc_gyroscope_operations gyro_ops = {
+            .get_viewpoint = GyroReadViewpoint,
+        };
+        resource->gyro.wrapper.sys = resource;
+        resource->gyro.wrapper.ops = &gyro_ops;
     }
     device = resource->gyro.device;
     if (device != NULL)
         resource->gyro.rc++;
     vlc_mutex_unlock(&resource->lock);
+
+    if (device != NULL)
+        return &resource->gyro.wrapper;
     return device;
 }
 
@@ -682,7 +700,7 @@ input_resource_PutGyroscope(input_resource_t *resource, struct vlc_gyroscope *gy
     vlc_mutex_lock(&resource->lock);
 
     /* Avoid recycling gyroscope device we don't own. */
-    assert(gyroscope == resource->gyro.device);
+    assert(gyroscope == &resource->gyro.wrapper);
     assert(resource->gyro.rc > 0);
 
     /* We currently don't recycle gyro across playback, but we still need to
