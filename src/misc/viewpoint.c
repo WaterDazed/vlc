@@ -28,8 +28,9 @@
 #include <vlc_es.h>
 
 /* Quaternion to/from Euler conversion.
- * Original code from:
- * http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/ */
+ * Original code from original version: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+ * The following version is a new one adapted from identification of the coefficients
+ * of the matrices. */
 static void QuaternionToEuler(float *yaw, float *pitch, float *roll, const float *q)
 {
     /* The matrix built from the angles is made from the multiplication of the
@@ -51,21 +52,27 @@ static void QuaternionToEuler(float *yaw, float *pitch, float *roll, const float
      * V = ⎢s(p)⋅s(y)⋅c(r) - s(r)⋅c(y)  c(p)⋅c(r)  s(p)⋅c(r)⋅c(y) + s(r)⋅s(y)⎥
      *     ⎣                 s(y)⋅c(p)      -s(p)                   c(p)⋅c(y)⎦
      *
-     * We can first extract pitch = atan2( -V_32, sqrt(V_31^2 + V_33^2) )
+     * We can first extract pitch = atan2( -V_32, sqrt(V_21^2 + V_22^2) )
      *
-     * By taking the case pitch = 0 or 180 degree, it simplify c(p) and s(p).
-     * By noting c = sign(c(p)), we have
+     * By taking the case |pitch| = 90 degree, it simplify c(p) and s(p).
+     * By noting s = sign(s(p)), we have
      *
-     *     ⎡   c(r)⋅c(y)    c⋅s(r)    - s(y)⋅c(r) ⎤
-     * V = ⎢ - s(r)⋅c(y)    c⋅c(r)      s(r)⋅s(y) ⎥
-     *     ⎣      c⋅s(y)         0         c⋅c(y) ⎦
+     *     ⎡ s⋅s(r)⋅s(y)    ...    ... ⎤
+     * V = ⎢ ...            ...    ... ⎥
+     *     ⎣ ...            ...    ... ⎦
      *
      * It also means that yaw and roll are referring to the same axis, so we set
-     * yaw in priority and set roll to 0.
+     * yaw in priority and set roll to 0, which means yaw can be found in V_11
+     * directly.
+     *
+     *     yaw = +/- asin( V_11 );
      *
      * By identifying the coefficient in this matrix and the matrix obtained
      * from converting the quaternion to 3x3 matrix, we get the following
-     * results.
+     * results in the other cases:
+     *
+     *      roll = atan2( V_13, -V_33 )
+     *      yaw  = atan2( V_13, -V_13 )
      */
 
     /* Rename variables and precompute square values to improve readability. as
