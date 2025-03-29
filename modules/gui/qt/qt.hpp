@@ -37,6 +37,7 @@
 #include <qconfig.h>
 
 #include <QString>
+#include <QPointer>
 
 enum {
     IMEventTypeOffset     = 0,
@@ -83,15 +84,15 @@ struct qt_intf_t
 
     vlc_thread_t thread;
 
-    class MainCtx *p_mi;     /* Main Interface, NULL if DialogProvider Mode */
-    class QSettings *mainSettings; /* Qt State settings not messing main VLC ones */
+    QPointer<class MainCtx> p_mi;     /* Main Interface, NULL if DialogProvider Mode */
+    QPointer<class QSettings> mainSettings; /* Qt State settings not messing main VLC ones */
 
     bool b_isDialogProvider; /* Qt mode or Skins mode */
 
     vlc_playlist_t *p_playlist;  /* playlist */
     vlc_player_t *p_player; /* player */
-    vlc::playlist::PlaylistController* p_mainPlaylistController;
-    PlayerController* p_mainPlayerController;
+    QPointer<vlc::playlist::PlaylistController> p_mainPlaylistController;
+    QPointer<PlayerController> p_mainPlayerController;
     std::unique_ptr<vlc::Compositor>  p_compositor;
 
     int refCount;
@@ -116,8 +117,8 @@ public:
 };
 
 #define THEDP DialogsProvider::getInstance()
-#define THEMIM p_intf->p_mainPlayerController
-#define THEMPL p_intf->p_mainPlaylistController
+#define THEMIM p_intf->p_mainPlayerController.get()
+#define THEMPL p_intf->p_mainPlaylistController.get()
 
 #define qfu( i ) QString::fromUtf8( i )
 #define qfue( i ) QString::fromUtf8( i ).replace( "&", "&&" ) /* for actions/buttons */

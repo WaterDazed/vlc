@@ -45,7 +45,7 @@ class ModelRecoveryAgent
 public:
     // NOTE: settings and model must outlive the instance of this class.
     template<class T>
-    ModelRecoveryAgent(class QSettings *settings, const QString& modelIdentifier, T* model)
+    ModelRecoveryAgent(QPointer<QSettings> settings, const QString& modelIdentifier, QPointer<T> model)
         : m_settings(settings), m_key(modelIdentifier + QStringLiteral("/RecoveryFilePath"))
     {
         assert(settings);
