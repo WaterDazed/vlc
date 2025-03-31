@@ -168,6 +168,17 @@ vlc_player_SetStartPaused(vlc_player_t *player, bool start_paused);
 VLC_API void
 vlc_player_SetPauseOnCork(vlc_player_t *player, bool enabled);
 
+struct vlc_gyroscope;
+
+VLC_API void
+vlc_player_SetInterfaceViewpointDevice(vlc_player_t *player, struct vlc_gyroscope *gyroscope);
+
+VLC_API void
+vlc_player_SetViewpointMode(vlc_player_t *player, enum vlc_viewpoint_mode mode);
+
+VLC_API void
+vlc_player_SetViewpointSensors(vlc_player_t *player, const char *name);
+
 /** @} vlc_player__instance */
 
 /**
