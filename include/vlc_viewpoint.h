@@ -38,6 +38,16 @@
  * Viewpoints
  */
 
+enum vlc_viewpoint_mode
+{
+    VLC_VIEWPOINT_MODE_USER_INTERFACE, //< Viewpoint from mouse input or libvlc-like client
+    VLC_VIEWPOINT_MODE_PREFER_SENSORS, //< Viewpoint from sensors plugin, or fallback
+    VLC_VIEWPOINT_MODE_SENSORS_ONLY, //< Viewpoint from sensors plugin
+    VLC_VIEWPOINT_MODE_MERGE_SENSORS, //< Viewpoint from sensors + yaw from user interface
+    VLC_VIEWPOINT_MODE_SENSORS_THEN_USER_INTERFACE, //< Merge the two rotations in that order
+    VLC_VIEWPOINT_MODE_USER_INTERFACE_THEN_SENSORS, //< Merge the two rotations in that order
+};
+
 struct vlc_viewpoint_t {
     /**
      * orientation quaternion with the following properties:
