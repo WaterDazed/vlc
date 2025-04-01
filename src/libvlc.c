@@ -481,6 +481,9 @@ PlaylistConfigureFromVariables(vlc_playlist_t *playlist, vlc_object_t *obj)
     vlc_player_SetStartPaused(player, start_paused);
     vlc_player_SetPauseOnCork(player, playlist_cork);
 
+    /* Default for VLC */
+    vlc_player_SetViewpointMode(player, VLC_VIEWPOINT_MODE_PREFER_SENSORS);
+
     vlc_playlist_Unlock(playlist);
 }
 
