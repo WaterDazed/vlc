@@ -26,11 +26,13 @@
 # include "config.h"
 #endif
 
+#include <windows.h>
+
 #include <vlc_common.h>
 #include <vlc_gyroscope.h>
 #include <vlc_plugin.h>
+#include <vlc_vout_display.h>
 
-#include "events.h"
 #include "sensors.h"
 
 #include <initguid.h>
