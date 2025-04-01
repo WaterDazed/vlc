@@ -23,6 +23,7 @@
 /*****************************************************************************
  * Preamble
  *****************************************************************************/
+#include "vlc_viewpoint.h"
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -89,7 +90,9 @@ struct input_resource_t
     struct {
         uintptr_t rc;
         struct vlc_gyroscope *device;
+        struct vlc_gyroscope *interface;
         struct vlc_gyroscope wrapper;
+        enum vlc_viewpoint_mode mode;
     } gyro;
 };
 
@@ -332,6 +335,7 @@ input_resource_t *input_resource_New( vlc_object_t *p_parent )
 
     p_resource->gyro.rc = 0;
     p_resource->gyro.device = NULL;
+    p_resource->gyro.mode = VLC_VIEWPOINT_MODE_USER_INTERFACE;
     return p_resource;
 }
 
@@ -665,7 +669,29 @@ static void GyroReadViewpoint(struct vlc_gyroscope *gyroscope, vlc_viewpoint_t *
     input_resource_t *resource = gyroscope->sys;
     assert(resource->gyro.device != NULL);
 
-    vlc_gyroscope_ReadViewpoint(resource->gyro.device, vp);
+    switch (resource->gyro.mode)
+    {
+        case VLC_VIEWPOINT_MODE_SENSORS_ONLY:
+            vlc_gyroscope_ReadViewpoint(resource->gyro.device, vp);
+            break;
+        default:
+            break;
+    }
+}
+
+void
+input_resource_SetupGyroscope(input_resource_t *resource,
+                              enum vlc_viewpoint_mode mode,
+                              struct vlc_gyroscope *interface_sensors)
+{
+    vlc_mutex_lock(&resource->lock);
+
+    // TODO: RACE utilisation du gyroscope
+    // TODO: re-setup gyro here
+    resource->gyro.interface = interface_sensors;
+    resource->gyro.mode = mode;
+
+    vlc_mutex_unlock(&resource->lock);
 }
 
 struct vlc_gyroscope *
@@ -673,6 +699,16 @@ input_resource_RequestGyroscope(input_resource_t *resource)
 {
     struct vlc_gyroscope *device = NULL;
     vlc_mutex_lock(&resource->lock);
+
+    if (resource->gyro.mode == VLC_VIEWPOINT_MODE_USER_INTERFACE)
+    {
+        /* In the current state, returning NULL falls back to the user
+         * interface mode in the client side.
+         * TODO: move this to the input resource side at some point. */
+        vlc_mutex_unlock(&resource->lock);
+        return NULL;
+    }
+
     if (resource->gyro.device == NULL)
     {
         assert(resource->gyro.rc == 0);
@@ -684,6 +720,7 @@ input_resource_RequestGyroscope(input_resource_t *resource)
         resource->gyro.wrapper.sys = resource;
         resource->gyro.wrapper.ops = &gyro_ops;
     }
+
     device = resource->gyro.device;
     if (device != NULL)
         resource->gyro.rc++;
@@ -691,7 +728,8 @@ input_resource_RequestGyroscope(input_resource_t *resource)
 
     if (device != NULL)
         return &resource->gyro.wrapper;
-    return device;
+
+    return NULL;
 }
 
 void

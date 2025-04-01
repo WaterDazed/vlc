@@ -98,6 +98,11 @@ input_resource_t *input_resource_Hold( input_resource_t * );
 
 void input_resource_ResetAout( input_resource_t * );
 
+void
+input_resource_SetupGyroscope(input_resource_t *resource,
+                              enum vlc_viewpoint_mode mode,
+                              struct vlc_gyroscope *interface_sensors);
+
 /**
  * Request a gyroscope device.
  */
