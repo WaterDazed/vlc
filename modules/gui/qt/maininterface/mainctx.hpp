@@ -129,6 +129,7 @@ class MainCtx : public QObject
     Q_PROPERTY(float safeArea READ safeArea NOTIFY safeAreaChanged FINAL)
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ getVideoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(int mouseHideTimeout READ mouseHideTimeout NOTIFY mouseHideTimeoutChanged FINAL)
+    Q_PROPERTY(float animationScale READ animationScale NOTIFY animationScaleChanged FINAL)
 
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
 
@@ -257,6 +258,8 @@ public:
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
     int mouseHideTimeout() const { return m_mouseHideTimeout; }
+
+    float animationScale() const { return m_animationScale; }
 
     Q_INVOKABLE static inline bool useTopLevelWindowForToolTip() {
         assert(qGuiApp);
@@ -442,6 +445,8 @@ protected:
 
     int m_mouseHideTimeout = 1000;
 
+    float m_animationScale = 1.0f;
+
     OsType m_osName;
     int m_osVersion;
 
@@ -555,6 +560,8 @@ signals:
     void safeAreaChanged();
 
     void mouseHideTimeoutChanged();
+
+    void animationScaleChanged();
 
     void navBoxToggled();
 

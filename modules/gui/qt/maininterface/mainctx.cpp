@@ -428,6 +428,8 @@ void MainCtx::loadPrefs(const bool callSignals)
     loadFromVLCOption(m_safeArea, "qt-safe-area", &MainCtx::safeAreaChanged);
 
     loadFromVLCOption(m_mouseHideTimeout, "mouse-hide-timeout", &MainCtx::mouseHideTimeoutChanged);
+
+    loadFromVLCOption(m_animationScale, "qt-animation-scale", &MainCtx::animationScaleChanged);
 }
 
 void MainCtx::loadFromSettingsImpl(const bool callSignals)
