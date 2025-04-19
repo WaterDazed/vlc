@@ -1361,7 +1361,8 @@ libqt_plugin_la_SHADER := shaders/FadingEdge.frag \
                           shaders/FastBlend.frag \
                           shaders/FastBlend_additive.frag \
                           shaders/FastBlend_multiply.frag \
-                          shaders/FastBlend_screen.frag
+                          shaders/FastBlend_screen.frag \
+                          shaders/Cone3D.frag
 if ENABLE_QT
 
 libqt_plugin_la_LIBADD += libqml_module_dialogs.a \
