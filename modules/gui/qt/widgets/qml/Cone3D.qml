@@ -16,8 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 import QtQuick
+import QtQuick.Window
 
+import VLC.MainInterface
 import VLC.Style
+import VLC.Util
 
 // This item uses 3D SDF and raymarching to render the cone.
 // Since everything is computed in the fragment shader, which runs per pixel,
@@ -37,6 +40,8 @@ ShaderEffect {
     property alias animating: animator.running
 
     readonly property size size: Qt.size(width, height) // aspect ratio is preserved
+
+    readonly property bool available: (GraphicsInfo.shaderType === GraphicsInfo.RhiShader)
 
     UniformAnimator on time {
         id: animator
@@ -58,4 +63,45 @@ ShaderEffect {
     // cullMode: ShaderEffect.BackFaceCulling
 
     fragmentShader: "qrc:///shaders/Cone3D.frag.qsb"
+
+    Component {
+        id: compat
+
+        ScaledImage {
+            // Compat image when shaders are not available (software/openvg mode).
+            id: compatImage
+
+            anchors.fill: parent
+
+            RotationAnimator on rotation {
+                // Poor man's rotation, 2D
+                from: 0
+                to: 360
+                loops: Animation.Infinite
+                duration: 1000
+                running: effect.running
+            }
+
+            transformOrigin: Item.Center
+
+            visible: !effect.available
+
+            source: SVGColorImage.colorize("qrc:///misc/cone.svg").accent(effect.color).uri()
+        }
+    }
+
+    property Item _compatItem
+
+    Window.onWindowChanged: {
+        if (Window.window) {
+            Qt.callLater(() => {
+                if (!effect.available && !effect._compatItem) {
+                    console.debug(effect, ": Creating compat item because it is determined " +
+                                          "that shaders are not available. Verify RHI is " +
+                                          "functional.")
+                    effect._compatItem = compat.createObject(effect)
+                }
+            })
+        }
+    }
 }
