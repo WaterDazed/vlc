@@ -56,7 +56,7 @@ Control {
             visible: (text.length > 0)
         }
 
-        BusyIndicator {
+        BusyIndicatorExt {
             palette.dark: theme.fg.primary
 
             anchors.verticalCenter: parent.verticalCenter
