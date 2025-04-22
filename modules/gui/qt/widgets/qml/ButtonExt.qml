@@ -139,6 +139,8 @@ T.Button {
 
                     running: control.busy
 
+                    visible: running
+
                     palette.text: theme.fg.primary
                 }
             }
