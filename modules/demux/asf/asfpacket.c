@@ -24,6 +24,7 @@
 #endif
 
 #include "asfpacket.h"
+#include <vlc_ancillary.h>
 #include <limits.h>
 
 #ifndef NDEBUG
@@ -68,6 +69,46 @@ static inline int GetValue2b(uint32_t *var, const uint8_t *p, unsigned int *skip
     default:
         return 0;
     }
+}
+
+static void AttachTimecodeAncillary( block_t *p_frag, const asf_track_info_t *p_tkinfo )
+{
+    if ( !p_tkinfo->p_timecode )
+        return;
+
+    vlc_smpte_timecode_t *p_timecode_data = malloc( sizeof(vlc_smpte_timecode_t) );
+    if ( !p_timecode_data )
+        return;
+
+    uint32_t i_raw_timecode = p_tkinfo->p_timecode->i_timecode;
+    p_timecode_data->hours   = ( i_raw_timecode >> 24 ) & 0xFF;
+    p_timecode_data->minutes = ( i_raw_timecode >> 16 ) & 0xFF;
+    p_timecode_data->seconds = ( i_raw_timecode >> 8 )  & 0xFF;
+    p_timecode_data->frames  = i_raw_timecode & 0xFF;
+
+    struct vlc_ancillary *p_anc = vlc_ancillary_Create( p_timecode_data, VLC_ANCILLARY_ID_SMPTE );
+    if ( !p_anc )
+    {
+        free( p_timecode_data );
+        return;
+    }
+
+    if ( vlc_frame_AttachAncillary( p_frag, p_anc ) != VLC_SUCCESS )
+        vlc_ancillary_Release( p_anc );
+}
+
+static void SetTimecode( const asf_track_info_t *p_info, uint16_t i_timecode_range,
+                                          uint32_t i_timecode, uint32_t i_user_bits )
+{
+    asf_track_info_t *p_tkinfo = (asf_track_info_t *) p_info;
+    free ( p_tkinfo->p_timecode );
+    p_tkinfo->p_timecode = malloc( sizeof(asf_payload_extension_system_timecode_t) );
+    if ( !p_tkinfo->p_timecode )
+        return;
+
+    p_tkinfo->p_timecode->i_timecode_range = i_timecode_range;
+    p_tkinfo->p_timecode->i_timecode = i_timecode;
+    p_tkinfo->p_timecode->i_user_bits = i_user_bits;
 }
 
 static int DemuxSubPayload( asf_packet_sys_t *p_packetsys,
@@ -118,6 +159,7 @@ static int DemuxSubPayload( asf_packet_sys_t *p_packetsys,
     if ( b_keyframe )
         p_frag->i_flags |= BLOCK_FLAG_TYPE_I;
 
+    AttachTimecodeAncillary( p_frag, p_tkinfo );
     block_ChainAppend( pp_frame, p_frag );
 
     return 0;
@@ -184,6 +226,14 @@ static void ParsePayloadExtensions( asf_packet_sys_t *p_packetsys,
         {
             if ( i_payload_extensions_size != 48 ) goto sizeerror;
             /* const int64_t i_pts = GetQWLE(&p_data[8]); */
+        }
+        else if ( guidcmp( &p_ext->i_extension_id, &mfasf_sampleextension_smpte_guid ) )
+        {
+            if ( i_payload_extensions_size != 14 ) goto sizeerror;
+            if ( GetDWLE( p_data + 10 ) == 0 )
+            {
+                SetTimecode( p_tkinfo, GetWLE( p_data ), GetDWLE( p_data + 2 ), GetDWLE( p_data + 6 ) );
+            }
         }
 #if 0
         else
@@ -577,6 +627,7 @@ void ASFPacketTrackInit( asf_track_info_t *p_ti )
     p_ti->p_esp = NULL;
     p_ti->p_sp = NULL;
     p_ti->p_frame = NULL;
+    p_ti->p_timecode = NULL;
     p_ti->i_pktcount = 0;
     p_ti->i_pkt = 0;
 }
