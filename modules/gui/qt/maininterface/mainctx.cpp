@@ -202,6 +202,27 @@ MainCtx::MainCtx(qt_intf_t *_p_intf)
 
     b_hasWayland = platformName.startsWith(QLatin1String("wayland"), Qt::CaseInsensitive);
 
+    connect(this, &MainCtx::interfaceAlwaysOnTopChanged, this, [this]() {
+        if (!b_interfaceOnTop)
+        {
+            m_immersiveModeRestoreIntfOnTop = false;
+            if (m_mainViewModes & IMMERSIVE_MODE)
+                setImmersiveMode(false); // immersive mode is not relevant when interface is not on top
+        }
+    });
+    connect(this, &MainCtx::useClientSideDecorationChanged, this, [this]() {
+        if (m_windowTitlebar)
+        {
+            m_immersiveModeRestoreTitleBar = false;
+            if (m_mainViewModes & IMMERSIVE_MODE)
+                setImmersiveMode(false); // immersive mode is not relevant without CSD
+        }
+    });
+    connect(this, &MainCtx::hasEmbededVideoChanged, this, [this]() {
+        if (!hasEmbededVideo() && (m_mainViewModes & IMMERSIVE_MODE))
+            setImmersiveMode(false); // immersive mode is not relevant when there is no video output
+    });
+
     /*********************************
      * Create the Systray Management *
      *********************************/
@@ -356,6 +377,16 @@ bool MainCtx::useClientSideDecoration() const
     return !m_windowTitlebar;
 }
 
+void MainCtx::setUseClientSideDecoration(bool enabled)
+{
+    if (m_windowTitlebar == !enabled)
+        return;
+
+    var_SetBool(p_intf, "qt-titlebar", !m_windowTitlebar);
+    m_windowTitlebar = !m_windowTitlebar;
+    emit useClientSideDecorationChanged();
+}
+
 bool MainCtx::hasFirstrun() const {
     return config_GetInt( "qt-privacy-ask" );
 }
@@ -402,8 +433,10 @@ void MainCtx::loadPrefs(const bool callSignals)
             signal(this);
     };
 
+    bool minimalMode;
     /* Are we in the enhanced always-video mode or not ? */
-    loadFromVLCOption(m_minimalView, "qt-minimal-view", &MainCtx::minimalViewChanged);
+    loadFromVLCOption(minimalMode, "qt-minimal-view", &MainCtx::minimalViewChanged);
+    setMinimalView(minimalMode);
 
     loadFromVLCOption(m_bgCone, "qt-bgcone", &MainCtx::bgConeToggled);
 
@@ -684,11 +717,22 @@ void MainCtx::setbgCone(bool bgCone)
 
 void MainCtx::setMinimalView(bool minimalView)
 {
-    if (m_minimalView == minimalView)
+    if (m_mainViewModes.testFlag(MINIMAL_MODE) == minimalView)
         return;
 
-    m_minimalView = minimalView;
+    m_mainViewModes.setFlag(MINIMAL_MODE, minimalView);
+    emit mainViewModesChanged(m_mainViewModes);
     emit minimalViewChanged();
+}
+
+void MainCtx::setPlayerView(bool enable)
+{
+    if (m_mainViewModes.testFlag(PLAYER_MODE) == enable)
+        return;
+
+    m_mainViewModes.setFlag(PLAYER_MODE, enable);
+    emit mainViewModesChanged(m_mainViewModes);
+    emit playerViewChanged();
 }
 
 void MainCtx::setShowRemainingTime( bool show )
@@ -734,6 +778,51 @@ void MainCtx::setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider
                 this, &MainCtx::hasEmbededVideoChanged,
                 Qt::QueuedConnection);
     emit hasEmbededVideoChanged(m_videoSurfaceProvider && m_videoSurfaceProvider->hasVideoEmbed());
+}
+
+bool MainCtx::immersiveMode() const
+{
+    return b_interfaceOnTop && !m_windowTitlebar && (m_mainViewModes & IMMERSIVE_MODE);
+}
+
+void MainCtx::setImmersiveMode(bool request)
+{
+    // Immersive mode is a visual concept, and merely a combination of these states:
+    // - Interface window title bar is off (CSD is on).
+    // - Interface window is always on top.
+    // - Immersive player/view is used.
+
+    if (request)
+    {
+        if (!b_interfaceOnTop)
+        {
+            m_immersiveModeRestoreIntfOnTop = true;
+            setInterfaceAlwaysOnTop(true);
+        }
+
+        if (m_windowTitlebar)
+        {
+            m_immersiveModeRestoreTitleBar = true;
+            setUseClientSideDecoration(true);
+        }
+
+        m_mainViewModes.setFlag(IMMERSIVE_MODE, true);
+    }
+    else
+    {
+        if (m_immersiveModeRestoreIntfOnTop)
+            setInterfaceAlwaysOnTop(false);
+
+        if (m_immersiveModeRestoreTitleBar)
+            setUseClientSideDecoration(false);
+
+        m_mainViewModes.setFlag(IMMERSIVE_MODE, false);
+    }
+
+    // We need this because effective immersive mode is more than mode changes:
+    emit immersiveModeChanged();
+
+    emit mainViewModesChanged(m_mainViewModes);
 }
 
 QJSValue MainCtx::urlListToMimeData(const QJSValue &array) {
@@ -1054,6 +1143,18 @@ void MainCtx::setAttachedToolTip(QObject *toolTip)
         qmlWarning(obj) << "Could not set self as custom ToolTip!";
     obj->deleteLater();
 #endif
+}
+
+MainCtx::MainViewMode MainCtx::getEffectiveMainViewMode() const {
+    //priority applies across modes
+    if (m_mainViewModes & MINIMAL_MODE)
+        return MINIMAL_MODE;
+    else if (m_mainViewModes & IMMERSIVE_MODE)
+        return IMMERSIVE_MODE;
+    else if (m_mainViewModes & PLAYER_MODE)
+        return PLAYER_MODE;
+    else
+        return MEDIALIB_MODE;
 }
 
 double MainCtx::dp(const double px, const double scale)

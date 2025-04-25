@@ -101,7 +101,7 @@ FocusScope {
 
             text: qsTr("Continue Watching")
 
-            onSeeAllButtonClicked: reason => History.push(["mc", "video", "all", "recentVideos"])
+            onSeeAllButtonClicked: reason => History.push(["video", "all", "recentVideos"])
 
             Navigation.parentItem: root
 

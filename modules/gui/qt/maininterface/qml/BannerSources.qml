@@ -186,7 +186,7 @@ T.ToolBar {
                             delegate: Widgets.BannerTabButton {
                                 iconTxt: model.icon
                                 showText: globalToolbar.colapseTabButtons
-                                selected: History.match(History.viewPath, ["mc", model.name])
+                                selected: History.match(History.viewPath, [model.name])
                                 onClicked: root.itemClicked(model.index)
                                 height: globalMenuGroup.height
                             }
@@ -475,7 +475,6 @@ T.ToolBar {
                                 Menus.QmlGlobalMenu {
                                     id: contextMenu
                                     ctx: MainCtx
-                                    playerViewVisible: History.match(History.viewPath, ["player"])
                                 }
                             }
                         }

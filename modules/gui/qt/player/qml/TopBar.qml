@@ -422,6 +422,10 @@ FocusScope{
 
         visible: root._showTopBar
 
+        ImmersiveView.ImmersiveModeToggleButton {
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
         Widgets.IconToolButton {
             id: menuSelector
 
@@ -450,7 +454,6 @@ FocusScope{
                 id: contextMenu
 
                 ctx: MainCtx
-                playerViewVisible: History.match(History.viewPath, ["player"])
 
                 onAboutToShow: root.requestLockUnlockAutoHide(true)
                 onAboutToHide: root.requestLockUnlockAutoHide(false)

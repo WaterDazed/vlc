@@ -58,7 +58,7 @@ T.Control {
         TapHandler {
             gesturePolicy: TapHandler.WithinBounds
 
-            onDoubleTapped: MainCtx.requestShowPlayerView()
+            onDoubleTapped: MainCtx.playerView = true
             onTapped: MainPlaylistController.togglePlayPause()
         }
 
@@ -102,13 +102,16 @@ T.Control {
         visible: hoverHandler.hovered ||
                  playButton.hovered ||
                  closeButton.hovered ||
-                 fullscreenButton.hovered
+                 fullscreenButton.hovered ||
+                 immersiveModeButton?.hovered
 
         // Raise the content item so that the handlers of the control do
         // not handle events that are to be handled by the handlers/items
         // of the content item. Raising the content item should be fine
         // because content item is supposed to be the foreground item.
         z: 1
+
+        property Item immersiveModeButton
 
         Widgets.IconButton {
             id: playButton
@@ -158,7 +161,30 @@ T.Control {
             description: qsTr("maximize player")
             text: VLCIcons.fullscreen
 
-            onClicked: MainCtx.requestShowPlayerView()
+            onClicked: MainCtx.playerView = true
+        }
+
+        Component {
+            id: immersiveModeToggleButtonComponent
+
+            ImmersiveView.ImmersiveModeToggleButton {
+                color: "white" // this is what the other buttons are doing
+
+                anchors {
+                    bottom: parent.bottom
+                    bottomMargin: VLCStyle.margin_small
+                    right: parent.right
+                    rightMargin: VLCStyle.margin_small
+                }
+            }
+        }
+
+        Component.onCompleted: {
+            // Immersive mode is not supported on Wayland because:
+            // - Window can not get hidden while video output is present.
+            // - Always on top does not work.
+            if (!Qt.platform.pluginName.startsWith("wayland"))
+                immersiveModeButton = immersiveModeToggleButtonComponent.createObject(this)
         }
     }
 }
