@@ -37,6 +37,9 @@ MLGroup::MLGroup(const vlc_ml_group_t * data)
     , m_count(data->i_nb_total_media)
 {
     assert(data);
+    m_hash = qHashMulti(
+        0,
+        m_id, m_title, m_duration, m_date, m_count);
 }
 
 //-------------------------------------------------------------------------------------------------

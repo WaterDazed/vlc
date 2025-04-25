@@ -137,6 +137,11 @@ MLVideo::MLVideo(const vlc_ml_media_t* data)
         m_resolution = "HD";
     else if ( maxWidth >= 720 && maxHeight >= 1280 )
         m_resolution = "720p";
+
+    m_hash = qHashMulti(
+        m_hash,
+        m_isNew, m_isFavorite, m_mrl, m_fileName, m_audioDesc.size(), m_videoDesc.size(), m_subtitleDesc.size(), m_channel, m_resolution
+        );
 }
 
 bool MLVideo::isNew() const

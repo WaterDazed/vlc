@@ -59,6 +59,10 @@ MLAlbumTrack::MLAlbumTrack(vlc_medialibrary_t* _ml, const vlc_ml_media_t *_data)
         if (artist)
             m_artist =  artist->psz_name;
     }
+
+    m_hash = qHashMulti(
+        0,
+        m_id, m_title, m_trackNumber, m_discNumber, m_duration, m_mrl, m_cover, m_albumTitle, m_artist);
 }
 
 QString MLAlbumTrack::getTitle() const

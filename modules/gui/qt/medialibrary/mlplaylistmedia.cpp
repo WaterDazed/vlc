@@ -89,6 +89,11 @@ MLPlaylistMedia::MLPlaylistMedia(const vlc_ml_media_t * data)
         m_resolution = "720p";
     else
         m_resolution = "";
+
+    m_hash = qHashMulti(
+        m_hash,
+        m_video.size(), m_audio.size(), m_channel, m_resolution
+        );
 }
 
 //-------------------------------------------------------------------------------------------------

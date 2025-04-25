@@ -41,7 +41,11 @@ public: // Interface
 
     unsigned int getCount() const;
 
+protected:
+    void updateHash();
+
 private:
+
     QString m_name;
 
     int64_t m_duration;

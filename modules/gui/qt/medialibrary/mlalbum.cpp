@@ -31,6 +31,9 @@ MLAlbum::MLAlbum(const vlc_ml_album_t *_data)
     , m_duration    ( _data->i_duration )
 {
     assert( _data );
+    m_hash = qHashMulti(
+        0,
+        m_id, m_title, m_releaseYear, m_shortSummary, m_cover, m_mainArtist, m_nbTracks, m_duration);
 }
 
 QString MLAlbum::getTitle() const

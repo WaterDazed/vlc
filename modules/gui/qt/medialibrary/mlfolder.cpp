@@ -34,7 +34,11 @@ MLFolder::MLFolder(const vlc_ml_folder_t * data)
     , m_count(data->i_nb_media)
     , m_audioCount(data->i_nb_audio)
     , m_videoCount(data->i_nb_video)
-{}
+{
+    m_hash = qHashMulti(
+        0,
+        m_id, m_present, m_banned, m_title, m_mrl, m_duration, m_count, m_audioCount, m_videoCount);
+}
 
 // Interface
 

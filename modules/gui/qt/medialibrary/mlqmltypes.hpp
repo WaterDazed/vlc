@@ -85,10 +85,13 @@ public:
     MLItem(MLItemId id) : m_id(id) {}
     virtual ~MLItem() = default;
 
-    MLItemId getId() const { return m_id; }
+    inline MLItemId getId() const { return m_id; }
 
-private:
+    inline size_t getHash() const { return m_hash; }
+
+protected:
     MLItemId m_id;
+    size_t m_hash = 0;
 };
 
 #endif // MLQMLTYPES_HPP

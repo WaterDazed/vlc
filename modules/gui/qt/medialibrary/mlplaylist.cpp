@@ -33,6 +33,14 @@ MLPlaylist::MLPlaylist(const vlc_ml_playlist_t * data)
     , m_count(data->i_nb_media)
 {
     assert(data);
+    updateHash();
+}
+
+void MLPlaylist::updateHash()
+{
+    m_hash = qHashMulti(
+        0,
+        m_id, m_name, m_duration, m_count);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -47,6 +55,7 @@ QString MLPlaylist::getName() const
 void MLPlaylist::setName(const QString & name)
 {
     m_name = name;
+    updateHash();
 }
 
 //-------------------------------------------------------------------------------------------------
