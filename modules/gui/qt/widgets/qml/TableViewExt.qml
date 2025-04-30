@@ -188,6 +188,8 @@ FocusScope {
 
     property alias reuseItems: view.reuseItems
 
+    property alias defaultScrollBar: view.defaultScrollBar
+
     // Signals
 
     //forwarded from subview
