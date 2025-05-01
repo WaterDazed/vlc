@@ -64,4 +64,36 @@ Rectangle {
             duration: root.animationDuration
         }
     }
+
+    ShaderEffect {
+        // Temporal dithering during color alpha animation
+        id: temporalNoise
+
+        anchors.fill: parent
+        anchors.margins: root.border.width
+
+        // Only with dark colors:
+        visible: root.animationRunning && (root.color.hslLightness < 0.5)
+
+        // The slower the animation, the strengthier the dithering.
+        // Manually calibrated for the default duration (200 ms).
+        // This is probably not supposed to be linear (for example,
+        // premultiplied alpha from 0.01 to 0.05, and 0.05 to 0.09
+        // may not cause the same amount of information loss), but
+        // for now it should be enough. In the future this can also
+        // be made discrete with regard to 8-bit information loss.
+        readonly property real strength: (1.0 - root.color.a) * (root.animationDuration / 200.0 / 100.0)
+
+        property real seed: 0.0
+
+        UniformAnimator on seed {
+            running: temporalNoise.visible
+            from: 0
+            to: 1
+            loops: Animation.Infinite
+            duration: 1000
+        }
+
+        fragmentShader: "qrc:///shaders/Noise.frag.qsb"
+    }
 }
