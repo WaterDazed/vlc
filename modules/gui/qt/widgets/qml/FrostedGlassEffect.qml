@@ -60,6 +60,8 @@ Widgets.BlurEffect {
 
         readonly property real strength: root.noiseStrength
 
+        readonly property real seed: 0.0 // so that Qt does not complain that a property matching the uniform does not exist
+
         fragmentShader: "qrc:///shaders/Noise.frag.qsb"
     }
 }

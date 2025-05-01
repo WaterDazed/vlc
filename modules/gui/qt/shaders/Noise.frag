@@ -22,6 +22,7 @@
 
 #include "Common.glsl"
 
+// This is provided by the default vertex shader even there is no texture to be sampled:
 layout(location = 0) in vec2 qt_TexCoord0;
 
 layout(location = 0) out vec4 fragColor;
@@ -30,10 +31,11 @@ layout(std140, binding = 0) uniform buf {
   mat4 qt_Matrix;
   float qt_Opacity;
   float strength;
+  float seed; // this seed is additional to the coordinate used as seed
 };
 
 void main() {
-   float r = rand(qt_TexCoord0) - 0.5;
+   float r = rand(qt_TexCoord0 + vec2(seed, seed)) - 0.5;
    vec4 noise = vec4(r,r,r,1.0) * strength;
    fragColor = noise * qt_Opacity;
    // Noise should use additive blending (S + D) instead of the default source-over
