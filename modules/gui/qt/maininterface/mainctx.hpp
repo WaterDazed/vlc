@@ -130,6 +130,7 @@ class MainCtx : public QObject
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ getVideoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(int mouseHideTimeout READ mouseHideTimeout NOTIFY mouseHideTimeoutChanged FINAL)
     Q_PROPERTY(bool albumSections READ albumSections WRITE setAlbumSections NOTIFY albumSectionsChanged FINAL)
+    Q_PROPERTY(bool hintIntfIsBlank READ hintIntfIsBlank MEMBER m_hintIntfIsBlank NOTIFY hintIntfIsBlankChanged FINAL)
 
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
 
@@ -259,6 +260,8 @@ public:
     void setVideoSurfaceProvider(VideoSurfaceProvider* videoSurfaceProvider);
 
     int mouseHideTimeout() const { return m_mouseHideTimeout; }
+
+    bool hintIntfIsBlank() const { return m_hintIntfIsBlank; }
 
     Q_INVOKABLE static inline bool useTopLevelWindowForToolTip() {
         assert(qGuiApp);
@@ -466,6 +469,8 @@ protected:
     SearchCtx* m_search = nullptr;
     SortCtx* m_sort = nullptr;
 
+    bool m_hintIntfIsBlank = false;
+
 #ifdef UPDATE_CHECK
     //m_updateModel is created on first access
     mutable std::unique_ptr<UpdateModel> m_updateModel;
@@ -581,6 +586,8 @@ signals:
     void requestShowPlayerView();
 
     void artistAlbumsWidthFactorChanged( double );
+
+    void hintIntfIsBlankChanged(bool);
 
 private:
     void loadPrefs(bool callSignals);

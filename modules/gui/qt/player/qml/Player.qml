@@ -58,6 +58,9 @@ FocusScope {
 
     property bool _keyPressed: false
 
+    readonly property bool hintBlank: (!topBar.visible || topBar.opacity <= 0.0) &&
+                                      (!controlBar.visible || controlBar.opacity <= 0.0)
+
     // Settings
 
     Accessible.role: Accessible.Client

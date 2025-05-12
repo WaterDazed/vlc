@@ -101,6 +101,12 @@ Item {
             value: _extendedFrameVisible ? (Qt.platform.pluginName.startsWith("wayland") ? 40 : 20) : 0
         }
 
+        Binding {
+            target: MainCtx
+            property: "hintIntfIsBlank"
+            value: !effect.visible && !!stackView.currentItem?.hintBlank
+        }
+
         Window.onWindowChanged: {
             if (Window.window && !Qt.colorEqual(Window.window.color, "transparent")) {
                 Window.window.color = Qt.binding(function() { return theme.bg.primary })
