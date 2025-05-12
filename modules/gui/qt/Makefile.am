@@ -1307,7 +1307,8 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/ImageExt.qml \
 	widgets/qml/ScrollBarExt.qml \
 	widgets/qml/FastBlend.qml \
-	widgets/qml/RadioButtonExt.qml
+	widgets/qml/RadioButtonExt.qml \
+	widgets/qml/Cone3D.qml
 if HAVE_QT65
 libqml_module_widgets_a_QML += \
 	widgets/qml/DynamicShadow.qml \
@@ -1365,7 +1366,8 @@ libqt_plugin_la_SHADER := shaders/FadingEdge.frag \
                           shaders/FastBlend.frag \
                           shaders/FastBlend_additive.frag \
                           shaders/FastBlend_multiply.frag \
-                          shaders/FastBlend_screen.frag
+                          shaders/FastBlend_screen.frag \
+                          shaders/Cone3D.frag
 if ENABLE_QT
 
 libqt_plugin_la_LIBADD += libqml_module_dialogs.a \

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2019 VLC authors and VideoLAN
+ * Copyright (C) 2025 VLC authors and VideoLAN
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,32 +16,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
+
 import VLC.Style
 
-BusyIndicator {
+T.BusyIndicator {
     id: control
 
-    property color color
-    palette.text: color
-    running: false
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
+                            implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
+                             implicitContentHeight + topPadding + bottomPadding)
 
-    property int delay: VLCStyle.duration_humanMoment
-    property bool runningDelayed: false
-    onRunningDelayedChanged: {
-        if (runningDelayed) {
-            controlDelay.start()
-        } else {
-            controlDelay.stop()
-            control.running = false
-        }
+    padding: VLCStyle.margin_xxsmall
+
+    readonly property ColorContext colorContext: ColorContext {
+        id: theme
+        colorSet: ColorContext.Item
     }
 
-    Timer {
-        id: controlDelay
-        interval: control.delay
-        running: false
-        repeat: false
-        onTriggered: control.running = true
+    palette.text: theme.accent
+
+    contentItem: Cone3D {
+        animating: control.running
+        color: control.palette.text
     }
 }

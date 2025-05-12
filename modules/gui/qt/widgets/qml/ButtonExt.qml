@@ -132,13 +132,14 @@ T.Button {
                     font.pixelSize: control.iconSize
                 }
 
-                // FIXME: use Control.Templates
-                BusyIndicator {
+                Widgets.BusyIndicatorExt {
                     anchors.fill: parent
 
                     padding: 0
 
                     running: control.busy
+
+                    visible: running
 
                     palette.text: theme.fg.primary
                 }
