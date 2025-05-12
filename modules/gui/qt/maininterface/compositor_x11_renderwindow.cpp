@@ -117,13 +117,16 @@ void RenderTask::render(unsigned int requestId)
             }
         }
 
-        xcb_render_picture_t pic = m_interfaceClient->getPicture();
-        if (pic)
+        if (!m_intf->p_mi->hintIntfIsBlank())
         {
-            xcb_render_composite(m_conn, XCB_RENDER_PICT_OP_OVER,
-                                 pic, 0, drawingarea,
-                                 0,0,0,0,
-                                 0, 0, m_interfaceSize.width(), m_interfaceSize.height());
+            xcb_render_picture_t pic = m_interfaceClient->getPicture();
+            if (pic)
+            {
+                xcb_render_composite(m_conn, XCB_RENDER_PICT_OP_OVER,
+                                     pic, 0, drawingarea,
+                                     0,0,0,0,
+                                     0, 0, m_interfaceSize.width(), m_interfaceSize.height());
+            }
         }
 
     } //picture lock scope
