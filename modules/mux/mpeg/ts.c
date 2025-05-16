@@ -1192,19 +1192,24 @@ static int MuxStreams( sout_mux_t *p_mux )
             continue;
 
         /* Need more data */
-        if( block_FifoCount( p_input->p_fifo ) <= 1 )
+        if( block_FifoCount( p_input->p_fifo ) == 0 )
         {
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
                 ( p_input->p_fmt->i_cat == VIDEO_ES ) )
             {
                 return -EAGAIN;
             }
-            else if( block_FifoCount( p_input->p_fifo ) <= 0 )
+            /* spu, only one packet is needed */
+            continue;
+        }
+        if( block_FifoCount( p_input->p_fifo ) == 1 )
+        {
+            if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
+                ( p_input->p_fmt->i_cat == VIDEO_ES ) )
             {
-                /* spu, only one packet is needed */
-                continue;
+                return -EAGAIN;
             }
-            else if( p_input->p_fmt->i_cat == SPU_ES )
+            if( p_input->p_fmt->i_cat == SPU_ES )
             {
                 /* Don't mux the SPU yet if it is too early */
                 block_t *p_spu = block_FifoShow( p_input->p_fifo );
