@@ -901,7 +901,7 @@ static int Mux(sout_mux_t *p_mux)
 
     do
     {
-        int i_stream = sout_MuxGetStream(p_mux, 2, NULL);
+        int i_stream = sout_MuxGetStream(p_mux, true, NULL);
         if (i_stream < 0)
             break;
 
@@ -1494,7 +1494,7 @@ static int MuxFrag(sout_mux_t *p_mux)
 {
     sout_mux_sys_t *p_sys = (sout_mux_sys_t*) p_mux->p_sys;
 
-    int i_stream = sout_MuxGetStream(p_mux, 1, NULL);
+    int i_stream = sout_MuxGetStream(p_mux, false, NULL);
     if (i_stream < 0)
         return VLC_SUCCESS;
 

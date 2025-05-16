@@ -152,7 +152,7 @@ VLC_API sout_input_t *sout_MuxAddStream( sout_mux_t *, const es_format_t * ) VLC
 VLC_API void sout_MuxDeleteStream( sout_mux_t *, sout_input_t * );
 VLC_API void sout_MuxDelete( sout_mux_t * );
 VLC_API int sout_MuxSendBuffer( sout_mux_t *, sout_input_t  *, block_t * );
-VLC_API int sout_MuxGetStream(sout_mux_t *, unsigned, vlc_tick_t *);
+VLC_API int sout_MuxGetStream(sout_mux_t *, bool has_multiple_blocks, vlc_tick_t *);
 VLC_API void sout_MuxFlush( sout_mux_t *, sout_input_t * );
 
 static inline int sout_MuxControl( sout_mux_t *p_mux, int i_query, ... )
