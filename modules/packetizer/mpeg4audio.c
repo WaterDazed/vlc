@@ -823,7 +823,8 @@ static block_t *PacketizeStreamBlock(decoder_t *p_dec, block_t **pp_block)
         block_SkipBytes(&p_sys->bytestream, p_sys->i_header_size);
 
         /* Copy the whole frame into the buffer */
-        block_GetBytes(&p_sys->bytestream, p_buf, p_sys->i_frame_size);
+        block_GetBytes(&p_sys->bytestream, p_buf, p_sys->i_frame_size,
+                       &p_out_buffer->ancillaries);
         if (p_sys->i_type != TYPE_ADTS) { /* parse/extract the whole frame */
             assert(p_sys->i_type == TYPE_LOAS);
             p_out_buffer->i_buffer = LOASParse(p_dec, p_buf, p_sys->i_frame_size);
@@ -838,6 +839,7 @@ static block_t *PacketizeStreamBlock(decoder_t *p_dec, block_t **pp_block)
                 break;
             }
         }
+
         SetupOutput(p_dec, p_out_buffer);
         /* Make sure we don't reuse the same pts twice */
         if (p_sys->i_pts == p_sys->bytestream.p_block->i_pts)

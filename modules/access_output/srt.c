@@ -333,7 +333,7 @@ static ssize_t Write( sout_access_out_t *p_access, block_t *p_buffer )
             && srt_getsockstate( p_sys->sock ) == SRTS_CONNECTED)
         {
             if ( block_GetBytes( &p_sys->block_stream, chunk,
-                                 chunk_size ) != VLC_SUCCESS )
+                                 chunk_size, NULL ) != VLC_SUCCESS )
                 break;
             if (srt_sendmsg2( p_sys->sock,
                 (char *)chunk, chunk_size, 0 ) == SRT_ERROR )

@@ -818,7 +818,7 @@ static void DrainDPBLocked(decoder_t *p_dec, bool flush)
     }
 }
 
-static frame_info_t * CreateReorderInfo(decoder_t *p_dec, const block_t *p_block)
+static frame_info_t * CreateReorderInfo(decoder_t *p_dec, block_t *p_block)
 {
     decoder_sys_t *p_sys = p_dec->p_sys;
     frame_info_t *p_info = calloc(1, sizeof(*p_info));
@@ -865,6 +865,8 @@ static frame_info_t * CreateReorderInfo(decoder_t *p_dec, const block_t *p_block
     /* required for still pictures/menus */
     p_info->b_eos = (p_block->i_flags & BLOCK_FLAG_END_OF_SEQUENCE);
 
+    vlc_ancillary_array_Init(&p_info->ancillaries);
+    vlc_ancillary_array_Move(&p_info->ancillaries, &p_block->ancillaries);
     return p_info;
 }
 
@@ -1937,7 +1939,7 @@ static int DecodeBlock(decoder_t *p_dec, block_t *p_block)
 
         if (!p_sys->session) /* Start Failed */
         {
-            free(p_info);
+            FrameInfoFree(p_info);
             goto skip;
         }
     }
@@ -1947,7 +1949,7 @@ static int DecodeBlock(decoder_t *p_dec, block_t *p_block)
         if(!p_info->b_keyframe)
         {
             msg_Dbg(p_dec, "discarding non recovery frame %"PRId64, p_info->pts);
-            free(p_info);
+            FrameInfoFree(p_info);
             goto skip;
         }
         p_sys->sync_state = STATE_BITSTREAM_DISCARD_LEADING;
@@ -1957,7 +1959,7 @@ static int DecodeBlock(decoder_t *p_dec, block_t *p_block)
         if(p_info->b_leading)
         {
             msg_Dbg(p_dec, "discarding skipped leading frame %"PRId64, p_info->pts);
-            free(p_info);
+            FrameInfoFree(p_info);
             goto skip;
         }
         p_sys->sync_state = STATE_BITSTREAM_SYNCED;
@@ -1967,7 +1969,7 @@ static int DecodeBlock(decoder_t *p_dec, block_t *p_block)
         VTSampleBufferCreate(p_dec, p_sys->videoFormatDescription, p_block);
     if (unlikely(!sampleBuffer))
     {
-        free(p_info);
+        FrameInfoFree(p_info);
         goto skip;
     }
 
@@ -2203,7 +2205,7 @@ static void DecoderCallback(void *decompressionOutputRefCon,
     p_info = NULL;
 
 end:
-    free(p_info);
+    FrameInfoFree(p_info);
     vlc_mutex_unlock(&p_sys->lock);
     pic_pacer_AccountFinishedDecode(p_sys->pic_pacer, b_field);
     return;

@@ -26,6 +26,7 @@ pluginsinclude_HEADERS.h = \
 	../include/vlc_actions.h \
 	../include/vlc_addons.h \
 	../include/vlc_ancillary.h \
+	../include/vlc_ancillary_queue.h \
 	../include/vlc_aout.h \
 	../include/vlc_aout_volume.h \
 	../include/vlc_arrays.h \
@@ -381,7 +382,6 @@ libvlccore_la_SOURCES = \
 	text/iso_lang.c \
 	text/iso-639_def.h \
 	misc/actions.c \
-	misc/ancillary.h \
 	misc/ancillary.c \
 	misc/chroma_probe.c \
 	misc/executor.c \

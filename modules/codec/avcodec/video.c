@@ -70,6 +70,7 @@ struct frame_info_s
 #endif
     bool b_eos;
     bool b_display;
+    vlc_ancillary_array ancillaries;
 };
 
 /*****************************************************************************
@@ -181,22 +182,67 @@ static struct frame_info_s * FrameInfoGet( decoder_sys_t *p_sys, AVFrame *frame 
 #endif
 }
 
+static void frame_info_Clean( struct frame_info_s *frame_info )
+{
+    vlc_ancillary_array_Clear( &frame_info->ancillaries );
+}
+
+static void InitFrameInfos( decoder_sys_t *p_sys )
+{
+#if OPAQUE_REF_ONLY
+    (void) p_sys;
+#else
+    for (size_t i = 0; i < FRAME_INFO_DEPTH; ++i)
+        vlc_ancillary_array_Init( &p_sys->frame_info[i].ancillaries );
+#endif
+}
+
+static void CleanFrameInfos( decoder_sys_t *p_sys )
+{
+#if OPAQUE_REF_ONLY
+    (void) p_sys;
+#else
+    for (size_t i = 0; i < FRAME_INFO_DEPTH; ++i)
+        frame_info_Clean( &p_sys->frame_info[i] );
+#endif
+}
+
+#if OPAQUE_REF_ONLY
+static void av_buffer_frame_info_free(void *opaque, uint8_t *data)
+{
+    (void) opaque;
+    struct frame_info_s *frame_info = (void *) data;
+    frame_info_Clean(frame_info);
+    free(data);
+}
+#endif
+
 static struct frame_info_s * FrameInfoAdd( decoder_sys_t *p_sys, AVPacket *pkt )
 {
 #if OPAQUE_REF_ONLY
-    AVBufferRef *bufref = av_buffer_allocz(sizeof(struct frame_info_s));
-    if( !bufref )
+    struct frame_info_s *p_frame_info = malloc(sizeof(*p_frame_info));
+    if (p_frame_info == NULL)
         return NULL;
+    p_frame_info->i_sequence_number = p_sys->i_next_sequence_number++;
+
+    AVBufferRef *bufref = av_buffer_create( (void *) p_frame_info, sizeof(*p_frame_info),
+                                            av_buffer_frame_info_free, NULL, 0 );
+    if (bufref == NULL)
+    {
+        free(p_frame_info);
+        return NULL;
+    }
+    vlc_ancillary_array_Init( &p_frame_info->ancillaries );
     pkt->opaque_ref = bufref;
 
-    struct frame_info_s *p_frame_info = (struct frame_info_s *) bufref->data;
-    p_frame_info->i_sequence_number = p_sys->i_next_sequence_number++;
-    return p_frame_info;
 #else
     VLC_UNUSED(pkt);
     AVCodecContext *p_context = p_sys->p_context;
-    return &p_sys->frame_info[p_context->reordered_opaque++ % FRAME_INFO_DEPTH];
+    struct frame_info_s *p_frame_info =
+        &p_sys->frame_info[p_context->reordered_opaque++ % FRAME_INFO_DEPTH];
+    frame_info_Clean( p_frame_info );
 #endif
+    return p_frame_info;
 }
 
 static bool FrameCanStoreInfo( const AVFrame *frame )
@@ -543,6 +589,8 @@ static int InitVideoDecCommon( decoder_t *p_dec )
 
     p_sys->p_va = NULL;
     vlc_mutex_init( &p_sys->lock );
+
+    InitFrameInfos( p_sys );
 
     /* ***** Fill p_context with init values ***** */
     p_context->codec_tag = ffmpeg_CodecTag( p_dec->fmt_in->i_original_fourcc ?
@@ -981,6 +1029,7 @@ static void Flush( decoder_t *p_dec )
     p_sys->i_late_frames = 0;
     p_sys->framedrop = FRAMEDROP_NONE;
     cc_Flush( &p_sys->cc );
+    CleanFrameInfos( p_sys );
 
     /* do not flush buffers if codec hasn't been opened (theora/vorbis/VC1) */
     if( avcodec_is_open( p_context ) )
@@ -1477,6 +1526,8 @@ static int DecodeBlock( decoder_t *p_dec, block_t **pp_block )
             const bool b_eos = p_block && (p_block->i_flags & BLOCK_FLAG_END_OF_SEQUENCE);
             p_frame_info->b_eos = b_eos;
             p_frame_info->b_display = b_need_output_picture;
+            if( p_block != NULL )
+                vlc_ancillary_array_Move( &p_frame_info->ancillaries, &p_block->ancillaries );
 
             int ret = avcodec_send_packet(p_context, pkt);
             if( ret != 0 && ret != AVERROR(EAGAIN) )
@@ -1677,7 +1728,13 @@ static int DecodeBlock( decoder_t *p_dec, block_t **pp_block )
         p_pic->b_progressive = !frame->interlaced_frame;
         p_pic->b_top_field_first = frame->top_field_first;
 #endif
-        p_pic->b_still = p_frame_info && p_frame_info->b_eos;
+        if( p_frame_info != NULL )
+        {
+            p_pic->b_still = p_frame_info->b_eos;
+            picture_MoveAncillaries( p_pic, &p_frame_info->ancillaries );
+        }
+        else
+            p_pic->b_still = false;
 
         if (DecodeSidedata(p_dec, frame, p_pic))
             i_pts = VLC_TICK_INVALID;
@@ -1749,6 +1806,7 @@ void EndVideoDec( vlc_object_t *obj )
     AVCodecContext *ctx = p_sys->p_context;
 
     cc_Flush( &p_sys->cc );
+    CleanFrameInfos( p_sys );
     avcodec_free_context( &ctx );
 
     if( p_sys->p_va )

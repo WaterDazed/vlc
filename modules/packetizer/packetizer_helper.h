@@ -197,7 +197,7 @@ static block_t *packetizer_PacketizeBlock( packetizer_t *p_pack, block_t **pp_bl
             }
 
             block_GetBytes( &p_pack->bytestream, &p_pic->p_buffer[p_pack->i_au_prepend],
-                            p_pic->i_buffer - p_pack->i_au_prepend );
+                            p_pic->i_buffer - p_pack->i_au_prepend, &p_pic->ancillaries );
             if( p_pack->i_au_prepend > 0 )
                 memcpy( p_pic->p_buffer, p_pack->p_au_prepend, p_pack->i_au_prepend );
 

@@ -24,9 +24,8 @@
 #define VLC_FRAME_H 1
 
 #include <vlc_tick.h>
+#include <vlc_ancillary.h>
 
-struct vlc_ancillary;
-typedef uint32_t vlc_ancillary_id;
 
 /**
  * \defgroup frame Frames
@@ -134,9 +133,7 @@ struct vlc_frame_t
     vlc_tick_t  i_dts;
     vlc_tick_t  i_length;
 
-    /** Private ancillary struct. Don't use it directly, but use it via
-     * vlc_frame_AttachAncillary() and vlc_frame_GetAncillary(). */
-    struct vlc_ancillary **priv_ancillaries;
+    vlc_ancillary_array ancillaries;
 
     const struct vlc_frame_callbacks *cbs;
 };
@@ -233,6 +230,34 @@ vlc_frame_Realloc(vlc_frame_t *frame, ssize_t pre, size_t body) VLC_USED;
 VLC_API void vlc_frame_Release(vlc_frame_t *frame);
 
 /**
+ * Attach an array of ancillaries to the frame
+ *
+ * @param frame the frame to attach the array
+ * @param src_array pointer to an ancillary array
+ * @return VLC_SUCCESS in case of success, VLC_ENOMEM in case of alloc error
+ */
+static inline int
+vlc_frame_AttachAncillaries(vlc_frame_t *frame,
+                            const vlc_ancillary_array *src_array)
+{
+    return vlc_ancillary_array_Dup(&frame->ancillaries, src_array);
+}
+
+/**
+ * Attach an array of ancillaries to the frame
+ *
+ * @param frame the frame to move the array
+ * @param src_array pointer to the source ancillary array, will point to empty
+ * data after this call.
+ * @return VLC_SUCCESS in case of success, VLC_ENOMEM in case of alloc error
+ */
+static inline int
+vlc_frame_MoveAncillaries(vlc_frame_t *frame, vlc_ancillary_array *src_array)
+{
+    return vlc_ancillary_array_Move(&frame->ancillaries, src_array);
+}
+
+/**
  * Attach an ancillary to the frame
  *
  * @warning the ancillary will be released only if the frame is allocated from
@@ -245,8 +270,11 @@ VLC_API void vlc_frame_Release(vlc_frame_t *frame);
  * @param ancillary ancillary that will be held by the frame, can't be NULL
  * @return VLC_SUCCESS in case of success, VLC_ENOMEM in case of alloc error
  */
-VLC_API int
-vlc_frame_AttachAncillary(vlc_frame_t *frame, struct vlc_ancillary *ancillary);
+static inline int
+vlc_frame_AttachAncillary(vlc_frame_t *frame, struct vlc_ancillary *ancillary)
+{
+    return vlc_ancillary_array_Insert(&frame->ancillaries, ancillary);
+}
 
 /**
  * Return the ancillary identified by an ID
@@ -256,8 +284,11 @@ vlc_frame_AttachAncillary(vlc_frame_t *frame, struct vlc_ancillary *ancillary);
  * @return the ancillary or NULL if the ancillary for that particular id is
  * not present
  */
-VLC_API struct vlc_ancillary *
-vlc_frame_GetAncillary(vlc_frame_t *frame, vlc_ancillary_id id);
+static inline struct vlc_ancillary *
+vlc_frame_GetAncillary(vlc_frame_t *frame, vlc_ancillary_id id)
+{
+    return vlc_ancillary_array_Get(&frame->ancillaries, id);
+}
 
 /**
  * Copy frame properties from src to dst
@@ -536,6 +567,37 @@ static inline void vlc_frame_ChainProperties( const vlc_frame_t *p_list, int *pi
 }
 
 /**
+ * Gathers all ancillaries from a chain
+ *
+ * @warning ancillary arrays from the list will be deleted. This will avoid the
+ * same ancillary to be added 2 times when not gathering a block entirely.
+ *
+ * @param p_list  Pointer to the first vlc_frame_t of the chain to gather
+ * @param p_dst   Pointer to a valid ancillary array that will receive all
+ *                ancillaries from the chain
+ * @param i_max   Number of bytes from the chain to parse
+ * @param ret     VLC_SUCCESS in case of success or VLC_ENOMEM in case of
+ *                allocation error
+ */
+static inline int vlc_frame_ChainGatherAncillaries( vlc_frame_t *p_list,
+                                                    vlc_ancillary_array *dst,
+                                                    size_t i_max )
+{
+    int ret = VLC_SUCCESS;
+    while( p_list && i_max > 0 && ret == VLC_SUCCESS )
+    {
+        size_t i_copy = __MIN( i_max, p_list->i_buffer );
+        i_max -= i_copy;
+
+        ret = vlc_ancillary_array_Move( dst, &p_list->ancillaries );
+
+        p_list = p_list->p_next;
+    }
+
+    return ret;
+}
+
+/**
  * Gathers a chain into a single vlc_frame_t
  *
  * All frames in the chain are gathered into a single vlc_frame_t and the
@@ -564,6 +626,13 @@ static inline vlc_frame_t *vlc_frame_ChainGather( vlc_frame_t *p_list )
     if( !g )
         return NULL;
     vlc_frame_ChainExtract( p_list, g->p_buffer, g->i_buffer );
+    int ret = vlc_frame_ChainGatherAncillaries( p_list, &g->ancillaries,
+                                                g->i_buffer );
+    if( ret != VLC_SUCCESS )
+    {
+        vlc_frame_Release( g );
+        return NULL;
+    }
 
     g->i_flags = p_list->i_flags;
     g->i_pts   = p_list->i_pts;

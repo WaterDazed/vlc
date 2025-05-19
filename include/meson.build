@@ -21,6 +21,8 @@ install_headers(
     'vlc_access.h',
     'vlc_actions.h',
     'vlc_addons.h',
+    'vlc_ancillary.h',
+    'vlc_ancillary_queue.h',
     'vlc_aout.h',
     'vlc_aout_volume.h',
     'vlc_arrays.h',

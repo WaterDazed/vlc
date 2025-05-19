@@ -311,7 +311,7 @@ static block_t *PacketizeBlock( decoder_t *p_dec, block_t **pp_block )
             /* Copy the whole frame into the buffer. When we reach this point
              * we already know we have enough data available. */
             block_GetBytes( &p_sys->bytestream, p_out_buffer->p_buffer,
-                            p_out_buffer->i_buffer );
+                            p_out_buffer->i_buffer, &p_out_buffer->ancillaries );
 
             p_sys->i_state = STATE_NOSYNC;
 

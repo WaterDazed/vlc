@@ -83,7 +83,7 @@ void RemoveDPBSlot(struct dpb_s *dpb, frame_info_t **pp_info)
     if(p_info->p_picture) /* release picture */
         dpb->pf_release(p_info->p_picture);
     *pp_info = p_info->p_next;
-    free(p_info);
+    FrameInfoFree(p_info);
 }
 
 static void ReduceDPBSize(struct dpb_s *dpb)
@@ -141,6 +141,7 @@ picture_t * DPBOutputFrame(struct dpb_s *dpb, date_t *ptsdate, frame_info_t *p_i
         p_info->b_output_needed = false;
     }
     assert(dpb->i_need_output_size <= dpb->i_stored_fields);
+    picture_MoveAncillaries(p_output, &p_info->ancillaries);
 
     return p_output;
 }
