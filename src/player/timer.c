@@ -327,12 +327,7 @@ vlc_player_UpdateTimerSource(vlc_player_t *player,
         source->point.system_date = VLC_TICK_MAX;
     else
         source->point.system_date = system_date;
-
-    if (source->point.length)
-        source->point.position = (ts - player->timer.input_normal_time - player->timer.start_offset)
-                               / (double) source->point.length;
-    else
-        source->point.position = player->timer.input_position;
+    source->point.position = player->timer.input_position;
 }
 
 static void
