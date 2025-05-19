@@ -1028,8 +1028,9 @@ static void SetBlockDuration( sout_input_t *p_input, block_t *p_data )
 {
     sout_input_sys_t *p_stream = (sout_input_sys_t*) p_input->p_sys;
 
+    block_FifoLock( p_input->p_fifo );
     if( p_input->p_fmt->i_cat != SPU_ES &&
-        block_FifoCount( p_input->p_fifo ) > 0 )
+        vlc_fifo_GetCount( p_input->p_fifo ) > 0 )
     {
         block_t *p_next = block_FifoShow( p_input->p_fifo );
         vlc_tick_t i_diff = p_next->i_dts - p_data->i_dts;
@@ -1072,6 +1073,7 @@ static void SetBlockDuration( sout_input_t *p_input, block_t *p_data )
     {
         p_data->i_length = VLC_TICK_FROM_MS(1);
     }
+    block_FifoUnlock( p_input->p_fifo );
 }
 
 static block_t *Encap_J2K( block_t *p_data, const es_format_t *p_fmt )
@@ -1192,8 +1194,10 @@ static int MuxStreams( sout_mux_t *p_mux )
             continue;
 
         /* Need more data */
-        if( block_FifoCount( p_input->p_fifo ) == 0 )
+        block_FifoLock( p_input->p_fifo );
+        if( vlc_fifo_GetCount( p_input->p_fifo ) == 0 )
         {
+            block_FifoUnlock( p_input->p_fifo );
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
                 ( p_input->p_fmt->i_cat == VIDEO_ES ) )
             {
@@ -1202,11 +1206,12 @@ static int MuxStreams( sout_mux_t *p_mux )
             /* spu, only one packet is needed */
             continue;
         }
-        if( block_FifoCount( p_input->p_fifo ) == 1 )
+        if( vlc_fifo_GetCount( p_input->p_fifo ) == 1 )
         {
             if( ( p_input->p_fmt->i_cat == AUDIO_ES ) ||
                 ( p_input->p_fmt->i_cat == VIDEO_ES ) )
             {
+                block_FifoUnlock( p_input->p_fifo );
                 return -EAGAIN;
             }
             if( p_input->p_fmt->i_cat == SPU_ES )
@@ -1217,7 +1222,10 @@ static int MuxStreams( sout_mux_t *p_mux )
                 int64_t i_spu_delay = p_spu->i_dts - p_pcr_stream->state.i_pes_dts;
                 if( ( i_spu_delay > i_shaping_delay ) &&
                     ( i_spu_delay < VLC_TICK_FROM_SEC(100)) )
+                {
+                    block_FifoUnlock( p_input->p_fifo );
                     continue;
+                }
 
                 if ( ( i_spu_delay >= VLC_TICK_FROM_SEC(100)) ||
                      ( i_spu_delay < VLC_TICK_FROM_MS(10) ) )
@@ -1226,10 +1234,12 @@ static int MuxStreams( sout_mux_t *p_mux )
                     p_stream->state.i_pes_dts = 0;
                     p_stream->state.i_pes_used = 0;
                     p_stream->state.i_pes_length = 0;
+                    block_FifoUnlock( p_input->p_fifo );
                     continue;
                 }
             }
         }
+        block_FifoUnlock( p_input->p_fifo );
         b_ok = false;
 
         block_t *p_data;
@@ -1267,14 +1277,16 @@ static int MuxStreams( sout_mux_t *p_mux )
             p_sys->first_dts = p_data->i_dts;
             for (int j = 0; j < p_mux->i_nb_inputs; j++ )
             {
+                block_FifoLock( p_mux->pp_inputs[j]->p_fifo );
                 if( p_mux->pp_inputs[j] != p_input &&
-                    block_FifoCount( p_mux->pp_inputs[j]->p_fifo) > 0 )
+                    vlc_fifo_GetCount( p_mux->pp_inputs[j]->p_fifo) > 0 )
                 {
                     block_t *p_block = block_FifoShow( p_mux->pp_inputs[j]->p_fifo );
                     if( p_block->i_dts != VLC_TICK_INVALID &&
                         p_block->i_dts < p_sys->first_dts )
                         p_sys->first_dts = p_block->i_dts;
                 }
+                block_FifoUnlock( p_mux->pp_inputs[j]->p_fifo );
             }
         }
 
@@ -1555,7 +1567,7 @@ static int Mux( sout_mux_t *p_mux )
         return VLC_SUCCESS;
     }
 
-    int status; 
+    int status;
     while( (status = MuxStreams( p_mux )) == VLC_SUCCESS );
     return (status == -EAGAIN) ? VLC_SUCCESS : status;
 }
@@ -1567,12 +1579,16 @@ static block_t *FixPES( sout_mux_t *p_mux, block_fifo_t *p_fifo )
     block_t *p_data;
     size_t i_size;
 
+    block_FifoLock( p_fifo );
     p_data = block_FifoShow( p_fifo );
     i_size = p_data->i_buffer;
 
     if( i_size == STD_PES_PAYLOAD )
     {
-        return block_FifoGet( p_fifo );
+        p_data = vlc_fifo_DequeueUnlocked( p_fifo );
+        block_FifoUnlock( p_fifo );
+        vlc_testcancel();
+        return p_data;
     }
     else if( i_size > STD_PES_PAYLOAD )
     {
@@ -1588,6 +1604,7 @@ static block_t *FixPES( sout_mux_t *p_mux, block_fifo_t *p_fifo )
         p_data->i_dts += p_new->i_length;
         p_data->i_length -= p_new->i_length;
         p_data->i_flags |= BLOCK_FLAG_NO_KEYFRAME;
+        block_FifoUnlock( p_fifo );
         return p_new;
     }
     else
@@ -1595,7 +1612,7 @@ static block_t *FixPES( sout_mux_t *p_mux, block_fifo_t *p_fifo )
         block_t *p_next;
         int i_copy;
 
-        p_data = block_FifoGet( p_fifo );
+        p_data = vlc_fifo_DequeueUnlocked( p_fifo );
         p_data = block_Realloc( p_data, 0, STD_PES_PAYLOAD );
         p_next = block_FifoShow( p_fifo );
         if ( p_data->i_flags & BLOCK_FLAG_NO_KEYFRAME )
@@ -1619,9 +1636,11 @@ static block_t *FixPES( sout_mux_t *p_mux, block_fifo_t *p_fifo )
 
         if( !p_next->i_buffer )
         {
-            p_next = block_FifoGet( p_fifo );
+            p_next = vlc_fifo_DequeueUnlocked( p_fifo );
             block_Release( p_next );
         }
+        block_FifoUnlock( p_fifo );
+        vlc_testcancel();
         return p_data;
     }
 }

@@ -24,6 +24,7 @@
 #define VLC_BLOCK_H 1
 
 #include <vlc_frame.h>
+#include <assert.h>
 
 /**
  * \defgroup block Blocks
@@ -107,6 +108,16 @@
 #define block_FifoGet vlc_fifo_Get
 #define block_FifoCount vlc_fifo_Count
 #define block_FifoEmpty vlc_fifo_Empty
-#define block_FifoShow vlc_fifo_Show
+
+#define block_FifoLock   vlc_fifo_Lock
+#define block_FifoUnlock vlc_fifo_Unlock
+
+static inline block_t * block_FifoShow(block_fifo_t *p_fifo)
+{
+    vlc_fifo_Assert( p_fifo );
+    vlc_queue_t *q = vlc_fifo_queue( p_fifo );
+    assert(q->first != NULL);
+    return (block_t*)q->first;
+}
 
 #endif /* VLC_BLOCK_H */
