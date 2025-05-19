@@ -1590,7 +1590,7 @@ static block_t *FixPES( sout_mux_t *p_mux, block_fifo_t *p_fifo )
         vlc_testcancel();
         return p_data;
     }
-    else if( i_size > STD_PES_PAYLOAD )
+    if( i_size > STD_PES_PAYLOAD )
     {
         block_t *p_new = block_Alloc( STD_PES_PAYLOAD );
         memcpy( p_new->p_buffer, p_data->p_buffer, STD_PES_PAYLOAD );
@@ -1607,42 +1607,40 @@ static block_t *FixPES( sout_mux_t *p_mux, block_fifo_t *p_fifo )
         block_FifoUnlock( p_fifo );
         return p_new;
     }
-    else
+
+    block_t *p_next;
+    int i_copy;
+
+    p_data = vlc_fifo_DequeueUnlocked( p_fifo );
+    p_data = block_Realloc( p_data, 0, STD_PES_PAYLOAD );
+    p_next = block_FifoShow( p_fifo );
+    if ( p_data->i_flags & BLOCK_FLAG_NO_KEYFRAME )
     {
-        block_t *p_next;
-        int i_copy;
-
-        p_data = vlc_fifo_DequeueUnlocked( p_fifo );
-        p_data = block_Realloc( p_data, 0, STD_PES_PAYLOAD );
-        p_next = block_FifoShow( p_fifo );
-        if ( p_data->i_flags & BLOCK_FLAG_NO_KEYFRAME )
-        {
-            p_data->i_flags &= ~BLOCK_FLAG_NO_KEYFRAME;
-            p_data->i_pts = p_next->i_pts;
-            p_data->i_dts = p_next->i_dts;
-        }
-        i_copy = __MIN( STD_PES_PAYLOAD - i_size, p_next->i_buffer );
-
-        memcpy( &p_data->p_buffer[i_size], p_next->p_buffer, i_copy );
-        vlc_tick_t offset = p_next->i_length * i_copy / p_next->i_buffer;
-        if( p_next->i_pts )
-            p_next->i_pts += offset;
-        if( p_next->i_dts )
-            p_next->i_dts += offset;
-        p_next->i_length -= offset;
-        p_next->i_buffer -= i_copy;
-        p_next->p_buffer += i_copy;
-        p_next->i_flags |= BLOCK_FLAG_NO_KEYFRAME;
-
-        if( !p_next->i_buffer )
-        {
-            p_next = vlc_fifo_DequeueUnlocked( p_fifo );
-            block_Release( p_next );
-        }
-        block_FifoUnlock( p_fifo );
-        vlc_testcancel();
-        return p_data;
+        p_data->i_flags &= ~BLOCK_FLAG_NO_KEYFRAME;
+        p_data->i_pts = p_next->i_pts;
+        p_data->i_dts = p_next->i_dts;
     }
+    i_copy = __MIN( STD_PES_PAYLOAD - i_size, p_next->i_buffer );
+
+    memcpy( &p_data->p_buffer[i_size], p_next->p_buffer, i_copy );
+    vlc_tick_t offset = p_next->i_length * i_copy / p_next->i_buffer;
+    if( p_next->i_pts )
+        p_next->i_pts += offset;
+    if( p_next->i_dts )
+        p_next->i_dts += offset;
+    p_next->i_length -= offset;
+    p_next->i_buffer -= i_copy;
+    p_next->p_buffer += i_copy;
+    p_next->i_flags |= BLOCK_FLAG_NO_KEYFRAME;
+
+    if( !p_next->i_buffer )
+    {
+        p_next = vlc_fifo_DequeueUnlocked( p_fifo );
+        block_Release( p_next );
+    }
+    block_FifoUnlock( p_fifo );
+    vlc_testcancel();
+    return p_data;
 }
 
 static block_t *Add_ADTS( block_t *p_data, const es_format_t *p_fmt )
