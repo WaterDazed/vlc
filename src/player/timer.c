@@ -31,7 +31,7 @@ vlc_player_ResetTimer(vlc_player_t *player)
 {
     vlc_mutex_lock(&player->timer.lock);
 
-    player->timer.input_length = VLC_TICK_INVALID;
+    player->timer.input_length = 0;
     player->timer.input_normal_time = VLC_TICK_0;
     player->timer.last_ts = VLC_TICK_INVALID;
     player->timer.start_offset = 0;
@@ -277,7 +277,7 @@ vlc_player_UpdateTimerSeekState(vlc_player_t *player, vlc_tick_t time,
     if (time == VLC_TICK_INVALID)
     {
         assert(position >= 0);
-        if (source->point.length != VLC_TICK_INVALID)
+        if (source->point.length)
             player->timer.seek_ts = position * source->point.length;
         else
             player->timer.seek_ts = VLC_TICK_INVALID;
@@ -288,7 +288,7 @@ vlc_player_UpdateTimerSeekState(vlc_player_t *player, vlc_tick_t time,
     if (position < 0)
     {
         assert(time != VLC_TICK_INVALID);
-        if (source->point.length != VLC_TICK_INVALID)
+        if (source->point.length)
             player->timer.seek_position = time / (double) source->point.length;
     }
     else
@@ -328,7 +328,7 @@ vlc_player_UpdateTimerSource(vlc_player_t *player,
     else
         source->point.system_date = system_date;
 
-    if (source->point.length != VLC_TICK_INVALID)
+    if (source->point.length)
         source->point.position = (ts - player->timer.input_normal_time - player->timer.start_offset)
                                / (double) source->point.length;
     else
@@ -454,7 +454,7 @@ vlc_player_UpdateTimer(vlc_player_t *player, vlc_es_id_t *es_source,
             force_update = true;
         }
         if (player->timer.input_length != point->length
-         && point->length >= VLC_TICK_0)
+         && point->length)
         {
             player->timer.input_length = point->length;
             player->timer.last_ts = VLC_TICK_INVALID;
@@ -644,7 +644,7 @@ vlc_player_timer_point_Interpolate(const struct vlc_player_timer_point *point,
         if (unlikely(ts < VLC_TICK_0))
             return VLC_EGENERIC;
     }
-    if (point->length != VLC_TICK_INVALID)
+    if (point->length)
     {
         pos += drift / (double) point->length;
         if (unlikely(pos < 0.f))
