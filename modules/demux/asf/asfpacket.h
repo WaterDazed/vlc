@@ -30,11 +30,14 @@
 #define ASFPACKET_PREROLL_FROM_CURRENT -1
 #define ASFPACKET_DEDUPLICATE 8
 
-typedef struct
+typedef struct asf_track_info_s asf_track_info_t;
+
+struct asf_track_info_s
 {
     block_t *p_frame; /* used to gather complete frame */
     asf_object_stream_properties_t *p_sp;
     asf_object_extended_stream_properties_t *p_esp;
+    asf_payload_extension_system_timecode_t *p_timecode;
     int i_cat;
     struct
     {
@@ -43,7 +46,7 @@ typedef struct
     } prev[ASFPACKET_DEDUPLICATE];
     unsigned i_pkt;
     unsigned i_pktcount;
-} asf_track_info_t;
+};
 
 typedef struct asf_packet_sys_s asf_packet_sys_t;
 

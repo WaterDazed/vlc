@@ -229,5 +229,19 @@ typedef struct vlc_vpx_alpha_t
     uint8_t *data;
 } vlc_vpx_alpha_t;
 
+/**
+ * SMPTE timecode data
+ */
+
+#define VLC_ANCILLARY_ID_SMPTE VLC_FOURCC('S','M','P','T')
+
+typedef struct vlc_smpte_timecode_t
+{
+    uint8_t hours;
+    uint8_t minutes;
+    uint8_t seconds;
+    uint8_t frames;
+} vlc_smpte_timecode_t;
+
 /** @} */
 #endif /* VLC_ANCILLARY_H */

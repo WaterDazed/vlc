@@ -310,6 +310,107 @@ static void ASF_FreeObject_Index( asf_object_t *p_obj )
     FREENULL( p_index->index_entry );
 }
 
+static void ASF_FreeObject_TimecodeIndex( asf_object_t *p_obj )
+{
+    asf_object_timecode_index_t *p_index = &p_obj->timecode_index;
+
+    for ( uint32_t i = 0; i < p_index->i_index_blocks_count; i++ )
+    {
+        asf_timecode_index_block_t *p_block = &p_index->p_index_blocks[i];
+        for ( uint32_t k = 0; k < p_block->i_index_entry_count; k++ )
+            FREENULL( p_block->p_index_entries[k].p_offsets );
+        FREENULL( p_block->p_index_entries );
+        FREENULL( p_block->p_block_positions );
+    }
+    FREENULL( p_index->p_index_blocks );
+    FREENULL( p_index->p_index_specifiers );
+    p_index->i_index_specifiers_count = 0;
+    p_index->i_index_blocks_count = 0;
+}
+
+static int ASF_ReadObject_TimecodeIndex( stream_t *s, asf_object_t *p_obj )
+{
+    asf_object_timecode_index_t *p_index = &p_obj->timecode_index;
+    const uint8_t *p_peek, *p_data;
+
+    if ( p_index->i_object_size < 34
+      || p_index->i_object_size > INT32_MAX
+      || vlc_stream_Peek(s, &p_peek, p_index->i_object_size)
+         < (int64_t)p_index->i_object_size )
+      return VLC_SUCCESS;
+
+    p_data = p_peek + ASF_OBJECT_COMMON_SIZE;
+    p_index->i_reserved = GetDWLE( p_data );
+    if ( p_index->i_reserved != 1 )
+        return VLC_SUCCESS;
+
+    p_index->i_index_specifiers_count = GetWLE( p_data + 4 );
+    p_index->i_index_blocks_count = GetDWLE( p_data + 6 );
+    p_index->p_index_specifiers = NULL;
+    p_index->p_index_blocks = NULL;
+    p_data += 10;
+
+    p_index->p_index_specifiers = calloc( p_index->i_index_specifiers_count, sizeof(asf_timecode_index_specifier_t) );
+    if ( !p_index->p_index_specifiers )
+    {
+        p_index->i_index_specifiers_count = 0;
+        return VLC_ENOMEM;
+    }
+
+    for ( uint32_t i = 0; i < p_index->i_index_specifiers_count; i++ )
+    {
+        p_index->p_index_specifiers[i].i_stream_number = GetWLE( p_data );
+        p_index->p_index_specifiers[i].i_index_type = GetWLE( p_data + 2 );
+        p_data += 4;
+    }
+
+    p_index->p_index_blocks = calloc( p_index->i_index_blocks_count, sizeof(asf_timecode_index_block_t) );
+    if (!p_index->p_index_blocks)
+    {
+        FREENULL( p_index->p_index_specifiers );
+        p_index->i_index_specifiers_count = 0;
+        p_index->i_index_blocks_count = 0;
+        return VLC_ENOMEM;
+    }
+
+    for ( uint32_t i = 0; i < p_index->i_index_blocks_count; i++ )
+    {
+        asf_timecode_index_block_t *p_block = &p_index->p_index_blocks[i];
+        p_block->i_index_entry_count = GetDWLE( p_data );
+        p_block->i_timecode_range = GetWLE( p_data + 4 );
+        p_data += 6;
+
+        p_block->p_block_positions = calloc( p_index->i_index_specifiers_count, sizeof(uint64_t) );
+        if ( !p_block->p_block_positions ) goto no_mem_error;
+        for ( uint32_t j = 0; j < p_index->i_index_specifiers_count; j++ )
+        {
+            p_block->p_block_positions[j] = GetQWLE( p_data );
+            p_data += 8;
+        }
+
+        p_block->p_index_entries = calloc( p_block->i_index_entry_count, sizeof(asf_timecode_index_entry_t) );
+        if ( !p_block->p_index_entries ) goto no_mem_error;
+        for ( uint32_t j = 0; j < p_block->i_index_entry_count; j++ )
+        {
+            p_block->p_index_entries[j].i_timecode = GetDWLE( p_data );
+            p_data += 4;
+            p_block->p_index_entries[j].p_offsets = calloc( p_index->i_index_specifiers_count, sizeof(uint32_t) );
+            if ( !p_block->p_index_entries[j].p_offsets ) goto no_mem_error;
+            for ( uint32_t k = 0; k < p_index->i_index_specifiers_count; k++ )
+            {
+                p_block->p_index_entries[j].p_offsets[k] = GetDWLE( p_data );
+                p_data += 4;
+            }
+        }
+    }
+
+    return VLC_SUCCESS;
+
+no_mem_error:
+    ASF_FreeObject_TimecodeIndex( p_obj );
+    return VLC_ENOMEM;
+}
+
 static int ASF_ReadObject_file_properties( stream_t *s, asf_object_t *p_obj )
 {
     asf_object_file_properties_t *p_fp = &p_obj->file_properties;
@@ -1447,6 +1548,8 @@ static const struct ASF_Object_Function_entry
       ASF_ReadObject_Data, ASF_FreeObject_Null },
     { &asf_object_simple_index_guid, ASF_OBJECT_INDEX,
       ASF_ReadObject_Index, ASF_FreeObject_Index },
+    { &asf_object_timecode_index_guid, ASF_OBJECT_INDEX,
+      ASF_ReadObject_TimecodeIndex, ASF_FreeObject_TimecodeIndex },
     { &asf_object_file_properties_guid, ASF_OBJECT_FILE_PROPERTIES,
       ASF_ReadObject_file_properties, ASF_FreeObject_Null },
     { &asf_object_stream_properties_guid, ASF_OBJECT_STREAM_PROPERTIES,
@@ -1615,6 +1718,7 @@ static const struct
     { &asf_object_data_guid, "Data" },
     { &asf_object_index_guid, "Index" },
     { &asf_object_simple_index_guid, "Simple Index" },
+    { &asf_object_timecode_index_guid, "Timecode Index"},
     { &asf_object_file_properties_guid, "File Properties" },
     { &asf_object_stream_properties_guid, "Stream Properties" },
     { &asf_object_content_description_guid, "Content Description" },
@@ -1715,6 +1819,7 @@ asf_object_root_t *ASF_ReadObjectRoot( stream_t *s, int b_seekable )
     p_root->p_data  = NULL;
     p_root->p_fp    = NULL;
     p_root->p_index = NULL;
+    p_root->p_timecode_index = NULL;
     p_root->p_metadata = NULL;
 
     for( ; ; )
@@ -1737,8 +1842,11 @@ asf_object_root_t *ASF_ReadObjectRoot( stream_t *s, int b_seekable )
                 p_root->p_data = (asf_object_data_t*)p_obj;
             break;
             case( ASF_OBJECT_INDEX ):
-                if ( p_root->p_index ) break;
-                p_root->p_index = (asf_object_index_t*)p_obj;
+                if ( p_root->p_index && p_root->p_timecode_index) break;
+                if ( guidcmp(&p_obj->common.i_object_id, &asf_object_timecode_index_guid) )
+                    p_root->p_timecode_index = (asf_object_timecode_index_t *)p_obj;
+                else
+                    p_root->p_index = (asf_object_index_t *)p_obj;
                 break;
             default:
                 msg_Warn( s, "unknown top-level object found: " GUID_FMT,

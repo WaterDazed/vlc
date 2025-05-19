@@ -54,6 +54,26 @@ typedef struct
 
 } asf_index_entry_t;
 
+typedef struct
+{
+    uint16_t i_stream_number;
+    uint16_t i_index_type;
+} asf_timecode_index_specifier_t;
+
+typedef struct
+{
+    uint32_t i_timecode;
+    uint32_t *p_offsets;
+} asf_timecode_index_entry_t;
+
+typedef struct
+{
+    uint32_t i_index_entry_count;
+    uint16_t i_timecode_range;
+    uint64_t *p_block_positions;
+    asf_timecode_index_entry_t *p_index_entries;
+} asf_timecode_index_block_t;
+
 /****************************************************************************
  * High level asf object
  ****************************************************************************/
@@ -89,6 +109,18 @@ typedef struct
     asf_index_entry_t *index_entry;
 
 } asf_object_index_t;
+
+typedef struct
+{
+    ASF_OBJECT_COMMON
+    uint32_t i_reserved; /* must be 1 */
+    uint16_t i_index_specifiers_count;
+    uint32_t i_index_blocks_count;
+
+    asf_timecode_index_specifier_t *p_index_specifiers;
+    asf_timecode_index_block_t *p_index_blocks;
+
+} asf_object_timecode_index_t;
 
 /****************************************************************************
  * Sub level asf object
@@ -260,6 +292,13 @@ typedef struct
     uint32_t i_info_length;
     char     *pi_info;
 } asf_payload_extension_system_t;
+
+typedef struct
+{
+    uint16_t    i_timecode_range;
+    uint32_t    i_timecode;
+    uint32_t    i_user_bits;
+} asf_payload_extension_system_timecode_t;
 #define ASF_EXTENSION_VIDEOFRAME_NEWFRAME  0x08
 #define ASF_EXTENSION_VIDEOFRAME_IFRAME    0x01
 #define ASF_EXTENSION_VIDEOFRAME_TYPE_MASK 0x07
@@ -350,6 +389,7 @@ typedef struct
     asf_object_data_t   *p_data;
     /* could be NULL if !b_seekable or not-present */
     asf_object_index_t  *p_index;
+    asf_object_timecode_index_t *p_timecode_index;
 
     /* from asf_object_header_t */
     asf_object_file_properties_t *p_fp;
@@ -368,6 +408,7 @@ typedef union asf_object_u
     asf_object_header_t header;
     asf_object_data_t   data;
     asf_object_index_t  index;
+    asf_object_timecode_index_t timecode_index;
     asf_object_root_t   root;
     asf_object_file_properties_t    file_properties;
     asf_object_stream_properties_t  stream_properties;

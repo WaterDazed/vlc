@@ -232,7 +232,7 @@ static const vlc_guid_t mfasf_sampleextension_sampleduration_guid =
 static const vlc_guid_t mfasf_sampleextension_outputcleanpoint_guid =
 {0xF72A3C6F, 0x6EB4, 0x4EBC, {0xB1, 0x92, 0x09, 0xAD, 0x97, 0x59, 0xE8, 0x28}};
 
-static const vlc_guid_t mfasf_sampleextension_smtpe_guid =
+static const vlc_guid_t mfasf_sampleextension_smpte_guid =
 {0x399595EC, 0x8667, 0x4E2D, {0x8F, 0xDB, 0x98, 0x81, 0x4C, 0xE7, 0x6C, 0x1E}};
 
 static const vlc_guid_t mfasf_sampleextension_filename_guid =
