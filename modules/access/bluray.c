@@ -2103,7 +2103,9 @@ static void blurayArgbOverlayProc(void *ptr, const BD_ARGB_OVERLAY *const overla
         vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     case BD_ARGB_OVERLAY_DRAW:
+        vlc_mutex_lock(&p_sys->bdj.lock);
         blurayDrawArgbOverlay(p_demux, overlay);
+        vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     default:
         msg_Warn(p_demux, "Unknown BD ARGB overlay command: %u", overlay->cmd);
