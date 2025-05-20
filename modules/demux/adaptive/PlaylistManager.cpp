@@ -89,6 +89,12 @@ PlaylistManager::PlaylistManager( demux_t *p_demux_,
 
 PlaylistManager::~PlaylistManager   ()
 {
+    if (b_thread)
+    {
+        resources->kill();
+        vlc_join(thread, nullptr);
+    }
+
     delete streamFactory;
     unsetPeriod();
     delete playlist;
@@ -194,9 +200,6 @@ void PlaylistManager::stop()
         b_canceled = true;
         waitcond.signal();
     }
-
-    vlc_join(thread, nullptr);
-    b_thread = false;
 }
 
 struct PrioritizedAbstractStream
