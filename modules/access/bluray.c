@@ -2013,14 +2013,6 @@ static void blurayOverlayProc(void *ptr, const BD_OVERLAY *const overlay)
     vlc_mutex_unlock(&p_sys->bdj.lock);
 }
 
-/*
- * ARGB overlay (BD-J)
- */
-static void blurayInitArgbOverlay(demux_t *p_demux, int plane, uint16_t width, uint16_t height)
-{
-    blurayInitOverlay(p_demux, plane, width, height);
-}
-
 static void blurayDrawArgbOverlay(demux_t *p_demux, const BD_ARGB_OVERLAY* const eventov)
 {
     demux_sys_t *p_sys = p_demux->p_sys;
@@ -2096,7 +2088,7 @@ static void blurayArgbOverlayProc(void *ptr, const BD_ARGB_OVERLAY *const overla
     switch (overlay->cmd) {
     case BD_ARGB_OVERLAY_INIT:
         vlc_mutex_lock(&p_sys->bdj.lock);
-        blurayInitArgbOverlay(p_demux, overlay->plane, overlay->w, overlay->h);
+        blurayInitOverlay(p_demux, overlay->plane, overlay->w, overlay->h);
         vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     case BD_ARGB_OVERLAY_CLOSE:
