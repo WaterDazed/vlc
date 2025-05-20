@@ -2098,7 +2098,9 @@ static void blurayArgbOverlayProc(void *ptr, const BD_ARGB_OVERLAY *const overla
         vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     case BD_ARGB_OVERLAY_FLUSH:
+        vlc_mutex_lock(&p_sys->bdj.lock);
         blurayActivateOverlay(p_demux, overlay->plane);
+        vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     case BD_ARGB_OVERLAY_DRAW:
         blurayDrawArgbOverlay(p_demux, overlay);
