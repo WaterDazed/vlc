@@ -42,11 +42,11 @@ namespace adaptive
                 bool start();
                 void schedule(HTTPChunkBufferedSource *);
                 void cancel(HTTPChunkBufferedSource *);
+                void kill();
 
             private:
                 static void * downloaderThread(void *);
                 void Run();
-                void kill();
                 vlc_thread_t thread_handle;
                 vlc_interrupt_t *interrupt;
                 vlc::threads::mutex lock;
