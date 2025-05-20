@@ -704,7 +704,7 @@ void PlaylistManager::setBufferingRunState(bool b)
 
 void PlaylistManager::Run()
 {
-    mutex_locker locker {lock};
+    lock.lock();
     const vlc_tick_t i_min_buffering = bufferingLogic->getMinBuffering(playlist);
     const vlc_tick_t i_max_buffering = bufferingLogic->getMaxBuffering(playlist);
     const vlc_tick_t i_target_buffering = bufferingLogic->getStableBuffering(playlist);
@@ -727,9 +727,11 @@ void PlaylistManager::Run()
         Times pcr = demux.times;
         vlc_mutex_unlock(&demux.lock);
 
+        lock.unlock();
         AbstractStream::BufferingStatus i_return = bufferize(pcr, i_min_buffering,
                                                              i_max_buffering, i_target_buffering);
 
+        lock.lock();
         if(i_return != AbstractStream::BufferingStatus::Lessthanmin)
         {
             vlc_tick_t i_deadline = vlc_tick_now();
@@ -754,6 +756,7 @@ void PlaylistManager::Run()
                 break;
         }
     }
+    lock.unlock();
 }
 
 void * PlaylistManager::managerThread(void *opaque)
