@@ -1532,22 +1532,6 @@ static es_out_t *esOutNew(vlc_object_t *p_obj, es_out_t *p_dst_out, void *priv)
  * subpicture_updater_t functions:
  *****************************************************************************/
 
-static bluray_overlay_t *updater_lock_overlay(bluray_overlay_t *ov)
-{
-    if (ov) {
-        /* this lock is held while vout accesses overlay. => overlay can't be modified. */
-        vlc_mutex_lock(&ov->lock);
-        return ov;
-    }
-
-    return NULL;
-}
-
-static void updater_unlock_overlay(bluray_overlay_t *ov)
-{
-    vlc_mutex_unlock(&ov->lock);
-}
-
 static struct bluray_region *bluray_region_Create(vlc_fourcc_t chroma, uint16_t w, uint16_t h, uint16_t vw, uint16_t vh, uint16_t x, uint16_t y)
 {
     struct bluray_region *p_reg = malloc(sizeof(*p_reg));
@@ -1606,12 +1590,15 @@ static void subpictureUpdaterUpdate(subpicture_t *p_subpic,
 {
     VLC_UNUSED(cfg);
 
-    bluray_overlay_t *p_overlay = updater_lock_overlay(p_subpic->updater.sys);
+    bluray_overlay_t *p_overlay = p_subpic->updater.sys;
     assert(p_overlay != NULL);
+
+    /* this lock is held while vout accesses overlay. => overlay can't be modified. */
+    vlc_mutex_lock(&p_overlay->lock);
 
     if (p_overlay->status != Outdated)
     {
-        updater_unlock_overlay(p_overlay);
+        vlc_mutex_unlock(&p_overlay->lock);
         return;
     }
 
@@ -1637,18 +1624,21 @@ static void subpictureUpdaterUpdate(subpicture_t *p_subpic,
     }
     p_overlay->status = Displayed;
 
-    updater_unlock_overlay(p_overlay);
+    vlc_mutex_unlock(&p_overlay->lock);
 }
 
 static void subpictureUpdaterDestroy(subpicture_t *p_subpic)
 {
-    bluray_overlay_t *p_overlay = updater_lock_overlay(p_subpic->updater.sys);
+    bluray_overlay_t *p_overlay = p_subpic->updater.sys;
     assert(p_overlay != NULL);
+
+    /* this lock is held while vout accesses overlay. => overlay can't be modified. */
+    vlc_mutex_lock(&p_overlay->lock);
 
     if (vlc_atomic_rc_dec(&p_overlay->rc))
     {
         // it should have been removed from bdj.p_overlays since the counter is zero
-        updater_unlock_overlay(p_overlay);
+        vlc_mutex_unlock(&p_overlay->lock);
         bluray_regions_Clear(&p_overlay->regions);
         free(p_overlay);
         return;
@@ -1657,7 +1647,7 @@ static void subpictureUpdaterDestroy(subpicture_t *p_subpic)
     /* vout is closed (seek, new clip, ?). Overlay must be redrawn. */
     p_overlay->status = Closed;
     p_overlay->b_on_vout = false;
-    updater_unlock_overlay(p_overlay);
+    vlc_mutex_unlock(&p_overlay->lock);
 }
 
 static subpicture_t *bluraySubpictureCreate(bluray_overlay_t *p_ov)
