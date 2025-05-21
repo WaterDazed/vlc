@@ -1703,12 +1703,11 @@ static void subpictureUpdaterDestroy(subpicture_t *p_subpic)
 
 static subpicture_t *bluraySubpictureCreate(bluray_overlay_t *p_ov)
 {
+    assert(p_ov->p_updater == NULL);
     bluray_spu_updater_sys_t *p_upd_sys = malloc(sizeof(*p_upd_sys));
     if (unlikely(p_upd_sys == NULL)) {
         return NULL;
     }
-
-    p_upd_sys->p_overlay = p_ov;
 
     static const struct vlc_spu_updater_ops spu_ops =
     {
@@ -1732,6 +1731,7 @@ static subpicture_t *bluraySubpictureCreate(bluray_overlay_t *p_ov)
 
     vlc_mutex_init(&p_upd_sys->lock);
     p_upd_sys->ref_cnt = 2;
+    p_upd_sys->p_overlay = p_ov;
 
     p_ov->p_updater = p_upd_sys;
 
