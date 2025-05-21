@@ -2085,32 +2085,27 @@ static void blurayArgbOverlayProc(void *ptr, const BD_ARGB_OVERLAY *const overla
     if(overlay->plane >= MAX_OVERLAY)
         return;
 
+    vlc_mutex_lock(&p_sys->bdj.lock);
+
     switch (overlay->cmd) {
     case BD_ARGB_OVERLAY_INIT:
-        vlc_mutex_lock(&p_sys->bdj.lock);
         blurayInitOverlay(p_demux, overlay->plane, overlay->w, overlay->h);
-        vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     case BD_ARGB_OVERLAY_CLOSE:
-        vlc_mutex_lock(&p_sys->bdj.lock);
         blurayClearOverlay(p_demux, overlay->plane);
         blurayCloseOverlay(p_demux, overlay->plane);
-        vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     case BD_ARGB_OVERLAY_FLUSH:
-        vlc_mutex_lock(&p_sys->bdj.lock);
         blurayActivateOverlay(p_demux, overlay->plane);
-        vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     case BD_ARGB_OVERLAY_DRAW:
-        vlc_mutex_lock(&p_sys->bdj.lock);
         blurayDrawArgbOverlay(p_demux, overlay);
-        vlc_mutex_unlock(&p_sys->bdj.lock);
         break;
     default:
         msg_Warn(p_demux, "Unknown BD ARGB overlay command: %u", overlay->cmd);
         break;
     }
+    vlc_mutex_unlock(&p_sys->bdj.lock);
 }
 
 static void bluraySendOverlayToVout(demux_t *p_demux, int plane, bluray_overlay_t *p_ov)
