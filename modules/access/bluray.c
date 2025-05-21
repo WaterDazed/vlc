@@ -1871,6 +1871,8 @@ static void blurayInitOverlay(demux_t *p_demux, int plane, uint16_t width, uint1
     ov->width = width;
     ov->height = height;
     ov->b_on_vout = false;
+    ov->status = Closed;
+    ov->p_updater = NULL;
     vlc_array_init(&ov->regions);
 
     vlc_mutex_init(&ov->lock);
