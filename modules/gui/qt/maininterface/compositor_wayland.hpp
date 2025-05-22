@@ -91,6 +91,9 @@ protected slots:
 protected:
     std::unique_ptr<QQuickView> m_qmlView;
     qtwayland_t* m_waylandImpl = nullptr;
+
+private:
+    bool unloadWaylandModule();
 };
 
 }
