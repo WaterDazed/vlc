@@ -68,6 +68,7 @@ PlaylistManager::PlaylistManager( demux_t *p_demux_,
     resources = res;
     bufferingLogic = nullptr;
     failedupdates = 0;
+    interrupt = nullptr;
     b_thread = false;
     b_buffering = false;
     b_canceled = false;
@@ -91,8 +92,13 @@ PlaylistManager::~PlaylistManager   ()
 {
     if (b_thread)
     {
+        assert(interrupt != nullptr);
         resources->kill();
+        vlc_interrupt_kill(interrupt);
+
         vlc_join(thread, nullptr);
+
+        vlc_interrupt_destroy(interrupt);
     }
 
     delete streamFactory;
@@ -174,6 +180,10 @@ bool PlaylistManager::init(bool b_preparsing)
 bool PlaylistManager::start()
 {
     if(b_thread || b_preparsing)
+        return false;
+
+    interrupt = vlc_interrupt_create();
+    if (interrupt == nullptr)
         return false;
 
     b_thread = !vlc_clone(&thread, managerThread, static_cast<void *>(this));
@@ -707,6 +717,7 @@ void PlaylistManager::setBufferingRunState(bool b)
 
 void PlaylistManager::Run()
 {
+    vlc_interrupt_set(interrupt);
     lock.lock();
     const vlc_tick_t i_min_buffering = bufferingLogic->getMinBuffering(playlist);
     const vlc_tick_t i_max_buffering = bufferingLogic->getMaxBuffering(playlist);
