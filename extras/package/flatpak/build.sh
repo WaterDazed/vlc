@@ -33,15 +33,14 @@ export VLC_SRC="$(realpath "$THIS_SCRIPT_DIR/../../../")"
 BUILD_DIR=$VLC_SRC/flatpak-build
 mkdir -p $BUILD_DIR/build $BUILD_DIR/contrib
 
+envsubst < "$VLC_SRC/extras/package/flatpak/vlc-flatpak.yaml.in" > "$VLC_SRC/extras/package/flatpak/vlc-flatpak.yaml"
+
+
 if [ -n "$(find "$BUILD_DIR/flatpak-build-dir" -mindepth 1 -print -quit 2>/dev/null)" ] \
    && [ -z "$FORCE_CLEAN" ]; then
     echo "App dir '$BUILD_DIR/flatpak-build-dir' is not empty. Please delete the existing contents or use -f" >&2
     exit 1
 fi
-
-
-echo TESTING > $BUILD_DIR/contrib/testing
-envsubst < "$VLC_SRC/extras/package/flatpak/vlc-flatpak.yaml.in" > "$VLC_SRC/extras/package/flatpak/vlc-flatpak.yaml"
 
 
 date > $THIS_SCRIPT_DIR/timestamp
