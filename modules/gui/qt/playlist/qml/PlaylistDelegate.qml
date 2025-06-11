@@ -248,6 +248,8 @@ T.Control {
                 font.weight: delegate.isCurrent ? Font.Bold : Font.DemiBold
                 text: delegate.title || qsTr("Unknown Title")
                 color: theme.fg.primary
+
+                T.ToolTip.visible: false
             }
 
             Widgets.ListSubtitleLabel {
@@ -257,6 +259,8 @@ T.Control {
 
                 text: delegate.artist || (delegate.title.length === 0 ? delegate.url : "")
                 color: theme.fg.primary
+
+                T.ToolTip.visible: false
             }
         }
 
@@ -268,6 +272,8 @@ T.Control {
             verticalAlignment: Text.AlignVCenter
             color: theme.fg.primary
             opacity: 0.5
+
+            T.ToolTip.visible: false
         }
     }
 
