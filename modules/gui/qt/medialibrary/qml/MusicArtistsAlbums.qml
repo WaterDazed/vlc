@@ -62,18 +62,11 @@ FocusScope {
     property alias currentIndex: artistList.currentIndex
     property alias currentAlbumIndex: albumSubView.currentIndex
 
-    property bool isScreenSmall: VLCStyle.isScreenSmall
-
     onInitialAlbumIndexChanged: resetFocus()
     onInitialIndexChanged: resetFocus()
 
-    onIsScreenSmallChanged: {
-        if (VLCStyle.isScreenSmall)
-            resetFocus()
-    }
-
     function resetFocus() {
-        if (VLCStyle.isScreenSmall) {
+        if (albumSubView.focus) {
             albumSubView.setCurrentItemFocus(Qt.OtherFocusReason)
             return
         }
@@ -86,7 +79,7 @@ FocusScope {
     }
 
     function setCurrentItemFocus(reason) {
-        if (VLCStyle.isScreenSmall) {
+        if (albumSubView.focus) {
             albumSubView.setCurrentItemFocus(reason);
         } else {
             artistList.setCurrentItemFocus(reason);
@@ -168,13 +161,13 @@ FocusScope {
             z: 1
             Layout.fillHeight: true
             Layout.preferredWidth: VLCStyle.isScreenSmall
-                                   ? 0
+                                   ? (VLCStyle.play_cover_small + VLCStyle.margin_normal)
                                    : Math.round(Helpers.clamp(root.width / resizeHandle.widthFactor,
                                                               VLCStyle.colWidth(1) + VLCStyle.column_spacing,
                                                               root.width * .5))
 
-            visible: !VLCStyle.isScreenSmall && (artistModel.count > 0)
-            focus: !VLCStyle.isScreenSmall && (artistModel.count > 0)
+            visible: (artistModel.count > 0)
+            focus: (artistModel.count > 0)
 
             fadingEdge.backgroundColor: artistListBackground.usingAcrylic ? "transparent"
                                                                           : artistListBackground.alternativeColor
@@ -271,7 +264,7 @@ FocusScope {
             header: Widgets.ViewHeader {
                 view: artistList
 
-                visible: view.count > 0
+                visible: (view.count > 0) && !VLCStyle.isScreenSmall
 
                 leftPadding: VLCStyle.margin_normal
                 topPadding: VLCStyle.margin_xlarge
@@ -298,6 +291,8 @@ FocusScope {
                 dragTarget: musicArtistDragItem
 
                 selected: selectionModel.selectedIndexesFlat.includes(index)
+
+                minimalWidthState: VLCStyle.isScreenSmall
             }
 
             Widgets.HorizontalResizeHandle {
@@ -363,7 +358,7 @@ FocusScope {
             focus: true
             initialIndex: root.initialAlbumIndex
             Navigation.parentItem: root
-            Navigation.leftItem: VLCStyle.isScreenSmall ? null : artistList
+            Navigation.leftItem: artistList
         }
     }
 
