@@ -23,14 +23,10 @@ import VLC.Style
 import VLC.Widgets as Widgets
 import VLC.Network
 
-T.AbstractButton {
+T.Button {
     id: button
 
     // Properties
-
-    property bool onlyIcon: true
-
-    property bool highlighted: false
 
     property color foregroundColor: theme.fg.primary
     property color backgroundColor: theme.bg.primary
@@ -47,8 +43,8 @@ T.AbstractButton {
 
     padding: VLCStyle.margin_xxsmall
 
-    font.pixelSize: (onlyIcon) ? VLCStyle.icon_normal
-                               : VLCStyle.fontSize_large
+    font.pixelSize: (display === T.Button.IconOnly) ? VLCStyle.icon_normal
+                                                    : VLCStyle.fontSize_large
 
     // Children
 
@@ -75,8 +71,8 @@ T.AbstractButton {
     Loader {
         id: contentLoader
 
-        sourceComponent: (onlyIcon) ? iconTextContent
-                                    : textContent
+        sourceComponent: (button.display === T.Button.IconOnly) ? iconTextContent
+                                                                : textContent
     }
 
     Component {
