@@ -103,6 +103,8 @@ class VLCIcons : public QObject {
     Q_PROPERTY(QString window_restore MEMBER window_restore CONSTANT FINAL)
     Q_PROPERTY(QString ic_fluent_document_add_24_regular MEMBER ic_fluent_document_add_24_regular CONSTANT FINAL)
     Q_PROPERTY(QString ic_fluent_document_copy_24_regular MEMBER ic_fluent_document_copy_24_regular CONSTANT FINAL)
+    Q_PROPERTY(QString medialibrary_add MEMBER medialibrary_add CONSTANT FINAL)
+    Q_PROPERTY(QString medialibrary_remove MEMBER medialibrary_remove CONSTANT FINAL)
 
 
 public:
@@ -202,6 +204,8 @@ public:
     static const inline QString window_restore{ "\ue056" };
     static const inline QString ic_fluent_document_add_24_regular{ "\ue057" };
     static const inline QString ic_fluent_document_copy_24_regular{ "\ue058" };
+    static const inline QString medialibrary_add{ "\ue059" };
+    static const inline QString medialibrary_remove{ "\ue05a" };
 
 };
 
