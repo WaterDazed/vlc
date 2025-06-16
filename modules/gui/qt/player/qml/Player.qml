@@ -737,7 +737,7 @@ FocusScope {
         component: PlaylistPane {
             id: playlistView
 
-            width: Helpers.clamp(rootPlayer.width / resizeHandle.widthFactor
+            width: Helpers.clamp(resizeHandle.requestedWith
                                  , playlistView.minimumWidth
                                  , (rootPlayer.width + playlistView.rightPadding) / 2)
             height: playlistpopup.height
@@ -789,29 +789,28 @@ FocusScope {
                 }
 
                 atRight: false
-                targetWidth: playlistpopup.width
-                sourceWidth: rootPlayer.width
+                currentWidth: playlistpopup.width
 
-                onWidthFactorChanged: {
+                onRequestedWidthChanged: {
                     if (!_inhibitMainCtxUpdate)
-                        MainCtx.playqueuePanel.widthFactor = widthFactor
+                        MainCtx.playqueuePanel.width = requestedWidth
                 }
 
                 Component.onCompleted:  _updateFromMainCtx()
 
                 function _updateFromMainCtx() {
-                    if (widthFactor === MainCtx.playqueuePanel.widthFactor)
+                    if (requestedWidth === MainCtx.playqueuePanel.width)
                         return
 
                     _inhibitMainCtxUpdate = true
-                    widthFactor = MainCtx.playqueuePanel.widthFactor
+                    requestedWidth = MainCtx.playqueuePanel.width
                     _inhibitMainCtxUpdate = false
                 }
 
                 Connections {
                     target: MainCtx.playqueuePanel
 
-                    function onWidthFactorChanged() {
+                    function onWidthChanged() {
                         resizeHandle._updateFromMainCtx()
                     }
                 }

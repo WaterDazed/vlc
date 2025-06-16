@@ -403,7 +403,7 @@ FocusScope {
 
         implicitWidth: Math.round(VLCStyle.isScreenSmall
                        ? g_mainDisplay.width * 0.8
-                       : Helpers.clamp(g_mainDisplay.width / MainCtx.navigationPanel.widthFactor,
+                       : Helpers.clamp(MainCtx.navigationPanel.width,
                                        minimumWidth,
                                        (g_mainDisplay.width + sidebarResizeHandle.width) / 3))
 
@@ -533,7 +533,7 @@ FocusScope {
 
             implicitWidth: Math.round(VLCStyle.isScreenSmall
                            ? g_mainDisplay.width * 0.8
-                           : Helpers.clamp(g_mainDisplay.width / MainCtx.playqueuePanel.widthFactor,
+                           : Helpers.clamp(MainCtx.playqueuePanel.width,
                                            minimumWidth,
                                            (g_mainDisplay.width + playqueueResizeHandle.width ) / 3))
 
@@ -786,31 +786,30 @@ FocusScope {
             }
 
             atRight: false
-            targetWidth: target.width
-            sourceWidth: g_mainDisplay.width
+            currentWidth: target.width
 
             visible: !VLCStyle.isScreenSmall
 
-            onWidthFactorChanged: {
+            onRequestedWidthChanged: {
                 if (!_inhibitMainInterfaceUpdate)
-                    paneResizeHandle.panelObject.widthFactor = widthFactor
+                    paneResizeHandle.panelObject.width = requestedWidth
             }
 
             Component.onCompleted:  _updateFromMainInterface()
 
             function _updateFromMainInterface() {
-                if (widthFactor === paneResizeHandle.panelObject.widthFactor)
+                if (requestedWidth === paneResizeHandle.panelObject.width)
                     return
 
                 _inhibitMainInterfaceUpdate = true
-                widthFactor = paneResizeHandle.panelObject.widthFactor
+                requestedWidth = paneResizeHandle.panelObject.width
                 _inhibitMainInterfaceUpdate = false
             }
 
             Connections {
                 target: paneResizeHandle.panelObject
 
-                function onWidthFactorChanged() {
+                function onWidthChanged() {
                     resizeHandle._updateFromMainInterface()
                 }
             }
