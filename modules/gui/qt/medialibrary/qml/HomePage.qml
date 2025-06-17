@@ -192,6 +192,7 @@ T.Page {
                 sectionProperty: ""
 
                 interactive: false
+                autoscroll: false
 
                 emptyLabel: null
 
@@ -278,6 +279,7 @@ T.Page {
                 listSectionProperty: ""
 
                 interactive: false
+                autoscroll: false
 
                 emptyLabel: null
 
@@ -350,6 +352,7 @@ T.Page {
                 listSectionProperty: ""
 
                 interactive: false
+                autoscroll: false
 
                 emptyLabel: null
 
