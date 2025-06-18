@@ -30,7 +30,9 @@ typedef struct mc_api_out mc_api_out;
 
 typedef int (*pf_MediaCodecApi_init)(mc_api*);
 
-int MediaCodecJni_Init(mc_api*);
+char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
+                         const char *psz_mime, int profile, int *p_quirks);
+
 int MediaCodecNdk_Init(mc_api*);
 
 #define MC_API_ERROR (-1)
