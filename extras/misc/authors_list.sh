@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # A script checking the git logs for commits. Final goal is updating AUTHORS.
 # Run it in source root

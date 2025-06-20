@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 case "$SNAP_ARCH" in
 	"amd64") ARCH='x86_64-linux-gnu'
 	;;
