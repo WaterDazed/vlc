@@ -129,6 +129,7 @@ class MainCtx : public QObject
     Q_PROPERTY(float safeArea READ safeArea NOTIFY safeAreaChanged FINAL)
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ getVideoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(int mouseHideTimeout READ mouseHideTimeout NOTIFY mouseHideTimeoutChanged FINAL)
+    Q_PROPERTY(QQuickItem* playerControlBar MEMBER m_playerControlBar NOTIFY playerControlBarChanged FINAL)
 
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
 
@@ -454,6 +455,8 @@ protected:
     SearchCtx* m_search = nullptr;
     SortCtx* m_sort = nullptr;
 
+    QPointer<QQuickItem> m_playerControlBar;
+
 #ifdef UPDATE_CHECK
     //m_updateModel is created on first access
     mutable std::unique_ptr<UpdateModel> m_updateModel;
@@ -567,6 +570,8 @@ signals:
     void requestShowPlayerView();
 
     void artistAlbumsWidthFactorChanged( double );
+
+    void playerControlBarChanged();
 
 private:
     void loadPrefs(bool callSignals);

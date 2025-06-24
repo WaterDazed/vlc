@@ -29,7 +29,7 @@ import VLC.Util
 import VLC.Dialogs
 
 FocusScope {
-    id: g_mainDisplay
+    id: root
 
     // Properties
 
@@ -188,7 +188,7 @@ FocusScope {
         Layout.minimumWidth: VLCStyle.minWindowWidth
         spacing: 0
 
-        Navigation.parentItem: g_mainDisplay
+        Navigation.parentItem: root
 
         /* Source selection*/
         BannerSources {
@@ -199,14 +199,14 @@ FocusScope {
             Layout.maximumHeight: height
             Layout.fillWidth: true
 
-            model: g_mainDisplay.tabModel
+            model: root.tabModel
 
             playlistPane: playlistLoader.active ? playlistLoader.item
                                                 : (playlistWindowLoader.status === Loader.Ready ? playlistWindowLoader.item.playlistView
                                                                                                 : null)
 
             onItemClicked: (index) => {
-                const name = g_mainDisplay.tabModel.get(index).name
+                const name = root.tabModel.get(index).name
 
                 //don't add the ["mc"] prefix as we are only testing subviers from MainDisplay
                 if (stackView.isDefaulLoadedForPath([name])) {
@@ -287,9 +287,9 @@ FocusScope {
                     anchors.rightMargin: (playlistLoader.shown && !VLCStyle.isScreenSmall)
                                          ? playlistLoader.width
                                          : 0
-                    anchors.bottomMargin: g_mainDisplay.displayMargin
+                    anchors.bottomMargin: root.displayMargin
 
-                    pageModel: g_mainDisplay.pageModel
+                    pageModel: root.pageModel
 
                     leftPadding: VLCStyle.applicationHorizontalMargin
 
@@ -303,10 +303,10 @@ FocusScope {
                                 // Main pages need to compensate for the mini player:
 
                                 if (currentItem.displayMarginEnd !== undefined)
-                                    currentItem.displayMarginEnd = Qt.binding(() => { return g_mainDisplay.displayMargin })
+                                    currentItem.displayMarginEnd = Qt.binding(() => { return root.displayMargin })
 
                                 if (currentItem.enableEndFade !== undefined)
-                                    currentItem.enableEndFade = Qt.binding(() => { return (g_mainDisplay.hasMiniPlayer === false) })
+                                    currentItem.enableEndFade = Qt.binding(() => { return (root.hasMiniPlayer === false) })
                             }
                         }
                     }
@@ -349,7 +349,7 @@ FocusScope {
                 }
 
                 width: 0
-                height: parent.height - g_mainDisplay.displayMargin
+                height: parent.height - root.displayMargin
 
                 visible: false
 
@@ -400,17 +400,17 @@ FocusScope {
                     id: playlist
 
                     implicitWidth: Math.round(VLCStyle.isScreenSmall
-                                   ? g_mainDisplay.width * 0.8
-                                   : Helpers.clamp(g_mainDisplay.width / resizeHandle.widthFactor,
+                                   ? root.width * 0.8
+                                   : Helpers.clamp(root.width / resizeHandle.widthFactor,
                                                    minimumWidth,
-                                                   g_mainDisplay.width / 2 + playlistLeftBorder.width / 2))
+                                                   root.width / 2 + playlistLeftBorder.width / 2))
 
                     focus: true
 
                     leftPadding: playlistLeftBorder.width
                     rightPadding: VLCStyle.applicationHorizontalMargin
                     topPadding: VLCStyle.layoutTitle_top_padding
-                    bottomPadding: VLCStyle.margin_normal + Math.max(VLCStyle.applicationVerticalMargin - g_mainDisplay.displayMargin, 0)
+                    bottomPadding: VLCStyle.margin_normal + Math.max(VLCStyle.applicationVerticalMargin - root.displayMargin, 0)
 
                     useAcrylic: !VLCStyle.isScreenSmall
 
@@ -459,7 +459,7 @@ FocusScope {
 
                         atRight: false
                         targetWidth: parent.width
-                        sourceWidth: g_mainDisplay.width
+                        sourceWidth: root.width
 
                         visible: !VLCStyle.isScreenSmall
 
@@ -530,17 +530,17 @@ FocusScope {
             width: VLCStyle.dp(320, VLCStyle.scale)
             height: VLCStyle.dp(180, VLCStyle.scale)
             z: 2
-            visible: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-            enabled: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
+            visible: root._showMiniPlayer && MainCtx.hasEmbededVideo
+            enabled: root._showMiniPlayer && MainCtx.hasEmbededVideo
 
             dragXMin: 0
-            dragXMax: g_mainDisplay.width - playerPip.width
+            dragXMax: root.width - playerPip.width
             dragYMin: sourcesBanner.y + sourcesBanner.height
             dragYMax: miniPlayer.y - playerPip.height
 
             //keep the player visible on resize
             Connections {
-                target: g_mainDisplay
+                target: root
                 function onWidthChanged() {
                     if (playerPip.x > playerPip.dragXMax)
                         playerPip.x = playerPip.dragXMax
@@ -555,7 +555,7 @@ FocusScope {
 
     Dialogs {
         z: 10
-        bgContent: g_mainDisplay
+        bgContent: root
 
         anchors {
             bottom: miniPlayer.visible ? miniPlayer.top : parent.bottom
