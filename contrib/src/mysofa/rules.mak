@@ -1,6 +1,6 @@
 # Mysofa
 
-MYSOFA_VERSION := 0.5
+MYSOFA_VERSION := 1.3.2
 MYSOFA_URL = $(GITHUB)/hoene/libmysofa/archive/v$(MYSOFA_VERSION).tar.gz
 
 PKGS += mysofa
@@ -31,4 +31,3 @@ MYSOFA_CONF := -DBUILD_TESTS=OFF
 	+$(CMAKEBUILD)
 	$(CMAKEINSTALL)
 	touch $@
-
