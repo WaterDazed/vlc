@@ -21,6 +21,7 @@ $(TARBALLS)/libmysofa-$(MYSOFA_VERSION).tar.gz:
 
 mysofa: libmysofa-$(MYSOFA_VERSION).tar.gz .sum-mysofa
 	$(UNPACK)
+	$(APPLY) $(SRC)/mysofa/use-cmake-35-as-min.patch
 	$(MOVE)
 
 MYSOFA_CONF := -DBUILD_TESTS=OFF
