@@ -61,6 +61,7 @@ pluginsinclude_HEADERS.h = \
 	../include/vlc_hash.h \
 	../include/vlc_http.h \
 	../include/vlc_httpd_legacy.h \
+	../include/vlc_httpd.h \
 	../include/vlc_image.h \
 	../include/vlc_inhibit.h \
 	../include/vlc_input.h \
@@ -366,6 +367,7 @@ libvlccore_la_SOURCES = \
 	network/getaddrinfo.c \
 	network/http_auth.c \
 	network/httpd_legacy.c \
+	network/httpd.c \
 	network/io.c \
 	network/tcp.c \
 	network/udp.c \
