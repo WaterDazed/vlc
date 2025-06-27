@@ -62,6 +62,7 @@ include access/Makefile.am
 include access/http/Makefile.am
 include access/rtp/Makefile.am
 include access/rtp/test/Makefile.am
+include ai_recommendations/Makefile.am
 include audio_filter/Makefile.am
 include audio_mixer/Makefile.am
 include audio_output/Makefile.am
