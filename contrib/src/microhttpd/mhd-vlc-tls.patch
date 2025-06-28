@@ -1,0 +1,3005 @@
+diff --git microhttpd/configure.ac microhttpd/configure.ac
+index 91393ab..2298f84 100644
+--- microhttpd/configure.ac
++++ microhttpd/configure.ac
+@@ -5341,6 +5341,14 @@ AS_UNSET([MHD_TLS_LIB_LDFLAGS])
+ AS_UNSET([MHD_TLS_LIBDEPS])
+ MSG_TLS_BACKENDS="none"
+ 
++# optional: External TLS support
++AC_ARG_ENABLE([external-tls],
++  [AS_HELP_STRING([--enable-external-tls],
++    [enable external TLS library for HTTPS support (yes, no) [no]])],
++  [enable_external_tls=${enableval}],
++  [enable_external_tls="no"]
++)
++
+ # optional: HTTPS support.  Enabled if GnuTLS is available.
+ AC_ARG_ENABLE([https],
+    [AS_HELP_STRING([--enable-https],
+@@ -5692,7 +5700,7 @@ choke me now
+     )
+ 
+ 
+-    AS_IF([test "x$have_gnutls" = "xyes" || test "x$have_openssl" = "xyes"],
++    AS_IF([test "x$have_gnutls" = "xyes" || test "x$have_openssl" = "xyes" || test "x$enable_external_tls" = "xyes"],
+       [
+         enable_https="yes"
+         multiple_tls="no"
+@@ -5728,6 +5736,18 @@ choke me now
+             MHD_PREPEND_FLAG_TO_VAR([MHD_TLS_LIBDEPS],[$OPENSSL_LIBS])
+           ]
+         )
++        AS_VAR_IF([enable_external_tls],["yes"],
++          [
++            AS_IF([test -n "${MSG_TLS_BACKENDS}"],
++              [
++                MSG_TLS_BACKENDS="${MSG_TLS_BACKENDS}, "
++                multiple_tls="yes"
++              ]
++            )
++            AC_DEFINE([MHD_SUPPORT_EXTERNAL],[1],[Define to '1' i][f External library should be used])
++            MSG_TLS_BACKENDS="${MSG_TLS_BACKENDS}External"
++          ]
++        )
+         AS_VAR_IF([multiple_tls],["yes"],
+           [
+             MSG_HTTPS="yes (multiple backends)"
+@@ -5782,6 +5802,7 @@ AM_CONDITIONAL([MHD_SUPPORT_OPENSSL], [[test "x$have_openssl" = "xyes"]])
+ AC_SUBST([OPENSSL_CPPFLAGS])
+ AC_SUBST([OPENSSL_LDFLAGS])
+ AC_SUBST([OPENSSL_LIBS])
++AM_CONDITIONAL([MHD_SUPPORT_EXTERNAL], [test "x$enable_external_tls" = "xyes"])
+ AM_CONDITIONAL([MHD_ENABLE_MULTITLS], [test "x$multiple_tls" = "xyes"])
+ AM_CONDITIONAL([MHD_SUPPORT_HTTPS], [test "x$enable_https" = "xyes"])
+ 
+diff --git microhttpd/src/include/d_options.rec microhttpd/src/include/d_options.rec
+index b3e5d6e..3c8c3e3 100644
+--- microhttpd/src/include/d_options.rec
++++ microhttpd/src/include/d_options.rec
+@@ -255,6 +255,17 @@ Comment: Control ALPN for TLS connection.
+ 
+ # Connection handling
+ 
++Name: external_tls_data
++Value: 150
++Comment: User-provided data for external TLS backend.
+++ Auto sets TLS backend as MHD_TLS_BACKEND_EXTERNAL
+++ Does not work with #MHD_D_OPTION_TLS()
++Type: struct MHD_DaemonOptionValueExternalTlsData
++Argument1: MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE *ctx
++Description1: External TLS context
++Argument2: struct MHD_DaemonTLSCallbacks *tls_cbs
++Description2: Callbacks for external TLS
++
+ Name: DEFAULT_TIMEOUT
+ Value: 160
+ Comment: Specify inactivity timeout for connection.
+diff --git microhttpd/src/include/microhttpd2.h microhttpd/src/include/microhttpd2.h
+index 06d85a2..d561d85 100644
+--- microhttpd/src/include/microhttpd2.h
++++ microhttpd/src/include/microhttpd2.h
+@@ -1573,6 +1573,12 @@ enum MHD_FIXED_ENUM_MHD_SET_ MHD_StatusCode
+    */
+   MHD_SC_TLS_BACKEND_DAEMON_INCOMPATIBLE_SETTINGS = 60034
+   ,
++  /**
++   * The application requested an external TLS backend which cannot be used due
++   * to missing user provided TLS callbacks.
++   */
++  MHD_SC_TLS_EXTERNAL_DATA_UNAVAILABLE = 60035
++  ,
+   /**
+    * The response header name has forbidden characters or token
+    */
+@@ -3620,6 +3626,11 @@ enum MHD_FIXED_ENUM_APP_SET_ MHD_TlsBackend
+    * Use OpenSSL as TLS backend.
+    */
+   MHD_TLS_BACKEND_OPENSSL = 3
++  ,
++  /**
++   * Use External TLS backend.
++   */
++  MHD_TLS_BACKEND_EXTERNAL = 4,
+ };
+ 
+ /**
+@@ -3782,6 +3793,166 @@ struct MHD_EarlyUriCbData
+   enum MHD_HTTP_Method method;
+ };
+ 
++/**
++ * The versions of TLS protocol
++ */
++enum MHD_FIXED_ENUM_MHD_SET_ MHD_TlsVersion
++{
++
++  /**
++   * No TLS / plain socket connection
++   */
++  MHD_TLS_VERSION_NO_TLS = 0
++  ,
++  /**
++   * Not supported/failed to negotiate/failed to handshake TLS
++   */
++  MHD_TLS_VERSION_BROKEN = 1
++  ,
++  /**
++   * TLS version 1.0
++   */
++  MHD_TLS_VERSION_1_0 = 2
++  ,
++  /**
++   * TLS version 1.1
++   */
++  MHD_TLS_VERSION_1_1 = 3
++  ,
++  /**
++   * TLS version 1.2
++   */
++  MHD_TLS_VERSION_1_2 = 4
++  ,
++  /**
++   * TLS version 1.3
++   */
++  MHD_TLS_VERSION_1_3 = 5
++  ,
++  /**
++   * Some unknown TLS version.
++   * The TLS version is supported by TLS backend, but unknown to MHD.
++   */
++  MHD_TLS_VERSION_UNKNOWN = 1999
++};
++
++/* Define MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE to the external TLS daemon
++ * context type before including this header.
++ * This is optional, but improves the types safety.
++ * For example:
++ * #define MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE struct my_structure
++ * 
++ * Alternatively, define struct MHD_ExtrnDaemonTlsCntx as you need in
++ * the application code. This type is opaque for MHD.
++ */
++#ifndef MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE
++struct MHD_ExtrnDaemonTlsCntx;
++#  define MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE struct MHD_ExtrnDaemonTlsCntx
++#endif
++
++struct MHD_DaemonTLSCallbacks
++{
++  /**
++   * Callback for allocating daemon credentials.
++   * @param ctx the context for the callback
++   * @param cert public certificate
++   * @param key private key
++   * @return the credentials handle
++   */
++  void*
++  (*daemon_init)(MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE *ctx, const char *cert, const char *key);
++
++  /**
++   * Callback for deallocating daemon credentials.
++   * @param cred the credentials to deallocate
++   */
++  void
++  (*daemon_deinit)(void *cred);
++
++  /**
++   * Callback for initiating TLS session.
++   * @param cred the daemon credentials
++   * @param fd the socket file descriptor
++   * @param alpn NULL-terminated list of Application Layer Protocols to negotiate,
++   *             or NULL to not negotiate protocols
++   * @return TLS session handle
++   */
++  void*
++  (*conn_init)(void *cred, int fd, const char *const *alpn);
++
++  /**
++   * Callback for deallocating TLS session.
++   * @param sess the session to deallocate
++   */
++  void
++  (*conn_deinit)(void *sess);
++
++  /**
++   * Callback for performing TLS handshake.
++   * @param cred the daemon credentials
++   * @param sess the session to use
++   * @return -1 on fatal error, 0 on successful handshake completion,
++   * 1 if more would-be blocking recv is needed,
++   * 2 if more would-be blocking send is required.
++   */
++  int
++  (*conn_handshake)(void *cred, void *sess);
++
++  /**
++   * Callback for shutting down TLS session.
++   * @param sess the session to use
++   * @param duplex whether to stop receiving data as well,
++   *               if true, sends a close_notify alert to the peer and waits to receive one back
++   *               if false, sends a close_notify alert to the peer but does not wait for a reply
++   * @return -1 on fatal error, 0 on successful shutdown completion,
++   * 1 if more would-be blocking recv is needed,
++   * 2 if more would-be blocking send is required.
++   */
++  int
++  (*conn_shutdown)(void *sess, int duplex);
++
++  /**
++   * Callback for receiving data from TLS session.
++   * @param sess the session to use
++   * @param buf the buffer to receive data into
++   * @param buf_size the size of the buffer
++   * @return -1 on fatal error, -2 on more would-be blocking operation needed,
++   * 0 on EOF, else size of data read
++   * @note MHD never invokes this callback with @a buf_size > INT_MAX.
++   */
++  int
++  (*conn_recv)(void *sess, void *buf, size_t buf_size);
++
++  /**
++   * Callback for checking if there is data to read from TLS session buffer.
++   * @param sess the session to use
++   * @return 0 if no data, 1 if data is available
++   */
++  int
++  (*conn_has_data_in)(void *sess);
++
++  /**
++   * Callback for sending data to TLS session.
++   * @param sess the session to use
++   * @param buf the buffer to send data from
++   * @param buf_size the size of the buffer
++   * @return -1 on fatal error, -2 on more would-be blocking operation needed,
++   * else size of data sent
++   * @note MHD never invokes this callback with @a buf_size > INT_MAX.
++   */
++  int
++  (*conn_send)(void *sess, const void *buf, size_t buf_size);
++
++  /**
++   * Callback to get the TLS version of the session.
++   * @param sess the session to use
++   * @return the TLS version of the session
++   * @see enum MHD_TlsVersion
++   */
++  enum MHD_TlsVersion
++  (*conn_get_tls_ver)(void *sess);
++};
++
+ /**
+  * Function called by MHD to allow the application to log the @a full_uri
+  * of the new request.
+@@ -4346,6 +4517,20 @@ MHD_D_OPTION_NO_ALPN (
+   enum MHD_Bool value
+   );
+ 
++/**
++ * User-provided data for external TLS backend.
++ * Auto sets TLS backend as MHD_TLS_BACKEND_EXTERNAL
++ * Does not work with #MHD_D_OPTION_TLS()
++ * @param ctx External TLS context
++ * @param tls_cbs Callbacks for external TLS
++ * @return structure with the requested setting
++ */
++struct MHD_DaemonOptionAndValue
++MHD_D_OPTION_EXTERNAL_TLS_DATA (
++  MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE *ctx,
++  struct MHD_DaemonTLSCallbacks *tls_cbs
++  );
++
+ /**
+  * Specify inactivity timeout for connection.
+  * When no activity for specified time on connection, it is closed
+@@ -9019,6 +9204,10 @@ struct MHD_LibInfoTLSType
+    * The OpenSSL backend is supported/available/enabled.
+    */
+   enum MHD_Bool backend_openssl;
++  /**
++   * The external backend is supported/available/enabled.
++   */
++  enum MHD_Bool backend_external;
+ };
+ 
+ /**
+@@ -9993,48 +10182,6 @@ enum MHD_ConnectionInfoDynamicType
+ };
+ 
+ 
+-/**
+- * The versions of TLS protocol
+- */
+-enum MHD_FIXED_ENUM_MHD_SET_ MHD_TlsVersion
+-{
+-
+-  /**
+-   * No TLS / plain socket connection
+-   */
+-  MHD_TLS_VERSION_NO_TLS = 0
+-  ,
+-  /**
+-   * Not supported/failed to negotiate/failed to handshake TLS
+-   */
+-  MHD_TLS_VERSION_BROKEN = 1
+-  ,
+-  /**
+-   * TLS version 1.0
+-   */
+-  MHD_TLS_VERSION_1_0 = 2
+-  ,
+-  /**
+-   * TLS version 1.1
+-   */
+-  MHD_TLS_VERSION_1_1 = 3
+-  ,
+-  /**
+-   * TLS version 1.2
+-   */
+-  MHD_TLS_VERSION_1_2 = 4
+-  ,
+-  /**
+-   * TLS version 1.3
+-   */
+-  MHD_TLS_VERSION_1_3 = 5
+-  ,
+-  /**
+-   * Some unknown TLS version.
+-   * The TLS version is supported by TLS backend, but unknown to MHD.
+-   */
+-  MHD_TLS_VERSION_UNKNOWN = 1999
+-};
+ 
+ /**
+  * Connection TLS session information.
+@@ -10063,6 +10210,8 @@ union MHD_ConnInfoDynamicTlsSess
+ #else
+   void /* SSL */ *v_openssl_session;
+ #endif
++
++  void *v_external_session;
+ };
+ 
+ /**
+diff --git microhttpd/src/include/microhttpd2_generated_daemon_options.h microhttpd/src/include/microhttpd2_generated_daemon_options.h
+index a257340..b4fc312 100644
+--- microhttpd/src/include/microhttpd2_generated_daemon_options.h
++++ microhttpd/src/include/microhttpd2_generated_daemon_options.h
+@@ -148,6 +148,14 @@ Works only when #MHD_D_OPTION_BIND_PORT() or #MHD_D_OPTION_BIND_SA() are used.
+   MHD_D_O_NO_ALPN = 140
+   ,
+ 
++  /**
++   * User-provided data for external TLS backend.
++   * Auto sets TLS backend as MHD_TLS_BACKEND_EXTERNAL
++   * Does not work with #MHD_D_OPTION_TLS()
++   */
++  MHD_D_O_EXTERNAL_TLS_DATA = 150
++  ,
++
+   /**
+    * Specify inactivity timeout for connection.
+    * When no activity for specified time on connection, it is closed
+@@ -491,6 +499,23 @@ struct MHD_DaemonOptionValueTlsPskCB
+ 
+ };
+ 
++/**
++ * Data for #MHD_D_O_EXTERNAL_TLS_DATA
++ */
++struct MHD_DaemonOptionValueExternalTlsData
++{
++  /**
++   * External TLS context
++   */
++  MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE *v_ctx;
++
++  /**
++   * Callbacks for external TLS
++   */
++  struct MHD_DaemonTLSCallbacks *v_tls_cbs;
++
++};
++
+ /**
+  * Data for #MHD_D_O_ACCEPT_POLICY
+  */
+@@ -714,6 +739,12 @@ union MHD_DaemonOptionValue
+    */
+   enum MHD_Bool no_alpn;
+ 
++  /**
++   * Value for #MHD_D_O_EXTERNAL_TLS_DATA.
++   * External TLS context
++   */
++  struct MHD_DaemonOptionValueExternalTlsData external_tls_data;
++
+   /**
+    * Value for #MHD_D_O_DEFAULT_TIMEOUT.
+    * the in seconds, zero for no timeout
+@@ -1148,6 +1179,23 @@ Works only when #MHD_D_OPTION_BIND_PORT() or #MHD_D_OPTION_BIND_SA() are used.
+           .val.no_alpn = (value) \
+         } \
+         MHD_RESTORE_WARN_COMPOUND_LITERALS_ MHD_RESTORE_WARN_AGGR_DYN_INIT_
++/**
++ * User-provided data for external TLS backend.
++ * Auto sets TLS backend as MHD_TLS_BACKEND_EXTERNAL
++ * Does not work with #MHD_D_OPTION_TLS()
++ * @param ctx External TLS context
++ * @param tls_cbs Callbacks for external TLS
++ * @return structure with the requested setting
++ */
++#  define MHD_D_OPTION_EXTERNAL_TLS_DATA(ctx,tls_cbs) \
++        MHD_NOWARN_COMPOUND_LITERALS_ MHD_NOWARN_AGGR_DYN_INIT_ \
++          (const struct MHD_DaemonOptionAndValue) \
++        { \
++          .opt = MHD_D_O_EXTERNAL_TLS_DATA,  \
++          .val.external_tls_data.v_ctx = (ctx), \
++          .val.external_tls_data.v_tls_cbs = (tls_cbs) \
++        } \
++        MHD_RESTORE_WARN_COMPOUND_LITERALS_ MHD_RESTORE_WARN_AGGR_DYN_INIT_
+ /**
+  * Specify inactivity timeout for connection.
+  * When no activity for specified time on connection, it is closed
+@@ -1938,6 +1986,30 @@ MHD_D_OPTION_NO_ALPN (
+ }
+ 
+ 
++/**
++ * User-provided data for external TLS backend.
++ * Auto sets TLS backend as MHD_TLS_BACKEND_EXTERNAL
++ * Does not work with #MHD_D_OPTION_TLS()
++ * @param ctx External TLS context
++ * @param tls_cbs Callbacks for external TLS
++ * @return structure with the requested setting
++ */
++static MHD_INLINE struct MHD_DaemonOptionAndValue
++MHD_D_OPTION_EXTERNAL_TLS_DATA (
++  MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE *ctx,
++  struct MHD_DaemonTLSCallbacks *tls_cbs
++  )
++{
++  struct MHD_DaemonOptionAndValue opt_val;
++
++  opt_val.opt = MHD_D_O_EXTERNAL_TLS_DATA;
++  opt_val.val.external_tls_data.v_ctx = ctx;
++  opt_val.val.external_tls_data.v_tls_cbs = tls_cbs;
++
++  return opt_val;
++}
++
++
+ /**
+  * Specify inactivity timeout for connection.
+  * When no activity for specified time on connection, it is closed
+diff --git microhttpd/src/include/microhttpd2_main.h.in microhttpd/src/include/microhttpd2_main.h.in
+index b495171..57afc44 100644
+--- microhttpd/src/include/microhttpd2_main.h.in
++++ microhttpd/src/include/microhttpd2_main.h.in
+@@ -4233,6 +4233,10 @@ struct MHD_LibInfoTLSType
+    * The OpenSSL backend is supported/available/enabled.
+    */
+   enum MHD_Bool backend_openssl;
++  /**
++   * The external backend is supported/available/enabled.
++   */
++  enum MHD_Bool backend_external;
+ };
+ 
+ /**
+@@ -5207,48 +5211,6 @@ enum MHD_ConnectionInfoDynamicType
+ };
+ 
+ 
+-/**
+- * The versions of TLS protocol
+- */
+-enum MHD_FIXED_ENUM_MHD_SET_ MHD_TlsVersion
+-{
+-
+-  /**
+-   * No TLS / plain socket connection
+-   */
+-  MHD_TLS_VERSION_NO_TLS = 0
+-  ,
+-  /**
+-   * Not supported/failed to negotiate/failed to handshake TLS
+-   */
+-  MHD_TLS_VERSION_BROKEN = 1
+-  ,
+-  /**
+-   * TLS version 1.0
+-   */
+-  MHD_TLS_VERSION_1_0 = 2
+-  ,
+-  /**
+-   * TLS version 1.1
+-   */
+-  MHD_TLS_VERSION_1_1 = 3
+-  ,
+-  /**
+-   * TLS version 1.2
+-   */
+-  MHD_TLS_VERSION_1_2 = 4
+-  ,
+-  /**
+-   * TLS version 1.3
+-   */
+-  MHD_TLS_VERSION_1_3 = 5
+-  ,
+-  /**
+-   * Some unknown TLS version.
+-   * The TLS version is supported by TLS backend, but unknown to MHD.
+-   */
+-  MHD_TLS_VERSION_UNKNOWN = 1999
+-};
+ 
+ /**
+  * Connection TLS session information.
+@@ -5277,6 +5239,8 @@ union MHD_ConnInfoDynamicTlsSess
+ #else
+   void /* SSL */ *v_openssl_session;
+ #endif
++
++  void *v_external_session;
+ };
+ 
+ /**
+diff --git microhttpd/src/include/microhttpd2_preamble.h.in microhttpd/src/include/microhttpd2_preamble.h.in
+index a262ba3..80bbb8c 100644
+--- microhttpd/src/include/microhttpd2_preamble.h.in
++++ microhttpd/src/include/microhttpd2_preamble.h.in
+@@ -1573,6 +1573,12 @@ enum MHD_FIXED_ENUM_MHD_SET_ MHD_StatusCode
+    */
+   MHD_SC_TLS_BACKEND_DAEMON_INCOMPATIBLE_SETTINGS = 60034
+   ,
++  /**
++   * The application requested an external TLS backend which cannot be used due
++   * to missing user provided TLS callbacks.
++   */
++  MHD_SC_TLS_EXTERNAL_DATA_UNAVAILABLE = 60035
++  ,
+   /**
+    * The response header name has forbidden characters or token
+    */
+@@ -3620,6 +3626,11 @@ enum MHD_FIXED_ENUM_APP_SET_ MHD_TlsBackend
+    * Use OpenSSL as TLS backend.
+    */
+   MHD_TLS_BACKEND_OPENSSL = 3
++  ,
++  /**
++   * Use External TLS backend.
++   */
++  MHD_TLS_BACKEND_EXTERNAL = 4,
+ };
+ 
+ /**
+@@ -3782,6 +3793,166 @@ struct MHD_EarlyUriCbData
+   enum MHD_HTTP_Method method;
+ };
+ 
++/**
++ * The versions of TLS protocol
++ */
++enum MHD_FIXED_ENUM_MHD_SET_ MHD_TlsVersion
++{
++
++  /**
++   * No TLS / plain socket connection
++   */
++  MHD_TLS_VERSION_NO_TLS = 0
++  ,
++  /**
++   * Not supported/failed to negotiate/failed to handshake TLS
++   */
++  MHD_TLS_VERSION_BROKEN = 1
++  ,
++  /**
++   * TLS version 1.0
++   */
++  MHD_TLS_VERSION_1_0 = 2
++  ,
++  /**
++   * TLS version 1.1
++   */
++  MHD_TLS_VERSION_1_1 = 3
++  ,
++  /**
++   * TLS version 1.2
++   */
++  MHD_TLS_VERSION_1_2 = 4
++  ,
++  /**
++   * TLS version 1.3
++   */
++  MHD_TLS_VERSION_1_3 = 5
++  ,
++  /**
++   * Some unknown TLS version.
++   * The TLS version is supported by TLS backend, but unknown to MHD.
++   */
++  MHD_TLS_VERSION_UNKNOWN = 1999
++};
++
++/* Define MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE to the external TLS daemon
++ * context type before including this header.
++ * This is optional, but improves the types safety.
++ * For example:
++ * #define MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE struct my_structure
++ * 
++ * Alternatively, define struct MHD_ExtrnDaemonTlsCntx as you need in
++ * the application code. This type is opaque for MHD.
++ */
++#ifndef MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE
++struct MHD_ExtrnDaemonTlsCntx;
++#  define MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE struct MHD_ExtrnDaemonTlsCntx
++#endif
++
++struct MHD_DaemonTLSCallbacks
++{
++  /**
++   * Callback for allocating daemon credentials.
++   * @param ctx the context for the callback
++   * @param cert public certificate
++   * @param key private key
++   * @return the credentials handle
++   */
++  void*
++  (*daemon_init)(MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE *ctx, const char *cert, const char *key);
++
++  /**
++   * Callback for deallocating daemon credentials.
++   * @param cred the credentials to deallocate
++   */
++  void
++  (*daemon_deinit)(void *cred);
++
++  /**
++   * Callback for initiating TLS session.
++   * @param cred the daemon credentials
++   * @param fd the socket file descriptor
++   * @param alpn NULL-terminated list of Application Layer Protocols to negotiate,
++   *             or NULL to not negotiate protocols
++   * @return TLS session handle
++   */
++  void*
++  (*conn_init)(void *cred, int fd, const char *const *alpn);
++
++  /**
++   * Callback for deallocating TLS session.
++   * @param sess the session to deallocate
++   */
++  void
++  (*conn_deinit)(void *sess);
++
++  /**
++   * Callback for performing TLS handshake.
++   * @param cred the daemon credentials
++   * @param sess the session to use
++   * @return -1 on fatal error, 0 on successful handshake completion,
++   * 1 if more would-be blocking recv is needed,
++   * 2 if more would-be blocking send is required.
++   */
++  int
++  (*conn_handshake)(void *cred, void *sess);
++
++  /**
++   * Callback for shutting down TLS session.
++   * @param sess the session to use
++   * @param duplex whether to stop receiving data as well,
++   *               if true, sends a close_notify alert to the peer and waits to receive one back
++   *               if false, sends a close_notify alert to the peer but does not wait for a reply
++   * @return -1 on fatal error, 0 on successful shutdown completion,
++   * 1 if more would-be blocking recv is needed,
++   * 2 if more would-be blocking send is required.
++   */
++  int
++  (*conn_shutdown)(void *sess, int duplex);
++
++  /**
++   * Callback for receiving data from TLS session.
++   * @param sess the session to use
++   * @param buf the buffer to receive data into
++   * @param buf_size the size of the buffer
++   * @return -1 on fatal error, -2 on more would-be blocking operation needed,
++   * 0 on EOF, else size of data read
++   * @note MHD never invokes this callback with @a buf_size > INT_MAX.
++   */
++  int
++  (*conn_recv)(void *sess, void *buf, size_t buf_size);
++
++  /**
++   * Callback for checking if there is data to read from TLS session buffer.
++   * @param sess the session to use
++   * @return 0 if no data, 1 if data is available
++   */
++  int
++  (*conn_has_data_in)(void *sess);
++
++  /**
++   * Callback for sending data to TLS session.
++   * @param sess the session to use
++   * @param buf the buffer to send data from
++   * @param buf_size the size of the buffer
++   * @return -1 on fatal error, -2 on more would-be blocking operation needed,
++   * else size of data sent
++   * @note MHD never invokes this callback with @a buf_size > INT_MAX.
++   */
++  int
++  (*conn_send)(void *sess, const void *buf, size_t buf_size);
++
++  /**
++   * Callback to get the TLS version of the session.
++   * @param sess the session to use
++   * @return the TLS version of the session
++   * @see enum MHD_TlsVersion
++   */
++  enum MHD_TlsVersion
++  (*conn_get_tls_ver)(void *sess);
++};
++
+ /**
+  * Function called by MHD to allow the application to log the @a full_uri
+  * of the new request.
+diff --git microhttpd/src/mhd2/Makefile.am microhttpd/src/mhd2/Makefile.am
+index 7be2b1b..ebf2870 100644
+--- microhttpd/src/mhd2/Makefile.am
++++ microhttpd/src/mhd2/Makefile.am
+@@ -182,6 +182,10 @@ tls_open_OPTSOURCES = \
+   tls_open_tls_lib.h        tls_open_daemon_data.h    tls_open_conn_data.h \
+   tls_open_funcs.c          tls_open_funcs.h
+ 
++tls_external_OPTSOURCES = \
++  tls_external_daemon_data.h  tls_external_conn_data.h \
++  tls_external_funcs.c        tls_external_funcs.h
++
+ if MHD_SUPPORT_POST_PARSER
+   libmicrohttpd2_la_SOURCES += $(post_parser_OPTSOURCES)
+ endif
+@@ -216,6 +220,10 @@ endif
+ if MHD_SUPPORT_OPENSSL
+   libmicrohttpd2_la_SOURCES += $(tls_open_OPTSOURCES)
+ endif
++
++if MHD_SUPPORT_EXTERNAL
++  libmicrohttpd2_la_SOURCES += $(tls_external_OPTSOURCES)
++endif
+ endif
+ 
+ libmicrohttpd2_la_CPPFLAGS = \
+diff --git microhttpd/src/mhd2/daemon_create.c microhttpd/src/mhd2/daemon_create.c
+index f79af6b..9bb8ab5 100644
+--- microhttpd/src/mhd2/daemon_create.c
++++ microhttpd/src/mhd2/daemon_create.c
+@@ -101,6 +101,8 @@ MHD_daemon_create (MHD_RequestCallback req_cb,
+   s->tls_cert_key.v_mem_cert = NULL;
+   s->tls_cert_key.v_mem_key = NULL;
+   s->tls_cert_key.v_mem_pass = NULL;
++  s->external_tls_data.v_ctx = NULL;
++  s->external_tls_data.v_tls_cbs = NULL;
+ 
+   /* d->log_params.v_log_cb = NULL; */ /* used directly */
+ #endif /* !HAVE_NULL_PTR_ALL_ZEROS */
+diff --git microhttpd/src/mhd2/daemon_get_info.c microhttpd/src/mhd2/daemon_get_info.c
+index bfd79ab..81d7f7e 100644
+--- microhttpd/src/mhd2/daemon_get_info.c
++++ microhttpd/src/mhd2/daemon_get_info.c
+@@ -151,6 +151,11 @@ MHD_daemon_get_info_fixed_sz (
+       case mhd_TLS_MULTI_ROUTE_OPEN:
+         output_buf->v_tls_backend = MHD_TLS_BACKEND_OPENSSL;
+         break;
++#  endif
++#  ifdef MHD_SUPPORT_EXTERNAL
++      case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++        output_buf->v_tls_backend = MHD_TLS_BACKEND_EXTERNAL;
++        break;
+ #  endif
+       case mhd_TLS_MULTI_ROUTE_NONE:
+       default:
+@@ -161,6 +166,8 @@ MHD_daemon_get_info_fixed_sz (
+       output_buf->v_tls_backend = MHD_TLS_BACKEND_GNUTLS;
+ #elif defined(MHD_SUPPORT_OPENSSL)
+       output_buf->v_tls_backend = MHD_TLS_BACKEND_OPENSSL;
++#elif defined(MHD_SUPPORT_EXTERNAL)
++      output_buf->v_tls_backend = MHD_TLS_BACKEND_EXTERNAL;
+ #else
+ #error No TLS backends enabled, while TLS support is enabled
+ #endif
+diff --git microhttpd/src/mhd2/daemon_options.h microhttpd/src/mhd2/daemon_options.h
+index ad365d3..cc98a07 100644
+--- microhttpd/src/mhd2/daemon_options.h
++++ microhttpd/src/mhd2/daemon_options.h
+@@ -129,6 +129,13 @@ struct DaemonOptions
+   enum MHD_Bool no_alpn;
+ 
+ 
++  /**
++   * Value for #MHD_D_O_EXTERNAL_TLS_DATA.
++   * External TLS context
++   */
++  struct MHD_DaemonOptionValueExternalTlsData external_tls_data;
++
++
+   /**
+    * Value for #MHD_D_O_DEFAULT_TIMEOUT.
+    * the in seconds, zero for no timeout
+diff --git microhttpd/src/mhd2/daemon_set_options.c microhttpd/src/mhd2/daemon_set_options.c
+index 27eca41..48d0ec6 100644
+--- microhttpd/src/mhd2/daemon_set_options.c
++++ microhttpd/src/mhd2/daemon_set_options.c
+@@ -150,6 +150,10 @@ MHD_daemon_set_options (
+     case MHD_D_O_NO_ALPN:
+       settings->no_alpn = option->val.no_alpn;
+       continue;
++    case MHD_D_O_EXTERNAL_TLS_DATA:
++      settings->external_tls_data.v_ctx = option->val.external_tls_data.v_ctx;
++      settings->external_tls_data.v_tls_cbs = option->val.external_tls_data.v_tls_cbs;
++      continue;
+     case MHD_D_O_DEFAULT_TIMEOUT:
+       settings->default_timeout = option->val.default_timeout;
+       continue;
+diff --git microhttpd/src/mhd2/daemon_start.c microhttpd/src/mhd2/daemon_start.c
+index 1950835..2a81e0e 100644
+--- microhttpd/src/mhd2/daemon_start.c
++++ microhttpd/src/mhd2/daemon_start.c
+@@ -1363,6 +1363,13 @@ daemon_choose_and_preinit_events (struct MHD_Daemon *restrict d,
+     if ((edge_trig_allowed) &&
+         (MHD_TLS_BACKEND_NONE != s->tls))
+       edge_trig_allowed = mhd_tls_is_edge_trigg_supported (s);
++
++    /* When multi-TLS mode is enabled, mhd_tls_is_edge_trigg_supported may return true
++       since GnuTLS supports edge-triggering. Therefore, it is necessary to explicitly check 
++       for the presence of external TLS data and disable edge-triggering if TLS is managed 
++       by the user application. */
++    if ((edge_trig_allowed) && (NULL != s->external_tls_data.v_tls_cbs))
++      edge_trig_allowed = false;
+ #  endif /* MHD_SUPPORT_HTTPS */
+ #endif /* MHD_SUPPORT_EPOLL */
+     fallback_syscall_allowed = true;
+@@ -1754,6 +1761,41 @@ daemon_init_tls (struct MHD_Daemon *restrict d,
+   d->tls = NULL;
+ #endif
+ 
++  if (s->external_tls_data.v_tls_cbs)
++  {
++    if (s->tls != MHD_TLS_BACKEND_NONE)
++    {
++      mhd_LOG_MSG (d, \
++                   MHD_SC_OPTIONS_CONFLICT, \
++                   "MHD_D_O_TLS cannot be used together " \
++                   "with MHD_D_O_EXTERNAL_TLS_DATA");
++      return MHD_SC_OPTIONS_CONFLICT;
++    }
++
++#ifndef MHD_SUPPORT_EXTERNAL
++    mhd_LOG_MSG (d, \
++                 MHD_SC_TLS_BACKEND_UNSUPPORTED, \
++                 "External TLS backend is not supported " \
++                 "by this MHD build");
++    return MHD_SC_TLS_BACKEND_UNSUPPORTED;
++#endif
++
++#ifdef MHD_SUPPORT_EXTERNAL
++    s->tls = MHD_TLS_BACKEND_EXTERNAL; // Auto select external TLS backend
++#endif /* MHD_SUPPORT_EXTERNAL */
++  }
++  else
++  {
++    if (MHD_TLS_BACKEND_EXTERNAL == s->tls)
++    {
++      mhd_LOG_MSG (d, \
++                   MHD_SC_OPTIONS_CONFLICT, \
++                   "MHD_TLS_BACKEND_EXTERNAL can't be set directly, " \
++                   "instead use MHD_D_O_EXTERNAL_TLS_DATA");
++      return MHD_SC_OPTIONS_CONFLICT;
++    }
++  }
++
+   if (MHD_TLS_BACKEND_NONE == s->tls)
+   {
+ #ifndef NDEBUG
+diff --git microhttpd/src/mhd2/lib_get_info.c microhttpd/src/mhd2/lib_get_info.c
+index 8419d7e..7693737 100644
+--- microhttpd/src/mhd2/lib_get_info.c
++++ microhttpd/src/mhd2/lib_get_info.c
+@@ -58,6 +58,9 @@
+ #  if defined(MHD_SUPPORT_OPENSSL)
+ #    include "tls_open_funcs.h"
+ #  endif
++#  if defined(MHD_SUPPORT_EXTERNAL)
++#    include "tls_external_funcs.h"
++#  endif
+ #endif
+ 
+ #ifdef MHD_SUPPORT_MD5
+@@ -465,6 +468,11 @@ MHD_lib_get_info_fixed_sz (enum MHD_LibInfoFixed info_type,
+ #  else  /* ! MHD_SUPPORT_OPENSSL */
+       output_buf->v_tls_backends.backend_openssl = MHD_NO;
+ #  endif /* ! MHD_SUPPORT_OPENSSL */
++#  ifdef MHD_SUPPORT_EXTERNAL
++      output_buf->v_tls_backends.backend_external = MHD_YES;
++#  else  /* ! MHD_SUPPORT_EXTERNAL */
++      output_buf->v_tls_backends.backend_external = MHD_NO;
++#  endif /* ! MHD_SUPPORT_EXTERNAL */
+ #endif
+       return MHD_SC_OK;
+     }
+diff --git microhttpd/src/mhd2/mhd_tls_choice.h microhttpd/src/mhd2/mhd_tls_choice.h
+index ca3b96b..6d2304e 100644
+--- microhttpd/src/mhd2/mhd_tls_choice.h
++++ microhttpd/src/mhd2/mhd_tls_choice.h
+@@ -85,11 +85,30 @@
+  */
+ #define mhd_TLS_OPEN_IS_SUPPORTED()     (! ! mhd_TLS_OPEN_ENABLED)
+ 
++/* * External * */
++
++#ifdef MHD_SUPPORT_EXTERNAL
++/**
++ * Defined to one if External TLS is enabled at build time or to zero if not enabled
++ */
++#  define mhd_TLS_EXTERNAL_ENABLED   (1)
++#else
++/**
++ * Defined to one if External TLS is enabled at build time or to zero if not enabled
++ */
++#  define mhd_TLS_EXTERNAL_ENABLED   (0)
++#endif
++
++/**
++ * Return non-zero if External TLS is supported
++ */
++#define mhd_TLS_EXTERNAL_IS_SUPPORTED()     (! ! mhd_TLS_EXTERNAL_ENABLED)
++
+ /**
+  * Defined to the number of enabled TLS backends
+  */
+ #define mhd_TLS_NUM_BACKENDS \
+-        (mhd_TLS_GNU_ENABLED + mhd_TLS_OPEN_ENABLED)
++        (mhd_TLS_GNU_ENABLED + mhd_TLS_OPEN_ENABLED + mhd_TLS_EXTERNAL_ENABLED)
+ 
+ #if mhd_TLS_NUM_BACKENDS == 0
+ #error At least one TLS backend must be enabled if this header is included
+@@ -168,6 +187,19 @@
+  * The TLS back-end identifier for macro names
+  */
+ #  define mhd_TLS_MACRO_NAME_ID OPEN
++#elif defined(MHD_SUPPORT_EXTERNAL)
++/**
++ * The TLS back-end identifier for function names
++ */
++#  define mhd_TLS_FUNC_NAME_ID external
++/**
++ * The TLS back-end identifier for data names
++ */
++#  define mhd_TLS_DATA_NAME_ID External
++/**
++ * The TLS back-end identifier for macro names
++ */
++#  define mhd_TLS_MACRO_NAME_ID EXTERNAL
+ #endif
+ 
+ 
+@@ -187,6 +219,13 @@
+ #  define mhd_tls_open_is_inited_fine() (! ! 0)
+ #endif
+ 
++#ifndef MHD_SUPPORT_EXTERNAL
++/**
++ * Check whether External backend was successfully initialised globally
++ */
++#  define mhd_tls_external_is_inited_fine()   (! ! 0)
++#endif
++
+ 
+ /* ** Functions names and structures names macros ** */
+ 
+diff --git microhttpd/src/mhd2/mhd_tls_funcs.c microhttpd/src/mhd2/mhd_tls_funcs.c
+index 12ea80d..8e3e139 100644
+--- microhttpd/src/mhd2/mhd_tls_funcs.c
++++ microhttpd/src/mhd2/mhd_tls_funcs.c
+@@ -35,6 +35,9 @@
+ #if defined(MHD_SUPPORT_OPENSSL)
+ #  include "tls_open_funcs.h"
+ #endif
++#if defined(MHD_SUPPORT_EXTERNAL)
++#  include "tls_external_funcs.h"
++#endif
+ 
+ #include "mhd_assert.h"
+ 
+@@ -48,7 +51,8 @@ mhd_tls_is_backend_available (struct DaemonOptions *s)
+   mhd_assert (MHD_TLS_BACKEND_NONE != s->tls);
+   if (MHD_TLS_BACKEND_ANY == s->tls)
+     return (mhd_tls_gnu_is_inited_fine ()
+-            || mhd_tls_open_is_inited_fine ()) ?
++            || mhd_tls_open_is_inited_fine ()
++            || mhd_tls_external_is_inited_fine ()) ?
+            mhd_TLS_BACKEND_AVAIL_OK :
+            mhd_TLS_BACKEND_AVAIL_NOT_AVAILABLE;
+ #ifdef MHD_SUPPORT_GNUTLS
+@@ -62,6 +66,12 @@ mhd_tls_is_backend_available (struct DaemonOptions *s)
+     return mhd_tls_open_is_inited_fine () ?
+            mhd_TLS_BACKEND_AVAIL_OK :
+            mhd_TLS_BACKEND_AVAIL_NOT_AVAILABLE;
++#endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  if (MHD_TLS_BACKEND_EXTERNAL == s->tls)
++    return mhd_tls_external_is_inited_fine () ?
++           mhd_TLS_BACKEND_AVAIL_OK :
++           mhd_TLS_BACKEND_AVAIL_NOT_AVAILABLE;
+ #endif
+   return mhd_TLS_BACKEND_AVAIL_NOT_SUPPORTED;
+ }
+diff --git microhttpd/src/mhd2/mhd_tls_funcs.h microhttpd/src/mhd2/mhd_tls_funcs.h
+index 3735bd0..9481a6e 100644
+--- microhttpd/src/mhd2/mhd_tls_funcs.h
++++ microhttpd/src/mhd2/mhd_tls_funcs.h
+@@ -43,6 +43,8 @@
+ #  include "tls_gnu_funcs.h"
+ #elif defined(MHD_SUPPORT_OPENSSL)
+ #  include "tls_open_funcs.h"
++#elif defined(MHD_SUPPORT_EXTERNAL)
++#  include "tls_external_funcs.h"
+ #endif
+ 
+ /* ** Global initialisation / de-initialisation ** */
+diff --git microhttpd/src/mhd2/tls_external_conn_data.h microhttpd/src/mhd2/tls_external_conn_data.h
+new file mode 100644
+index 0000000..4f97073
+--- /dev/null
++++ microhttpd/src/mhd2/tls_external_conn_data.h
+@@ -0,0 +1,75 @@
++/*
++  This file is part of GNU libmicrohttpd
++  Copyright (C) 2024 Evgeny Grin (Karlson2k) (and other contributing authors)
++
++  GNU libmicrohttpd is free software; you can redistribute it and/or
++  modify it under the terms of the GNU Lesser General Public
++  License as published by the Free Software Foundation; either
++  version 2.1 of the License, or (at your option) any later version.
++
++  GNU libmicrohttpd is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++  Lesser General Public License for more details.
++
++  You should have received a copy of the GNU Lesser General Public
++  License along with this library; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++
++*/
++
++/**
++ * @file src/mhd2/tls_external_conn_data.h
++ * @brief  The definition of external TLS connection-specific data structures
++ * @author Ayush Dey
++ */
++
++#ifndef MHD_TLS_EXTERNAL_CONN_DATA_H
++#define MHD_TLS_EXTERNAL_CONN_DATA_H 1
++
++#include "mhd_sys_options.h"
++
++#ifndef MHD_SUPPORT_EXTERNAL
++#error This header can be used only if external TLS is enabled
++#endif
++
++#include "sys_bool_type.h"
++
++#ifndef NDEBUG
++struct mhd_TlsExternalConnDebug
++{
++  unsigned int is_inited;
++  unsigned int is_tls_handshake_completed;
++  unsigned int is_finished;
++  unsigned int is_failed;
++};
++#endif /* ! NDEBUG */
++
++/**
++ * The structure with connection-specific external TLS data
++ */
++struct mhd_TlsExternalConnData
++{
++  /* Connection session handle */
++  void *sess;
++
++  /* Daemon credentials handle */
++  void *cred;
++
++  /**
++   * 'true' if received EOF (the remote side initiated shutting down)
++   */
++  bool rmt_shut_tls_wr;
++
++  /* callbacks for external TLS operations */
++  struct MHD_DaemonTLSCallbacks *cbs;
++
++#ifndef NDEBUG
++  /**
++   * Debugging data
++   */
++  struct mhd_TlsExternalConnDebug dbg;
++#endif /* ! NDEBUG */
++};
++
++#endif /* ! MHD_TLS_EXTERNAL_CONN_DATA_H */
+diff --git microhttpd/src/mhd2/tls_external_daemon_data.h microhttpd/src/mhd2/tls_external_daemon_data.h
+new file mode 100644
+index 0000000..e118612
+--- /dev/null
++++ microhttpd/src/mhd2/tls_external_daemon_data.h
+@@ -0,0 +1,50 @@
++/*
++  This file is part of GNU libmicrohttpd
++  Copyright (C) 2024 Evgeny Grin (Karlson2k) (and other contributing authors)
++
++  GNU libmicrohttpd is free software; you can redistribute it and/or
++  modify it under the terms of the GNU Lesser General Public
++  License as published by the Free Software Foundation; either
++  version 2.1 of the License, or (at your option) any later version.
++
++  GNU libmicrohttpd is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++  Lesser General Public License for more details.
++
++  You should have received a copy of the GNU Lesser General Public
++  License along with this library; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++
++*/
++
++/**
++ * @file src/mhd2/tls_external_daemon_data.h
++ * @brief  The definition of external daemon-specific data structures
++ * @author Ayush Dey
++ */
++
++#ifndef MHD_TLS_EXTERNAL_DAEMON_DATA_H
++#define MHD_TLS_EXTERNAL_DAEMON_DATA_H 1
++
++#include "mhd_sys_options.h"
++
++#ifndef MHD_SUPPORT_EXTERNAL
++#error This header can be used only if external TLS is enabled
++#endif
++
++/**
++ * The structure with daemon-specific external TLS data
++ */
++struct mhd_TlsExternalDaemonData
++{
++  /**
++   * Daemon credentials handle
++   */
++  void *cred;
++
++  /* callbacks for external TLS operations */
++  struct MHD_DaemonTLSCallbacks *cbs;
++};
++
++#endif /* ! MHD_TLS_EXTERNAL_DAEMON_DATA_H */
+diff --git microhttpd/src/mhd2/tls_external_funcs.c microhttpd/src/mhd2/tls_external_funcs.c
+new file mode 100644
+index 0000000..c94cbc2
+--- /dev/null
++++ microhttpd/src/mhd2/tls_external_funcs.c
+@@ -0,0 +1,518 @@
++/*
++  This file is part of GNU libmicrohttpd
++  Copyright (C) 2024 Evgeny Grin (Karlson2k) (and other contributing authors)
++
++  GNU libmicrohttpd is free software; you can redistribute it and/or
++  modify it under the terms of the GNU Lesser General Public
++  License as published by the Free Software Foundation; either
++  version 2.1 of the License, or (at your option) any later version.
++
++  GNU libmicrohttpd is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++  Lesser General Public License for more details.
++
++  You should have received a copy of the GNU Lesser General Public
++  License along with this library; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++
++*/
++
++/**
++ * @file src/mhd2/tls_external_funcs.c
++ * @brief  The implementation of external TLS functions
++ * @author Ayush Dey
++ */
++
++#include "mhd_sys_options.h"
++
++#include "sys_bool_type.h"
++#include "sys_base_types.h"
++
++#include "compat_calloc.h"
++#include "sys_malloc.h"
++#include "mhd_assert.h"
++#include "mhd_limits.h"
++
++#include <string.h>
++
++#include "mhd_conn_socket.h"
++
++#include "mhd_tls_ver_stct.h"
++
++#include "tls_external_daemon_data.h"
++#include "tls_external_conn_data.h"
++#include "tls_external_funcs.h"
++
++#include "daemon_options.h"
++#include "daemon_logger.h"
++
++#include "mhd_public_api.h"
++
++/* ** Global initialisation / de-initialisation ** */
++
++static bool external_lib_inited = false;
++
++MHD_INTERNAL void
++mhd_tls_external_global_init (void)
++{
++  external_lib_inited = true;
++}
++
++
++MHD_INTERNAL void
++mhd_tls_external_global_deinit (void)
++{
++  external_lib_inited = false;
++}
++
++
++MHD_INTERNAL MHD_FN_PURE_ bool
++mhd_tls_external_is_inited_fine (void)
++{
++  return external_lib_inited;
++}
++
++/* ** Daemon initialisation / de-initialisation ** */
++
++/**
++ * Check application-provided daemon TLS settings
++ * @param d the daemon handle
++ * @param s the application-provided settings
++ * @return #MHD_SC_OK on success,
++ *         error code otherwise
++ */
++static MHD_FN_PAR_NONNULL_ALL_ MHD_FN_MUST_CHECK_RESULT_ enum MHD_StatusCode
++check_app_tls_sessings (struct MHD_Daemon *restrict d,
++                        bool sk_edge_trigg,
++                        struct DaemonOptions *restrict s)
++{
++  mhd_assert (MHD_TLS_BACKEND_NONE != s->tls);
++  mhd_assert ((MHD_TLS_BACKEND_EXTERNAL == s->tls) || \
++              (MHD_TLS_BACKEND_ANY == s->tls));
++  if (NULL == s->tls_cert_key.v_mem_cert)
++  {
++    mhd_LOG_MSG (d, MHD_SC_TLS_CONF_BAD_CERT, \
++                 "No valid TLS certificate is provided");
++    return MHD_SC_TLS_CONF_BAD_CERT;
++  }
++  mhd_assert (NULL != s->tls_cert_key.v_mem_key);
++
++  if (sk_edge_trigg)
++  {
++    mhd_LOG_MSG (d, MHD_SC_TLS_BACKEND_DAEMON_INCOMPATIBLE_SETTINGS, \
++                 "Edge-triggered sockets polling cannot be used "
++                 "with External backend");
++    return MHD_SC_TLS_BACKEND_DAEMON_INCOMPATIBLE_SETTINGS;
++  }
++
++  return MHD_SC_OK;
++}
++
++static MHD_FN_PAR_NONNULL_ALL_ MHD_FN_MUST_CHECK_RESULT_ enum MHD_StatusCode
++daemon_init_credentials (struct MHD_Daemon *restrict d,
++                         struct mhd_TlsExternalDaemonData *restrict d_tls,
++                         struct DaemonOptions *restrict s)
++{
++  size_t cert_len;
++  size_t key_len;
++
++  cert_len = strlen (s->tls_cert_key.v_mem_cert);
++  key_len = strlen (s->tls_cert_key.v_mem_key);
++
++  mhd_assert (0 != cert_len);
++  mhd_assert (0 != key_len);
++
++  if ((cert_len != (unsigned int) cert_len)
++      || (key_len != (unsigned int) key_len))
++    return MHD_SC_TLS_CONF_BAD_CERT; /* Very unlikely, do not waste space on special message */
++
++  if (NULL == s->external_tls_data.v_tls_cbs)
++  {
++    mhd_LOG_MSG (d, MHD_SC_TLS_EXTERNAL_DATA_UNAVAILABLE, \
++                 "No valid TLS callbacks are provided");
++    return MHD_SC_TLS_EXTERNAL_DATA_UNAVAILABLE;
++  }
++
++  d_tls->cbs = s->external_tls_data.v_tls_cbs;
++
++  d_tls->cred = d_tls->cbs->daemon_init(s->external_tls_data.v_ctx, s->tls_cert_key.v_mem_cert, s->tls_cert_key.v_mem_key);
++
++  if (NULL == d_tls->cred)
++  {
++    mhd_LOG_MSG (d, MHD_SC_TLS_DAEMON_INIT_FAILED, \
++      "Failed to initialise TLS credentials for the daemon");
++
++    return MHD_SC_TLS_DAEMON_INIT_FAILED;
++  }
++
++  return MHD_SC_OK;
++}
++
++static MHD_FN_PAR_NONNULL_ALL_ void
++daemon_deinit_credentials (struct mhd_TlsExternalDaemonData *restrict d_tls)
++{
++  mhd_assert (NULL != d_tls->cred);
++  d_tls->cbs->daemon_deinit(d_tls->cred);
++}
++
++MHD_INTERNAL MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_
++MHD_FN_PAR_OUT_ (3) mhd_StatusCodeInt
++mhd_tls_external_daemon_init (struct MHD_Daemon *restrict d,
++                               bool sk_edge_trigg,
++                               struct DaemonOptions *restrict s,
++                               struct mhd_TlsExternalDaemonData **restrict p_d_tls)
++{
++  mhd_StatusCodeInt res;
++  struct mhd_TlsExternalDaemonData *restrict d_tls;
++
++  mhd_assert (external_lib_inited);
++
++  res = check_app_tls_sessings (d, sk_edge_trigg, s);
++  if (MHD_SC_OK != res)
++    return res;
++
++  d_tls = (struct mhd_TlsExternalDaemonData *)
++          mhd_calloc (1, sizeof (struct mhd_TlsExternalDaemonData));
++
++  *p_d_tls = d_tls;
++  if (NULL == d_tls)
++    return MHD_SC_DAEMON_MEM_ALLOC_FAILURE;
++
++  res = daemon_init_credentials(d, d_tls, s);
++  if (MHD_SC_OK == res)
++    return res; /* Success exit point */
++
++  free (d_tls);
++  *p_d_tls = NULL;
++  mhd_assert (MHD_SC_OK != res);
++  return res;
++}
++
++MHD_INTERNAL MHD_FN_PAR_NONNULL_ALL_
++MHD_FN_PAR_INOUT_ (1) void
++mhd_tls_external_daemon_deinit (struct mhd_TlsExternalDaemonData *restrict d_tls)
++{
++  mhd_assert (NULL != d_tls);
++  daemon_deinit_credentials (d_tls);
++  free (d_tls);
++}
++
++/* ** Connection initialisation / de-initialisation ** */
++
++MHD_INTERNAL size_t
++mhd_tls_external_conn_get_tls_size_v (void)
++{
++  return sizeof (struct mhd_TlsExternalConnData);
++}
++
++MHD_INTERNAL MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_
++MHD_FN_PAR_OUT_ (3) bool
++mhd_tls_external_conn_init (const struct mhd_TlsExternalDaemonData *restrict d_tls,
++                            const struct mhd_ConnSocket *sk,
++                            struct mhd_TlsExternalConnData *restrict c_tls)
++{
++  int fd;
++  const char *alpn[] = { "http/1.0", "http/1.1", NULL };
++
++  c_tls->cred = d_tls->cred;
++  c_tls->rmt_shut_tls_wr = false;
++  c_tls->cbs = d_tls->cbs;
++
++#ifndef NDEBUG
++  c_tls->dbg.is_inited = false;
++  c_tls->dbg.is_tls_handshake_completed = false;
++  c_tls->dbg.is_finished = false;
++  c_tls->dbg.is_failed = false;
++#endif /* ! NDEBUG */
++
++  fd = (int) sk->fd;
++  if (sk->fd != (MHD_Socket) fd)
++    return false;
++
++  c_tls->sess = d_tls->cbs->conn_init(d_tls->cred, fd, alpn);
++
++  if (c_tls->sess == NULL)
++    return false;
++
++#ifndef NDEBUG
++      c_tls->dbg.is_inited = true;
++#endif /* ! NDEBUG */
++  return true;
++}
++
++MHD_INTERNAL MHD_FN_PAR_NONNULL_ALL_ void
++mhd_tls_external_conn_deinit (struct mhd_TlsExternalConnData *restrict c_tls)
++{
++  mhd_assert (NULL != c_tls->sess);
++  mhd_assert (c_tls->dbg.is_inited);
++  c_tls->cbs->conn_deinit(c_tls->sess);
++}
++
++/* ** TLS connection establishing ** */
++
++MHD_INTERNAL MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_
++enum mhd_TlsProcedureResult
++mhd_tls_external_conn_handshake (struct mhd_TlsExternalConnData *restrict c_tls)
++{
++  int res;
++
++  mhd_assert (c_tls->dbg.is_inited);
++  mhd_assert (! c_tls->dbg.is_tls_handshake_completed);
++  mhd_assert (! c_tls->dbg.is_finished);
++  mhd_assert (! c_tls->dbg.is_failed);
++
++  res = c_tls->cbs->conn_handshake(c_tls->cred, c_tls->sess);
++
++  switch (res)
++  {
++  case 0:
++#ifndef NDEBUG
++    c_tls->dbg.is_tls_handshake_completed = true;
++#endif /* ! NDEBUG */
++    return mhd_TLS_PROCED_SUCCESS;
++  case 1:
++    /* Externally provided TLS might not be able to distinguish between "interrupted"
++       and "try again" codes.
++       If edge-triggered sockets polling is used and the flag is cleared, but
++       it should not (because the process has been "interrupted") then already
++       pending data could be never processed.
++       If the flag is not cleared, but it should be cleared (because all
++       received data has been processed) then it would create busy-waiting loop
++       with edge-triggered sockets polling.
++       Temporal solution: disallow edge-triggered sockets polling with External TLS
++       backend and use clear of "ready" flag. */
++    return mhd_TLS_PROCED_RECV_MORE_NEEDED;
++  case 2:
++    /* Externally provided TLS might not be able to distinguish between "interrupted"
++       and "try again" codes.
++       If edge-triggered sockets polling is used and the flag is cleared, but
++       it should not (because the process has been "interrupted") then already
++       pending data could be never processed.
++       If the flag is not cleared, but it should be cleared (because all
++       received data has been processed) then it would create busy-waiting loop
++       with edge-triggered sockets polling.
++       Temporal solution: disallow edge-triggered sockets polling with External TLS
++       backend and use clear of "ready" flag. */
++    return mhd_TLS_PROCED_SEND_MORE_NEEDED;
++  default:
++    break;
++  }
++#ifndef NDEBUG
++  c_tls->dbg.is_failed = true;
++#endif /* ! NDEBUG */
++  return mhd_TLS_PROCED_FAILED;
++}
++
++MHD_INTERNAL MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_
++enum mhd_TlsProcedureResult
++mhd_tls_external_conn_shutdown (struct mhd_TlsExternalConnData *restrict c_tls)
++{
++  int res;
++  bool duplex = c_tls->rmt_shut_tls_wr ? false : true;
++
++  mhd_assert (c_tls->dbg.is_inited);
++  mhd_assert (c_tls->dbg.is_tls_handshake_completed);
++  mhd_assert (! c_tls->dbg.is_finished);
++  mhd_assert (! c_tls->dbg.is_failed);
++
++  res = c_tls->cbs->conn_shutdown(c_tls->sess, duplex);
++
++  switch (res)
++  {
++  case 0:
++#ifndef NDEBUG
++    c_tls->dbg.is_finished = true;
++#endif /* ! NDEBUG */
++    return mhd_TLS_PROCED_SUCCESS;
++  case 1:
++    /* Externally provided TLS might not be able to distinguish between "interrupted"
++       and "try again" codes.
++       If edge-triggered sockets polling is used and the flag is cleared, but
++       it should not (because the process has been "interrupted") then already
++       pending data could be never processed.
++       If the flag is not cleared, but it should be cleared (because all
++       received data has been processed) then it would create busy-waiting loop
++       with edge-triggered sockets polling.
++       Temporal solution: disallow edge-triggered sockets polling with External TLS
++       backend and use clear of "ready" flag. */
++    return mhd_TLS_PROCED_RECV_MORE_NEEDED;
++  case 2:
++    /* Externally provided TLS might not be able to distinguish between "interrupted"
++       and "try again" codes.
++       If edge-triggered sockets polling is used and the flag is cleared, but
++       it should not (because the process has been "interrupted") then already
++       pending data could be never processed.
++       If the flag is not cleared, but it should be cleared (because all
++       received data has been processed) then it would create busy-waiting loop
++       with edge-triggered sockets polling.
++       Temporal solution: disallow edge-triggered sockets polling with External TLS
++       backend and use clear of "ready" flag. */
++    return mhd_TLS_PROCED_SEND_MORE_NEEDED;
++  default:
++    break;
++  }
++
++#ifndef NDEBUG
++  c_tls->dbg.is_failed = true;
++#endif /* ! NDEBUG */
++  return mhd_TLS_PROCED_FAILED;
++}
++
++
++/* ** Data receiving and sending ** */
++
++MHD_INTERNAL MHD_FN_PAR_NONNULL_ALL_
++MHD_FN_PAR_OUT_SIZE_ (3,2)
++MHD_FN_PAR_OUT_ (4) enum mhd_SocketError
++mhd_tls_external_conn_recv (struct mhd_TlsExternalConnData *restrict c_tls,
++                            size_t buf_size,
++                            char buf[MHD_FN_PAR_DYN_ARR_SIZE_ (buf_size)],
++                            size_t *restrict received)
++{
++  ssize_t res;
++
++  mhd_assert (c_tls->dbg.is_inited);
++  mhd_assert (c_tls->dbg.is_tls_handshake_completed);
++  mhd_assert (! c_tls->dbg.is_finished);
++  mhd_assert (! c_tls->dbg.is_failed);
++
++  /* return value limitation of INT_MAX */
++  if (buf_size > (size_t)INT_MAX)
++    buf_size = INT_MAX;
++
++  res = c_tls->cbs->conn_recv(c_tls->sess, buf, buf_size);
++
++  if (res <= 0)
++  {
++    *received = 0;
++    if (res == 0)
++    {
++      c_tls->rmt_shut_tls_wr = true;
++      return mhd_SOCKET_ERR_NO_ERROR;
++    }
++    else
++    {
++      if (res == -2)
++      {
++      /* Externally provided TLS might not be able to distinguish between "interrupted"
++         and "try again" codes.
++         If edge-triggered sockets polling is used and the flag is cleared, but
++         it should not (because the process has been "interrupted") then already
++         pending data could be never processed.
++         If the flag is not cleared, but it should be cleared (because all
++         received data has been processed) then it would create busy-waiting loop
++         with edge-triggered sockets polling.
++         Temporal solution: disallow edge-triggered sockets polling with External TLS
++         backend and use clear of "ready" flag. */
++        return mhd_SOCKET_ERR_AGAIN;
++      }
++#ifndef NDEBUG
++      c_tls->dbg.is_failed = true;
++#endif /* ! NDEBUG */
++      return mhd_SOCKET_ERR_TLS;
++    }
++  }
++
++  *received = (size_t) res;
++  return mhd_SOCKET_ERR_NO_ERROR;
++}
++
++MHD_INTERNAL MHD_FN_PAR_NONNULL_ALL_ bool
++mhd_tls_external_conn_has_data_in (struct mhd_TlsExternalConnData *restrict c_tls)
++{
++  if (NULL == c_tls->cbs || NULL == c_tls->cbs->conn_has_data_in)
++  {
++    /* If the callback is not provided, assume that there is no data */
++    return false;
++  }
++
++  return (0 != c_tls->cbs->conn_has_data_in(c_tls->sess));
++}
++
++MHD_INTERNAL MHD_FN_PAR_NONNULL_ALL_
++MHD_FN_PAR_IN_SIZE_ (3,2)
++MHD_FN_PAR_OUT_ (4) enum mhd_SocketError
++mhd_tls_external_conn_send (struct mhd_TlsExternalConnData *restrict c_tls,
++                            size_t buf_size,
++                            const char buf[MHD_FN_PAR_DYN_ARR_SIZE_ (buf_size)],
++                            size_t *restrict sent)
++{
++  ssize_t res;
++
++  mhd_assert (c_tls->dbg.is_inited);
++  mhd_assert (c_tls->dbg.is_tls_handshake_completed);
++  mhd_assert (! c_tls->dbg.is_finished);
++  mhd_assert (! c_tls->dbg.is_failed);
++
++  /* return value limitation of INT_MAX */
++  if (buf_size > (size_t)INT_MAX)
++    buf_size = INT_MAX;
++
++  res = c_tls->cbs->conn_send(c_tls->sess, buf, buf_size);
++
++  mhd_assert (0 != res);
++
++  if (res < 0)
++  {
++    *sent = 0;
++
++    if (res == -2)
++    {
++      /* Externally provided TLS might not be able to distinguish between "interrupted"
++         and "try again" codes.
++         If edge-triggered sockets polling is used and the flag is cleared, but
++         it should not (because the process has been "interrupted") then already
++         pending data could be never processed.
++         If the flag is not cleared, but it should be cleared (because all
++         received data has been processed) then it would create busy-waiting loop
++         with edge-triggered sockets polling.
++         Temporal solution: disallow edge-triggered sockets polling with External TLS
++         backend and use clear of "ready" flag. */
++      return mhd_SOCKET_ERR_AGAIN;
++    }
++
++#ifndef NDEBUG
++    c_tls->dbg.is_failed = true;
++#endif /* ! NDEBUG */
++    return mhd_SOCKET_ERR_TLS;
++  }
++
++  *sent = (size_t) res;
++  return mhd_SOCKET_ERR_NO_ERROR;
++}
++
++/* ** TLS connection information ** */
++
++MHD_INTERNAL MHD_FN_PAR_NONNULL_ALL_
++MHD_FN_PAR_OUT_ (2) void
++mhd_tls_external_conn_get_tls_sess (
++  struct mhd_TlsExternalConnData *restrict c_tls,
++  union MHD_ConnInfoDynamicTlsSess *restrict tls_sess_out)
++{
++  tls_sess_out->v_external_session = c_tls->sess;
++}
++
++MHD_INTERNAL MHD_FN_PAR_NONNULL_ALL_
++MHD_FN_PAR_OUT_ (2) bool
++mhd_tls_external_conn_get_tls_ver (struct mhd_TlsExternalConnData *restrict c_tls,
++                                   struct mhd_StctTlsVersion *restrict tls_ver_out)
++{
++  if (NULL == c_tls->cbs || NULL == c_tls->cbs->conn_get_tls_ver)
++  {
++    tls_ver_out->tls_ver = MHD_TLS_VERSION_UNKNOWN;
++    return false;
++  }
++
++  int res = c_tls->cbs->conn_get_tls_ver(c_tls->sess);
++
++  if (res < 0)
++  {
++    tls_ver_out->tls_ver = MHD_TLS_VERSION_UNKNOWN;
++    return false;
++  }
++
++  tls_ver_out->tls_ver = (enum MHD_TlsVersion) res;
++
++  return true;
++}
+diff --git microhttpd/src/mhd2/tls_external_funcs.h microhttpd/src/mhd2/tls_external_funcs.h
+new file mode 100644
+index 0000000..82e8d8f
+--- /dev/null
++++ microhttpd/src/mhd2/tls_external_funcs.h
+@@ -0,0 +1,269 @@
++/*
++  This file is part of GNU libmicrohttpd
++  Copyright (C) 2024 Evgeny Grin (Karlson2k) (and other contributing authors)
++
++  GNU libmicrohttpd is free software; you can redistribute it and/or
++  modify it under the terms of the GNU Lesser General Public
++  License as published by the Free Software Foundation; either
++  version 2.1 of the License, or (at your option) any later version.
++
++  GNU libmicrohttpd is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++  Lesser General Public License for more details.
++
++  You should have received a copy of the GNU Lesser General Public
++  License along with this library; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++
++*/
++
++/**
++ * @file src/mhd2/tls_external_funcs.h
++ * @brief  The declarations of external wrapper functions
++ * @author Ayush Dey
++ */
++
++#ifndef MHD_TLS_EXTERNAL_FUNCS_H
++#define MHD_TLS_EXTERNAL_FUNCS_H 1
++
++#include "mhd_sys_options.h"
++
++#ifndef MHD_SUPPORT_EXTERNAL
++#error This header can be used only if external TLS is enabled
++#endif
++
++#include "sys_bool_type.h"
++#include "sys_base_types.h"
++
++#include "mhd_status_code_int.h"
++
++#include "mhd_tls_enums.h"
++#include "mhd_socket_error.h"
++
++/**
++ * The structure with daemon-specific external data
++ */
++struct mhd_TlsExternalDaemonData;    /* Forward declaration */
++
++/**
++ * The structure with connection-specific external data
++ */
++struct mhd_TlsExternalConnData;      /* Forward declaration */
++
++union MHD_ConnInfoDynamicTlsSess; /* Forward declaration */
++
++struct mhd_StctTlsVersion;      /* Forward declaration */
++
++/* ** Global initialisation / de-initialisation ** */
++
++/**
++ * Globally initialise external backend
++ */
++MHD_INTERNAL void
++mhd_tls_external_global_init (void);
++
++/* An alias for mhd_tls_external_global_init() */
++#define mhd_tls_external_global_init_once()    mhd_tls_external_global_init ()
++
++/* An alias for mhd_tls_external_global_init() */
++#define mhd_tls_external_global_re_init()      mhd_tls_external_global_init ()
++
++/**
++ * Globally de-initialise external backend
++ */
++MHD_INTERNAL void
++mhd_tls_external_global_deinit (void);
++
++/**
++ * Check whether external backend was successfully initialised globally
++ * @return 'true' if backend has been successfully initialised,
++ *         'false' if backend cannot be used
++ */
++MHD_INTERNAL bool
++mhd_tls_external_is_inited_fine (void)
++MHD_FN_PURE_;
++
++
++/* ** Daemon initialisation / de-initialisation ** */
++
++struct MHD_Daemon;      /* Forward declaration */
++struct DaemonOptions;   /* Forward declaration */
++
++/**
++ * Check whether external backend supports edge-triggered sockets polling
++ * @param s the daemon settings
++ * @return 'true' if the backend supports edge-triggered sockets polling,
++ *         'false' if edge-triggered sockets polling cannot be used
++ */
++#define mhd_tls_external_is_edge_trigg_supported(s) (! ! 0)
++
++
++/**
++ * Allocate and initialise daemon TLS parameters
++ * @param d the daemon handle
++ * @param et if 'true' then sockets polling uses edge-triggering
++ * @param s the daemon settings
++ * @param p_d_tls the pointer to variable to set the pointer to
++ *                the daemon's TLS settings (allocated by this function)
++ * @return #MHD_SC_OK on success (p_d_tls set to the allocated settings),
++ *         error code otherwise
++ */
++MHD_INTERNAL mhd_StatusCodeInt
++mhd_tls_external_daemon_init (struct MHD_Daemon *restrict d,
++                              bool sk_edge_trigg,
++                              struct DaemonOptions *restrict s,
++                              struct mhd_TlsExternalDaemonData **restrict p_d_tls)
++MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_ MHD_FN_PAR_OUT_ (4);
++
++/**
++ * De-initialise daemon TLS parameters (and free memory allocated for TLS
++ * settings)
++ * @param d_tls the pointer to  the daemon's TLS settings
++ */
++MHD_INTERNAL void
++mhd_tls_external_daemon_deinit (struct mhd_TlsExternalDaemonData *restrict d_tls)
++MHD_FN_PAR_NONNULL_ALL_ MHD_FN_PAR_INOUT_ (1);
++
++
++/* ** Connection initialisation / de-initialisation ** */
++
++struct mhd_ConnSocket; /* Forward declaration */
++
++/**
++ * Get size size of the connection's TLS settings
++ */
++MHD_INTERNAL size_t
++mhd_tls_external_conn_get_tls_size_v (void);
++
++/**
++ * Get size size of the connection's TLS settings
++ * @param d_tls the pointer to  the daemon's TLS settings
++ */
++#define mhd_tls_external_conn_get_tls_size(d_tls) \
++        mhd_tls_external_conn_get_tls_size_v ()
++
++/**
++ * Initialise connection TLS settings
++ * @param d_tls the daemon TLS settings
++ * @param sk data about the socket for the connection
++ * @param[out] c_tls the pointer to the allocated space for
++ *                   the connection TLS settings
++ * @return 'true' on success,
++ *         'false' otherwise
++ */
++MHD_INTERNAL bool
++mhd_tls_external_conn_init (const struct mhd_TlsExternalDaemonData *restrict d_tls,
++                            const struct mhd_ConnSocket *sk,
++                            struct mhd_TlsExternalConnData *restrict c_tls)
++MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_ MHD_FN_PAR_OUT_ (3);
++
++/**
++ * De-initialise connection TLS settings.
++ * The provided pointer is not freed/deallocated.
++ * @param c_tls the initialised connection TLS settings
++ */
++MHD_INTERNAL void
++mhd_tls_external_conn_deinit (struct mhd_TlsExternalConnData *restrict c_tls)
++MHD_FN_PAR_NONNULL_ALL_;
++
++
++/* ** TLS connection establishing ** */
++
++/**
++ * Perform TLS handshake
++ * @param c_tls the connection TLS handle
++ * @return #mhd_TLS_PROCED_SUCCESS if completed successfully
++ *         or other enum mhd_TlsProcedureResult values
++ */
++MHD_INTERNAL enum mhd_TlsProcedureResult
++mhd_tls_external_conn_handshake (struct mhd_TlsExternalConnData *restrict c_tls)
++MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_;
++
++/**
++ * Perform shutdown of TLS layer
++ * @param c_tls the connection TLS handle
++ * @return #mhd_TLS_PROCED_SUCCESS if completed successfully
++ *         or other enum mhd_TlsProcedureResult values
++ */
++MHD_INTERNAL enum mhd_TlsProcedureResult
++mhd_tls_external_conn_shutdown (struct mhd_TlsExternalConnData *restrict c_tls)
++MHD_FN_MUST_CHECK_RESULT_ MHD_FN_PAR_NONNULL_ALL_;
++
++
++/* ** Data sending and receiving over TLS connection ** */
++
++/**
++ * Receive the data from the remote side over TLS connection
++ *
++ * @param c_tls the connection TLS handle
++ * @param buf_size the size of the @a buf buffer
++ * @param[out] buf the buffer to fill with the received data
++ * @param[out] received the pointer to variable to get the size of the data
++ *                      actually put to the @a buffer
++ * @return mhd_SOCKET_ERR_NO_ERROR if receive succeed (the @a received gets
++ *         the received size) or socket error
++ */
++MHD_INTERNAL enum mhd_SocketError
++mhd_tls_external_conn_recv (struct mhd_TlsExternalConnData *restrict c_tls,
++                            size_t buf_size,
++                            char buf[MHD_FN_PAR_DYN_ARR_SIZE_ (buf_size)],
++                            size_t *restrict received)
++MHD_FN_PAR_NONNULL_ALL_ MHD_FN_PAR_OUT_SIZE_ (3,2) MHD_FN_PAR_OUT_ (4);
++
++/**
++ * Check whether any incoming data is pending in the TLS buffers
++ *
++ * @param c_tls the connection TLS handle
++ * @return 'true' if any incoming remote data is already pending (the TLS recv()
++ *          call can be performed),
++ *         'false' otherwise
++ */
++MHD_INTERNAL bool
++mhd_tls_external_conn_has_data_in (struct mhd_TlsExternalConnData *restrict c_tls)
++MHD_FN_PAR_NONNULL_ALL_;
++
++/**
++ * Send data to the remote side over TLS connection
++ *
++ * @param c_tls the connection TLS handle
++ * @param buf_size the size of the @a buffer (in bytes)
++ * @param buf content of the buffer to send
++ * @param[out] sent the pointer to get amount of actually sent bytes
++ * @return mhd_SOCKET_ERR_NO_ERROR if send succeed (the @a sent gets
++ *         the sent size) or socket error
++ */
++MHD_INTERNAL enum mhd_SocketError
++mhd_tls_external_conn_send (struct mhd_TlsExternalConnData *restrict c_tls,
++                            size_t buf_size,
++                            const char buf[MHD_FN_PAR_DYN_ARR_SIZE_ (buf_size)],
++                            size_t *restrict sent)
++MHD_FN_PAR_NONNULL_ALL_ MHD_FN_PAR_IN_SIZE_ (3,2) MHD_FN_PAR_OUT_ (4);
++
++
++/* ** TLS connection information ** */
++
++/**
++ * Get the TLS session used in connection
++ * @param c_tls the connection TLS handle
++ * @param tls_ver_out the pointer to variable to be set to the TLS version
++ */
++MHD_INTERNAL void
++mhd_tls_external_conn_get_tls_sess (
++  struct mhd_TlsExternalConnData *restrict c_tls,
++  union MHD_ConnInfoDynamicTlsSess *restrict tls_sess_out)
++MHD_FN_PAR_NONNULL_ALL_ MHD_FN_PAR_OUT_ (2);
++
++/**
++ * Get the TLS version used in connection
++ * @param c_tls the connection TLS handle
++ * @param tls_ver_out the pointer to variable to be set to the TLS version
++ * @return 'true' is TLS version information set successfully,
++ *         'false' if TLS version information cannot be obtained or mapped
++ */
++MHD_INTERNAL bool
++mhd_tls_external_conn_get_tls_ver (struct mhd_TlsExternalConnData *restrict c_tls,
++                                   struct mhd_StctTlsVersion *restrict tls_ver_out)
++MHD_FN_PAR_NONNULL_ALL_ MHD_FN_PAR_OUT_ (2);
++
++#endif /* ! MHD_TLS_EXTERNAL_FUNCS_H */
+diff --git microhttpd/src/mhd2/tls_multi_conn_data.h microhttpd/src/mhd2/tls_multi_conn_data.h
+index 395163c..ccc4b13 100644
+--- microhttpd/src/mhd2/tls_multi_conn_data.h
++++ microhttpd/src/mhd2/tls_multi_conn_data.h
+@@ -41,6 +41,9 @@ struct mhd_TlsGnuConnData;      /* forward declaration */
+ #ifdef MHD_SUPPORT_OPENSSL
+ struct mhd_TlsOpenConnData;     /* forward declaration */
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++struct mhd_TlsExternalConnData;     /* forward declaration */
++#endif
+ 
+ /**
+  * The pointer to the underlying TLS backend connection data
+@@ -59,6 +62,12 @@ struct mhd_TlsMultiConnRoutePtr
+    */
+   struct mhd_TlsOpenConnData *openssl;
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  /**
++   * Pointer to External connection-specific data
++   */
++  struct mhd_TlsExternalConnData *external;
++#endif
+ };
+ 
+ /**
+diff --git microhttpd/src/mhd2/tls_multi_daemon_data.h microhttpd/src/mhd2/tls_multi_daemon_data.h
+index 36ae22a..da21b4d 100644
+--- microhttpd/src/mhd2/tls_multi_daemon_data.h
++++ microhttpd/src/mhd2/tls_multi_daemon_data.h
+@@ -41,6 +41,9 @@ struct mhd_TlsGnuDaemonData;    /* forward declaration */
+ #ifdef MHD_SUPPORT_OPENSSL
+ struct mhd_TlsOpenDaemonData;   /* forward declaration */
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++struct mhd_TlsExternalDaemonData;    /* forward declaration */
++#endif
+ 
+ /**
+  * The pointer to the underlying TLS backend daemon data
+@@ -59,6 +62,12 @@ struct mhd_TlsMultiDaemonRoutePtr
+    */
+   struct mhd_TlsOpenDaemonData *openssl;
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  /**
++   * Pointer to external daemon-specific data
++   */
++  struct mhd_TlsExternalDaemonData *external;
++#endif
+ };
+ 
+ /**
+diff --git microhttpd/src/mhd2/tls_multi_funcs.c microhttpd/src/mhd2/tls_multi_funcs.c
+index 1834f84..2069e0a 100644
+--- microhttpd/src/mhd2/tls_multi_funcs.c
++++ microhttpd/src/mhd2/tls_multi_funcs.c
+@@ -49,6 +49,9 @@
+ #if defined(MHD_SUPPORT_OPENSSL)
+ #  include "tls_open_funcs.h"
+ #endif
++#if defined(MHD_SUPPORT_EXTERNAL)
++#  include "tls_external_funcs.h"
++#endif
+ 
+ #include "daemon_options.h"
+ #include "daemon_logger.h"
+@@ -83,6 +86,9 @@ mhd_tls_multi_global_init_once (void)
+ #if defined(MHD_SUPPORT_OPENSSL)
+   mhd_tls_open_global_init_once ();
+ #endif
++#if defined(MHD_SUPPORT_EXTERNAL)
++  mhd_tls_external_global_init_once ();
++#endif
+ }
+ 
+ 
+@@ -96,6 +102,9 @@ mhd_tls_multi_global_deinit (void)
+ #if defined(MHD_SUPPORT_GNUTLS)
+   mhd_tls_gnu_global_deinit ();
+ #endif
++#if defined(MHD_SUPPORT_EXTERNAL)
++  mhd_tls_external_global_deinit ();
++#endif
+ }
+ 
+ 
+@@ -108,6 +117,9 @@ mhd_tls_multi_global_re_init (void)
+ #if defined(MHD_SUPPORT_OPENSSL)
+   mhd_tls_open_global_re_init ();
+ #endif
++#if defined(MHD_SUPPORT_EXTERNAL)
++  mhd_tls_external_global_re_init ();
++#endif
+ }
+ 
+ 
+@@ -131,6 +143,11 @@ mhd_tls_multi_is_edge_trigg_supported (struct DaemonOptions *s)
+     if (mhd_tls_open_is_edge_trigg_supported (s)
+         && mhd_tls_open_is_inited_fine ())
+       return true;
++#endif
++#ifdef MHD_SUPPORT_EXTERNAL
++    if (mhd_tls_external_is_edge_trigg_supported (s)
++        && mhd_tls_external_is_inited_fine ())
++      return true;
+ #endif
+     return false;
+   case MHD_TLS_BACKEND_GNUTLS:
+@@ -145,6 +162,13 @@ mhd_tls_multi_is_edge_trigg_supported (struct DaemonOptions *s)
+     /* Ignore "backend inited" status here,
+        it will be checked on daemon TLS init */
+     return mhd_tls_open_is_edge_trigg_supported (s);
++#endif
++    break;
++  case MHD_TLS_BACKEND_EXTERNAL:
++#ifdef MHD_SUPPORT_EXTERNAL
++    /* Ignore "backend inited" status here,
++       it will be checked on daemon TLS init */
++    return mhd_tls_external_is_edge_trigg_supported (s);
+ #endif
+     break;
+   default:
+@@ -219,6 +243,25 @@ tls_daemon_init_try (enum mhd_TlsMultiRoute route,
+                         "the daemon, error code: %u", (unsigned) res);
+     return res;
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    if (! mhd_tls_external_is_inited_fine ())
++      return MHD_SC_TLS_BACKEND_UNAVAILABLE;
++    res = mhd_tls_external_daemon_init (d,
++                                        sk_edge_trigg,
++                                        s,
++                                        &(d_tls->data.external));
++    if (MHD_SC_OK == res)
++    {
++      mhd_M_DEBUG_PRINT ("External backend initialised successfully " \
++                         "for the daemon");
++      d_tls->choice = route;
++      return MHD_SC_OK;
++    }
++    mhd_M_DEBUG_PRINT1 ("Failed to initialise External backend for " \
++                        "the daemon, error code: %u", (unsigned) res);
++    return res;
++#endif /* MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     break;
+@@ -257,6 +300,9 @@ mhd_tls_multi_daemon_init (struct MHD_Daemon *restrict d,
+ #endif
+ #ifdef MHD_SUPPORT_OPENSSL
+         mhd_TLS_MULTI_ROUTE_OPEN,
++#endif
++#ifdef MHD_SUPPORT_EXTERNAL
++        mhd_TLS_MULTI_ROUTE_EXTERNAL,
+ #endif
+         mhd_TLS_MULTI_ROUTE_NONE  /* Not used */
+       };
+@@ -293,6 +339,16 @@ mhd_tls_multi_daemon_init (struct MHD_Daemon *restrict d,
+                                d_tls);
+ #endif /* MHD_SUPPORT_OPENSSL */
+     break;
++#ifdef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++    mhd_assert (mhd_tls_external_is_inited_fine ()); /* Must be checked earlier */
++    res = tls_daemon_init_try (mhd_TLS_MULTI_ROUTE_EXTERNAL,
++                               d,
++                               sk_edge_trigg,
++                               s,
++                               d_tls);
++    break;
++#endif /* MHD_SUPPORT_EXTERNAL */
+ 
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+@@ -300,6 +356,9 @@ mhd_tls_multi_daemon_init (struct MHD_Daemon *restrict d,
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case MHD_TLS_BACKEND_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -333,12 +392,20 @@ mhd_tls_multi_daemon_deinit (struct mhd_TlsMultiDaemonData *restrict d_tls)
+     mhd_tls_open_daemon_deinit (d_tls->data.openssl);
+     break;
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    mhd_tls_external_daemon_deinit (d_tls->data.external);
++    break;
++#endif /* MHD_SUPPORT_EXTERNAL */
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -368,12 +435,20 @@ mhd_tls_multi_conn_get_tls_size (struct mhd_TlsMultiDaemonData *restrict d_tls)
+     data_size += mhd_tls_open_conn_get_tls_size (d_tls->data.openssl);
+     break;
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    data_size += mhd_tls_external_conn_get_tls_size (d_tls->data.external);
++    break;
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -408,12 +483,23 @@ mhd_tls_multi_conn_init (const struct mhd_TlsMultiDaemonData *restrict d_tls,
+                                    sk,
+                                    c_tls->data.openssl);
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    /* Assume the same alignment requirements for both structures */
++    c_tls->data.external = (struct mhd_TlsExternalConnData *) (c_tls + 1);
++    return mhd_tls_external_conn_init (d_tls->data.external,
++                                      sk,
++                                      c_tls->data.external);
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -444,12 +530,20 @@ mhd_tls_multi_conn_deinit (struct mhd_TlsMultiConnData *restrict c_tls)
+     mhd_tls_open_conn_deinit (c_tls->data.openssl);
+     break;
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    mhd_tls_external_conn_deinit (c_tls->data.external);
++    break;
++#endif /* MHD_SUPPORT_EXTERNAL */
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -473,12 +567,19 @@ mhd_tls_multi_conn_handshake (struct mhd_TlsMultiConnData *restrict c_tls)
+   case mhd_TLS_MULTI_ROUTE_OPEN:
+     return mhd_tls_open_conn_handshake (c_tls->data.openssl);
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    return mhd_tls_external_conn_handshake (c_tls->data.external);
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -502,12 +603,19 @@ mhd_tls_multi_conn_shutdown (struct mhd_TlsMultiConnData *restrict c_tls)
+   case mhd_TLS_MULTI_ROUTE_OPEN:
+     return mhd_tls_open_conn_shutdown (c_tls->data.openssl);
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    return mhd_tls_external_conn_shutdown (c_tls->data.external);
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -543,12 +651,22 @@ mhd_tls_multi_conn_recv (struct mhd_TlsMultiConnData *restrict c_tls,
+                                    buf,
+                                    received);
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    return mhd_tls_external_conn_recv (c_tls->data.external,
++                                      buf_size,
++                                      buf,
++                                      received);
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -571,12 +689,19 @@ mhd_tls_multi_conn_has_data_in (struct mhd_TlsMultiConnData *restrict c_tls)
+   case mhd_TLS_MULTI_ROUTE_OPEN:
+     return mhd_tls_open_conn_has_data_in (c_tls->data.openssl);
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    return mhd_tls_external_conn_has_data_in (c_tls->data.external);
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -610,12 +735,22 @@ mhd_tls_multi_conn_send (struct mhd_TlsMultiConnData *restrict c_tls,
+                                    buf,
+                                    sent);
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    return mhd_tls_external_conn_send (c_tls->data.external,
++                                      buf_size,
++                                      buf,
++                                      sent);
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -647,12 +782,21 @@ mhd_tls_multi_conn_get_tls_sess (
+                                     tls_sess_out);
+     break;
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    mhd_tls_external_conn_get_tls_sess (c_tls->data.external,
++                                       tls_sess_out);
++    break;
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+@@ -678,12 +822,20 @@ mhd_tls_multi_conn_get_tls_ver (struct mhd_TlsMultiConnData *restrict c_tls,
+     return mhd_tls_open_conn_get_tls_ver (c_tls->data.openssl,
+                                           tls_ver_out);
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  case mhd_TLS_MULTI_ROUTE_EXTERNAL:
++    return mhd_tls_external_conn_get_tls_ver (c_tls->data.external,
++                                             tls_ver_out);
++#endif
+ #ifndef MHD_SUPPORT_GNUTLS
+   case MHD_TLS_BACKEND_GNUTLS:
+ #endif /* ! MHD_SUPPORT_GNUTLS */
+ #ifndef MHD_SUPPORT_OPENSSL
+   case MHD_TLS_BACKEND_OPENSSL:
+ #endif /* ! MHD_SUPPORT_OPENSSL */
++#ifndef MHD_SUPPORT_EXTERNAL
++  case MHD_TLS_BACKEND_EXTERNAL:
++#endif /* ! MHD_SUPPORT_EXTERNAL */
+   case mhd_TLS_MULTI_ROUTE_NONE:
+   default:
+     mhd_UNREACHABLE ();
+diff --git microhttpd/src/mhd2/tls_multi_tls_lib.h microhttpd/src/mhd2/tls_multi_tls_lib.h
+index eb60b74..faf9db2 100644
+--- microhttpd/src/mhd2/tls_multi_tls_lib.h
++++ microhttpd/src/mhd2/tls_multi_tls_lib.h
+@@ -59,6 +59,13 @@ enum mhd_TlsMultiRoute
+    */
+   mhd_TLS_MULTI_ROUTE_OPEN
+ #endif
++#ifdef MHD_SUPPORT_EXTERNAL
++  ,
++  /**
++   * Use External backend
++   */
++  mhd_TLS_MULTI_ROUTE_EXTERNAL
++#endif
+ };
+ 
+ #endif /* ! MHD_TLS_MULTI_TLS_LIB_H */
+diff --git microhttpd/src/tests/client_server/Makefile.am microhttpd/src/tests/client_server/Makefile.am
+index 0559a97..e2a4d58 100644
+--- microhttpd/src/tests/client_server/Makefile.am
++++ microhttpd/src/tests/client_server/Makefile.am
+@@ -37,6 +37,11 @@ check_PROGRAMS += \
+   test_cert_tls
+ endif
+ 
++if MHD_SUPPORT_EXTERNAL
++check_PROGRAMS += \
++  test_external_tls
++endif
++
+ TESTS = $(check_PROGRAMS)
+ 
+ noinst_LTLIBRARIES = \
+diff --git microhttpd/src/tests/client_server/libtest.c microhttpd/src/tests/client_server/libtest.c
+index 1aaf573..621b0d0 100644
+--- microhttpd/src/tests/client_server/libtest.c
++++ microhttpd/src/tests/client_server/libtest.c
+@@ -54,14 +54,7 @@ struct Semaphore
+ };
+ 
+ 
+-/**
+- * Check that @a cond is true, otherwise abort().
+- *
+- * @param cond condition to check
+- * @param filename filename to log
+- * @param line line number to log
+- */
+-static void
++void
+ test_check_ (bool cond,
+              const char *filename,
+              unsigned int line)
+@@ -77,15 +70,6 @@ test_check_ (bool cond,
+ }
+ 
+ 
+-/**
+- * Checks that @a cond is true and otherwise aborts.
+- *
+- * @param cond condition to check
+- */
+-#define test_check(cond) \
+-        test_check_ (cond, __FILE__, __LINE__)
+-
+-
+ /**
+  * Initialize a semaphore @a sem with a value of @a val.
+  *
+diff --git microhttpd/src/tests/client_server/libtest.h microhttpd/src/tests/client_server/libtest.h
+index 854bb2a..90fc11f 100644
+--- microhttpd/src/tests/client_server/libtest.h
++++ microhttpd/src/tests/client_server/libtest.h
+@@ -35,6 +35,26 @@
+ #endif
+ #include "microhttpd2.h"
+ 
++/**
++ * Check that @a cond is true, otherwise abort().
++ *
++ * @param cond condition to check
++ * @param filename filename to log
++ * @param line line number to log
++ */
++void
++test_check_ (bool cond,
++             const char *filename,
++             unsigned int line);
++
++
++/**
++ * Checks that @a cond is true and otherwise aborts.
++ *
++ * @param cond condition to check
++ */
++#define test_check(cond) \
++        test_check_ (cond, __FILE__, __LINE__)
+ 
+ /**
+  * A phase defines some server and client-side
+diff --git microhttpd/src/tests/client_server/test_external_tls.c microhttpd/src/tests/client_server/test_external_tls.c
+new file mode 100644
+index 0000000..a9c828f
+--- /dev/null
++++ microhttpd/src/tests/client_server/test_external_tls.c
+@@ -0,0 +1,493 @@
++/*
++  This file is part of GNU libmicrohttpd
++  Copyright (C) 2025 Christian Grothoff & Evgeny Grin (Karlson2k)
++
++  GNU libmicrohttpd is free software; you can redistribute it and/or
++  modify it under the terms of the GNU Lesser General Public
++  License as published by the Free Software Foundation; either
++  version 2.1 of the License, or (at your option) any later version.
++
++  GNU libmicrohttpd is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++  Lesser General Public License for more details.
++
++  You should have received a copy of the GNU Lesser General Public
++  License along with this library; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++
++*/
++
++/**
++ * @file test_external_tls.c
++ * @brief  test with client against dummy external TLS server
++ * @author Ayush Dey
++ */
++#define MHD_APP_DAEMON_EXTRN_TLS_CNTX_TYPE void
++
++#include "libtest.h"
++
++#include "mhd_sockets_macros.h"
++
++// store TLS callbacks invocation count
++struct MHDT_external_tls_TestStats
++{
++  int daemon_init_calls;
++  int daemon_deinit_calls;
++  int conn_init_calls;
++  int conn_deinit_calls;
++  int conn_recv_calls;
++  int conn_send_calls;
++};
++
++static struct MHDT_external_tls_TestStats g_test_stats;
++
++static void MHDT_reset_test_stats(void)
++{
++  memset(&g_test_stats, 0, sizeof(g_test_stats));
++}
++
++// dummy structure to hold external TLS daemon data
++struct MHDT_ExternalDaemonData
++{
++  void *ctx;
++  const char *cert;
++  const char *key;
++};
++
++// dummy structure to hold external TLS connection data
++struct MHDT_ExternalConnData
++{
++  void *cred;
++  int fd;
++};
++
++static void* MHDT_daemon_init(void *ctx, const char *cert, const char *key)
++{
++  g_test_stats.daemon_init_calls++;
++
++  struct MHDT_ExternalDaemonData *cred;
++
++  cred = (struct MHDT_ExternalDaemonData *) malloc(sizeof(struct MHDT_ExternalDaemonData));
++  if (NULL == cred)
++    return NULL;
++
++  cred->ctx = ctx;
++  cred->cert = cert;
++  cred->key = key;
++
++  // Here you would typically initialize the TLS daemon with ctx, cert and key
++  // For this test, we just return the daemon credentials object
++
++  return cred;
++}
++
++static void MHDT_daemon_deinit(void *cred)
++{
++  g_test_stats.daemon_deinit_calls++;
++  struct MHDT_ExternalDaemonData *c = (struct MHDT_ExternalDaemonData *) cred;
++
++  if (NULL != c)
++  {
++    // For this test, we just free the credentials object
++    free(c);
++  }
++  return;
++}
++
++static void* MHDT_conn_init(void *cred, int fd, const char *const *alpn)
++{
++  g_test_stats.conn_init_calls++;
++  struct MHDT_ExternalConnData *sess;
++
++  sess = (struct MHDT_ExternalConnData *) malloc(sizeof(struct MHDT_ExternalConnData));
++  if (NULL == sess)
++    return NULL;
++
++  sess->cred = cred;
++  sess->fd = fd;
++
++  // Here you would typically initialize the TLS session with the credentials
++  // For this test, we just return the session object
++
++  return sess;
++}
++
++static void MHDT_conn_deinit(void *sess)
++{
++  g_test_stats.conn_deinit_calls++;
++  struct MHDT_ExternalConnData *c = (struct MHDT_ExternalConnData *) sess;
++
++  if (NULL != c)
++  {
++    // For this test, we just free the session object
++    free(c);
++  }
++  return;
++}
++
++static int MHDT_conn_handshake(void *cred, void *sess)
++{
++  // This is a dummy handshake implementation. Always succeeds as additional handshake
++  // operations are not needed for plain TCP operations.
++  return 0;
++}
++
++static int MHDT_conn_shutdown(void *sess, int duplex)
++{
++  // This is a dummy shutdown implementation. Always succeeds as additional shutdown
++  // operations are not needed for plain TCP operations.
++  return 0;
++}
++
++static int MHDT_conn_recv(void *sess, void *buf, size_t buf_size)
++{
++  g_test_stats.conn_recv_calls++;
++  int res;
++  struct MHDT_ExternalConnData *c = (struct MHDT_ExternalConnData *) sess;
++
++  res = mhd_sys_recv (c->fd, buf, buf_size);
++  if (res < 0)
++  {
++    // as edge triggering is not supported in external TLS, we can return -2
++    // to indicate that more would-be blocking operation is needed
++    // for both EAGAIN and EINTR errors
++    if ( mhd_SCKT_ERR_IS_EAGAIN (mhd_SCKT_GET_LERR()) || mhd_SCKT_ERR_IS_EINTR (mhd_SCKT_GET_LERR()) )
++      return -2; // More would-be blocking operation needed
++    else
++      return -1; // Fatal error
++  }
++  return res;
++}
++
++static int MHDT_conn_has_data_in(void *sess)
++{
++  return 0; // For plain TCP, we do not have a buffer to check
++  // In a real TLS implementation, you would check if the TLS buffer has data
++}
++
++static int MHDT_conn_send(void *sess, const void *buf, size_t buf_size)
++{
++  g_test_stats.conn_send_calls++;
++  int res;
++  struct MHDT_ExternalConnData *c = (struct MHDT_ExternalConnData *) sess;
++
++  res = mhd_sys_send(c->fd, buf, buf_size);
++  if (res < 0)
++  {
++    // as edge triggering is not supported in external TLS, we can return -2
++    // to indicate that more would-be blocking operation is needed
++    // for both EAGAIN and EINTR errors
++    if ( mhd_SCKT_ERR_IS_EAGAIN (mhd_SCKT_GET_LERR()) || mhd_SCKT_ERR_IS_EINTR (mhd_SCKT_GET_LERR()) )
++      return -2; // More would-be blocking operation needed
++    else
++      return -1; // Fatal error
++  }
++  return res;
++}
++
++static enum MHD_TlsVersion MHDT_conn_get_tls_ver(void *sess)
++{
++  return MHD_TLS_VERSION_NO_TLS; // For plain TCP, we do not have a TLS version
++  // In a real TLS implementation, you would return the TLS version of the session
++  // @see enum MHD_TlsVersion
++}
++
++const struct MHD_DaemonTLSCallbacks tls_cbs =
++{
++    MHDT_daemon_init,
++    MHDT_daemon_deinit,
++    MHDT_conn_init,
++    MHDT_conn_deinit,
++    MHDT_conn_handshake,
++    MHDT_conn_shutdown,
++    MHDT_conn_recv,
++    MHDT_conn_has_data_in,
++    MHDT_conn_send,
++    MHDT_conn_get_tls_ver,
++};
++
++int
++main (int argc, char *argv[])
++{
++  char *srv_certs_chain
++    = MHDT_load_pem ("chain.crt");
++  char *srv_cert_key
++    = MHDT_load_pem ("test-server-key.pem");
++
++  struct MHD_DaemonOptionAndValue thread1select[] = {
++    MHD_D_OPTION_POLL_SYSCALL (MHD_SPS_SELECT),
++    MHD_D_OPTION_WM_WORKER_THREADS (1),
++    MHD_D_OPTION_EXTERNAL_TLS_DATA(NULL, &tls_cbs),
++    MHD_D_OPTION_TLS_CERT_KEY (srv_certs_chain,
++                               srv_cert_key,
++                               NULL),
++    MHD_D_OPTION_TERMINATE ()
++  };
++  struct MHD_DaemonOptionAndValue thread2select[] = {
++    MHD_D_OPTION_POLL_SYSCALL (MHD_SPS_SELECT),
++    MHD_D_OPTION_WM_WORKER_THREADS (2),
++    MHD_D_OPTION_EXTERNAL_TLS_DATA(NULL, &tls_cbs),
++    MHD_D_OPTION_TLS_CERT_KEY (srv_certs_chain,
++                               srv_cert_key,
++                               NULL),
++    MHD_D_OPTION_TERMINATE ()
++  };
++  struct MHD_DaemonOptionAndValue thread1poll[] = {
++    MHD_D_OPTION_POLL_SYSCALL (MHD_SPS_POLL),
++    MHD_D_OPTION_WM_WORKER_THREADS (1),
++    MHD_D_OPTION_EXTERNAL_TLS_DATA(NULL, &tls_cbs),
++    MHD_D_OPTION_TLS_CERT_KEY (srv_certs_chain,
++                               srv_cert_key,
++                               NULL),
++    MHD_D_OPTION_TERMINATE ()
++  };
++  struct MHD_DaemonOptionAndValue thread2poll[] = {
++    MHD_D_OPTION_POLL_SYSCALL (MHD_SPS_POLL),
++    MHD_D_OPTION_WM_WORKER_THREADS (2),
++    MHD_D_OPTION_EXTERNAL_TLS_DATA(NULL, &tls_cbs),
++    MHD_D_OPTION_TLS_CERT_KEY (srv_certs_chain,
++                               srv_cert_key,
++                               NULL),
++    MHD_D_OPTION_TERMINATE ()
++  };
++  struct MHD_DaemonOptionAndValue thread1auto[] = {
++    MHD_D_OPTION_POLL_SYSCALL (MHD_SPS_AUTO),
++    MHD_D_OPTION_WM_WORKER_THREADS (1),
++    MHD_D_OPTION_EXTERNAL_TLS_DATA(NULL, &tls_cbs),
++    MHD_D_OPTION_TLS_CERT_KEY (srv_certs_chain,
++                               srv_cert_key,
++                               NULL),
++    MHD_D_OPTION_TERMINATE ()
++  };
++  struct MHD_DaemonOptionAndValue external0auto[] = {
++    MHD_D_OPTION_POLL_SYSCALL (MHD_SPS_AUTO),
++    MHD_D_OPTION_WM_EXTERNAL_PERIODIC (),
++    MHD_D_OPTION_EXTERNAL_TLS_DATA(NULL, &tls_cbs),
++    MHD_D_OPTION_TLS_CERT_KEY (srv_certs_chain,
++                               srv_cert_key,
++                               NULL),
++    MHD_D_OPTION_TERMINATE ()
++  };
++  struct ServerType
++  {
++    const char *label;
++    MHDT_ServerSetup server_setup;
++    void *server_setup_cls;
++    MHDT_ServerRunner server_runner;
++    void *server_runner_cls;
++  } configs[] = {
++#ifdef MHD_SUPPORT_SELECT
++    {
++      .label = "single threaded select",
++      .server_setup = &MHDT_server_setup_minimal,
++      .server_setup_cls = thread1select,
++      .server_runner = &MHDT_server_run_minimal,
++    },
++    {
++      .label = "multi-threaded select",
++      .server_setup = &MHDT_server_setup_minimal,
++      .server_setup_cls = thread2select,
++      .server_runner = &MHDT_server_run_minimal,
++    },
++#endif
++#ifdef MHD_SUPPORT_POLL
++    {
++      .label = "single threaded poll",
++      .server_setup = &MHDT_server_setup_minimal,
++      .server_setup_cls = thread1poll,
++      .server_runner = &MHDT_server_run_minimal,
++    },
++    {
++      .label = "multi-threaded poll",
++      .server_setup = &MHDT_server_setup_minimal,
++      .server_setup_cls = thread2poll,
++      .server_runner = &MHDT_server_run_minimal,
++    },
++#endif
++    {
++      .label = "auto-selected mode, single threaded",
++      .server_setup = &MHDT_server_setup_minimal,
++      .server_setup_cls = thread1auto,
++      .server_runner = &MHDT_server_run_minimal,
++    },
++#if 1
++    /* FIXME: remove once MHD_daemon_process_blocking
++       has been implemented */
++    {
++      .label = "END"
++    },
++#endif
++    {
++      .label = "auto-selected external event loop mode, no threads",
++      .server_setup = &MHDT_server_setup_minimal,
++      .server_setup_cls = external0auto,
++      .server_runner = &MHDT_server_run_blocking,
++    },
++    {
++      .label = "END"
++    }
++  };
++
++  /* TLS has been disabled as these are dummy TLS callbacks performing plain TCP operations.
++   The objective is solely to verify that the callbacks are invoked correctly and that basic
++   HTTP-over-TCP operations function as expected with externally provided callbacks. */
++  struct MHDT_Phase phases[] = {
++    {
++      .label = "simple get",
++      .server_cb = &MHDT_server_reply_text,
++      .server_cb_cls = (void *) "Hello world",
++      .client_cb = &MHDT_client_get_root,
++      .client_cb_cls = "Hello world",
++      .timeout_ms = 2500,
++      .use_tls = false
++    },
++    {
++      .label = "GET with sendfile",
++      .server_cb = &MHDT_server_reply_file,
++      .server_cb_cls = (void *) "Hello world",
++      .client_cb = &MHDT_client_get_root,
++      .client_cb_cls = "Hello world",
++      .timeout_ms = 2500,
++      .use_tls = false
++    },
++    {
++      .label = "client PUT with content-length",
++      .server_cb = &MHDT_server_reply_check_upload,
++      .server_cb_cls = (void *) "simple-upload-value",
++      .client_cb = &MHDT_client_put_data,
++      .client_cb_cls = "simple-upload-value",
++      .timeout_ms = 2500,
++      .use_tls = false
++    },
++    {
++      .label = "client PUT with 2 chunks",
++      .server_cb = &MHDT_server_reply_check_upload,
++      .server_cb_cls = (void *) "chunky-upload-value",
++      .client_cb = &MHDT_client_chunk_data,
++      .client_cb_cls = "chunky-upload-value",
++      .timeout_ms = 2500,
++      .use_tls = false
++    },
++    {
++      .label = "client request with custom header",
++      .server_cb = &MHDT_server_reply_check_header,
++      .server_cb_cls = (void *) "C-Header:testvalue",
++      .client_cb = &MHDT_client_set_header,
++      .client_cb_cls = "C-Header:testvalue",
++      .timeout_ms = 2500,
++      .use_tls = false
++    },
++    {
++      .label = "server response with custom header",
++      .server_cb = &MHDT_server_reply_with_header,
++      .server_cb_cls = (void *) "X-Header:testvalue",
++      .client_cb = &MHDT_client_expect_header,
++      .client_cb_cls = "X-Header:testvalue",
++      .timeout_ms = 2500,
++      .use_tls = false
++    },
++    {
++      .label = "URL with query parameters 1",
++      .server_cb = &MHDT_server_reply_check_query,
++      .server_cb_cls = (void *) "a=b&c",
++      .client_cb = &MHDT_client_get_with_query,
++      .client_cb_cls = "?a=b&c",
++      .timeout_ms = 5000,
++      .num_clients = 4,
++      .use_tls = false
++    },
++    {
++      .label = "URL with query parameters 2",
++      .server_cb = &MHDT_server_reply_check_query,
++      .server_cb_cls = (void *) "a=b&c", /* a => b, c => NULL */
++      .client_cb = &MHDT_client_get_with_query,
++      .client_cb_cls = "?c&a=b",
++      .timeout_ms = 5000,
++      .num_clients = 1,
++      .use_tls = false
++    },
++    {
++      .label = "URL with query parameters 3",
++      .server_cb = &MHDT_server_reply_check_query,
++      .server_cb_cls = (void *) "a=&c", /* a => "", c => NULL */
++      .client_cb = &MHDT_client_get_with_query,
++      .client_cb_cls = "?c&a=",
++      .timeout_ms = 5000,
++      .num_clients = 1,
++      .use_tls = false
++    },
++    {
++      .label = "URL with query parameters 4",
++      .server_cb = &MHDT_server_reply_check_query,
++      .server_cb_cls = (void *) "a=", /* a => "" */
++      .client_cb = &MHDT_client_get_with_query,
++      .client_cb_cls = "?a=",
++      .timeout_ms = 5000,
++      .num_clients = 1,
++      .use_tls = false
++    },
++    {
++      .label = "URL with query parameters 5",
++      .server_cb = &MHDT_server_reply_check_query,
++      .server_cb_cls = (void *) "a=b", /* a => "b" */
++      .client_cb = &MHDT_client_get_with_query,
++      .client_cb_cls = "?a=b",
++      .timeout_ms = 5000,
++      .num_clients = 1,
++      .use_tls = false
++    },
++    {
++      .label = "chunked response get",
++      .server_cb = &MHDT_server_reply_chunked_text,
++      .server_cb_cls = (void *) "Hello world",
++      .client_cb = &MHDT_client_get_root,
++      .client_cb_cls = "Hello world",
++      .timeout_ms = 2500,
++      .use_tls = false
++    },
++    // TODO: chunked download
++    {
++      .label = NULL,
++    },
++  };
++  unsigned int i;
++  int ret = 0;
++
++  (void) argc; /* Unused. Silence compiler warning. */
++  (void) argv; /* Unused. Silence compiler warning. */
++
++  MHDT_reset_test_stats();
++
++  for (i = 0; NULL != configs[i].server_setup; i++)
++  {
++    fprintf (stderr,
++             "Running TLS tests with server setup '%s'\n",
++             configs[i].label);
++    ret = MHDT_test (configs[i].server_setup,
++                     configs[i].server_setup_cls,
++                     configs[i].server_runner,
++                     configs[i].server_runner_cls,
++                     phases);
++    if (0 != ret)
++    {
++      fprintf (stderr,
++               "Test failed with server of type '%s' (%u)\n",
++               configs[i].label,
++               i);
++      break;
++    }
++  }
++
++  /* external TLS callback tests */
++  test_check(g_test_stats.daemon_init_calls > 0);
++  test_check(g_test_stats.conn_init_calls > 0);
++  test_check(g_test_stats.daemon_init_calls == g_test_stats.daemon_deinit_calls);
++  test_check(g_test_stats.conn_init_calls == g_test_stats.conn_deinit_calls);
++  test_check(g_test_stats.conn_recv_calls > 0);
++  test_check(g_test_stats.conn_send_calls > 0);
++
++  free (srv_cert_key);
++  free (srv_certs_chain);
++  return ret;
++}
