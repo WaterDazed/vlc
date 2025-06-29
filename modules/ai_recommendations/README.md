@@ -28,36 +28,6 @@ This module adds AI-powered media recommendation capabilities to VLC Media Playe
    ./build_module.sh
    ```
 
-### Installing the Module
-
-#### For the current user only:
-```bash
-./install_local.sh
-```
-
-This installs the module to `~/.local/lib/vlc/plugins/interface/`.
-
-#### System-wide installation:
-```bash
-sudo ./install_system.sh
-```
-
-This installs the module to the system VLC plugins directory.
-
-## Running VLC with the Module
-
-### From the command line:
-```bash
-./run_vlc.sh
-```
-
-### Create a desktop shortcut:
-```bash
-./create_desktop_shortcut.sh
-```
-
-This creates a "VLC with AI Recommender" shortcut in your applications menu.
-
 ## Usage
 
 See the [User Guide](USER_GUIDE.md) for detailed instructions on using the AI recommendation features.

@@ -1,1 +1,0 @@
-UI integration files ai_recommendations_ui.cpp and ai_recommendations_ui.hpp have been removed from the build. If you want to re-enable UI, restore these files and update Makefile.am accordingly.

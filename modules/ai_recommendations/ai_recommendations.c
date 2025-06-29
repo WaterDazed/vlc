@@ -72,7 +72,7 @@ static void TriggerRecommendationUpdate(ai_recommender_t *);
 /* Open and Close functions are declared in ai_recommendations.h */
 
 /* Module definition */
-#define CONFIG_PREFIX "ai-recommendations-"
+#define CONFIG_PREFIX "ai-recommender-"
 
 #define MODULE_STRING "ai_recommendations"
 
@@ -98,6 +98,21 @@ vlc_module_begin()
     add_string(CONFIG_PREFIX "profile-dir", NULL, 
                N_("User profile directory"), 
                N_("Directory to store user profile data"))
+    add_integer(CONFIG_PREFIX "processing-mode", 1, 
+                N_("Processing mode"), 
+                N_("Choose how intensive the recommendation processing should be"))
+    add_integer(CONFIG_PREFIX "max-memory", 256, 
+                N_("Maximum memory usage (MB)"), 
+                N_("Limit memory consumption for analysis tasks"))
+    add_bool(CONFIG_PREFIX "analyze-subtitles", true, 
+             N_("Analyze subtitles"), 
+             N_("Extract themes and topics from subtitle content"))
+    add_integer(CONFIG_PREFIX "scan-interval", 60, 
+                N_("Library scan interval (minutes)"), 
+                N_("Time between automatic media library scans"))
+    add_integer(CONFIG_PREFIX "num-recommendations", 5, 
+                N_("Number of recommendations"), 
+                N_("Number of recommendations to display"))
 vlc_module_end()
 
 /* Main entry point for the module */
@@ -595,7 +610,7 @@ static void *BackgroundWorker(void *data)
 {
     ai_recommender_t *p_sys = (ai_recommender_t *)data;
     
-    vlc_thread_set_name("vlc-ai-recommender");
+    vlc_thread_set_name("vlc-ai-rec");
     
     while (vlc_object_alive_hold(p_sys->obj)) {
         vlc_tick_t sleep_time = VLC_TICK_FROM_SEC(10); /* Default sleep time */

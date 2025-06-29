@@ -137,3 +137,23 @@ libmedialibrary_plugin_la_LIBADD = $(MEDIALIBRARY_LIBS)
 libmedialibrary_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(miscdir)'
 EXTRA_LTLIBRARIES += libmedialibrary_plugin.la
 misc_LTLIBRARIES += $(LTLIBmedialibrary)
+
+libai_recommendations_plugin_la_SOURCES = \
+	ai_recommendations/ai_recommendations.c \
+	ai_recommendations/profile_manager.c \
+	ai_recommendations/feature_extractor.c \
+	ai_recommendations/recommendation_engine.c \
+	ai_recommendations/metadata_analyzer.c \
+	ai_recommendations/ai_recommendations.h \
+	ai_recommendations/profile_manager.h \
+	ai_recommendations/feature_extractor.h \
+	ai_recommendations/recommendation_engine.h \
+	ai_recommendations/metadata_analyzer.h \
+	ai_recommendations/custom_compat.h
+
+libai_recommendations_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/include
+libai_recommendations_plugin_la_CFLAGS = $(AM_CFLAGS)
+libai_recommendations_plugin_la_LIBADD = $(LIBM)
+libai_recommendations_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(miscdir)' \
+	-avoid-version -module
+misc_LTLIBRARIES += libai_recommendations_plugin.la
