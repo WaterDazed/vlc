@@ -24,6 +24,8 @@
 
 #import "VLCLibraryDataTypes.h"
 
+#import "coreinteraction/VLCHotkeysController.h"
+
 #import "extensions/NSColor+VLCAdditions.h"
 #import "extensions/NSImage+VLCAdditions.h"
 #import "extensions/NSFont+VLCAdditions.h"
@@ -703,6 +705,25 @@ static void addShadow(NSImageView *__unsafe_unretained imageView)
     if (!self.videoViewController.view.hidden) {
         [self showControlsBar];
     }
+}
+
+- (void)keyDown:(NSEvent *)event
+{
+    const unsigned short SPACE = 49;
+    if (event.keyCode == SPACE) {
+        if (self.firstResponder != self.librarySearchField) {
+            // First try performKeyEquivalent on the first responder
+            if ([self.firstResponder respondsToSelector:@selector(performKeyEquivalent:)] &&
+                [self.firstResponder performKeyEquivalent:event]) {
+                return;
+            }
+            
+            // Only use hotkey if no one else handled it
+            if ([VLCMain.sharedInstance.hotkeysController performKeyEquivalent:event])
+                return;
+        }
+    }
+    [super keyDown:event];
 }
 
 @end
