@@ -1,5 +1,5 @@
 /*****************************************************************************
- * opencv_wrapper.c : OpenCV wrapper video filter
+ * opencv_wrapper.cpp : OpenCV wrapper video filter
  *****************************************************************************
  * Copyright (C) 2006-2012 VLC authors and VideoLAN
  * Copyright (C) 2012 Edward Wang
@@ -146,8 +146,8 @@ static int Create( filter_t* p_filter )
     char *psz_chroma, *psz_output;
 
     /* Allocate structure */
-    p_sys = malloc( sizeof( filter_sys_t ) );
-    if( p_sys == NULL )
+    p_sys = new (std::nothrow) filter_sys_t;
+    if( !p_sys )
         return VLC_ENOMEM;
 
     /* Load the internal OpenCV filter.
@@ -159,9 +159,9 @@ static int Create( filter_t* p_filter )
      * We don't need to set up video formats for this filter as it not
      * actually using a picture_t.
      */
-    p_sys->p_opencv = vlc_object_create( p_filter, sizeof(filter_t) );
+    p_sys->p_opencv = static_cast<filter_t*>( vlc_object_create( p_filter, sizeof(filter_t) ) );
     if( !p_sys->p_opencv ) {
-        free( p_sys );
+        delete p_sys;
         return VLC_ENOMEM;
     }
 
@@ -178,7 +178,7 @@ static int Create( filter_t* p_filter )
         msg_Err( p_filter, "can't open internal opencv filter: %s", psz_inner_name );
         free( psz_inner_name );
         vlc_object_delete(p_sys->p_opencv);
-        free( p_sys );
+        delete p_sys;
 
         return VLC_ENOENT;
     }
@@ -268,7 +268,7 @@ static void Destroy( filter_t* p_filter )
     // Release the internal OpenCV filter.
     vlc_filter_Delete( p_sys->p_opencv );
 
-    free( p_sys );
+    delete p_sys;
 }
 
 /*****************************************************************************
