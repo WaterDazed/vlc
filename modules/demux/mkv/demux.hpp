@@ -34,6 +34,8 @@
 #include <memory>
 
 #include <vlc_threads.h>
+#include <vlc_dialog.h>
+#include <mutex>
 
 namespace mkv {
 
@@ -142,18 +144,11 @@ public:
         return ms_interpreter.get();
     }
 
-    matroska_js_interpreter_c * GetMatroskaJSInterpreter()
+    matroska_js_interpreter_c *GetMatroskaJSInterpreter()
     {
-        if (!matroska_js_interpreter)
-        {
-            try {
-                matroska_js_interpreter = std::make_unique<matroska_js_interpreter_c> ( vlc_object_logger( &demuxer ), *this );
-            } catch ( const std::bad_alloc & ) {
-            }
-        }
+        std::call_once(matroskajs_init_once, initMatroskaJSInterpreter, this);
         return matroska_js_interpreter.get();
     }
-
 
 
     uint8_t        palette[4][4];
@@ -167,10 +162,38 @@ public:
         return this->ev;
     }
 private:
+
+    static void initMatroskaJSInterpreter(void *opaque)
+    {
+        demux_sys_t *p_sys = static_cast<demux_sys_t *>(opaque);
+        demux_t &demuxer = p_sys->demuxer;
+
+        uint8_t user_permission = vlc_dialog_wait_question(
+            VLC_OBJECT(&demuxer),
+            VLC_DIALOG_QUESTION_NORMAL,
+            _("No"),            // Cancel ( "No", returns 0)
+            _("Yes, proceed"),  // Action1 ("Yes", returns 1)
+            NULL,            // TODO: Always button
+            _("MatroskaJS Interpreter"),
+            _("Do you want to load the Matroska chapter interpreter for this chapter?")
+        );
+
+        if (user_permission) {
+            try {
+                p_sys->matroska_js_interpreter =
+                    std::make_unique<matroska_js_interpreter_c> (
+                        vlc_object_logger( &demuxer ), *p_sys
+                    );
+            } catch ( const std::bad_alloc & ) {
+            }
+        }
+    }
+
     virtual_segment_c                *p_current_vsegment = nullptr;
     std::unique_ptr<dvd_command_interpretor_c> dvd_interpretor; // protected by lock_demuxer
     std::unique_ptr<matroska_script_interpretor_c> ms_interpreter;
     std::unique_ptr<matroska_js_interpreter_c> matroska_js_interpreter;
+    std::once_flag matroskajs_init_once;
 };
 
 } // namespace
