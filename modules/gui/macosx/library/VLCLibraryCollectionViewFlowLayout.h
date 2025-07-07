@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Creates new layout with standard insets and spacing
 @property (class, readonly) VLCLibraryCollectionViewFlowLayout *standardLayout;
+@property (nonatomic, readonly, nullable) NSIndexPath *selectedIndexPath;
 
 - (void)expandDetailSectionAtIndex:(NSIndexPath *)indexPath;
 - (void)collapseDetailSectionAtIndex:(NSIndexPath *)indexPath;
