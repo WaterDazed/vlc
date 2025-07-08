@@ -67,6 +67,8 @@ MainViewLoader {
     readonly property int contentLeftMargin: currentItem?.contentLeftMargin ?? 0
     readonly property int contentRightMargin: currentItem?.contentRightMargin ?? 0
 
+    property QtAbstractItemModel viewModel: root.model
+
     isSearchable: true
 
     sortModel: [
@@ -150,7 +152,7 @@ MainViewLoader {
 
             focus: true
 
-            model: root.model
+            model: root.viewModel
 
             selectionModel: root.selectionModel
 
@@ -276,7 +278,7 @@ MainViewLoader {
 
             focus: true
 
-            model: root.model
+            model: root.viewModel
 
             selectionModel: root.selectionModel
 
