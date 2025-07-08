@@ -345,6 +345,8 @@ libqt_plugin_la_SOURCES = \
 	util/colorizedsvgicon.hpp \
 	util/textureproviderobserver.cpp \
 	util/textureproviderobserver.hpp \
+	util/limiter_proxy_model.hpp \
+	util/limiter_proxy_model.cpp \
 	widgets/native/animators.cpp \
 	widgets/native/animators.hpp \
 	widgets/native/customwidgets.cpp widgets/native/customwidgets.hpp \
@@ -504,6 +506,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	util/vlchotkeyconverter.moc.cpp \
 	util/qsgtextureview.moc.cpp \
 	util/textureproviderobserver.moc.cpp \
+	util/limiter_proxy_model.moc.cpp \
 	widgets/native/animators.moc.cpp \
 	widgets/native/csdthemeimage.moc.cpp \
 	widgets/native/customwidgets.moc.cpp \
