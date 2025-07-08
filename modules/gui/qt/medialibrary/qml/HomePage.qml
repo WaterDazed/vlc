@@ -204,6 +204,17 @@ T.Page {
             Navigation.parentItem: root
             Navigation.upItem: coneNButtons
 
+            // FIXME: "ExpandGridView" does not work with abstract item model.
+            component ExpandGridViewCompatLimiterProxyModel : LimiterProxyModel {
+                property var getDataAt: function(...args) {
+                    // We can not simply `getDataAt: sourceModel.getDataAt`, because of the infamous Qt warning:
+                    // "Calling C++ methods with 'this' objects different from the one they were retrieved from is broken..."
+                    console.assert(this.sourceModel)
+                    console.assert(this.sourceModel.getDataAt)
+                    return this.sourceModel.getDataAt(...args)
+                }
+            }
+
             VideoAll {
                 id: continueWatchingRow
 
@@ -243,7 +254,13 @@ T.Page {
                     searchPattern: MainCtx.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(continueWatchingRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+                    limit: MainCtx.gridView ? 6 : 5
+                }
+
+                viewModel: ExpandGridViewCompatLimiterProxyModel {
+                    sourceModel: continueWatchingRow.model
+
+                    maximumRowCount: MainCtx.gridView ? (continueWatchingRow.currentItem?.nbItemPerRow ?? -1) : -1
                 }
 
                 header: Widgets.ViewHeader {
@@ -251,7 +268,7 @@ T.Page {
 
                     text: qsTr("Continue Watching")
 
-                    seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.model.count
+                    seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.count
 
                     Navigation.parentItem: continueWatchingRow
                     Navigation.downAction: function () {
@@ -342,7 +359,13 @@ T.Page {
                     searchPattern: MainCtx.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(favoritesRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+                    limit: MainCtx.gridView ? 10 : 5
+                }
+
+                viewModel: ExpandGridViewCompatLimiterProxyModel {
+                    sourceModel: favoritesRow.model
+
+                    maximumRowCount: MainCtx.gridView ? (favoritesRow.currentItem?.nbItemPerRow ?? -1) : -1
                 }
 
                 headerText: qsTr("Favorites")
@@ -411,7 +434,13 @@ T.Page {
                     searchPattern: MainCtx.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(newMediaRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+                    limit: MainCtx.gridView ? 10 : 5
+                }
+
+                viewModel: ExpandGridViewCompatLimiterProxyModel {
+                    sourceModel: newMediaRow.model
+
+                    maximumRowCount: MainCtx.gridView ? (newMediaRow.currentItem?.nbItemPerRow ?? -1) : -1
                 }
 
                 headerText: qsTr("New Media")
