@@ -236,7 +236,7 @@ ListView {
             readonly property bool bottomContainsDrag: false
 
             onContainsDragChanged: {
-                if (root.model.count > 0) {
+                if (root.count > 0) {
                     root.updateItemContainsDrag(this, containsDrag)
                 } else if (!containsDrag && root.itemContainsDrag === this) {
                     // In case model count is changed somehow while
@@ -258,7 +258,7 @@ ListView {
 
                 color: "transparent"
 
-                visible: (root.model.count === 0 && (dropArea.containsDrag || dropArea.dropOperationOngoing))
+                visible: (root.count === 0 && (dropArea.containsDrag || dropArea.dropOperationOngoing))
 
                 opacity: 0.8
 
@@ -288,7 +288,7 @@ ListView {
                 }
 
                 onEntered: function(drag) {
-                    if (!root.isDropAcceptableFunc || !root.isDropAcceptableFunc(drag, root.model.rowCount())
+                    if (!root.isDropAcceptableFunc || !root.isDropAcceptableFunc(drag, root.count)
                             || !root.acceptDropFunc) {
                         drag.accepted = false
                         return
@@ -300,7 +300,7 @@ ListView {
                 onDropped: function(drop) {
                     console.assert(!!root.acceptDropFunc)
                     dropOperationOngoing = true
-                    root.acceptDropFunc(root.model.count, drop)
+                    root.acceptDropFunc(root.count, drop)
                         .then(() => { dropOperationOngoing = false })
                 }
             }
@@ -423,7 +423,7 @@ ListView {
     }
 
     function setCurrentItemFocus(reason) {
-        if (!model || model.count === 0) {
+        if (!model || root.count === 0) {
             // NOTE: By default we want the focus on the flickable.
             root.forceActiveFocus(reason);
 
