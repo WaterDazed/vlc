@@ -71,6 +71,8 @@ MainViewLoader {
 
     property QtAbstractItemModel viewModel: root.model
 
+    readonly property int count: currentItem?.count ?? 0
+
     // Aliases
 
     property alias dragItem: dragItem
