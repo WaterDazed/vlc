@@ -10,7 +10,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
+ the way i implemented sticky album cover in the orginal version was using y pos and calculating *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
@@ -24,6 +24,11 @@
 MLAlbumModel::MLAlbumModel(QObject *parent)
     : MLBaseModel(parent)
 {
+}
+
+QJSValue MLAlbumModel::getDataAtId(int item_id) {
+    const MLItemId item(item_id, VLC_ML_PARENT_ALBUM);
+    return getDataById(item);
 }
 
 QHash<int, QByteArray> MLAlbumModel::roleNames() const

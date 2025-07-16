@@ -306,7 +306,6 @@ FocusScope {
                 height: VLCStyle.tableHeaderText_height
                 verticalAlignment: Text.AlignVCenter
 
-                text: view.currentSection
                 color: view.colorContext.accent
                 visible: view.headerPositioning === ListView.OverlayHeader
                          && text !== ""
