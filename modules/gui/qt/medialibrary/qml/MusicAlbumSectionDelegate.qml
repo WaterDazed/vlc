@@ -37,6 +37,7 @@ Rectangle {
     property var listViewId
     property var albumCover: (root.album && root.album.cover && root.album.cover !== "") ? root.album.cover : VLCStyle.noArtAlbumCover
 
+    property int listViewContentY: -1
     property bool forcePlayActionBtnFocusOnce: false
     property bool showClosePanelButton: true
     property bool largeCoverSize: false
@@ -108,11 +109,13 @@ Rectangle {
         id: bgCover
 
         Rectangle {
+            color: "transparent"
 
             Widgets.ImageExt {
                 id: expand_cover_id_blur
 
                 anchors.fill: parent
+                anchors.bottomMargin: VLCStyle.margin_normal
                 fillMode: Image.PreserveAspectCrop
                 source: root.albumCover
             }

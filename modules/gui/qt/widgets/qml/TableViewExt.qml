@@ -123,6 +123,9 @@ FocusScope {
     property color headerColor: (interactive && (headerPositioning !== ListView.InlineHeader)) ? colorContext.bg.primary : "transparent"
     property int headerTopPadding: 0
 
+    property bool forceShowDefaultHeader: false
+    property bool headerAtBottom: false
+    property bool manualSortDisbled: false
 
     property real rowHeight: VLCStyle.tableRow_height
 
@@ -221,6 +224,10 @@ FocusScope {
 
     function positionViewAtBeginning() {
         view.positionViewAtBeginning()
+    }
+
+    function itemAtIndex(index) {
+        return view.itemAtIndex(index)
     }
 
     function getItemY(index) {
@@ -340,7 +347,7 @@ FocusScope {
                     spacing: VLCStyle.column_spacing
 
                     // If there is a specific header, obey to its visibility otherwise hide the header if model is empty:
-                    visible: headerLoader.item ? headerLoader.item.visible : (view.count > 0)
+                    visible: headerLoader.item ? headerLoader.item.visible || root.forceShowDefaultHeader: (view.count > 0)
 
                     Repeater {
                         model: sortModel
@@ -390,6 +397,8 @@ FocusScope {
 
                             TapHandler {
                                 onTapped: (eventPoint, button) => {
+                                    if (root.manualSortDisbled)
+                                        return
                                     if (!(modelData.model.isSortable ?? true))
                                         return
                                     else if (root.model.sortCriteria !== modelData.model.criteria)

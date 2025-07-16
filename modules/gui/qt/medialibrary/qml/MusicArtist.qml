@@ -132,6 +132,13 @@ FocusScope {
                 text: qsTr("Albums")
                 visible: MainCtx.gridView
             }
+
+            Loader {
+                id: albumsLoader
+
+                active: !MainCtx.gridView
+                visible: MainCtx.gridView
+            }
         }
     }
 
