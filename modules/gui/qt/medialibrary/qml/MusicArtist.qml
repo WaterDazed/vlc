@@ -36,13 +36,6 @@ FocusScope {
     readonly property int _contentLeftMargin: VLCStyle.layout_left_margin + _extraMargin
     readonly property int _contentRightMargin: VLCStyle.layout_right_margin + _extraMargin
 
-    property int displayMarginBeginning: 0
-    property int displayMarginEnd: 0
-
-    // Currently only respected by the list view:
-    property bool enableBeginningFade: true
-    property bool enableEndFade: true
-
     //the index to "go to" when the view is loaded
     property int initialIndex: 0
 
@@ -50,7 +43,7 @@ FocusScope {
 
     property bool isSearchable: true
 
-    property alias searchPattern: albumModel.searchPattern
+    property var searchPattern
     property alias sortOrder: albumModel.sortOrder
     property alias sortCriteria: albumModel.sortCriteria
 
@@ -125,6 +118,8 @@ FocusScope {
             Widgets.ViewHeader {
                 view: root
 
+                // visible: MainCtx.gridView
+
                 leftPadding: root._contentLeftMargin
                 bottomPadding: VLCStyle.layoutTitle_bottom_padding -
                                (MainCtx.gridView ? 0 : VLCStyle.gridItemSelectedBorder)
@@ -138,6 +133,144 @@ FocusScope {
 
                 active: !MainCtx.gridView
                 visible: MainCtx.gridView
+                focus: true
+
+                onActiveFocusChanged: {
+                    // make sure content is visible with activeFocus
+                    if (activeFocus)
+                        root.navigationShowHeader(y, height)
+                }
+
+                sourceComponent: Column {
+                    property alias albumsListView: albumsList
+
+                    width: albumsList.width
+                    height: implicitHeight
+
+                    spacing: VLCStyle.tableView_spacing - VLCStyle.margin_xxxsmall
+
+                    Widgets.ListViewExt {
+                        id: albumsList
+
+                        x: root._contentLeftMargin - VLCStyle.gridItemSelectedBorder
+
+                        width: root.width - root.rightPadding - root._contentLeftMargin - root._contentRightMargin
+                        height: gridHelper.cellHeight + topMargin + bottomMargin + VLCStyle.margin_xxxsmall
+
+                        leftMargin: VLCStyle.gridItemSelectedBorder
+                        rightMargin: leftMargin
+
+                        topMargin: VLCStyle.gridItemSelectedBorder
+                        bottomMargin: VLCStyle.gridItemSelectedBorder
+
+                        focus: true
+
+                        model: albumModel
+                        selectionModel: albumSelectionModel
+                        orientation: ListView.Horizontal
+                        spacing: VLCStyle.column_spacing
+                        buttonMargin: (gridHelper.cellHeight - gridHelper.textHeight - buttonLeft.height) / 2 +
+                                      VLCStyle.gridItemSelectedBorder
+
+                        Navigation.parentItem: root
+
+                        Navigation.upAction: function() {
+                            artistBanner.setCurrentItemFocus(Qt.TabFocusReason);
+                        }
+
+                        Navigation.downAction: function() {
+                            root.setCurrentItemFocus(Qt.TabFocusReason);
+                        }
+
+                        GridSizeHelper {
+                            id: gridHelper
+
+                            availableWidth: albumsList.width
+                            basePictureWidth: VLCStyle.gridCover_music_width
+                            basePictureHeight: VLCStyle.gridCover_music_height
+                        }
+
+                        delegate: Widgets.GridItem {
+                            id: gridItem
+
+                            required property var model
+                            required property int index
+
+                            y: selectedBorderWidth
+
+                            width: gridHelper.cellWidth
+                            height: gridHelper.cellHeight
+
+                            pictureWidth: gridHelper.maxPictureWidth
+                            pictureHeight: gridHelper.maxPictureHeight
+
+                            image: model.cover || ""
+                            fallbackImage: VLCStyle.noArtAlbumCover
+
+                            title: model.title || qsTr("Unknown title")
+                            subtitle: model.release_year || ""
+                            subtitleVisible: true
+                            textAlignHCenter: true
+                            dragItem: albumDragItem
+
+                            // updates to selection is manually handled for optimization purpose
+                            Component.onCompleted: _updateSelected()
+
+                            onIndexChanged: _updateSelected()
+
+                            onPlayClicked: play()
+                            onItemDoubleClicked: play()
+
+                            onItemClicked: (modifier) => {
+                                albumsList.selectionModel.updateSelection( modifier , albumsList.currentIndex, index )
+                                albumsList.currentIndex = index
+                                albumsList.forceActiveFocus()
+                            }
+
+                            Connections {
+                                target: albumsList.selectionModel
+
+                                function onSelectionChanged(selected, deselected) {
+                                    const idx = albumModel.index(gridItem.index, 0)
+                                    const findInSelection = s => s.find(range => range.contains(idx)) !== undefined
+
+                                    // NOTE: we only get diff of the selection
+                                    if (findInSelection(selected))
+                                        gridItem.selected = true
+                                    else if (findInSelection(deselected))
+                                        gridItem.selected = false
+                                }
+                            }
+
+                            onContextMenuButtonClicked: (_, globalMousePos) => {
+                                albumSelectionModel.updateSelection( Qt.NoModifier , albumsList.currentIndex, index )
+                                contextMenu.popup(albumSelectionModel.selectedIndexes
+                                                  , globalMousePos)
+                            }
+
+                            function play() {
+                                if ( model.id !== undefined ) {
+                                    MediaLib.addAndPlay( model.id )
+                                }
+                            }
+
+                            function _updateSelected() {
+                                selected = albumSelectionModel.isRowSelected(gridItem.index)
+                            }
+                        }
+
+                        onActionAtIndex: (index) => { albumModel.addAndPlay( new Array(index) ) }
+                    }
+
+                    Widgets.ViewHeader {
+                        view: root
+
+                        leftPadding: root._contentLeftMargin
+                        topPadding: 0
+
+                        text: qsTr("Tracks")
+                    }
+                }
             }
         }
     }
@@ -164,7 +297,7 @@ FocusScope {
         if (initialIndex >= albumModel.count)
             initialIndex = 0
         albumSelectionModel.select(initialIndex, ItemSelectionModel.ClearAndSelect)
-        const albumsListView = MainCtx.gridView ? _currentView : headerItem.albumsListView
+        const albumsListView = MainCtx.gridView ? _currentView : _currentView.albumListView
         if (albumsListView) {
             albumsListView.currentIndex = initialIndex
             albumsListView.positionViewAtIndex(initialIndex, ItemView.Contain)
@@ -287,9 +420,6 @@ FocusScope {
             selectionModel: albumSelectionModel
             model: albumModel
 
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
-
             Connections {
                 target: albumModel
                 // selectionModel updates but doesn't trigger any signal, this forces selection update in view
@@ -392,6 +522,8 @@ FocusScope {
                 listView_id.setCurrentItemFocus(focus_reason)
             }
 
+            //TODO: Flashes when switching between list/grid.
+            // Move this outside of both the grid and list views to make switching between those views smoother
             Loader {
                 id: headerLoader
                 sourceComponent: root.header
@@ -410,48 +542,7 @@ FocusScope {
                 }
 
                 property var currentVisibleSection: null
-
-                function navigateSection(direction, currentSection) {
-                    const sectionProp = listView_id.section.property
-                    const model = listView_id.model
-                    const count = listView_id.count
-                    if (count === 0 || !model || !sectionProp)
-                        return
-
-                    const sectionIndexes = []
-
-                    // Collect starting indexes of each section
-                    for (let i = 0; i < count; ++i) {
-                        const albumId = model.getDataAt(i)[sectionProp]
-                        if (sectionIndexes.length === 0 || sectionIndexes[sectionIndexes.length - 1].album_id !== albumId) {
-                            sectionIndexes.push({ index: i, album_id: albumId })
-                        }
-                    }
-
-                    const currentIndex = currentSection == null ? 0 : sectionIndexes.findIndex(s => s.album_id === currentSection)
-
-                    let targetSection = null
-                    if (direction === "next" && currentIndex < sectionIndexes.length - 1) {
-                        targetSection = sectionIndexes[currentIndex + 1]
-                    } else if (direction === "prev" && currentIndex > 0) {
-                        targetSection = sectionIndexes[currentIndex - 1]
-                    }
-
-                    if (targetSection) {
-                        listView_id.positionViewAtIndex(targetSection.index, ListView.SnapPosition)
-                        listView_id.currentVisibleSection = targetSection.album_id
-                        listView_id.currentIndex = targetSection.index
-                        Qt.callLater(() => {
-                            listView_id.contentY += (listView_id.headerItem?.implicitHeight || 0) + VLCStyle.margin_normal
-                        })
-                    }
-                }
-
-                displayMarginBeginning: root.displayMarginBeginning
-                displayMarginEnd: root.displayMarginEnd
-
-                fadingEdge.enableBeginningFade: root.enableBeginningFade
-                fadingEdge.enableEndFade: root.enableEndFade
+                property real sectionHeight: 0
 
                 readonly property var _titleModel: [{
                     weight: 1,
@@ -516,6 +607,7 @@ FocusScope {
                 height: parent.height
 
                 forceShowDefaultHeader: true
+                headerAtBottom: true
                 manualSortDisbled: true
 
                 section.property: "album_id"
@@ -523,11 +615,8 @@ FocusScope {
                     width: listView_id.width
                     height: implicitHeight
 
-                    prevAlbumBtnVisible: true
-                    nextAlbumBtnVisible: true
-
-                    onChangeAlbum: (direction) => {
-                        listView_id.navigateSection(direction > 0 ? "prev" : "next", parseInt(section))
+                    onImplicitHeightChanged: {
+                        listView_id.sectionHeight = implicitHeight
                     }
                 }
 
@@ -537,13 +626,6 @@ FocusScope {
 
                     section: listView_id.currentVisibleSection
                     visible: listView_id.currentVisibleSection != null
-
-                    prevAlbumBtnVisible: true
-                    nextAlbumBtnVisible: true
-
-                    onChangeAlbum: (direction) => {
-                        listView_id.navigateSection(direction > 0 ? "prev" : "next", section)
-                    }
                 }
 
                 onContentYChanged: {
@@ -551,7 +633,7 @@ FocusScope {
                         const item = listView_id.itemAtIndex(i)
                         if (!item) continue
 
-                        const item_y = Math.max(item.y - listView_id.headerItem?.implicitHeight - VLCStyle.margin_small, 0)
+                        const item_y = Math.max(item.y - listView_id.sectionHeight - VLCStyle.margin_small, 0)
                         if (item_y <= listView_id.contentY && (item_y + item.height) > listView_id.contentY) {
                             const current = model.getDataAt(i).album_id
                             if (listView_id.currentVisibleSection !== current)

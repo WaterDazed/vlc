@@ -32,6 +32,7 @@ Widgets.TableViewExt {
     // Properties
 
     readonly property bool isSearchable: true
+    property bool hasStrictSectionProperty: false
 
     property var pagePrefix: []
 
@@ -209,6 +210,9 @@ Widgets.TableViewExt {
         ml: MediaLib
 
         onSortCriteriaChanged: {
+            if (root.hasStrictSectionProperty) {
+                return;
+            }
             switch (rootmodel.sortCriteria) {
             case "title":
             case "album_title":

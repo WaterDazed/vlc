@@ -39,11 +39,8 @@ Rectangle {
 
     property int listViewContentY: -1
     property bool forcePlayActionBtnFocusOnce: false
-    property bool showClosePanelButton: true
     property bool largeCoverSize: false
-    property bool showHeaderUnderArtAndControls: false
     property bool showBlurredAlbumCover: false
-    property bool isStickyCommonHeaderEnabled: listViewId != null && !VLCStyle.isScreenSmall
 
     property bool prevAlbumBtnVisible: false
     property bool nextAlbumBtnVisible: false
@@ -56,7 +53,7 @@ Rectangle {
     }
 
     implicitHeight: {
-        const verticalMargins = layout.anchors.topMargin + layout.anchors.bottomMargin
+        const verticalMargins = layout.anchors.topMargin + layout.anchors.bottomMargin + VLCStyle.margin_small
         return artAndControl.height + verticalMargins
     }
 
@@ -86,10 +83,9 @@ Rectangle {
         id: cover
 
         Widgets.ImageExt {
-            id: expand_cover_id
-
             property int cover_height: parent.cover_height
             property int cover_width: parent.cover_width
+            readonly property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
 
             height: cover_height
             width: cover_width
@@ -97,7 +93,6 @@ Rectangle {
             source: root.albumCover
             sourceSize: Qt.size(width * eDPR, height * eDPR)
 
-            readonly property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
 
             Widgets.DefaultShadow {
                 visible: (parent.status === Image.Ready)
@@ -110,32 +105,47 @@ Rectangle {
 
         Rectangle {
             color: "transparent"
+            clip: true
 
             Widgets.ImageExt {
-                id: expand_cover_id_blur
+                id: album_bg_cover
 
-                anchors.fill: parent
+                width: parent.width
+                // If the width becomes too small the height does too, this prevents it.
+                height: Math.max(parent.height, width / (sourceSize.width / sourceSize.height))
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
                 anchors.bottomMargin: VLCStyle.margin_normal
-                fillMode: Image.PreserveAspectCrop
+
+                fillMode: Image.PreserveAspectFit
                 source: root.albumCover
+                visible: false
             }
 
-            Item {
-                anchors.fill: expand_cover_id_blur
-                clip: !blurEffect.sourceNeedsLayering
+            Widgets.FrostedGlassEffect {
+                id: blurEffect
+                anchors.fill: album_bg_cover
+                source: album_bg_cover
 
-                Widgets.FrostedGlassEffect {
-                    id: blurEffect
-                    ColorContext {
-                        id: frostedTheme
-                        palette: VLCStyle.palette
-                        colorSet: ColorContext.Window
-                    }
+                ColorContext {
+                    id: frostedTheme
+                    palette: VLCStyle.palette
+                    colorSet: ColorContext.Window
+                }
 
-                    tint: frostedTheme.bg.secondary
-                    tintStrength: 0.87
+                tint: frostedTheme.bg.secondary
+                tintStrength: 0.8
 
-                    source: expand_cover_id_blur
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.AllButtons
+                propagateComposedEvents: false
+                // Prevent selection of tracks behind this delegate when it's pinned at the top
+                onPressed: (mouse) => {
+                    mouse.accepted = true
                 }
             }
         }
@@ -199,6 +209,7 @@ Rectangle {
 
     Loader {
         anchors.fill: parent
+        anchors.bottomMargin: VLCStyle.margin_small
         sourceComponent: bgCover
     }
 
@@ -215,9 +226,6 @@ Rectangle {
         FocusScope {
             id: artAndControl
 
-            visible: !VLCStyle.isScreenSmall
-            focus: !VLCStyle.isScreenSmall
-
             implicitHeight: artAndControlLayout.implicitHeight
             implicitWidth: artAndControlLayout.implicitWidth
             Layout.alignment: Qt.AlignTop
@@ -230,9 +238,9 @@ Rectangle {
 
                 /* A bigger cover for the album */
                 Loader {
-                    sourceComponent: !VLCStyle.isScreenSmall ? cover : null
-                    property int cover_height: root.largeCoverSize ? VLCStyle.listCover_music_height : VLCStyle.expandCover_music_height
-                    property int cover_width: root.largeCoverSize ? VLCStyle.listCover_music_width : VLCStyle.expandCover_music_width
+                    sourceComponent: cover
+                    property int cover_height: VLCStyle.isScreenSmall ? VLCStyle.cover_small : VLCStyle.expandCover_music_height
+                    property int cover_width: VLCStyle.isScreenSmall ? VLCStyle.cover_small : VLCStyle.expandCover_music_width
                 }
             }
         }
@@ -265,7 +273,7 @@ Rectangle {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
 
-                sourceComponent: !VLCStyle.isScreenSmall ? buttons : null
+                sourceComponent: buttons
 
                 onLoaded: {
                     root.playActionBtn = item.playActionBtn
