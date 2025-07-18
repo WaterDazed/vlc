@@ -387,6 +387,8 @@ FocusScope {
             bottom: miniPlayer.top
         }
 
+        property int maximumWidth: (g_mainDisplay.width + sidebarResizeHandle.width) / 3
+
         //topPadding: VLCStyle.isScreenSmall ? 0 : localTopbar.height
         bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_small
 
@@ -403,9 +405,7 @@ FocusScope {
 
         implicitWidth: Math.round(VLCStyle.isScreenSmall
                        ? g_mainDisplay.width * 0.8
-                       : Helpers.clamp(MainCtx.navigationPanel.width,
-                                       minimumWidth,
-                                       (g_mainDisplay.width + sidebarResizeHandle.width) / 3))
+                       : Helpers.clamp(MainCtx.navigationPanel.width, minimumWidth, maximumWidth))
 
         Navigation.parentItem: g_mainDisplay
         Navigation.upItem: localTopbar
@@ -462,6 +462,15 @@ FocusScope {
 
             panelObject: MainCtx.navigationPanel
             atRight: true
+
+            minimumWidth: sidebar.minimumWidth
+            maximumWidth: sidebar.maximumWidth
+
+            anchors {
+                top: parent.top
+                bottom: parent.bottom
+                right: parent.right
+            }
         }
     }
 
@@ -533,9 +542,9 @@ FocusScope {
 
             implicitWidth: Math.round(VLCStyle.isScreenSmall
                            ? g_mainDisplay.width * 0.8
-                           : Helpers.clamp(MainCtx.playqueuePanel.width,
-                                           minimumWidth,
-                                           (g_mainDisplay.width + playqueueResizeHandle.width ) / 3))
+                           : MainCtx.playqueuePanel.width)
+
+            property int maximumWidth: (g_mainDisplay.width + playqueueResizeHandle.width ) / 3
 
             focus: true
 
@@ -560,6 +569,9 @@ FocusScope {
 
                 parent: playlist
                 target: playlist
+
+                minimumWidth: playlist.minimumWidth
+                maximumWidth: playlist.maximumWidth
 
                 panelObject: MainCtx.playqueuePanel
                 atRight: false
@@ -756,6 +768,9 @@ FocusScope {
         required property Item target
         required property QtObject panelObject
         property alias atRight: resizeHandle.atRight
+
+        property alias minimumWidth: resizeHandle.minimumWidth
+        property alias maximumWidth: resizeHandle.maximumWidth
 
         implicitWidth: resizeHandle.width
 
