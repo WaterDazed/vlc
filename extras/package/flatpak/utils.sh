@@ -76,7 +76,7 @@ case "$subcommand" in
       shift
       run_command sh -c "$*"
     else
-      run_command sh
+      run_command sh -c 'PS1="[\[\e[38;5;208m\]➤ vlc \[\e[32m\]\W\[\e[0m\]] \$ " exec bash --noprofile --norc'
     fi
     ;;
   install-build)
