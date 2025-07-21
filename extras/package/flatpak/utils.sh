@@ -52,10 +52,17 @@ print_help() {
   echo "Usage: $0 <subcommand> [options]"
   echo
   echo "Subcommands:"
-  echo "  shell [-c <command>]   Run a shell or command inside Flatpak sandbox"
-  echo "  build                  Build the Flatpak app"
-  echo "  clean                  Remove build directory"
-  echo "  help                   Show this help message"
+  echo "  install-build            Run initial Flatpak build and install (required for running"
+  echo "                           rest of the commands)"
+  echo "                           Next time builds must be confirmed with -f to clean flatpak-build-dir"
+  echo "                           directory."
+  echo "  "
+  echo "  shell [-c <command>]     Run an interactive shell or execute command inside Flatpak sandbox"
+  echo "  contrib-make [args...]   Run make inside the contrib directory (e.g., contrib-make -j8)"
+  echo "  make [args...]           Run make inside the build directory (e.g., make -j8)"
+  echo "  run                      Run the already made vlc instance"
+  echo "  clean -f                 Delete the build directory (must be confirmed with -f)"
+  echo "  help                     Show this help message"
 }
 
 
