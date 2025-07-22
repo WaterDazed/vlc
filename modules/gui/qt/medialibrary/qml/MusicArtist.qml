@@ -610,6 +610,7 @@ FocusScope {
                 headerAtBottom: true
                 manualSortDisbled: true
 
+
                 section.property: "album_id"
                 section.delegate: MusicAlbumSectionDelegate {
                     width: listView_id.width
@@ -617,6 +618,50 @@ FocusScope {
 
                     onImplicitHeightChanged: {
                         listView_id.sectionHeight = implicitHeight
+                    }
+
+                    prevAlbumBtnVisible: true
+                    nextAlbumBtnVisible: true
+
+                    onChangeAlbum: (direction) => {
+                        listView_id.navigateSection(direction > 0 ? "prev" : "next", parseInt(section))
+                    }
+                }
+
+                function navigateSection(direction, currentSection) {
+                    const sectionProp = listView_id.section.property
+                    const model = listView_id.model
+                    const count = listView_id.count
+                    if (count === 0 || !model || !sectionProp)
+                        return
+
+                    const sectionIndexes = []
+
+                    // Collect starting indexes of each section
+                    for (let i = 0; i < count; ++i) {
+                        const albumId = model.getDataAt(i)[sectionProp]
+                        if (sectionIndexes.length === 0 || sectionIndexes[sectionIndexes.length - 1].album_id !== albumId) {
+                            sectionIndexes.push({ index: i, album_id: albumId })
+                        }
+                    }
+
+                    const currentIndex = currentSection == null ? 0 : sectionIndexes.findIndex(s => s.album_id === currentSection)
+
+                    let targetSection = null
+                    if (direction === "next" && currentIndex < sectionIndexes.length - 1) {
+                        targetSection = sectionIndexes[currentIndex + 1]
+                    } else if (direction === "prev" && currentIndex > 0) {
+                        targetSection = sectionIndexes[currentIndex - 1]
+                    }
+
+                    if (targetSection) {
+                        listView_id.positionViewAtIndex(targetSection.index, ListView.SnapPosition)
+                        listView_id.currentVisibleSection = targetSection.album_id
+                        listView_id.currentIndex = targetSection.index
+                        Qt.callLater(() => {
+                            const offset = listView_id.sectionHeight || 0
+                            listView_id.contentY += offset + VLCStyle.margin_normal
+                        })
                     }
                 }
 
@@ -626,6 +671,13 @@ FocusScope {
 
                     section: listView_id.currentVisibleSection
                     visible: listView_id.currentVisibleSection != null
+
+                    prevAlbumBtnVisible: true
+                    nextAlbumBtnVisible: true
+
+                    onChangeAlbum: (direction) => {
+                        listView_id.navigateSection(direction > 0 ? "prev" : "next", section)
+                    }
                 }
 
                 onContentYChanged: {

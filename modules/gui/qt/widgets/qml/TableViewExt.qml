@@ -230,6 +230,10 @@ FocusScope {
         return view.itemAtIndex(index)
     }
 
+    function indexAt(x, y) {
+        return view.indexAt(x, y)
+    }
+
     function getItemY(index) {
         let size = index * rowHeight + topMargin
 

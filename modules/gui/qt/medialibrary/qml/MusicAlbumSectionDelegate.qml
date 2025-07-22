@@ -52,6 +52,8 @@ Rectangle {
         colorSet: ColorContext.View
     }
 
+    signal changeAlbum(int direction)
+
     implicitHeight: {
         const verticalMargins = layout.anchors.topMargin + layout.anchors.bottomMargin + VLCStyle.margin_small
         return artAndControl.height + verticalMargins
@@ -191,7 +193,7 @@ Rectangle {
 
                     iconTxt: root.prevAlbumBtnPointToEnd ? VLCIcons.chevron_down : VLCIcons.chevron_up
                     text: root.prevAlbumBtnPointToEnd ? qsTr("Bottom") : qsTr("Prev")
-                    // onClicked: root.changeAlbum( 1 )
+                    onClicked: root.changeAlbum( 1 )
                     visible: root.prevAlbumBtnVisible
                 }
 
@@ -200,7 +202,7 @@ Rectangle {
 
                     iconTxt: root.nextAlbumBtnPointToStart ? VLCIcons.chevron_up : VLCIcons.chevron_down
                     text: root.nextAlbumBtnPointToStart ? qsTr("Top") : qsTr("Next")
-                    // onClicked: root.changeAlbum( -1 )
+                    onClicked: root.changeAlbum( -1 )
                     visible: root.nextAlbumBtnVisible
                 }
             }
