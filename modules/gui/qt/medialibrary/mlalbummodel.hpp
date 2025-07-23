@@ -54,7 +54,7 @@ public:
 
     Q_INVOKABLE QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE QJSValue getDataAtId(int item_id);
+    Q_INVOKABLE QJSValue getAlbumDataFromId(int item_id);
 
 protected:
     QVariant itemRoleData(const MLItem *item, int role) const override;

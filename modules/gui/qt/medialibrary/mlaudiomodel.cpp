@@ -46,12 +46,6 @@ QVariant MLAudioModel::itemRoleData(const MLItem *item, const int role) const
         return QVariant::fromValue(getFirstSymbol(audio->getAlbumTitle()));
     case AUDIO_ALBUM_ID:
         return QVariant::fromValue(audio->getAlbumId());
-    case AUDIO_ALBUM_INFO: {
-        QVariantMap map;
-        map["id"] = QVariant::fromValue(audio->getAlbumId());
-        map["title"] = audio->getAlbumTitle();
-        return map;
-    }
     default:
         return MLMediaModel::itemRoleData(item, role);
     }
@@ -72,7 +66,6 @@ QHash<int, QByteArray> MLAudioModel::roleNames() const
         {AUDIO_ALBUM, "album_title"},
         {AUDIO_ALBUM_FIRST_SYMBOL, "album_title_first_symbol"},
         {AUDIO_ALBUM_ID, "album_id"},
-        {AUDIO_ALBUM_INFO, "album_info"},
     });
 
     return hash;

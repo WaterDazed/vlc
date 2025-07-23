@@ -124,7 +124,6 @@ FocusScope {
     property int headerTopPadding: 0
 
     property bool forceShowDefaultHeader: false
-    property bool headerAtBottom: false
     property bool manualSortDisbled: false
 
     property real rowHeight: VLCStyle.tableRow_height

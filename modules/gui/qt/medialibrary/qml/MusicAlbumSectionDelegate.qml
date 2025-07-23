@@ -37,8 +37,6 @@ Rectangle {
     property var listViewId
     property var albumCover: (root.album && root.album.cover && root.album.cover !== "") ? root.album.cover : VLCStyle.noArtAlbumCover
 
-    property int listViewContentY: -1
-    property bool forcePlayActionBtnFocusOnce: false
     property bool largeCoverSize: false
     property bool showBlurredAlbumCover: false
 
@@ -61,7 +59,7 @@ Rectangle {
 
     function fetchAlbumData() {
         if (!section || albumModel.loading) return
-        albumModel.getDataAtId(section).then((albumData) => {
+        albumModel.getAlbumDataFromId(section).then((albumData) => {
             album = albumData
         })
     }
@@ -165,7 +163,7 @@ Rectangle {
             property alias nextAlbumBtn: _nextAlbumBtn
 
             focus: true
-            width: root.largeCoverSize ? VLCStyle.listCover_music_width : VLCStyle.expandCover_music_width
+            width: VLCStyle.isScreenSmall ? VLCStyle.listCover_music_width : VLCStyle.expandCover_music_width
 
             spacing: VLCStyle.margin_small
 
