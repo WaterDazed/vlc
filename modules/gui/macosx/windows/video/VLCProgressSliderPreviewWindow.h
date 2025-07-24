@@ -1,9 +1,9 @@
 /*****************************************************************************
- * VLCPlaybackProgressSlider.h
+ * VLCProgressSliderPreviewWindow.h: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2017 VLC authors and VideoLAN
+ * Copyright (C) 2025 VLC authors and VideoLAN
  *
- * Authors: Marvin Scholz <epirat07 at gmail dot com>
+ * Authors: Bob Moriasi <official.bobmoriasi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,26 +20,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-#import <Cocoa/Cocoa.h>
+#import "Cocoa/Cocoa.h"
 
-@class VLCPlaybackProgressSlider;
+NS_ASSUME_NONNULL_BEGIN
 
-@protocol VLCPlaybackProgressSliderPreviewDelegate <NSObject>
+@interface VLCProgressSliderPreviewWindow : NSWindow 
 
-- (void)slider:(VLCPlaybackProgressSlider *)slider showPreviewAtPosition:(float)position mouseLocation:(NSPoint)mouseLocation;
-- (void)slider:(VLCPlaybackProgressSlider *)slider updatePreviewAtPosition:(float)position mouseLocation:(NSPoint)mouseLocation;
-- (void)sliderHidePreview:(VLCPlaybackProgressSlider *)slider;
-
-@end
-
-@interface VLCPlaybackProgressSlider : NSSlider
-
-@property (readwrite, nonatomic) BOOL indefinite;
-@property (readwrite, nonatomic) BOOL knobHidden;
-
-/* Indicates if the slider is scrollable with the mouse or trackpad scrollwheel. */
-@property (readwrite) BOOL scrollable;
-
-@property (weak, nonatomic) id<VLCPlaybackProgressSliderPreviewDelegate> previewDelegate;
+- (void)hideWithAnimation;
+- (void)showAtPoint:(NSPoint)point timeString:(NSString *)timeString;
+- (void)updateImage:(NSImage *)image timeString:(NSString *)timeString;
+- (void)updatePosition:(NSPoint)point timeString:(NSString *)timeString completion:(void (^)(void))completion;
 
 @end
+
+NS_ASSUME_NONNULL_END
