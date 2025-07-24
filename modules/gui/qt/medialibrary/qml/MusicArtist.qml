@@ -404,9 +404,9 @@ FocusScope {
                     rightMargin: root._extraMargin / 2
                 }
 
-                property var currentVisibleSection: null
+                property var currentPinnedSection: null
 
-                function navigateSection(direction, currentSection) {
+                function positionViewAtSection(direction, currentSection) {
                     const sectionProp = listView_id.section.property
                     const model = listView_id.model
                     const count = listView_id.count
@@ -426,15 +426,15 @@ FocusScope {
                     const currentIndex = currentSection == null ? 0 : sectionIndexes.findIndex(s => s.album_id === currentSection)
 
                     let targetSection = null
-                    if (direction === "next" && currentIndex < sectionIndexes.length - 1) {
+                    if (direction > 0 && currentIndex < sectionIndexes.length - 1) {
                         targetSection = sectionIndexes[currentIndex + 1]
-                    } else if (direction === "prev" && currentIndex > 0) {
+                    } else if (direction < 0 && currentIndex > 0) {
                         targetSection = sectionIndexes[currentIndex - 1]
                     }
 
                     if (targetSection) {
                         listView_id.positionViewAtIndex(targetSection.index, ListView.SnapPosition)
-                        listView_id.currentVisibleSection = targetSection.album_id
+                        listView_id.currentPinnedSection = targetSection.album_id
                         listView_id.currentIndex = targetSection.index
                         Qt.callLater(() => {
                             listView_id.contentY += (listView_id.headerItem?.implicitHeight || 0) + VLCStyle.margin_normal
@@ -511,7 +511,7 @@ FocusScope {
                 height: parent.height
 
                 forceShowDefaultHeader: true
-                manualSortDisbled: true
+                manualSortDisabled: true
 
                 section.property: "album_id"
                 section.delegate: MusicAlbumSectionDelegate {
@@ -521,25 +521,26 @@ FocusScope {
                     prevAlbumBtnVisible: true
                     nextAlbumBtnVisible: true
 
-                    onChangeAlbum: (direction) => {
-                        listView_id.navigateSection(direction > 0 ? "prev" : "next", parseInt(section))
+                    onRequestAlbumChange: (direction) => {
+                        listView_id.positionViewAtSection(direction, parseInt(section))
                     }
                 }
 
                 header: MusicAlbumSectionDelegate {
                     width: listView_id.width
-                    height: listView_id.currentVisibleSection ? implicitHeight : 0
+                    height: listView_id.currentPinnedSection ? implicitHeight : 0
 
-                    section: listView_id.currentVisibleSection
-                    visible: listView_id.currentVisibleSection != null
+                    section: listView_id.currentPinnedSection
+                    visible: listView_id.currentPinnedSection != null
 
                     prevAlbumBtnVisible: true
                     nextAlbumBtnVisible: true
 
-                    onChangeAlbum: (direction) => {
-                        listView_id.navigateSection(direction > 0 ? "prev" : "next", section)
+                    onRequestAlbumChange: (direction) => {
+                        listView_id.positionViewAtSection(direction, section)
                     }
                 }
+                headerTopPadding: VLCStyle.margin_small
 
                 onContentYChanged: {
                     for (let i = 0; i < listView_id.count; ++i) {
@@ -549,12 +550,12 @@ FocusScope {
                         const item_y = Math.max(item.y - listView_id.headerItem?.implicitHeight - VLCStyle.margin_small, 0)
                         if (item_y <= listView_id.contentY && (item_y + item.height) > listView_id.contentY) {
                             const current = model.getDataAt(i).album_id
-                            if (listView_id.currentVisibleSection !== current)
-                                listView_id.currentVisibleSection = current
+                            if (listView_id.currentPinnedSection !== current)
+                                listView_id.currentPinnedSection = current
                             return
                         }
                     }
-                    listView_id.currentVisibleSection = null
+                    listView_id.currentPinnedSection = null
                 }
 
                 sortModel: VLCStyle.isScreenSmall

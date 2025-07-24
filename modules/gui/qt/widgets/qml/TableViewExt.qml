@@ -124,7 +124,7 @@ FocusScope {
     property int headerTopPadding: 0
 
     property bool forceShowDefaultHeader: false
-    property bool manualSortDisbled: false
+    property bool manualSortDisabled: false
 
     property real rowHeight: VLCStyle.tableRow_height
 
@@ -400,7 +400,7 @@ FocusScope {
 
                             TapHandler {
                                 onTapped: (eventPoint, button) => {
-                                    if (root.manualSortDisbled)
+                                    if (root.manualSortDisabled)
                                         return
                                     if (!(modelData.model.isSortable ?? true))
                                         return
