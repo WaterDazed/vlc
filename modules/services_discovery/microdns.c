@@ -85,6 +85,7 @@ static const struct
     { "nfs", "_nfs._tcp.local", ITEM_TYPE_DIRECTORY, 0 },
     { "sftp", "_sftp-ssh._tcp.local", ITEM_TYPE_DIRECTORY, 0 },
     { "rtsp", "_rtsp._tcp.local", ITEM_TYPE_DIRECTORY, 0 },
+    { "ndi", "_ndi._tcp.local", ITEM_TYPE_STREAM, 0 },
     { "chromecast", "_googlecast._tcp.local", ITEM_TYPE_RENDERER, VLC_RENDERER_CAN_AUDIO },
 };
 
