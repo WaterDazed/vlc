@@ -404,12 +404,13 @@ FocusScope {
                     rightMargin: root._extraMargin / 2
                 }
 
-                property var currentPinnedSection: null
+                property bool currentPinnedSection: false
 
-                function positionViewAtSection(direction, currentSection) {
+                function positionViewAtSection(direction, section = null) {
                     const sectionProp = listView_id.section.property
                     const model = listView_id.model
                     const count = listView_id.count
+                    const currentSection = section || parseInt(listView_id.currentSection)
                     if (count === 0 || !model || !sectionProp)
                         return
 
@@ -423,7 +424,7 @@ FocusScope {
                         }
                     }
 
-                    const currentIndex = currentSection == null ? 0 : sectionIndexes.findIndex(s => s.album_id === currentSection)
+                    const currentIndex = currentSection ? sectionIndexes.findIndex(s => s.album_id === currentSection) : 0
 
                     let targetSection = null
                     if (direction > 0 && currentIndex < sectionIndexes.length - 1) {
@@ -434,7 +435,8 @@ FocusScope {
 
                     if (targetSection) {
                         listView_id.positionViewAtIndex(targetSection.index, ListView.SnapPosition)
-                        listView_id.currentPinnedSection = targetSection.album_id
+                        listView_id.currentPinnedSection = true
+                        // This is for keyboard navigation, when user jumps to a section and wants to browse the tracks.
                         listView_id.currentIndex = targetSection.index
                         Qt.callLater(() => {
                             listView_id.contentY += (listView_id.headerItem?.implicitHeight || 0) + VLCStyle.margin_normal
@@ -530,32 +532,39 @@ FocusScope {
                     width: listView_id.width
                     height: listView_id.currentPinnedSection ? implicitHeight : 0
 
-                    section: listView_id.currentPinnedSection
-                    visible: listView_id.currentPinnedSection != null
+                    section: listView_id.currentSection || ""
+                    visible: listView_id.currentPinnedSection
 
                     prevAlbumBtnVisible: true
                     nextAlbumBtnVisible: true
 
                     onRequestAlbumChange: (direction) => {
-                        listView_id.positionViewAtSection(direction, section)
+                        listView_id.positionViewAtSection(direction)
                     }
                 }
                 headerTopPadding: VLCStyle.margin_small
 
                 onContentYChanged: {
-                    for (let i = 0; i < listView_id.count; ++i) {
-                        const item = listView_id.itemAtIndex(i)
-                        if (!item) continue
+                    const y = listView_id.contentY
+                    const offset = listView_id.headerItem?.implicitHeight ?? 0
+                    const centerX = listView_id.width / 2
 
-                        const item_y = Math.max(item.y - listView_id.headerItem?.implicitHeight - VLCStyle.margin_small, 0)
-                        if (item_y <= listView_id.contentY && (item_y + item.height) > listView_id.contentY) {
-                            const current = model.getDataAt(i).album_id
-                            if (listView_id.currentPinnedSection !== current)
-                                listView_id.currentPinnedSection = current
-                            return
-                        }
+                    // We need to compare two indexes as sometimes when scrolling one indexAt() might report -1
+                    // when the point lies between the item spacing. Comparing two indexes prevents this.
+                    const i1 = listView_id.indexAt(centerX, y + offset)
+                    // Offset to make sure we are comparing with different height differences to detect false negatives with item spacing.
+                    const i2 = listView_id.indexAt(centerX, y + offset * 1.5)
+
+                    if (i1 === -1 || i2 === -1) {
+                        listView_id.currentPinnedSection = false
+                        return
                     }
-                    listView_id.currentPinnedSection = null
+
+                    const sectionProp = listView_id.section.property
+                    const section1 = model.getDataAt(i1)?.[sectionProp]
+                    const section2 = model.getDataAt(i2)?.[sectionProp]
+                    const current = parseInt(listView_id.currentSection)
+                    listView_id.currentPinnedSection = section1 === current && section2 === current
                 }
 
                 sortModel: VLCStyle.isScreenSmall

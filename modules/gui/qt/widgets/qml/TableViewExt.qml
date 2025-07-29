@@ -163,6 +163,7 @@ FocusScope {
     property alias interactive: view.interactive
 
     property alias section: view.section
+    property alias currentSection: view.currentSection
 
     property alias currentIndex: view.currentIndex
     property alias currentItem: view.currentItem
@@ -231,6 +232,10 @@ FocusScope {
 
     function indexAt(x, y) {
         return view.indexAt(x, y)
+    }
+
+    function itemAt(x, y) {
+        return view.itemAt(x, y)
     }
 
     function getItemY(index) {
