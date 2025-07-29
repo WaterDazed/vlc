@@ -46,8 +46,8 @@ MLAudio::MLAudio(vlc_medialibrary_t* _ml, const vlc_ml_media_t *_data)
     }
 }
 
-int64_t MLAudio::getAlbumId() const {
-    return m_albumId;
+MLItemId MLAudio::getAlbumId() const {
+    return {m_albumId, VLC_ML_PARENT_ALBUM};
 }
 
 

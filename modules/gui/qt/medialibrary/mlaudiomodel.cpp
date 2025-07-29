@@ -45,7 +45,7 @@ QVariant MLAudioModel::itemRoleData(const MLItem *item, const int role) const
     case AUDIO_ALBUM_FIRST_SYMBOL:
         return QVariant::fromValue(getFirstSymbol(audio->getAlbumTitle()));
     case AUDIO_ALBUM_ID:
-        return QVariant::fromValue(audio->getAlbumId());
+        return QVariant::fromValue(audio->getAlbumId().toString());
     default:
         return MLMediaModel::itemRoleData(item, role);
     }

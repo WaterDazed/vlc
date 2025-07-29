@@ -33,7 +33,7 @@ public:
     QString getArtist() const;
     unsigned int getTrackNumber() const;
     unsigned int getDiscNumber() const;
-    int64_t getAlbumId() const;
+    MLItemId getAlbumId() const;
 
 private:
     QString m_albumTitle;

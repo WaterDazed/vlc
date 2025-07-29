@@ -26,11 +26,6 @@ MLAlbumModel::MLAlbumModel(QObject *parent)
 {
 }
 
-QJSValue MLAlbumModel::getAlbumDataFromId(int item_id) {
-    const MLItemId item(item_id, VLC_ML_PARENT_ALBUM);
-    return getDataById(item);
-}
-
 QHash<int, QByteArray> MLAlbumModel::roleNames() const
 {
     return {

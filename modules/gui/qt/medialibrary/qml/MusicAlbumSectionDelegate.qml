@@ -112,7 +112,7 @@ T.Pane {
 
     function fetchAlbumData() {
         if (!section || albumModel.loading) return
-        albumModel.getAlbumDataFromId(section).then((albumData) => {
+        albumModel.getDataByIdSerialized(section).then((albumData) => {
             album = albumData
         })
     }

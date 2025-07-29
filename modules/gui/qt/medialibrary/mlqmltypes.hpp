@@ -23,6 +23,7 @@
 # include "config.h"
 #endif
 
+#include <QHash>
 #include <QObject>
 #include <vlc_common.h>
 #include <vlc_media_library.h>
@@ -70,6 +71,32 @@ public:
             return QString("UNKNOWN - %2").arg(id);
         }
 #undef ML_PARENT_TYPE_CASE
+    }
+
+    Q_INVOKABLE static inline MLItemId fromString(const QString& serialized_id) {
+        const QStringList parts = serialized_id.split(" - "); // Type, ID
+        if (parts.length() != 2) {
+            return {-1, VLC_ML_PARENT_UNKNOWN};
+        }
+
+        const QString& type = parts[0];
+        bool conversionSuccessful = false;
+        std::int64_t item_id = parts[1].toLongLong(&conversionSuccessful);
+        if (!conversionSuccessful) {
+            return {-1, VLC_ML_PARENT_UNKNOWN};
+        }
+
+        static const QHash<QString, vlc_ml_parent_type> map = {
+            { "VLC_ML_PARENT_ALBUM", VLC_ML_PARENT_ALBUM },
+            { "VLC_ML_PARENT_ARTIST", VLC_ML_PARENT_ARTIST },
+            { "VLC_ML_PARENT_SHOW", VLC_ML_PARENT_SHOW },
+            { "VLC_ML_PARENT_GENRE", VLC_ML_PARENT_GENRE },
+            { "VLC_ML_PARENT_GROUP", VLC_ML_PARENT_GROUP },
+            { "VLC_ML_PARENT_FOLDER", VLC_ML_PARENT_FOLDER },
+            { "VLC_ML_PARENT_PLAYLIST", VLC_ML_PARENT_PLAYLIST }
+        };
+
+        return { item_id, map.value(type, VLC_ML_PARENT_UNKNOWN) };
     }
 };
 

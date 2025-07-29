@@ -78,6 +78,13 @@ public:
      */
     Q_INVOKABLE QJSValue getDataById(MLItemId id);
 
+    /**
+     * @brief getDataByIdSerialized allows getting the informations of an mlitem from its serialized Id.
+     * @param id_string id of the item in string (serialized).
+     * @return a JS Promise with the content of the item
+     */
+    Q_INVOKABLE QJSValue getDataByIdSerialized(const QString& id_string);
+
 
     /**
      * @brief getIndexFromId allow getting the row of an item from its id,

@@ -410,7 +410,7 @@ FocusScope {
                     const sectionProp = listView_id.section.property
                     const model = listView_id.model
                     const count = listView_id.count
-                    const currentSection = section || parseInt(listView_id.currentSection)
+                    const currentSection = section || listView_id.currentSection
                     if (count === 0 || !model || !sectionProp)
                         return
 
@@ -524,7 +524,7 @@ FocusScope {
                     nextAlbumBtnVisible: true
 
                     onRequestAlbumChange: (direction) => {
-                        listView_id.positionViewAtSection(direction, parseInt(section))
+                        listView_id.positionViewAtSection(direction, section)
                     }
                 }
 
@@ -563,7 +563,7 @@ FocusScope {
                     const sectionProp = listView_id.section.property
                     const section1 = model.getDataAt(i1)?.[sectionProp]
                     const section2 = model.getDataAt(i2)?.[sectionProp]
-                    const current = parseInt(listView_id.currentSection)
+                    const current = listView_id.currentSection
                     listView_id.currentPinnedSection = section1 === current && section2 === current
                 }
 
