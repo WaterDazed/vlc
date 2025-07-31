@@ -404,8 +404,6 @@ FocusScope {
                     rightMargin: root._extraMargin / 2
                 }
 
-                property bool currentPinnedSection: false
-
                 function positionViewAtSection(direction, section = null) {
                     const sectionProp = listView_id.section.property
                     const model = listView_id.model
@@ -435,12 +433,12 @@ FocusScope {
 
                     if (targetSection) {
                         listView_id.positionViewAtIndex(targetSection.index, ListView.SnapPosition)
-                        listView_id.currentPinnedSection = true
                         // This is for keyboard navigation, when user jumps to a section and wants to browse the tracks.
                         listView_id.currentIndex = targetSection.index
-                        Qt.callLater(() => {
-                            listView_id.contentY += (listView_id.headerItem?.implicitHeight || 0) + VLCStyle.margin_normal
-                        })
+                        // Qt.callLater(() => {
+                        //     const newY = listView_id.contentY + VLCStyle.cover_small + VLCStyle.margin_xsmall * 2
+                        //     listView_id.contentY = Helpers.clamp(newY, 0, listView_id.contentHeight - listView_id.height)
+                        // })
                     }
                 }
 
@@ -528,44 +526,36 @@ FocusScope {
                     }
                 }
 
+                property bool showHeader: listView_id.headerPositioning === ListView.OverlayHeader
+                        && listView_id.contentHeight > listView_id.height
+
                 header: MusicAlbumSectionDelegate {
                     width: listView_id.width
-                    height: listView_id.currentPinnedSection ? implicitHeight : 0
+                    height: listView_id.showHeader ? implicitHeight : 0
+                    // height: implicitHeight
 
                     section: listView_id.currentSection || ""
-                    visible: listView_id.currentPinnedSection
+                    visible: listView_id.showHeader
 
                     prevAlbumBtnVisible: true
                     nextAlbumBtnVisible: true
+                    pinnedStyle: true
 
                     onRequestAlbumChange: (direction) => {
                         listView_id.positionViewAtSection(direction)
                     }
-                }
-                headerTopPadding: VLCStyle.margin_small
 
-                onContentYChanged: {
-                    const y = listView_id.contentY
-                    const offset = listView_id.headerItem?.implicitHeight ?? 0
-                    const centerX = listView_id.width / 2
+                    Navigation.parentItem: root
 
-                    // We need to compare two indexes as sometimes when scrolling one indexAt() might report -1
-                    // when the point lies between the item spacing. Comparing two indexes prevents this.
-                    const i1 = listView_id.indexAt(centerX, y + offset)
-                    // Offset to make sure we are comparing with different height differences to detect false negatives with item spacing.
-                    const i2 = listView_id.indexAt(centerX, y + offset * 1.5)
-
-                    if (i1 === -1 || i2 === -1) {
-                        listView_id.currentPinnedSection = false
-                        return
+                    Navigation.upAction: function() {
+                        headerLoader.item.setCurrentItemFocus(Qt.TabFocusReason);
                     }
 
-                    const sectionProp = listView_id.section.property
-                    const section1 = model.getDataAt(i1)?.[sectionProp]
-                    const section2 = model.getDataAt(i2)?.[sectionProp]
-                    const current = listView_id.currentSection
-                    listView_id.currentPinnedSection = section1 === current && section2 === current
+                    Navigation.downAction: function() {
+                        listView_id.setCurrentItemFocus(Qt.TabFocusReason);
+                    }
                 }
+                headerTopPadding: VLCStyle.margin_small
 
                 sortModel: VLCStyle.isScreenSmall
                            ? _titleModel // use criterias text with small screens
@@ -596,10 +586,12 @@ FocusScope {
                 Navigation.parentItem: root
 
                 Navigation.upAction: function() {
-                    headerLoader.item.setCurrentItemFocus(Qt.TabFocusReason);
+                    listView_id.headerItem.setCurrentItemFocus(Qt.TabFocusReason);
                 }
 
-                Navigation.cancelAction: root._onNavigationCancel
+                Navigation.cancelAction: function() {
+                    listView_id.headerItem.setCurrentItemFocus(Qt.TabFocusReason);
+                }
 
                 Keys.priority:  Keys.AfterItem
                 Keys.onPressed: (event) =>  root.Navigation.defaultKeyAction(event)
