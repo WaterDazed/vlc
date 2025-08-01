@@ -126,7 +126,7 @@ T.Pane {
 
     function fetchAlbumData() {
         if (!section || albumModel.loading) return
-        albumModel.getDataByIdSerialized(section).then((albumData) => {
+        albumModel.getDataById(MediaLib.deserializeMlItemIdFromString(section)).then((albumData) => {
             album = albumData
         })
     }

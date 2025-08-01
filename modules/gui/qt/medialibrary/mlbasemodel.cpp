@@ -301,11 +301,6 @@ Q_INVOKABLE QJSValue MLBaseModel::getDataById(MLItemId id)
     return p;
 }
 
-Q_INVOKABLE QJSValue MLBaseModel::getDataByIdSerialized(const QString& id_string) {
-    return getDataById(MLItemId::fromString(id_string));
-}
-
-
 Q_INVOKABLE QJSValue MLBaseModel::getIndexFromId(MLItemId id)
 {
     Q_D(const MLBaseModel);
