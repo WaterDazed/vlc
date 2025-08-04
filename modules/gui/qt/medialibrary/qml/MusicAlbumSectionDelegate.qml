@@ -122,6 +122,13 @@ T.Pane {
         sourceComponent: pinnedStyle ? null : background
     }
 
+    contentItem: Loader {
+        id: main_loader
+
+        anchors.fill: parent
+        sourceComponent: root.pinnedStyle ? (VLCStyle.isScreenSmall ? pinnedViewSmall : pinnedView) : inlineView
+    }
+
     function setCurrentItemFocus(reason) {
         root.playActionBtn.forceActiveFocus(reason)
     }
@@ -446,10 +453,4 @@ T.Pane {
         }
     }
 
-    Loader {
-        id: main_loader
-
-        anchors.fill: parent
-        sourceComponent: root.pinnedStyle ? (VLCStyle.isScreenSmall ? pinnedViewSmall : pinnedView) : inlineView
-    }
 }
