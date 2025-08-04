@@ -532,7 +532,7 @@ FocusScope {
                 header: MusicAlbumSectionDelegate {
                     width: listView_id.width
                     height: listView_id.showHeader ? implicitHeight : 0
-                    // height: implicitHeight
+                    rightPadding: VLCStyle.margin_normal
 
                     section: listView_id.currentSection || ""
                     visible: listView_id.showHeader
