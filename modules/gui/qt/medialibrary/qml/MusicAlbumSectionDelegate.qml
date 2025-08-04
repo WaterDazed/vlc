@@ -102,7 +102,9 @@ T.Pane {
 
                 height: sourceNeedsLayering ? album_bg_cover.height : (aspectRatio * width)
 
-                source: album_bg_cover
+                // Sections are re-used, but they may not release GPU resources immediately.
+                // This ensures resources are freed to limit peak VRAM consumption.
+                source: visible ? album_bg_cover : null
 
                 ColorContext {
                     id: frostedTheme
