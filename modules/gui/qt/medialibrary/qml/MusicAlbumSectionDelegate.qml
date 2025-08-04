@@ -238,7 +238,7 @@ T.Pane {
 
             property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
 
-            radius: VLCStyle.expandCover_music_radius
+            radius: parent.cover_radius ?? VLCStyle.expandCover_music_radius
             source: root.albumCover
             sourceSize: Qt.size(width * eDPR, height * eDPR)
 
@@ -343,6 +343,15 @@ T.Pane {
             anchors.fill: parent
             anchors.leftMargin: VLCStyle.margin_small
             height: implicitHeight
+
+            Loader {
+                Layout.alignment: Qt.AlignVCenter
+                sourceComponent: albumCoverImage
+
+                property int cover_height: VLCStyle.cover_xxsmall
+                property int cover_width: VLCStyle.cover_xxsmall
+                property int cover_radius: VLCStyle.artistGridCover_radius
+            }
 
             Loader {
                 id: albumTitleLoader
