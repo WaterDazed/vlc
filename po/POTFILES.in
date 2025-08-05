@@ -778,6 +778,7 @@ modules/gui/qt/medialibrary/qml/MusicAlbumsGridExpandDelegate.qml
 modules/gui/qt/medialibrary/qml/MusicAllArtists.qml
 modules/gui/qt/medialibrary/qml/MusicArtist.qml
 modules/gui/qt/medialibrary/qml/MusicAlbumSectionDelegate.qml
+modules/gui/qt/medialibrary/qml/MusicAlbumPinnedSectionDelegate.qml
 modules/gui/qt/medialibrary/qml/MusicArtistDelegate.qml
 modules/gui/qt/medialibrary/qml/MusicArtistsAlbums.qml
 modules/gui/qt/medialibrary/qml/MusicArtistsDisplay.qml

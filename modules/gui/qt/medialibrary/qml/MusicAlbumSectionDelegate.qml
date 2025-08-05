@@ -42,12 +42,15 @@ T.Pane {
 
     property bool largeCoverSize: false
     property bool showBlurredAlbumCover: false
-    property bool pinnedStyle: false
 
     property bool prevAlbumBtnVisible: false
     property bool nextAlbumBtnVisible: false
     property bool prevAlbumBtnPointToEnd: false
     property bool nextAlbumBtnPointToStart: false
+
+    readonly property Component buttonsRowComponent: buttonsRow
+    readonly property Component albumCoverImageComponent: albumCoverImage
+    readonly property Component scrollingALbumTitleComponent: scrollingALbumTitle
 
     readonly property ColorContext colorContext: ColorContext {
         id: theme
@@ -64,82 +67,124 @@ T.Pane {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    Component {
-        id: background
+    function getBackgroundYPos() {
+        if (!root.listViewid) return
+        // Limit pos to 0 and the blurEffect's height as that is the max value by which we can shift
+        // Otherwise we will shift it beyond the effect's height which will shift the item out of the view vertically
+        const pos = Helpers.clamp(root.listViewid.mapFromItem(root, 0, 0).y, 0, blurEffect.height)
+        const height = root.listViewid.height
+        // The height of the image varies with the width of the view, make sure that we don't shift the image
+        // too much to send it out of the view vertically when scrolling downwards
+        const normalized_pos = pos * (blurEffect.height / height)
+        //FIXME: When scrolling the pos shifts abruptly, might be due to the behavior of sections with contentHeight
+        const parallax_multiplier = Helpers.clamp(root.listViewid.contentY / (root.listViewid.contentHeight - height), 0.0, 1.0)
+        return -normalized_pos * parallax_multiplier
+    }
 
-        Item {
-            clip: !blurEffect.sourceNeedsLayering
-            visible: (GraphicsInfo.shaderType === GraphicsInfo.RhiShader)
+    background: Item {
+        clip: !blurEffect.sourceNeedsLayering
+        visible: (GraphicsInfo.shaderType === GraphicsInfo.RhiShader)
 
-            Image {
-                id: album_bg_cover
+        Image {
+            id: album_bg_cover
 
-                anchors.fill: parent
+            anchors.fill: parent
 
-                source: root.albumCover
-                sourceSize: root.albumCover ? Qt.size(Helpers.alignUp(Screen.desktopAvailableWidth, 32), 0) : undefined
-                mipmap: !!root.albumCover
+            source: root.albumCover
+            sourceSize: root.albumCover ? Qt.size(Helpers.alignUp(Screen.desktopAvailableWidth, 32), 0) : undefined
+            mipmap: !!root.albumCover
 
-                fillMode: Image.Stretch
+            fillMode: Image.Stretch
 
-                visible: !blurEffect.visible
-                cache: (source === VLCStyle.noArtArtist)
+            visible: !blurEffect.visible
+            cache: (source === VLCStyle.noArtArtist)
 
-                opacity: blurEffect.visible ? 1.0 : 0.5
+            opacity: blurEffect.visible ? 1.0 : 0.5
+        }
+
+        Widgets.FrostedGlassEffect {
+            id: blurEffect
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+
+            Binding on y {
+                when: root.listViewid !== null
+                value: getBackgroundYPos()
             }
 
-            function getBackgroundYPos() {
-                // Limit pos to 0 and the blurEffect's height as that is the max value by which we can shift
-                // Otherwise we will shift it beyond the effect's height which will shift the item out of the view vertically
-                const pos = Helpers.clamp(root.listViewid.mapFromItem(root, 0, 0).y, 0, blurEffect.height)
-                const height = root.listViewid.height
-                // The height of the image varies with the width of the view, make sure that we don't shift the image
-                // too much to send it out of the view vertically when scrolling downwards
-                const normalized_pos = pos * (blurEffect.height / height)
-                //FIXME: When scrolling the pos shifts abruptly, might be due to the behavior of sections with contentHeight
-                const parallax_multiplier = Helpers.clamp(root.listViewid.contentY / (root.listViewid.contentHeight - height), 0.0, 1.0)
-                return -normalized_pos * parallax_multiplier
+            readonly property bool sourceNeedsLayering: (album_bg_cover.fillMode !== Image.Stretch) ||
+                                                        (MainCtx.qtVersion() < MainCtx.qtVersionCheck(6, 5, 0))
+            readonly property real aspectRatio: (album_bg_cover.implicitHeight / album_bg_cover.implicitWidth)
+
+            height: sourceNeedsLayering ? album_bg_cover.height : (aspectRatio * width)
+
+            // Sections are re-used, but they may not release GPU resources immediately.
+            // This ensures resources are freed to limit peak VRAM consumption.
+            source: visible ? album_bg_cover : null
+
+            ColorContext {
+                id: frostedTheme
+                palette: VLCStyle.palette
+                colorSet: ColorContext.Window
             }
 
-            Widgets.FrostedGlassEffect {
-                id: blurEffect
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                y: getBackgroundYPos()
-
-                readonly property bool sourceNeedsLayering: (album_bg_cover.fillMode !== Image.Stretch) ||
-                                                            (MainCtx.qtVersion() < MainCtx.qtVersionCheck(6, 5, 0))
-                readonly property real aspectRatio: (album_bg_cover.implicitHeight / album_bg_cover.implicitWidth)
-
-                height: sourceNeedsLayering ? album_bg_cover.height : (aspectRatio * width)
-
-                // Sections are re-used, but they may not release GPU resources immediately.
-                // This ensures resources are freed to limit peak VRAM consumption.
-                source: visible ? album_bg_cover : null
-
-                ColorContext {
-                    id: frostedTheme
-                    palette: VLCStyle.palette
-                    colorSet: ColorContext.Window
-                }
-
-                tint: frostedTheme.bg.secondary
-                tintStrength: 0.8
-            }
+            tint: frostedTheme.bg.secondary
+            tintStrength: 0.8
         }
     }
 
-    background: Loader {
-        sourceComponent: pinnedStyle ? null : background
-    }
+    contentItem: Item {
+        RowLayout {
+            id: layout
 
-    contentItem: Loader {
-        id: main_loader
+            anchors.fill: parent
+            anchors.bottomMargin: root.bottomSpacingMargin
+            anchors.leftMargin: VLCStyle.margin_large
 
-        anchors.fill: parent
-        sourceComponent: root.pinnedStyle ? (VLCStyle.isScreenSmall ? pinnedViewSmall : pinnedView) : inlineView
+            spacing: VLCStyle.margin_normal
+
+            Loader {
+                Layout.alignment: Qt.AlignVCenter
+                sourceComponent: albumCoverImage
+
+                Layout.preferredHeight: cover_height
+                Layout.preferredWidth: cover_width
+
+                property int cover_height: VLCStyle.cover_small
+                property int cover_width: VLCStyle.cover_small
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+
+                Layout.preferredHeight: colLayout.implicitHeight + VLCStyle.margin_small / 2
+
+                ColumnLayout {
+                    id: colLayout
+
+                    Widgets.SubtitleLabel {
+                        text: album?.title || qsTr("Unknown title")
+                        color: theme.fg.primary
+                    }
+
+                    Widgets.CaptionLabel {
+                        color: theme.fg.secondary
+                        width: parent.width
+
+                        text: root._getAlbumCaption()
+                    }
+
+                    Loader {
+                        sourceComponent: buttonsRow
+                        onLoaded: {
+                            root.playActionBtn = item.playActionBtn
+                        }
+                    }
+                }
+            }
+        }
     }
 
     function setCurrentItemFocus(reason) {
@@ -271,60 +316,6 @@ T.Pane {
     }
 
     Component {
-        id: inlineView
-
-        RowLayout {
-            id: layout
-
-            anchors.fill: parent
-            anchors.bottomMargin: root.bottomSpacingMargin
-            anchors.leftMargin: VLCStyle.margin_large
-
-            spacing: VLCStyle.margin_normal
-
-            Loader {
-                Layout.alignment: Qt.AlignVCenter
-                sourceComponent: albumCoverImage
-
-                property int cover_height: VLCStyle.cover_small
-                property int cover_width: VLCStyle.cover_small
-            }
-
-            Item {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-
-                implicitHeight: {
-                    return colLayout.implicitHeight + VLCStyle.margin_small / 2
-                }
-
-                ColumnLayout {
-                    id: colLayout
-
-                    Widgets.SubtitleLabel {
-                        text: album?.title || qsTr("Unknown title")
-                        color: theme.fg.primary
-                    }
-
-                    Widgets.CaptionLabel {
-                        color: theme.fg.secondary
-                        width: parent.width
-
-                        text: root._getAlbumCaption()
-                    }
-
-                    Loader {
-                        sourceComponent: buttonsRow
-                        onLoaded: {
-                            root.playActionBtn = item.playActionBtn
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
         id: scrollingALbumTitle
 
         Widgets.TextAutoScroller {
@@ -357,113 +348,4 @@ T.Pane {
             }
         }
     }
-
-    Component {
-        id: pinnedView
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: VLCStyle.margin_small
-            height: implicitHeight
-
-            Loader {
-                Layout.alignment: Qt.AlignVCenter
-                sourceComponent: albumCoverImage
-
-                property int cover_height: VLCStyle.cover_xxsmall
-                property int cover_width: VLCStyle.cover_xxsmall
-                property int cover_radius: VLCStyle.artistGridCover_radius
-            }
-
-            Loader {
-                id: albumTitleLoader
-
-                Layout.alignment: Qt.AlignLeft
-
-                Layout.preferredWidth: implicitWidth
-                Layout.preferredHeight: implicitHeight
-
-                property int containerWidth: root.width
-
-                property int leftUsed: (buttonLoader.item?.width ?? 0)
-                property int leftMargins: VLCStyle.margin_small * 2
-
-                property int rightUsed: album_caption_label.implicitWidth
-                property int rightMargins: VLCStyle.margin_small * 2
-
-                sourceComponent: scrollingALbumTitle
-            }
-
-            Widgets.CaptionLabel {
-                id: album_caption_label
-
-                Layout.fillWidth: true // stretch to fill the remaining space and help to align items to the left
-                Layout.alignment: Qt.AlignLeft
-                Layout.leftMargin: VLCStyle.margin_small
-
-                color: theme.fg.secondary
-                text: root._getAlbumCaption()
-            }
-
-            Loader {
-                id: buttonLoader
-                sourceComponent: buttonsRow
-                Layout.alignment: Qt.AlignLeft
-                onLoaded: {
-                    root.playActionBtn = item.playActionBtn
-                }
-            }
-        }
-    }
-
-    Component {
-        id: pinnedViewSmall
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.leftMargin: VLCStyle.margin_small
-            height: implicitHeight
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                Loader {
-                    id: albumTitleSmallLoader
-
-                    Layout.alignment: Qt.AlignLeft
-
-                    Layout.preferredWidth: implicitWidth
-                    Layout.preferredHeight: implicitHeight
-
-                    property int containerWidth: root.width
-
-                    property int leftMargins: VLCStyle.margin_small
-                    property int rightMargins: VLCStyle.margin_small * 2
-
-                    sourceComponent: scrollingALbumTitle
-                }
-            }
-
-            Widgets.CaptionLabel {
-                Layout.fillWidth: true // stretch to fill the remaining space and help to align items to the left
-                Layout.alignment: Qt.AlignLeft
-
-                color: theme.fg.secondary
-                text: root._getAlbumCaption()
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                Loader {
-                    sourceComponent: buttonsRow
-                    Layout.alignment: Qt.AlignLeft
-                    onLoaded: {
-                        root.playActionBtn = item.playActionBtn
-                    }
-                }
-            }
-        }
-    }
-
 }

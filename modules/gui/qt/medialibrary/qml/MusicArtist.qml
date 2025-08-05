@@ -530,7 +530,7 @@ FocusScope {
                 property bool showHeader: listView_id.headerPositioning === ListView.OverlayHeader
                         && listView_id.contentHeight > listView_id.height
 
-                header: MusicAlbumSectionDelegate {
+                header: MusicAlbumPinnedSectionDelegate {
                     width: listView_id.width
                     height: listView_id.showHeader ? implicitHeight : 0
                     rightPadding: VLCStyle.margin_normal
@@ -540,7 +540,6 @@ FocusScope {
 
                     prevAlbumBtnVisible: true
                     nextAlbumBtnVisible: true
-                    pinnedStyle: true
 
                     onRequestAlbumChange: (direction) => {
                         listView_id.positionViewAtSection(direction)
