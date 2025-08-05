@@ -35,7 +35,7 @@ T.Pane {
 
     required property var section
     property var album: null
-    property var listViewId
+    property var listViewid
     property var albumCover: (root.album && root.album.cover && root.album.cover !== "") ? root.album.cover : VLCStyle.noArtAlbumCover
 
     property var playActionBtn
@@ -88,13 +88,26 @@ T.Pane {
                 opacity: blurEffect.visible ? 1.0 : 0.5
             }
 
+            function getBackgroundYPos() {
+                // Limit pos to 0 and the blurEffect's height as that is the max value by which we can shift
+                // Otherwise we will shift it beyond the effect's height which will shift the item out of the view vertically
+                const pos = Helpers.clamp(root.listViewid.mapFromItem(root, 0, 0).y, 0, blurEffect.height)
+                const height = root.listViewid.height
+                // The height of the image varies with the width of the view, make sure that we don't shift the image
+                // too much to send it out of the view vertically when scrolling downwards
+                const normalized_pos = pos * (blurEffect.height / height)
+                //FIXME: When scrolling the pos shifts abruptly, might be due to the behavior of sections with contentHeight
+                const parallax_multiplier = Helpers.clamp(root.listViewid.contentY / (root.listViewid.contentHeight - height), 0.0, 1.0)
+                return -normalized_pos * parallax_multiplier
+            }
+
             Widgets.FrostedGlassEffect {
                 id: blurEffect
 
                 anchors.left: parent.left
                 anchors.right: parent.right
 
-                anchors.verticalCenter: parent.verticalCenter
+                y: getBackgroundYPos()
 
                 readonly property bool sourceNeedsLayering: (album_bg_cover.fillMode !== Image.Stretch) ||
                                                             (MainCtx.qtVersion() < MainCtx.qtVersionCheck(6, 5, 0))

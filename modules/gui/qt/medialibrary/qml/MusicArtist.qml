@@ -517,6 +517,7 @@ FocusScope {
                 section.delegate: MusicAlbumSectionDelegate {
                     width: listView_id.width
                     height: implicitHeight
+                    listViewid: listView_id
 
                     prevAlbumBtnVisible: true
                     nextAlbumBtnVisible: true
