@@ -3466,8 +3466,17 @@ static void MP4_TrackSetup( demux_t *p_demux, mp4_track_t *p_track,
         unsigned int i;
 
         msg_Warn( p_demux, "elst box found" );
+        bool use_editlist = var_InheritBool( p_demux, CFG_PREFIX"editlist" );
         for( i = 0; i < elst->i_entry_count; i++ )
         {
+            if ( elst->i_segment_duration[i] > INT64_MAX / CLOCK_FREQ ||
+                 ( elst->i_media_time[i] >= 0 && elst->i_media_time[i] > INT64_MAX / CLOCK_FREQ ) )
+            {
+                use_editlist = false;
+                msg_Dbg( p_demux, "   - [%d] bogus duration=%" PRId64 " media time=%" PRId64 ")",
+                         i, elst->i_segment_duration[i], elst->i_media_time[i] );
+            }
+            else
             msg_Dbg( p_demux, "   - [%d] duration=%"PRId64"ms media time=%"PRId64
                      "ms) rate=%d.%d", i,
                      MP4_rescale( elst->i_segment_duration[i], p_sys->i_timescale, 1000 ),
@@ -3478,7 +3487,7 @@ static void MP4_TrackSetup( demux_t *p_demux, mp4_track_t *p_track,
                      elst->i_media_rate_fraction[i] );
         }
 
-        if( var_InheritBool( p_demux, CFG_PREFIX"editlist" ) )
+        if( use_editlist )
             p_track->p_elst = p_elst;
         else
             msg_Dbg( p_demux, "ignore editlist" );
