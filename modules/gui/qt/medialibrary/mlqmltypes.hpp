@@ -30,6 +30,16 @@
 
 static constexpr int64_t INVALID_MLITEMID_ID = 0;
 
+static const QHash<QString, vlc_ml_parent_type> ml_parent_map = {
+    { "VLC_ML_PARENT_ALBUM", VLC_ML_PARENT_ALBUM },
+    { "VLC_ML_PARENT_ARTIST", VLC_ML_PARENT_ARTIST },
+    { "VLC_ML_PARENT_SHOW", VLC_ML_PARENT_SHOW },
+    { "VLC_ML_PARENT_GENRE", VLC_ML_PARENT_GENRE },
+    { "VLC_ML_PARENT_GROUP", VLC_ML_PARENT_GROUP },
+    { "VLC_ML_PARENT_FOLDER", VLC_ML_PARENT_FOLDER },
+    { "VLC_ML_PARENT_PLAYLIST", VLC_ML_PARENT_PLAYLIST }
+};
+
 class MLItemId
 {
     Q_GADGET
@@ -73,30 +83,20 @@ public:
 #undef ML_PARENT_TYPE_CASE
     }
 
-    Q_INVOKABLE static inline MLItemId fromString(const QString& serialized_id) {
-        const QStringList parts = serialized_id.split(" - "); // Type, ID
+    Q_INVOKABLE static inline MLItemId fromString(const QStringView& serialized_id) {
+        const QList<QStringView> parts = serialized_id.split('-'); // Type, ID
         if (parts.length() != 2) {
             return {-1, VLC_ML_PARENT_UNKNOWN};
         }
 
-        const QString& type = parts[0];
+        const QString type = parts[0].trimmed().toString();
         bool conversionSuccessful = false;
-        std::int64_t item_id = parts[1].toLongLong(&conversionSuccessful);
+        std::int64_t item_id = parts[1].trimmed().toLongLong(&conversionSuccessful);
         if (!conversionSuccessful) {
             return {-1, VLC_ML_PARENT_UNKNOWN};
         }
 
-        static const QHash<QString, vlc_ml_parent_type> map = {
-            { "VLC_ML_PARENT_ALBUM", VLC_ML_PARENT_ALBUM },
-            { "VLC_ML_PARENT_ARTIST", VLC_ML_PARENT_ARTIST },
-            { "VLC_ML_PARENT_SHOW", VLC_ML_PARENT_SHOW },
-            { "VLC_ML_PARENT_GENRE", VLC_ML_PARENT_GENRE },
-            { "VLC_ML_PARENT_GROUP", VLC_ML_PARENT_GROUP },
-            { "VLC_ML_PARENT_FOLDER", VLC_ML_PARENT_FOLDER },
-            { "VLC_ML_PARENT_PLAYLIST", VLC_ML_PARENT_PLAYLIST }
-        };
-
-        return { item_id, map.value(type, VLC_ML_PARENT_UNKNOWN) };
+        return { item_id, ml_parent_map.value(type, VLC_ML_PARENT_UNKNOWN) };
     }
 };
 
