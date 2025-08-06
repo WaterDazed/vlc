@@ -1406,21 +1406,18 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
 
     vlc_clock_Lock(sys->clock);
     sys->clock_nowait = false;
-    vlc_clock_Unlock(sys->clock);
-    vlc_queuedmutex_lock(&sys->display_lock);
-
     vlc_tick_t system_now = vlc_tick_now();
     vlc_tick_t system_pts;
     if (render_now)
         system_pts = system_now;
     else
     {
-        vlc_clock_Lock(sys->clock);
         assert(!sys->displayed.current->b_force);
         system_pts = vlc_clock_ConvertToSystem(sys->clock, system_now, pts,
                                                sys->rate, NULL);
-        vlc_clock_Unlock(sys->clock);
     }
+    vlc_clock_Unlock(sys->clock);
+    vlc_queuedmutex_lock(&sys->display_lock);
 
     picture_t *todisplay;
     vlc_render_subpicture *subpic;
