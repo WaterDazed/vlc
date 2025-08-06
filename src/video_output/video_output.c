@@ -1409,16 +1409,6 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     vlc_clock_Unlock(sys->clock);
     vlc_queuedmutex_lock(&sys->display_lock);
 
-    picture_t *todisplay;
-    vlc_render_subpicture *subpic;
-    todisplay = PrerenderPicture(sys, filtered, &subpic);
-    if (todisplay == NULL)
-    {
-        vlc_queuedmutex_unlock(&sys->display_lock);
-        return VLC_EGENERIC;
-    }
-    assert(todisplay->date == pts);
-
     vlc_tick_t system_now = vlc_tick_now();
     vlc_tick_t system_pts;
     if (render_now)
@@ -1431,6 +1421,16 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
                                                sys->rate, NULL);
         vlc_clock_Unlock(sys->clock);
     }
+
+    picture_t *todisplay;
+    vlc_render_subpicture *subpic;
+    todisplay = PrerenderPicture(sys, filtered, &subpic);
+    if (todisplay == NULL)
+    {
+        vlc_queuedmutex_unlock(&sys->display_lock);
+        return VLC_EGENERIC;
+    }
+    assert(todisplay->date == pts);
 
     const unsigned frame_rate = todisplay->format.i_frame_rate;
     const unsigned frame_rate_base = todisplay->format.i_frame_rate_base;
