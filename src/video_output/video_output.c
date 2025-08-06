@@ -1402,6 +1402,8 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     if (!filtered)
         return VLC_EGENERIC;
 
+    const vlc_tick_t pts = filtered->date;
+
     vlc_clock_Lock(sys->clock);
     sys->clock_nowait = false;
     vlc_clock_Unlock(sys->clock);
@@ -1415,9 +1417,9 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
         vlc_queuedmutex_unlock(&sys->display_lock);
         return VLC_EGENERIC;
     }
+    assert(todisplay->date == pts);
 
     vlc_tick_t system_now = vlc_tick_now();
-    const vlc_tick_t pts = todisplay->date;
     vlc_tick_t system_pts;
     if (render_now)
         system_pts = system_now;
