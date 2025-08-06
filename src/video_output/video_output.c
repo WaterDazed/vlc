@@ -1231,8 +1231,7 @@ static vlc_render_subpicture *RenderSPUs(vout_thread_sys_t *sys,
                       ignore_osd);
 }
 
-static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
-                            picture_t **out_pic,
+static picture_t *PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
                             vlc_render_subpicture **out_subpic)
 {
     vout_display_t *vd = sys->display;
@@ -1368,7 +1367,7 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
 
     todisplay = vout_ConvertForDisplay(vd, todisplay);
     if (todisplay == NULL) {
-        return VLC_EGENERIC;
+        return NULL;
     }
 
     if (!vd_does_blending && !blending_before_converter && sys->spu_blend)
@@ -1383,7 +1382,6 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
         }
     }
 
-    *out_pic = todisplay;
     if (vd_does_blending)
         *out_subpic = RenderSPUs(sys, vd->info.subpicture_chromas, &fmt_spu_rot,
                                  system_now, render_subtitle_date,
@@ -1391,7 +1389,7 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
     else
         *out_subpic = NULL;
 
-    return VLC_SUCCESS;
+    return todisplay;
 }
 
 static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
@@ -1411,11 +1409,11 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
 
     picture_t *todisplay;
     vlc_render_subpicture *subpic;
-    int ret = PrerenderPicture(sys, filtered, &todisplay, &subpic);
-    if (ret != VLC_SUCCESS)
+    todisplay = PrerenderPicture(sys, filtered, &subpic);
+    if (todisplay == NULL)
     {
         vlc_queuedmutex_unlock(&sys->display_lock);
-        return ret;
+        return VLC_EGENERIC;
     }
 
     vlc_tick_t system_now = vlc_tick_now();
