@@ -1232,7 +1232,7 @@ static vlc_render_subpicture *RenderSPUs(vout_thread_sys_t *sys,
 }
 
 static picture_t *PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
-                            vlc_render_subpicture **out_subpic)
+                            vlc_render_subpicture **out_subpic, vlc_tick_t system_pts)
 {
     vout_display_t *vd = sys->display;
 
@@ -1389,6 +1389,9 @@ static picture_t *PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
     else
         *out_subpic = NULL;
 
+    if (vd->ops->prepare != NULL)
+        vd->ops->prepare(vd, todisplay, *out_subpic, system_pts);
+
     return todisplay;
 }
 
@@ -1421,16 +1424,13 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
 
     picture_t *todisplay;
     vlc_render_subpicture *subpic;
-    todisplay = PrerenderPicture(sys, filtered, &subpic);
+    todisplay = PrerenderPicture(sys, filtered, &subpic, system_pts);
     if (todisplay == NULL)
     {
         vlc_queuedmutex_unlock(&sys->display_lock);
         return VLC_EGENERIC;
     }
     assert(todisplay->date == pts);
-
-    if (vd->ops->prepare != NULL)
-        vd->ops->prepare(vd, todisplay, subpic, system_pts);
 
     vout_chrono_Stop(&sys->chrono.render);
 
