@@ -40,7 +40,8 @@ layout(std140, binding = 0) uniform buf {
 layout(binding = 1) uniform sampler2D source;
 layout(location = 1) in float pos;
 
-void main() {
+void main()
+{
   vec4 texel = texture(source, coord);
 
   // Note that the whole texel is multiplied instead
