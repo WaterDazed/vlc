@@ -513,6 +513,21 @@ FocusScope {
                 forceShowDefaultHeader: true
                 manualSortDisabled: true
 
+                property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
+
+                Connections {
+                    target: MainCtx
+
+                    function onIntfDevicePixelRatioChanged() {
+                        // Update the DPR:
+                        // Normally, this is not done, as we display the images at the size we
+                        // want, and we don't want to re-load all images on DPR change. But
+                        // in this case we depend on the implicit size, so we should re-load
+                        // the image with the updated DPR:
+                        listView_id.eDPR = MainCtx.effectiveDevicePixelRatio(Window.window)
+                    }
+                }
+
                 section.property: "album_id"
                 section.delegate: MusicAlbumSectionDelegate {
                     width: listView_id.width
@@ -521,6 +536,8 @@ FocusScope {
 
                     prevAlbumBtnVisible: true
                     nextAlbumBtnVisible: true
+
+                    eDPR: listView_id.eDPR
 
                     onRequestAlbumChange: (direction) => {
                         listView_id.positionViewAtSection(direction, section)

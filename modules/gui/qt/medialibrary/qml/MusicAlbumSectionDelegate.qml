@@ -48,6 +48,8 @@ T.Pane {
     property bool prevAlbumBtnPointToEnd: false
     property bool nextAlbumBtnPointToStart: false
 
+    property real eDPR
+
     readonly property Component buttonsRowComponent: buttonsRow
     readonly property Component albumCoverImageComponent: albumCoverImage
     readonly property Component scrollingALbumTitleComponent: scrollingALbumTitle
@@ -303,11 +305,9 @@ T.Pane {
             width: parent.cover_width ?? VLCStyle.cover_xxsmall
             height: parent.cover_height ?? VLCStyle.cover_xxsmall
 
-            property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
-
             radius: parent.cover_radius ?? VLCStyle.expandCover_music_radius
             source: root.albumCover
-            sourceSize: Qt.size(width * eDPR, height * eDPR)
+            sourceSize: Qt.size(width * root.eDPR, height * root.eDPR)
 
             Widgets.DefaultShadow {
                 visible: (parent.status === Image.Ready)
