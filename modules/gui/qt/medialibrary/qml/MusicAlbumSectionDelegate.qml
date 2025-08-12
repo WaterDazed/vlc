@@ -19,6 +19,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
@@ -29,7 +30,7 @@ import VLC.Widgets as Widgets
 import VLC.Util
 import VLC.Style
 
-Rectangle {
+T.Pane {
     id: root
 
     required property var section
@@ -50,11 +51,63 @@ Rectangle {
         colorSet: ColorContext.View
     }
 
-    signal changeAlbum(int direction)
+    signal requestAlbumChange(int direction)
 
-    implicitHeight: {
-        const verticalMargins = layout.anchors.topMargin + layout.anchors.bottomMargin + VLCStyle.margin_small
-        return artAndControl.height + verticalMargins
+    topPadding: VLCStyle.margin_xsmall
+    bottomPadding: VLCStyle.margin_xsmall
+
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
+                            implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
+                             implicitContentHeight + topPadding + bottomPadding)
+
+    background: Item {
+        clip: !blurEffect.sourceNeedsLayering
+
+        visible: (GraphicsInfo.shaderType === GraphicsInfo.RhiShader)
+
+        Image {
+            id: album_bg_cover
+
+            anchors.fill: parent
+
+            source: root.albumCover
+            sourceSize: root.albumCover ? Qt.size(Helpers.alignUp(Screen.desktopAvailableWidth, 32), 0) : undefined
+            mipmap: !!root.albumCover
+
+            fillMode: Image.Stretch
+
+            visible: !blurEffect.visible
+            cache: (source === VLCStyle.noArtArtist)
+
+            opacity: blurEffect.visible ? 1.0 : 0.5
+        }
+
+        Widgets.FrostedGlassEffect {
+            id: blurEffect
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+
+            anchors.verticalCenter: parent.verticalCenter
+
+            readonly property bool sourceNeedsLayering: (album_bg_cover.fillMode !== Image.Stretch) ||
+                                                        (MainCtx.qtVersion() < MainCtx.qtVersionCheck(6, 5, 0))
+            readonly property real aspectRatio: (album_bg_cover.implicitHeight / album_bg_cover.implicitWidth)
+
+            height: sourceNeedsLayering ? album_bg_cover.height : (aspectRatio * width)
+
+            source: album_bg_cover
+
+            ColorContext {
+                id: frostedTheme
+                palette: VLCStyle.palette
+                colorSet: ColorContext.Window
+            }
+
+            tint: frostedTheme.bg.secondary
+            tintStrength: 0.8
+        }
     }
 
     function fetchAlbumData() {
@@ -63,6 +116,7 @@ Rectangle {
             album = albumData
         })
     }
+
     function _getStringTrack() {
         const count = root.album?.nb_tracks ?? 0;
 
@@ -72,214 +126,125 @@ Rectangle {
             return qsTr("%1 tracks").arg(count);
     }
 
-    Component.onCompleted: { fetchAlbumData() }
-    onSectionChanged: { fetchAlbumData() }
-
-    width: parent.width
-    height: col.implicitHeight + VLCStyle.margin_small
-    color: "transparent"
-
-    Component {
-        id: cover
-
-        Widgets.ImageExt {
-            property int cover_height: parent.cover_height
-            property int cover_width: parent.cover_width
-            readonly property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
-
-            height: cover_height
-            width: cover_width
-            radius: VLCStyle.expandCover_music_radius
-            source: root.albumCover
-            sourceSize: Qt.size(width * eDPR, height * eDPR)
-
-
-            Widgets.DefaultShadow {
-                visible: (parent.status === Image.Ready)
-            }
-        }
-    }
-
-    Component {
-        id: bgCover
-
-        Rectangle {
-            color: "transparent"
-            clip: true
-
-            Widgets.ImageExt {
-                id: album_bg_cover
-
-                width: parent.width
-                // If the width becomes too small the height does too, this prevents it.
-                height: Math.max(parent.height, width / (sourceSize.width / sourceSize.height))
-
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.bottomMargin: VLCStyle.margin_normal
-
-                fillMode: Image.PreserveAspectFit
-                source: root.albumCover
-                visible: false
-            }
-
-            Widgets.FrostedGlassEffect {
-                id: blurEffect
-                anchors.fill: album_bg_cover
-                source: album_bg_cover
-
-                ColorContext {
-                    id: frostedTheme
-                    palette: VLCStyle.palette
-                    colorSet: ColorContext.Window
-                }
-
-                tint: frostedTheme.bg.secondary
-                tintStrength: 0.8
-
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                acceptedButtons: Qt.AllButtons
-                propagateComposedEvents: false
-                // Prevent selection of tracks behind this delegate when it's pinned at the top
-                onPressed: (mouse) => {
-                    mouse.accepted = true
-                }
-            }
-        }
-    }
-
-    Component {
-        id: buttons
-
-        Widgets.NavigableRow {
-            id: actionButtons
-
-            property alias enqueueActionBtn: _enqueueActionBtn
-            property alias playActionBtn: _playActionBtn
-            property alias prevAlbumBtn: _prevAlbumBtn
-            property alias nextAlbumBtn: _nextAlbumBtn
-
-            focus: true
-            width: VLCStyle.isScreenSmall ? VLCStyle.listCover_music_width : VLCStyle.expandCover_music_width
-
-            spacing: VLCStyle.margin_small
-
-            Layout.alignment: Qt.AlignCenter
-
-            model: ObjectModel {
-                Widgets.ActionButtonPrimary {
-                    id: _playActionBtn
-
-                    iconTxt: VLCIcons.play
-                    text: qsTr("Play")
-                    onClicked: MediaLib.addAndPlay( root.album.id )
-                }
-
-                Widgets.ButtonExt {
-                    id: _enqueueActionBtn
-
-                    iconTxt: VLCIcons.enqueue
-                    text: qsTr("Enqueue")
-                    onClicked: MediaLib.addToPlaylist( root.album.id )
-                }
-
-                Widgets.ButtonExt {
-                    id: _prevAlbumBtn
-
-                    iconTxt: root.prevAlbumBtnPointToEnd ? VLCIcons.chevron_down : VLCIcons.chevron_up
-                    text: root.prevAlbumBtnPointToEnd ? qsTr("Bottom") : qsTr("Prev")
-                    onClicked: root.changeAlbum( 1 )
-                    visible: root.prevAlbumBtnVisible
-                }
-
-                Widgets.ButtonExt {
-                    id: _nextAlbumBtn
-
-                    iconTxt: root.nextAlbumBtnPointToStart ? VLCIcons.chevron_up : VLCIcons.chevron_down
-                    text: root.nextAlbumBtnPointToStart ? qsTr("Top") : qsTr("Next")
-                    onClicked: root.changeAlbum( -1 )
-                    visible: root.nextAlbumBtnVisible
-                }
-            }
-        }
-    }
-
-    Loader {
-        anchors.fill: parent
-        anchors.bottomMargin: VLCStyle.margin_small
-        sourceComponent: bgCover
+    onSectionChanged: {
+        fetchAlbumData()
     }
 
     RowLayout {
         id: layout
 
         anchors.fill: parent
-        anchors.topMargin: VLCStyle.margin_small
+        anchors.bottomMargin: root.bottomSpacingMargin
         anchors.leftMargin: VLCStyle.margin_large
 
         spacing: VLCStyle.margin_normal
-        Layout.alignment: Qt.AlignLeft
 
-        FocusScope {
-            id: artAndControl
+        Item {
+            id: albumCover
 
-            implicitHeight: artAndControlLayout.implicitHeight
-            implicitWidth: artAndControlLayout.implicitWidth
-            Layout.alignment: Qt.AlignTop
+            implicitHeight: albumCoverLayout.implicitHeight
+            implicitWidth: albumCoverLayout.implicitWidth
+            Layout.alignment: Qt.AlignVCenter
 
             Column {
-                id: artAndControlLayout
+                id: albumCoverLayout
 
                 spacing: VLCStyle.margin_normal
-                bottomPadding: VLCStyle.margin_large
 
-                /* A bigger cover for the album */
-                Loader {
-                    sourceComponent: cover
-                    property int cover_height: VLCStyle.isScreenSmall ? VLCStyle.cover_small : VLCStyle.expandCover_music_height
-                    property int cover_width: VLCStyle.isScreenSmall ? VLCStyle.cover_small : VLCStyle.expandCover_music_width
+                Widgets.ImageExt {
+                    property int cover_height: VLCStyle.cover_small
+                    property int cover_width: VLCStyle.cover_small
+                    property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
+
+                    height: cover_height
+                    width: cover_width
+                    radius: VLCStyle.expandCover_music_radius
+                    source: root.albumCover
+                    sourceSize: Qt.size(width * eDPR, height * eDPR)
+
+                    Widgets.DefaultShadow {
+                        visible: (parent.status === Image.Ready)
+                    }
                 }
             }
         }
 
-        ColumnLayout {
+        Item {
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignVCenter
 
-            Widgets.SubtitleLabel {
-                text: album?.title || qsTr("Unknown title")
-                color: theme.fg.primary
+            implicitHeight: {
+                return colLayout.implicitHeight + VLCStyle.margin_small / 2
             }
 
-            Widgets.CaptionLabel {
-                id: expand_infos_subtitle_id
+            ColumnLayout {
+                id: colLayout
 
-                color: theme.fg.secondary
-                width: parent.width
+                Widgets.SubtitleLabel {
+                    text: album?.title || qsTr("Unknown title")
+                    color: theme.fg.primary
+                }
 
-                text: qsTr("%1 - %2 - %3 - %4")
-                    .arg(root.album?.main_artist || qsTr("Unknown artist"))
-                    .arg(root.album?.release_year || "")
-                    .arg(_getStringTrack())
-                    .arg(root.album?.duration?.formatHMS() ?? 0)
-            }
+                Widgets.CaptionLabel {
+                    id: expand_infos_subtitle_id
 
-            Loader {
-                Layout.topMargin: VLCStyle.margin_small
+                    color: theme.fg.secondary
+                    width: parent.width
 
-                Layout.fillHeight: true
-                Layout.fillWidth: true
+                    text: qsTr("%1 - %2 - %3 - %4")
+                        .arg(root.album?.main_artist || qsTr("Unknown artist"))
+                        .arg(root.album?.release_year || "")
+                        .arg(_getStringTrack())
+                        .arg(root.album?.duration?.formatHMS() ?? 0)
+                }
 
-                sourceComponent: buttons
+                RowLayout {
+                    id: actionButtons
 
-                onLoaded: {
-                    root.playActionBtn = item.playActionBtn
-                    root.enqueueActionBtn = item.enqueueActionBtn
-                    root.prevAlbumBtn = item.prevAlbumBtn
-                    root.nextAlbumBtn = item.nextAlbumBtn
+                    width: VLCStyle.isScreenSmall ? VLCStyle.listCover_music_width : VLCStyle.expandCover_music_width
+                    spacing: VLCStyle.margin_small
+
+                    Widgets.ActionButtonPrimary {
+                        id: _playActionBtn
+
+                        iconTxt: VLCIcons.play
+                        text: qsTr("Play")
+                        onClicked: {
+                            MediaLib.addAndPlay( root.album.id )
+                        }
+                    }
+
+                    Widgets.ButtonExt {
+                        id: _enqueueActionBtn
+
+                        iconTxt: VLCIcons.enqueue
+                        text: qsTr("Enqueue")
+                        onClicked: {
+                            MediaLib.addToPlaylist( root.album.id )
+                        }
+                    }
+
+                    Widgets.ButtonExt {
+                        id: _prevAlbumBtn
+
+                        iconTxt: root.prevAlbumBtnPointToEnd ? VLCIcons.chevron_down : VLCIcons.chevron_up
+                        text: root.prevAlbumBtnPointToEnd ? qsTr("Bottom") : qsTr("Prev")
+                        onClicked: {
+                            root.requestAlbumChange( -1 )
+                        }
+                        visible: root.prevAlbumBtnVisible
+                    }
+
+                    Widgets.ButtonExt {
+                        id: _nextAlbumBtn
+
+                        iconTxt: root.nextAlbumBtnPointToStart ? VLCIcons.chevron_up : VLCIcons.chevron_down
+                        text: root.nextAlbumBtnPointToStart ? qsTr("Top") : qsTr("Next")
+                        onClicked: {
+                            root.requestAlbumChange( 1 )
+                        }
+                        visible: root.nextAlbumBtnVisible
+                    }
                 }
             }
         }
