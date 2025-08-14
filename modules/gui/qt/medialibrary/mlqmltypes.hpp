@@ -30,14 +30,14 @@
 
 static constexpr int64_t INVALID_MLITEMID_ID = 0;
 
-static const QHash<QString, vlc_ml_parent_type> ml_parent_map = {
-    { "VLC_ML_PARENT_ALBUM", VLC_ML_PARENT_ALBUM },
-    { "VLC_ML_PARENT_ARTIST", VLC_ML_PARENT_ARTIST },
-    { "VLC_ML_PARENT_SHOW", VLC_ML_PARENT_SHOW },
-    { "VLC_ML_PARENT_GENRE", VLC_ML_PARENT_GENRE },
-    { "VLC_ML_PARENT_GROUP", VLC_ML_PARENT_GROUP },
-    { "VLC_ML_PARENT_FOLDER", VLC_ML_PARENT_FOLDER },
-    { "VLC_ML_PARENT_PLAYLIST", VLC_ML_PARENT_PLAYLIST }
+static const QHash<QStringView, vlc_ml_parent_type> ml_parent_map = {
+    { QStringLiteral("VLC_ML_PARENT_ALBUM"), VLC_ML_PARENT_ALBUM },
+    { QStringLiteral("VLC_ML_PARENT_ARTIST"), VLC_ML_PARENT_ARTIST },
+    { QStringLiteral("VLC_ML_PARENT_SHOW"), VLC_ML_PARENT_SHOW },
+    { QStringLiteral("VLC_ML_PARENT_GENRE"), VLC_ML_PARENT_GENRE },
+    { QStringLiteral("VLC_ML_PARENT_GROUP"), VLC_ML_PARENT_GROUP },
+    { QStringLiteral("VLC_ML_PARENT_FOLDER"), VLC_ML_PARENT_FOLDER },
+    { QStringLiteral("VLC_ML_PARENT_PLAYLIST"), VLC_ML_PARENT_PLAYLIST }
 };
 
 class MLItemId
@@ -89,7 +89,7 @@ public:
             return {-1, VLC_ML_PARENT_UNKNOWN};
         }
 
-        const QString type = parts[0].trimmed().toString();
+        const QStringView type = parts[0].trimmed();
         bool conversionSuccessful = false;
         std::int64_t item_id = parts[1].trimmed().toLongLong(&conversionSuccessful);
         if (!conversionSuccessful) {
