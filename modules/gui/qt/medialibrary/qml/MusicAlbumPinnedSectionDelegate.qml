@@ -112,24 +112,20 @@ MusicAlbumSectionDelegate {
             anchors.leftMargin: VLCStyle.margin_small
             height: implicitHeight
 
-            RowLayout {
-                Layout.fillWidth: true
+            Loader {
+                id: albumTitleSmallLoader
 
-                Loader {
-                    id: albumTitleSmallLoader
+                Layout.alignment: Qt.AlignLeft
 
-                    Layout.alignment: Qt.AlignLeft
+                Layout.preferredWidth: implicitWidth
+                Layout.preferredHeight: implicitHeight
 
-                    Layout.preferredWidth: implicitWidth
-                    Layout.preferredHeight: implicitHeight
+                property int containerWidth: root.width
 
-                    property int containerWidth: root.width
+                property int leftMargins: VLCStyle.margin_small
+                property int rightMargins: VLCStyle.margin_small * 2
 
-                    property int leftMargins: VLCStyle.margin_small
-                    property int rightMargins: VLCStyle.margin_small * 2
-
-                    sourceComponent: root.scrollingALbumTitleComponent
-                }
+                sourceComponent: root.scrollingALbumTitleComponent
             }
 
             Widgets.CaptionLabel {
@@ -140,15 +136,11 @@ MusicAlbumSectionDelegate {
                 text: root._getAlbumCaption()
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-
-                Loader {
-                    sourceComponent: root.buttonsRowComponent
-                    Layout.alignment: Qt.AlignLeft
-                    onLoaded: {
-                        root.playActionBtn = item.playActionBtn
-                    }
+            Loader {
+                sourceComponent: root.buttonsRowComponent
+                Layout.alignment: Qt.AlignLeft
+                onLoaded: {
+                    root.playActionBtn = item.playActionBtn
                 }
             }
         }

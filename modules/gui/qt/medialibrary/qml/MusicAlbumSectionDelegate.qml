@@ -35,7 +35,7 @@ T.Pane {
 
     required property var section
     property var album: null
-    property var listViewid
+    property var view: ListView.view
     property var albumCover: (root.album && root.album.cover && root.album.cover !== "") ? root.album.cover : VLCStyle.noArtAlbumCover
 
     property var playActionBtn
@@ -70,16 +70,16 @@ T.Pane {
                              implicitContentHeight + topPadding + bottomPadding)
 
     function getBackgroundYPos() {
-        if (!root.listViewid) return
+        if (!root.view) return
         // Limit pos to 0 and the blurEffect's height as that is the max value by which we can shift
         // Otherwise we will shift it beyond the effect's height which will shift the item out of the view vertically
-        const pos = Helpers.clamp(root.listViewid.mapFromItem(root, 0, 0).y, 0, blurEffect.height)
-        const height = root.listViewid.height
+        const pos = Helpers.clamp(root.view.mapFromItem(root, 0, 0).y, 0, blurEffect.height)
+        const height = root.view.height
         // The height of the image varies with the width of the view, make sure that we don't shift the image
         // too much to send it out of the view vertically when scrolling downwards
         const normalized_pos = pos * (blurEffect.height / height)
         //FIXME: When scrolling the pos shifts abruptly, might be due to the behavior of sections with contentHeight
-        const parallax_multiplier = Helpers.clamp(root.listViewid.contentY / (root.listViewid.contentHeight - height), 0.0, 1.0)
+        const parallax_multiplier = Helpers.clamp(root.view.contentY / (root.view.contentHeight - height), 0.0, 1.0)
         return -normalized_pos * parallax_multiplier
     }
 
@@ -111,7 +111,7 @@ T.Pane {
             anchors.right: parent.right
 
             Binding on y {
-                when: root.listViewid !== null
+                when: root.view !== null
                 value: getBackgroundYPos()
             }
 
@@ -308,6 +308,7 @@ T.Pane {
             radius: parent.cover_radius ?? VLCStyle.expandCover_music_radius
             source: root.albumCover
             sourceSize: Qt.size(width * root.eDPR, height * root.eDPR)
+            asynchronous: true
 
             Widgets.DefaultShadow {
                 visible: (parent.status === Image.Ready)
