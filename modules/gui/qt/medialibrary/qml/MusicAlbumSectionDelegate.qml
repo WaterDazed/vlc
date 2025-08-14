@@ -33,10 +33,10 @@ import VLC.Style
 T.Pane {
     id: root
 
-    required property var section
-    property var album: null
-    property var view: ListView.view
-    property var albumCover: (root.album && root.album.cover && root.album.cover !== "") ? root.album.cover : VLCStyle.noArtAlbumCover
+    required property string section
+    property var _albumData: null
+    property ListView _view: ListView.view
+    property url _albumCover: (root._albumData && root._albumData.cover) ? root._albumData.cover : VLCStyle.noArtAlbumCover
 
     property var playActionBtn
 
@@ -70,16 +70,16 @@ T.Pane {
                              implicitContentHeight + topPadding + bottomPadding)
 
     function getBackgroundYPos() {
-        if (!root.view) return
+        if (!root._view) return
         // Limit pos to 0 and the blurEffect's height as that is the max value by which we can shift
-        // Otherwise we will shift it beyond the effect's height which will shift the item out of the view vertically
-        const pos = Helpers.clamp(root.view.mapFromItem(root, 0, 0).y, 0, blurEffect.height)
-        const height = root.view.height
-        // The height of the image varies with the width of the view, make sure that we don't shift the image
-        // too much to send it out of the view vertically when scrolling downwards
+        // Otherwise we will shift it beyond the effect's height which will shift the item out of the _view vertically
+        const pos = Helpers.clamp(root._view.mapFromItem(root, 0, 0).y, 0, blurEffect.height)
+        const height = root._view.height
+        // The height of the image varies with the width of the _view, make sure that we don't shift the image
+        // too much to send it out of the _view vertically when scrolling downwards
         const normalized_pos = pos * (blurEffect.height / height)
         //FIXME: When scrolling the pos shifts abruptly, might be due to the behavior of sections with contentHeight
-        const parallax_multiplier = Helpers.clamp(root.view.contentY / (root.view.contentHeight - height), 0.0, 1.0)
+        const parallax_multiplier = Helpers.clamp(root._view.contentY / (root._view.contentHeight - height), 0.0, 1.0)
         return -normalized_pos * parallax_multiplier
     }
 
@@ -92,9 +92,9 @@ T.Pane {
 
             anchors.fill: parent
 
-            source: root.albumCover
-            sourceSize: root.albumCover ? Qt.size(Helpers.alignUp(Screen.desktopAvailableWidth, 32), 0) : undefined
-            mipmap: !!root.albumCover
+            source: root._albumCover
+            sourceSize: root._albumCover ? Qt.size(Helpers.alignUp(Screen.desktopAvailableWidth, 32), 0) : undefined
+            mipmap: !!root._albumCover
 
             fillMode: Image.Stretch
 
@@ -111,7 +111,7 @@ T.Pane {
             anchors.right: parent.right
 
             Binding on y {
-                when: root.view !== null
+                when: root._view !== null
                 value: getBackgroundYPos()
             }
 
@@ -167,7 +167,7 @@ T.Pane {
                     id: colLayout
 
                     Widgets.SubtitleLabel {
-                        text: album?.title || qsTr("Unknown title")
+                        text: root._albumData?.title || qsTr("Unknown title")
                         color: theme.fg.primary
                     }
 
@@ -196,29 +196,29 @@ T.Pane {
     function fetchAlbumData() {
         if (!section || albumModel.loading) return
         albumModel.getDataById(MediaLib.deserializeMlItemIdFromString(section)).then((albumData) => {
-            album = albumData
+            _albumData = albumData
         })
     }
 
     function _getAlbumCaption() {
-        const album = root.album
-        if (!album)
+        const _albumData = root._albumData
+        if (!_albumData)
             return ""
 
         const parts = []
 
         if (!root.pinnedStyle) {
-            parts.push(album.main_artist || qsTr("Unknown artist"))
+            parts.push(_albumData.main_artist || qsTr("Unknown artist"))
         }
 
-        const year = album.release_year
+        const year = _albumData.release_year
         if (year)
             parts.push(year)
 
-        const count = album.nb_tracks ?? 0
+        const count = _albumData.nb_tracks ?? 0
         parts.push(qsTr(count < 2 ? "%1 track" : "%1 tracks").arg(count))
 
-        const duration = album.duration?.formatHMS()
+        const duration = _albumData.duration?.formatHMS()
         if (duration)
             parts.push(duration)
 
@@ -244,7 +244,7 @@ T.Pane {
                 iconTxt: VLCIcons.play
                 text: qsTr("Play")
                 onClicked: {
-                    MediaLib.addAndPlay( root.album.id )
+                    MediaLib.addAndPlay( root._albumData.id )
                 }
 
                 Navigation.parentItem: root
@@ -257,7 +257,7 @@ T.Pane {
                 iconTxt: VLCIcons.enqueue
                 text: qsTr("Enqueue")
                 onClicked: {
-                    MediaLib.addToPlaylist( root.album.id )
+                    MediaLib.addToPlaylist( root._albumData.id )
                 }
 
                 Navigation.parentItem: root
@@ -306,7 +306,7 @@ T.Pane {
             height: parent.cover_height ?? VLCStyle.cover_xxsmall
 
             radius: parent.cover_radius ?? VLCStyle.expandCover_music_radius
-            source: root.albumCover
+            source: root._albumCover
             sourceSize: Qt.size(width * root.eDPR, height * root.eDPR)
             asynchronous: true
 
@@ -344,7 +344,7 @@ T.Pane {
 
             Widgets.SubtitleLabel {
                 id: albumTitleLabel
-                text: album?.title || qsTr("Unknown title")
+                text: _albumData?.title || qsTr("Unknown title")
                 color: theme.fg.primary
             }
         }
