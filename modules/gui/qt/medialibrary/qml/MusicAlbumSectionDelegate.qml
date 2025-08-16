@@ -136,53 +136,53 @@ T.Pane {
         }
     }
 
-    contentItem: Item {
-        RowLayout {
-            id: layout
+    contentItem: RowLayout {
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottomMargin: root.bottomSpacingMargin
+            leftMargin: VLCStyle.margin_large
+        }
 
-            anchors.fill: parent
-            anchors.bottomMargin: root.bottomSpacingMargin
-            anchors.leftMargin: VLCStyle.margin_large
+        spacing: VLCStyle.margin_normal
 
-            spacing: VLCStyle.margin_normal
+        Loader {
+            id: albumCoverLoader
+            Layout.alignment: Qt.AlignVCenter
+            sourceComponent: albumCoverImage
 
-            Loader {
-                Layout.alignment: Qt.AlignVCenter
-                sourceComponent: albumCoverImage
+            Layout.preferredHeight: cover_height
+            Layout.preferredWidth: cover_width
 
-                Layout.preferredHeight: cover_height
-                Layout.preferredWidth: cover_width
+            property int cover_height: VLCStyle.cover_small
+            property int cover_width: VLCStyle.cover_small
+        }
 
-                property int cover_height: VLCStyle.cover_small
-                property int cover_width: VLCStyle.cover_small
-            }
+        Item {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
 
-            Item {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
+            Layout.preferredHeight: colLayout.implicitHeight + VLCStyle.margin_small / 2
 
-                Layout.preferredHeight: colLayout.implicitHeight + VLCStyle.margin_small / 2
+            ColumnLayout {
+                id: colLayout
 
-                ColumnLayout {
-                    id: colLayout
+                Widgets.SubtitleLabel {
+                    text: root._albumData?.title || qsTr("Unknown title")
+                    color: theme.fg.primary
+                }
 
-                    Widgets.SubtitleLabel {
-                        text: root._albumData?.title || qsTr("Unknown title")
-                        color: theme.fg.primary
-                    }
+                Widgets.CaptionLabel {
+                    color: theme.fg.secondary
+                    width: parent.width
 
-                    Widgets.CaptionLabel {
-                        color: theme.fg.secondary
-                        width: parent.width
+                    text: root._getAlbumCaption()
+                }
 
-                        text: root._getAlbumCaption()
-                    }
-
-                    Loader {
-                        sourceComponent: buttonsRow
-                        onLoaded: {
-                            root.playActionBtn = item.playActionBtn
-                        }
+                Loader {
+                    sourceComponent: buttonsRow
+                    onLoaded: {
+                        root.playActionBtn = item.playActionBtn
                     }
                 }
             }
