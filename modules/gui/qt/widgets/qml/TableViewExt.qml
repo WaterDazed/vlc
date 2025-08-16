@@ -123,8 +123,9 @@ FocusScope {
     property color headerColor: (interactive && (headerPositioning !== ListView.InlineHeader)) ? colorContext.bg.primary : "transparent"
     property int headerTopPadding: 0
 
-    property bool forceShowDefaultHeader: false
-    property bool manualSortDisabled: false
+    property bool headerItemAlwaysVisible: false
+    property bool hideSectionTextFromLabel: false
+    property bool preventSortingFromHeader: false
 
     property real rowHeight: VLCStyle.tableRow_height
 
@@ -309,6 +310,7 @@ FocusScope {
                 height: VLCStyle.tableHeaderText_height
                 verticalAlignment: Text.AlignVCenter
 
+                text: hideSectionTextFromLabel ? "" : view.currentSection
                 color: view.colorContext.accent
                 visible: view.headerPositioning === ListView.OverlayHeader
                          && text !== ""
@@ -343,7 +345,7 @@ FocusScope {
                     spacing: VLCStyle.column_spacing
 
                     // If there is a specific header, obey to its visibility otherwise hide the header if model is empty:
-                    visible: headerLoader.item ? headerLoader.item.visible || root.forceShowDefaultHeader: (view.count > 0)
+                    visible: headerLoader.item ? headerLoader.item.visible || root.headerItemAlwaysVisible: (view.count > 0)
 
                     Repeater {
                         model: sortModel
@@ -393,7 +395,7 @@ FocusScope {
 
                             TapHandler {
                                 onTapped: (eventPoint, button) => {
-                                    if (root.manualSortDisabled)
+                                    if (root.preventSortingFromHeader)
                                         return
                                     if (!(modelData.model.isSortable ?? true))
                                         return

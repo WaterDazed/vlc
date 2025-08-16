@@ -510,8 +510,9 @@ FocusScope {
                 width: parent.width
                 height: parent.height
 
-                forceShowDefaultHeader: true
-                manualSortDisabled: true
+                headerItemAlwaysVisible: true
+                hideSectionTextFromLabel: true
+                preventSortingFromHeader: true
 
                 property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
 
