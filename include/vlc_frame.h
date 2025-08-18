@@ -515,7 +515,7 @@ static inline void vlc_frame_ChainRelease( vlc_frame_t *frame )
  *
  * @see vlc_frame_ChainGather()
  */
-static size_t vlc_frame_ChainExtract( vlc_frame_t *p_list, void *p_data, size_t i_max )
+VLC_USED static size_t vlc_frame_ChainExtract( vlc_frame_t *p_list, void *p_data, size_t i_max )
 {
     size_t  i_total = 0;
     uint8_t *p = (uint8_t*)p_data;
