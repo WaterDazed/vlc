@@ -33,9 +33,13 @@ import VLC.Style
 MusicAlbumSectionDelegate {
     id: root
 
+    function setCurrentItemFocus(reason) {
+        root.contentItem.forceActiveFocus(reason)
+    }
+
     background: null
 
-    contentItem: Item {
+    contentItem: FocusScope {
         implicitWidth: main_loader.item ? main_loader.item.implicitWidth : 0
         implicitHeight: main_loader.item ? main_loader.item.implicitHeight : 0
 
@@ -44,6 +48,7 @@ MusicAlbumSectionDelegate {
 
             anchors.fill: parent
             sourceComponent: VLCStyle.isScreenSmall ? pinnedViewSmall : pinnedView
+            focus: true
         }
     }
 
@@ -73,7 +78,7 @@ MusicAlbumSectionDelegate {
 
                 property int containerWidth: root.width
 
-                property int leftUsed: (buttonLoader.item?.width ?? 0)
+                property int leftUsed: buttonLoader.item?.width ?? 0
                 property int leftMargins: VLCStyle.margin_small * 2
 
                 property int rightUsed: album_caption_label.implicitWidth
@@ -97,9 +102,7 @@ MusicAlbumSectionDelegate {
                 id: buttonLoader
                 sourceComponent: root.buttonsRowComponent
                 Layout.alignment: Qt.AlignLeft
-                onLoaded: {
-                    root.playActionBtn = item.playActionBtn
-                }
+                focus: true
             }
         }
     }
@@ -139,9 +142,7 @@ MusicAlbumSectionDelegate {
             Loader {
                 sourceComponent: root.buttonsRowComponent
                 Layout.alignment: Qt.AlignLeft
-                onLoaded: {
-                    root.playActionBtn = item.playActionBtn
-                }
+                focus: true
             }
         }
     }

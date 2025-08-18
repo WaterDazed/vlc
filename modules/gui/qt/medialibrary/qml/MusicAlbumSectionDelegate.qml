@@ -38,8 +38,6 @@ T.Pane {
     readonly property url _albumCover: (root._albumData && root._albumData.cover) ? root._albumData.cover : VLCStyle.noArtAlbumCover
     property var _albumData: null
 
-    property var playActionBtn
-
     property bool largeCoverSize: false
     property bool showBlurredAlbumCover: false
 
@@ -179,16 +177,9 @@ T.Pane {
 
                 Loader {
                     sourceComponent: buttonsRow
-                    onLoaded: {
-                        root.playActionBtn = item.playActionBtn
-                    }
                 }
             }
         }
-    }
-
-    function setCurrentItemFocus(reason) {
-        root.playActionBtn.forceActiveFocus(reason)
     }
 
     function fetchAlbumData() {
@@ -233,7 +224,6 @@ T.Pane {
         RowLayout {
             id: actionButtons
 
-            property alias playActionBtn: _playActionBtn
             spacing: VLCStyle.margin_small
 
             Widgets.ActionButtonPrimary {
@@ -247,6 +237,7 @@ T.Pane {
 
                 Navigation.parentItem: root
                 Navigation.rightItem: _enqueueActionBtn
+                focus: true
             }
 
             Widgets.ButtonExt {
