@@ -34,9 +34,9 @@ T.Pane {
     id: root
 
     required property string section
+    readonly property ListView _view: ListView.view
+    readonly property url _albumCover: (root._albumData && root._albumData.cover) ? root._albumData.cover : VLCStyle.noArtAlbumCover
     property var _albumData: null
-    property ListView _view: ListView.view
-    property url _albumCover: (root._albumData && root._albumData.cover) ? root._albumData.cover : VLCStyle.noArtAlbumCover
 
     property var playActionBtn
 
@@ -138,8 +138,6 @@ T.Pane {
 
     contentItem: RowLayout {
         anchors {
-            left: parent.left
-            right: parent.right
             bottomMargin: root.bottomSpacingMargin
             leftMargin: VLCStyle.margin_large
         }
