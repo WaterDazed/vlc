@@ -57,11 +57,8 @@ MusicAlbumSectionDelegate {
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: VLCStyle.margin_small
-            height: implicitHeight
 
             Loader {
-                Layout.alignment: Qt.AlignVCenter
                 sourceComponent: root.albumCoverImageComponent
 
                 property int cover_height: VLCStyle.cover_xxsmall
@@ -70,8 +67,6 @@ MusicAlbumSectionDelegate {
 
             Loader {
                 id: albumTitleLoader
-
-                Layout.alignment: Qt.AlignLeft
 
                 Layout.preferredWidth: implicitWidth
                 Layout.preferredHeight: implicitHeight
@@ -90,8 +85,8 @@ MusicAlbumSectionDelegate {
             Widgets.CaptionLabel {
                 id: album_caption_label
 
-                Layout.fillWidth: true // stretch to fill the remaining space and help to align items to the left
-                Layout.alignment: Qt.AlignLeft
+                // stretch to fill the remaining space and help to align items to the left
+                Layout.fillWidth: true
                 Layout.leftMargin: VLCStyle.margin_small
 
                 color: theme.fg.secondary
@@ -101,7 +96,6 @@ MusicAlbumSectionDelegate {
             Loader {
                 id: buttonLoader
                 sourceComponent: root.buttonsRowComponent
-                Layout.alignment: Qt.AlignLeft
                 focus: true
             }
         }
@@ -118,8 +112,6 @@ MusicAlbumSectionDelegate {
             Loader {
                 id: albumTitleSmallLoader
 
-                Layout.alignment: Qt.AlignLeft
-
                 Layout.preferredWidth: implicitWidth
                 Layout.preferredHeight: implicitHeight
 
@@ -132,8 +124,8 @@ MusicAlbumSectionDelegate {
             }
 
             Widgets.CaptionLabel {
-                Layout.fillWidth: true // stretch to fill the remaining space and help to align items to the left
-                Layout.alignment: Qt.AlignLeft
+                // stretch to fill the remaining space and help to align items to the left
+                Layout.fillWidth: true
 
                 color: theme.fg.secondary
                 text: root._getAlbumCaption()
@@ -141,7 +133,6 @@ MusicAlbumSectionDelegate {
 
             Loader {
                 sourceComponent: root.buttonsRowComponent
-                Layout.alignment: Qt.AlignLeft
                 focus: true
             }
         }

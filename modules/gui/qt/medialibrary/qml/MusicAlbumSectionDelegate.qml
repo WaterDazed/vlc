@@ -61,6 +61,7 @@ T.Pane {
 
     topPadding: VLCStyle.margin_xsmall
     bottomPadding: VLCStyle.margin_xsmall
+    leftPadding: VLCStyle.margin_large
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
@@ -135,11 +136,6 @@ T.Pane {
     }
 
     contentItem: RowLayout {
-        anchors {
-            bottomMargin: root.bottomSpacingMargin
-            leftMargin: VLCStyle.margin_large
-        }
-
         spacing: VLCStyle.margin_normal
 
         Loader {
@@ -291,8 +287,8 @@ T.Pane {
         Widgets.ImageExt {
             Layout.alignment: Qt.AlignVCenter
 
-            width: parent.cover_width ?? VLCStyle.cover_xxsmall
-            height: parent.cover_height ?? VLCStyle.cover_xxsmall
+            implicitWidth: parent.cover_width ?? VLCStyle.cover_xxsmall
+            implicitHeight: parent.cover_height ?? VLCStyle.cover_xxsmall
 
             radius: parent.cover_radius ?? VLCStyle.expandCover_music_radius
             source: root._albumCover
