@@ -57,6 +57,7 @@ MusicAlbumSectionDelegate {
 
         RowLayout {
             anchors.fill: parent
+            spacing: VLCStyle.margin_small
 
             Loader {
                 sourceComponent: root.albumCoverImageComponent
@@ -87,7 +88,6 @@ MusicAlbumSectionDelegate {
 
                 // stretch to fill the remaining space and help to align items to the left
                 Layout.fillWidth: true
-                Layout.leftMargin: VLCStyle.margin_small
 
                 color: theme.fg.secondary
                 text: root._getAlbumCaption()
@@ -108,6 +108,7 @@ MusicAlbumSectionDelegate {
             anchors.fill: parent
             anchors.leftMargin: VLCStyle.margin_small
             height: implicitHeight
+            spacing: VLCStyle.margin_xsmall
 
             Loader {
                 id: albumTitleSmallLoader

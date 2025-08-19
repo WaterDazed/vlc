@@ -159,6 +159,8 @@ T.Pane {
             ColumnLayout {
                 id: colLayout
 
+                spacing: VLCStyle.margin_xxsmall
+
                 Widgets.SubtitleLabel {
                     text: root._albumData?.title || qsTr("Unknown title")
                     color: theme.fg.primary
