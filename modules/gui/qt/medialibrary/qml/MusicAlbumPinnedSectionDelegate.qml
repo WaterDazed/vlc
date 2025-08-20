@@ -66,27 +66,27 @@ MusicAlbumSectionDelegate {
                 property int cover_width: VLCStyle.cover_xxsmall
             }
 
-            Loader {
-                id: albumTitleLoader
+            Widgets.TextAutoScroller {
+                label: albumTitleLabel
+                forceScroll: root.visualFocus
+                clip: scrolling
 
-                Layout.preferredWidth: implicitWidth
-                Layout.preferredHeight: implicitHeight
+                Layout.fillWidth: true
+                Layout.preferredWidth: Math.min(albumTitleLabel.implicitWidth, root.width)
+                // A small margin is needed to prevent eliding even though width is satisfactory and does not need to elide
+                Layout.maximumWidth: albumTitleLabel.implicitWidth + VLCStyle.margin_xxsmall
+                Layout.preferredHeight: albumTitleLabel.implicitHeight
 
-                property int containerWidth: root.width
-
-                property int leftUsed: buttonLoader.item?.width ?? 0
-                property int leftMargins: VLCStyle.margin_small * 2
-
-                property int rightUsed: album_caption_label.implicitWidth
-                property int rightMargins: VLCStyle.margin_small * 2
-
-                sourceComponent: root.scrollingALbumTitleComponent
+                Widgets.SubtitleLabel {
+                    id: albumTitleLabel
+                    text: _albumData?.title || qsTr("Unknown title")
+                    color: theme.fg.primary
+                }
             }
 
             Widgets.CaptionLabel {
                 id: album_caption_label
 
-                // stretch to fill the remaining space and help to align items to the left
                 Layout.fillWidth: true
 
                 color: theme.fg.secondary
@@ -110,18 +110,20 @@ MusicAlbumSectionDelegate {
             height: implicitHeight
             spacing: VLCStyle.margin_xsmall
 
-            Loader {
-                id: albumTitleSmallLoader
+            Widgets.TextAutoScroller {
+                label: albumTitleLabelSmall
+                forceScroll: root.visualFocus
+                clip: scrolling
 
-                Layout.preferredWidth: implicitWidth
-                Layout.preferredHeight: implicitHeight
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredHeight: albumTitleLabelSmall.implicitHeight - VLCStyle.margin_xsmall
 
-                property int containerWidth: root.width
-
-                property int leftMargins: VLCStyle.margin_small
-                property int rightMargins: VLCStyle.margin_small * 2
-
-                sourceComponent: root.scrollingALbumTitleComponent
+                Widgets.SubtitleLabel {
+                    id: albumTitleLabelSmall
+                    text: _albumData?.title || qsTr("Unknown title")
+                    color: theme.fg.primary
+                }
             }
 
             Widgets.CaptionLabel {

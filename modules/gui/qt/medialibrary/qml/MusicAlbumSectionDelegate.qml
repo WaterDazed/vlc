@@ -50,7 +50,6 @@ T.Pane {
 
     readonly property Component buttonsRowComponent: buttonsRow
     readonly property Component albumCoverImageComponent: albumCoverImage
-    readonly property Component scrollingALbumTitleComponent: scrollingALbumTitle
 
     readonly property ColorContext colorContext: ColorContext {
         id: theme
@@ -299,40 +298,6 @@ T.Pane {
 
             Widgets.DefaultShadow {
                 visible: (parent.status === Image.Ready)
-            }
-        }
-    }
-
-    Component {
-        id: scrollingALbumTitle
-
-        Widgets.TextAutoScroller {
-            label: albumTitleLabel
-            forceScroll: albumTitleMouseHandler.hovered
-            visible: albumTitleLabel.text !== ""
-            clip: true
-
-            property int containerWidth: (parent.containerWidth ?? 0) + 0
-
-            property int leftUsed: parent.leftUsed ?? 0
-            property int leftMargins: parent.leftMargins ?? 0
-            property int rightUsed: parent.rightUsed ?? 0
-            property int rightMargins: parent.rightMargins ?? 0
-
-            implicitWidth: {
-                const available = containerWidth - leftUsed - rightUsed - leftMargins - rightMargins;
-                return Math.min(albumTitleLabel.implicitWidth, available);
-            }
-            implicitHeight: albumTitleLabel.height
-
-            HoverHandler {
-                id: albumTitleMouseHandler
-            }
-
-            Widgets.SubtitleLabel {
-                id: albumTitleLabel
-                text: _albumData?.title || qsTr("Unknown title")
-                color: theme.fg.primary
             }
         }
     }
