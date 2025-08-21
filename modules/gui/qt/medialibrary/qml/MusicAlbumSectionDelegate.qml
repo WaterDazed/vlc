@@ -93,6 +93,7 @@ T.Pane {
             source: root._albumCover
             sourceSize: root._albumCover ? Qt.size(Helpers.alignUp(Screen.desktopAvailableWidth, 32), 0) : undefined
             mipmap: !!root._albumCover
+            asynchronous: true
 
             fillMode: Image.Stretch
 
