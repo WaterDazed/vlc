@@ -47,6 +47,7 @@ MusicAlbumSectionDelegate {
             id: main_loader
 
             anchors.fill: parent
+            anchors.leftMargin: VLCStyle.margin_small
             sourceComponent: VLCStyle.isScreenSmall ? pinnedViewSmall : pinnedView
             focus: true
         }
@@ -56,7 +57,6 @@ MusicAlbumSectionDelegate {
         id: pinnedView
 
         RowLayout {
-            anchors.fill: parent
             spacing: VLCStyle.margin_small
 
             Widgets.ImageExt {
@@ -113,9 +113,6 @@ MusicAlbumSectionDelegate {
         id: pinnedViewSmall
 
         ColumnLayout {
-            anchors.fill: parent
-            anchors.leftMargin: VLCStyle.margin_small
-            height: implicitHeight
             spacing: VLCStyle.margin_xsmall
 
             Widgets.TextAutoScroller {

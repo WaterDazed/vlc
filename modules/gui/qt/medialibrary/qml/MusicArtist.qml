@@ -376,9 +376,6 @@ FocusScope {
         id: listComponent
 
         Item {
-            width: parent.width
-            height: parent.height
-
             property Item headerItem: headerLoader.status === Loader.Ready ? headerLoader.item : null
             property alias currentIndex: listView_id.currentIndex
             property alias albumsListView: listView_id
