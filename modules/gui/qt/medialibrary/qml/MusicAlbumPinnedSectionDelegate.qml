@@ -39,7 +39,6 @@ MusicAlbumSectionDelegate {
             id: main_loader
 
             anchors.fill: parent
-            anchors.leftMargin: VLCStyle.margin_small
             sourceComponent: VLCStyle.isScreenSmall ? pinnedViewSmall : pinnedView
             focus: true
         }

@@ -57,6 +57,7 @@ T.Pane {
     topPadding: VLCStyle.margin_xsmall
     bottomPadding: VLCStyle.margin_xsmall
     leftPadding: VLCStyle.margin_large
+    spacing: VLCStyle.margin_xsmall
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
@@ -164,7 +165,7 @@ T.Pane {
     }
 
     contentItem: RowLayout {
-        spacing: VLCStyle.margin_normal
+        spacing: root.spacing
 
         Widgets.ImageExt {
             Layout.preferredHeight: VLCStyle.cover_small
@@ -184,7 +185,7 @@ T.Pane {
         Column {
             Layout.fillWidth: true
 
-            spacing: VLCStyle.margin_xxsmall
+            spacing: root.spacing
 
             Widgets.SubtitleLabel {
                 text: root._albumData?.title || qsTr("Unknown title")
@@ -218,7 +219,7 @@ T.Pane {
         Row {
             id: actionButtons
 
-            spacing: VLCStyle.margin_small
+            spacing: root.spacing
 
             Widgets.ActionButtonPrimary {
                 id: _playActionBtn
