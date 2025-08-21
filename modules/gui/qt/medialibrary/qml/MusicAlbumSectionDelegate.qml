@@ -213,6 +213,10 @@ T.Pane {
         fetchAlbumData()
     }
 
+    Component.onCompleted: {
+        fetchAlbumData()
+    }
+
     Component {
         id: buttonsRow
 
