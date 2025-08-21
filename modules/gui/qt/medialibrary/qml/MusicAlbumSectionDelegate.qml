@@ -49,7 +49,6 @@ T.Pane {
     property real eDPR
 
     readonly property Component buttonsRowComponent: buttonsRow
-    readonly property Component albumCoverImageComponent: albumCoverImage
 
     readonly property ColorContext colorContext: ColorContext {
         id: theme
@@ -138,15 +137,19 @@ T.Pane {
     contentItem: RowLayout {
         spacing: VLCStyle.margin_normal
 
-        Loader {
-            id: albumCoverLoader
-            sourceComponent: albumCoverImage
+        Widgets.ImageExt {
+            Layout.preferredHeight: VLCStyle.cover_small
+            Layout.preferredWidth: VLCStyle.cover_small
 
-            Layout.preferredHeight: cover_height
-            Layout.preferredWidth: cover_width
+            radius: VLCStyle.expandCover_music_radius
 
-            property int cover_height: VLCStyle.cover_small
-            property int cover_width: VLCStyle.cover_small
+            source: root._albumCover
+            sourceSize: Qt.size(width * root.eDPR, height * root.eDPR)
+            asynchronous: true
+
+            Widgets.DefaultShadow {
+                visible: (parent.status === Image.Ready)
+            }
         }
 
         Item {
@@ -280,24 +283,6 @@ T.Pane {
 
                 Navigation.parentItem: root
                 Navigation.leftItem: _prevAlbumBtn
-            }
-        }
-    }
-
-    Component {
-        id: albumCoverImage
-
-        Widgets.ImageExt {
-            implicitWidth: parent.cover_width ?? VLCStyle.cover_xxsmall
-            implicitHeight: parent.cover_height ?? VLCStyle.cover_xxsmall
-
-            radius: parent.cover_radius ?? VLCStyle.expandCover_music_radius
-            source: root._albumCover
-            sourceSize: Qt.size(width * root.eDPR, height * root.eDPR)
-            asynchronous: true
-
-            Widgets.DefaultShadow {
-                visible: (parent.status === Image.Ready)
             }
         }
     }

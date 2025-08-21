@@ -59,11 +59,19 @@ MusicAlbumSectionDelegate {
             anchors.fill: parent
             spacing: VLCStyle.margin_small
 
-            Loader {
-                sourceComponent: root.albumCoverImageComponent
+            Widgets.ImageExt {
+                Layout.preferredHeight: VLCStyle.cover_xxsmall
+                Layout.preferredWidth: VLCStyle.cover_xxsmall
 
-                property int cover_height: VLCStyle.cover_xxsmall
-                property int cover_width: VLCStyle.cover_xxsmall
+                radius: VLCStyle.expandCover_music_radius
+
+                source: root._albumCover
+                sourceSize: Qt.size(width * root.eDPR, height * root.eDPR)
+                asynchronous: true
+
+                Widgets.DefaultShadow {
+                    visible: (parent.status === Image.Ready)
+                }
             }
 
             Widgets.TextAutoScroller {
