@@ -152,30 +152,25 @@ T.Pane {
             }
         }
 
-        Item {
+        Column {
             Layout.fillWidth: true
-            Layout.preferredHeight: colLayout.implicitHeight + VLCStyle.margin_small / 2
 
-            Column {
-                id: colLayout
+            spacing: VLCStyle.margin_xxsmall
 
-                spacing: VLCStyle.margin_xxsmall
+            Widgets.SubtitleLabel {
+                text: root._albumData?.title || qsTr("Unknown title")
+                color: theme.fg.primary
+            }
 
-                Widgets.SubtitleLabel {
-                    text: root._albumData?.title || qsTr("Unknown title")
-                    color: theme.fg.primary
-                }
+            Widgets.CaptionLabel {
+                color: theme.fg.secondary
+                width: parent.width
 
-                Widgets.CaptionLabel {
-                    color: theme.fg.secondary
-                    width: parent.width
+                text: root._getAlbumCaption()
+            }
 
-                    text: root._getAlbumCaption()
-                }
-
-                Loader {
-                    sourceComponent: buttonsRow
-                }
+            Loader {
+                sourceComponent: buttonsRow
             }
         }
     }
