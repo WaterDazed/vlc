@@ -17,11 +17,8 @@
  *****************************************************************************/
 
 import QtQuick
-import QtQuick.Window
-import QtQuick.Controls
 import QtQuick.Templates as T
 import QtQuick.Layouts
-import QtQml.Models
 
 import VLC.MainInterface
 import VLC.MediaLibrary
