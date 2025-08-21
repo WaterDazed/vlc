@@ -139,7 +139,6 @@ T.Pane {
 
         Loader {
             id: albumCoverLoader
-            Layout.alignment: Qt.AlignVCenter
             sourceComponent: albumCoverImage
 
             Layout.preferredHeight: cover_height
@@ -151,11 +150,9 @@ T.Pane {
 
         Item {
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-
             Layout.preferredHeight: colLayout.implicitHeight + VLCStyle.margin_small / 2
 
-            ColumnLayout {
+            Column {
                 id: colLayout
 
                 spacing: VLCStyle.margin_xxsmall
@@ -218,7 +215,7 @@ T.Pane {
     Component {
         id: buttonsRow
 
-        RowLayout {
+        Row {
             id: actionButtons
 
             spacing: VLCStyle.margin_small
@@ -286,8 +283,6 @@ T.Pane {
         id: albumCoverImage
 
         Widgets.ImageExt {
-            Layout.alignment: Qt.AlignVCenter
-
             implicitWidth: parent.cover_width ?? VLCStyle.cover_xxsmall
             implicitHeight: parent.cover_height ?? VLCStyle.cover_xxsmall
 
