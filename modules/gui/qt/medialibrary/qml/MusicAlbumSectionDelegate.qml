@@ -66,6 +66,38 @@ T.Pane {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
+    function fetchAlbumData() {
+        if (!section || albumModel.loading) return
+        albumModel.getDataById(MediaLib.deserializeMlItemIdFromString(section)).then((albumData) => {
+            root._albumData = albumData
+        })
+    }
+
+    function _getAlbumCaption() {
+        const _albumData = root._albumData
+        if (!_albumData)
+            return ""
+
+        const parts = []
+
+        if (!root.pinnedStyle) {
+            parts.push(_albumData.main_artist || qsTr("Unknown artist"))
+        }
+
+        const year = _albumData.release_year
+        if (year)
+            parts.push(year)
+
+        const count = _albumData.nb_tracks ?? 0
+        parts.push(qsTr(count < 2 ? "%1 track" : "%1 tracks").arg(count))
+
+        const duration = _albumData.duration?.formatHMS()
+        if (duration)
+            parts.push(duration)
+
+        return parts.join(" - ")
+    }
+
     function getBackgroundYPos() {
         if (!root._view) return
         // Limit pos to 0 and the blurEffect's height as that is the max value by which we can shift
@@ -173,38 +205,6 @@ T.Pane {
                 sourceComponent: buttonsRow
             }
         }
-    }
-
-    function fetchAlbumData() {
-        if (!section || albumModel.loading) return
-        albumModel.getDataById(MediaLib.deserializeMlItemIdFromString(section)).then((albumData) => {
-            _albumData = albumData
-        })
-    }
-
-    function _getAlbumCaption() {
-        const _albumData = root._albumData
-        if (!_albumData)
-            return ""
-
-        const parts = []
-
-        if (!root.pinnedStyle) {
-            parts.push(_albumData.main_artist || qsTr("Unknown artist"))
-        }
-
-        const year = _albumData.release_year
-        if (year)
-            parts.push(year)
-
-        const count = _albumData.nb_tracks ?? 0
-        parts.push(qsTr(count < 2 ? "%1 track" : "%1 tracks").arg(count))
-
-        const duration = _albumData.duration?.formatHMS()
-        if (duration)
-            parts.push(duration)
-
-        return parts.join(" - ")
     }
 
     onSectionChanged: {
