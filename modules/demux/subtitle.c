@@ -700,7 +700,8 @@ static int Open ( vlc_object_t *p_this )
         es_format_Init( &fmt, SPU_ES, VLC_CODEC_SUBT );
 
     p_sys->subtitles.i_current = 0;
-    if( p_sys->subtitles.i_count > 0 )
+    if( p_sys->subtitles.i_count > 0 &&
+        p_sys->subtitles.p_array[p_sys->subtitles.i_count-1].i_stop != VLC_TICK_INVALID )
         p_sys->i_length = p_sys->subtitles.p_array[p_sys->subtitles.i_count-1].i_stop - VLC_TICK_0;
     else
         p_sys->i_length = 0;
