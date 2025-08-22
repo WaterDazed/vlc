@@ -1364,7 +1364,7 @@ static int ParseVplayer( vlc_object_t *p_obj, subs_properties_t *p_props,
                     &h1, &m1, &s1, psz_text ) == 4 )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 );
-            p_subtitle->i_stop  = -1;
+            p_subtitle->i_stop  = VLC_TICK_INVALID;
             break;
         }
         free( psz_text );
@@ -1481,7 +1481,7 @@ static int ParseSami( vlc_object_t *p_obj, subs_properties_t *p_props,
     }
 
     p_subtitle->i_start = VLC_TICK_0 + VLC_TICK_FROM_MS(i_start);
-    p_subtitle->i_stop  = -1;
+    p_subtitle->i_stop  = VLC_TICK_INVALID;
     p_subtitle->psz_text = strdup( text );
 
     return VLC_SUCCESS;
@@ -1526,7 +1526,7 @@ static int ParseDVDSubtitle(vlc_object_t *p_obj, subs_properties_t *p_props,
         {
             p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
                                   VLC_TICK_FROM_MS( c1 * 10 ) + VLC_TICK_0;
-            p_subtitle->i_stop = -1;
+            p_subtitle->i_stop = VLC_TICK_INVALID;
             break;
         }
     }
@@ -2189,7 +2189,7 @@ static int ParseRealText( vlc_object_t *p_obj, subs_properties_t *p_props,
             if (end != VLC_TICK_MIN)
                 p_subtitle->i_stop = end;
             else
-                p_subtitle->i_stop = -1;
+                p_subtitle->i_stop = VLC_TICK_INVALID;
             break;
         }
     }
@@ -2271,7 +2271,7 @@ static int ParseDKS( vlc_object_t *p_obj, subs_properties_t *p_props,
             if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 )
                 p_subtitle->i_stop  = VLC_TICK_0 + vlc_tick_from_HMS( h2, m2, s2 );
             else
-                p_subtitle->i_stop  = -1;
+                p_subtitle->i_stop  = VLC_TICK_INVALID;
             break;
         }
         free( psz_text );
@@ -2328,7 +2328,7 @@ static int ParseSubViewer1( vlc_object_t *p_obj, subs_properties_t *p_props,
             if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 )
                 p_subtitle->i_stop  = VLC_TICK_0 + vlc_tick_from_HMS( h2, m2, s2 );
             else
-                p_subtitle->i_stop  = -1;
+                p_subtitle->i_stop  = VLC_TICK_INVALID;
 
             break;
         }
@@ -2463,7 +2463,7 @@ static int ParseSCC( vlc_object_t *p_obj, subs_properties_t *p_props,
         }
         p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_sec(i_frames)*
                                          p_rate->rate.den / p_rate->rate.num;
-        p_subtitle->i_stop = -1;
+        p_subtitle->i_stop = VLC_TICK_INVALID;
 
         const char *psz_text = strchr( psz_line, '\t' );
         if( !psz_text && !(psz_text = strchr( psz_line, ' ' )) )
