@@ -246,6 +246,11 @@ static vlc_tick_t vlc_tick_from_HMS( int h, int m, int s )
     return vlc_tick_from_sec(h * INT64_C(3600) + m * INT64_C(60) + s);
 }
 
+static inline vlc_tick_t vlc_tick_from_HMSms(int h1, int m1, int s1, int ms)
+{
+    return vlc_tick_from_HMS( h1, m1, s1 ) + VLC_TICK_FROM_MS( ms );
+}
+
 /*****************************************************************************
  * Decoder format output function
  *****************************************************************************/
@@ -1162,9 +1167,7 @@ static int subtitle_ParseSubRipTimingValue(vlc_tick_t *timing_value,
     return VLC_EGENERIC;
 
 success:
-    (*timing_value) = VLC_TICK_0
-        + vlc_tick_from_HMS(h1, m1, s1)
-        + VLC_TICK_FROM_MS(d1);
+    (*timing_value) = VLC_TICK_0 + vlc_tick_from_HMSms(h1, m1, s1, d1);
 
     return VLC_SUCCESS;
 
@@ -1212,11 +1215,9 @@ static int subtitle_ParseSubViewerTiming( subtitle_t *p_subtitle,
                 &h1, &m1, &s1, &d1, &h2, &m2, &s2, &d2) != 8 )
         return VLC_EGENERIC;
 
-    p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
-                          VLC_TICK_FROM_MS( d1 ) + VLC_TICK_0;
+    p_subtitle->i_start = vlc_tick_from_HMSms( h1, m1, s1, d1 ) + VLC_TICK_0;
 
-    p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 ) +
-                          VLC_TICK_FROM_MS( d2 ) + VLC_TICK_0;
+    p_subtitle->i_stop  = vlc_tick_from_HMSms( h2, m2, s2, d2 ) + VLC_TICK_0;
     return VLC_SUCCESS;
 }
 
@@ -1312,10 +1313,8 @@ static int  ParseSSA( vlc_object_t *p_obj, subs_properties_t *p_props,
                 psz_text = psz_temp;
             }
 
-            p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
-                                  VLC_TICK_FROM_MS( c1 * 10 ) + VLC_TICK_0;
-            p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 ) +
-                                  VLC_TICK_FROM_MS( c2 * 10 ) + VLC_TICK_0;
+            p_subtitle->i_start = vlc_tick_from_HMSms( h1, m1, s1, c1 * 10 ) + VLC_TICK_0;
+            p_subtitle->i_stop  = vlc_tick_from_HMSms( h2, m2, s2, c2 * 10 ) + VLC_TICK_0;
             p_subtitle->psz_text = psz_text;
             return VLC_SUCCESS;
         }
@@ -1525,8 +1524,7 @@ static int ParseDVDSubtitle(vlc_object_t *p_obj, subs_properties_t *p_props,
                     "{T %d:%d:%d:%d",
                     &h1, &m1, &s1, &c1 ) == 4 )
         {
-            p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
-                                  VLC_TICK_FROM_MS( c1 * 10 ) + VLC_TICK_0;
+            p_subtitle->i_start = vlc_tick_from_HMSms( h1, m1, s1, c1 * 10 ) + VLC_TICK_0;
             p_subtitle->i_stop = VLC_TICK_INVALID;
             break;
         }
@@ -2112,18 +2110,15 @@ static vlc_tick_t ParseRealTime( const char *psz )
     int h, m, s, f;
     if( sscanf( psz, "%d:%d:%d.%d", &h, &m, &s, &f ) == 4 )
     {
-        return vlc_tick_from_HMS( h, m, s )
-               + VLC_TICK_FROM_MS(f * 10) + VLC_TICK_0;
+        return vlc_tick_from_HMSms( h, m, s, f * 10 ) + VLC_TICK_0;
     }
     if( sscanf( psz, "%d:%d.%d", &m, &s, &f ) == 3 )
     {
-        return vlc_tick_from_HMS( 0, m, s )
-               + VLC_TICK_FROM_MS(f * 10) + VLC_TICK_0;
+        return vlc_tick_from_HMSms( 0, m, s, f * 10) + VLC_TICK_0;
     }
     if( sscanf( psz, "%d.%d", &s, &f ) == 2 )
     {
-        return vlc_tick_from_sec( s )
-               + VLC_TICK_FROM_MS(f * 10) + VLC_TICK_0;
+        return vlc_tick_from_HMSms( 0, 0, s, f * 10) + VLC_TICK_0;
     }
     if( sscanf( psz, "%d:%d", &m, &s ) == 2 )
     {
@@ -2361,11 +2356,9 @@ static int ParseCommonSBV( vlc_object_t *p_obj, subs_properties_t *p_props,
                     &h1, &m1, &s1, &d1,
                     &h2, &m2, &s2, &d2 ) == 8 )
         {
-            p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
-                                  VLC_TICK_FROM_MS( d1 ) + VLC_TICK_0;
+            p_subtitle->i_start = vlc_tick_from_HMSms( h1, m1, s1, d1 ) + VLC_TICK_0;
 
-            p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 ) +
-                                  VLC_TICK_FROM_MS( d2 ) + VLC_TICK_0;
+            p_subtitle->i_stop  = vlc_tick_from_HMSms( h2, m2, s2, d2 ) + VLC_TICK_0;
             if( p_subtitle->i_start < p_subtitle->i_stop )
                 break;
         }
