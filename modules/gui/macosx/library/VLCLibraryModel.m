@@ -58,6 +58,9 @@ NSString * const VLCLibraryModelAlbumDeleted = @"VLCLibraryModelAlbumDeleted";
 NSString * const VLCLibraryModelArtistDeleted = @"VLCLibraryModelArtistDeleted";
 NSString * const VLCLibraryModelGenreDeleted = @"VLCLibraryModelGenreDeleted";
 NSString * const VLCLibraryModelGroupDeleted = @"VLCLibraryModelGroupDeleted";
+NSString * const VLCLibraryModelGroupMediaItemAdded = @"VLCLibraryModelGroupMediaItemAdded";
+NSString * const VLCLibraryModelGroupMediaItemRemoved = @"VLCLibraryModelGroupMediaItemRemoved";
+NSString * const VLCLibraryModelGroupMetadataUpdated = @"VLCLibraryModelGroupMetadataUpdated";
 NSString * const VLCLibraryModelPlaylistDeleted = @"VLCLibraryModelPlaylistDeleted";
 
 NSString * const VLCLibraryModelAudioMediaItemUpdated = @"VLCLibraryModelAudioMediaItemUpdated";
@@ -1347,8 +1350,21 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
 
         dispatch_sync(dispatch_get_main_queue(), ^{
             NSMutableArray * const mutableGroups = self.cachedListOfGroups.mutableCopy;
+            VLCMediaLibraryGroup * const oldGroup = mutableGroups[groupIdx];
             [mutableGroups replaceObjectAtIndex:groupIdx withObject:group];
             self.cachedListOfGroups = mutableGroups.copy;
+            
+            NSUInteger oldItemCount = oldGroup.mediaItems.count;
+            NSUInteger newItemCount = group.mediaItems.count;
+            
+            if (newItemCount > oldItemCount) {
+                [self->_defaultNotificationCenter postNotificationName:VLCLibraryModelGroupMediaItemAdded object:group];
+            } else if (newItemCount < oldItemCount) {
+                [self->_defaultNotificationCenter postNotificationName:VLCLibraryModelGroupMediaItemRemoved object:group];
+            } else {
+                [self->_defaultNotificationCenter postNotificationName:VLCLibraryModelGroupMetadataUpdated object:group];
+            }
+            
             [self->_defaultNotificationCenter postNotificationName:VLCLibraryModelGroupUpdated object:group];
         });
     });

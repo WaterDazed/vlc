@@ -55,6 +55,9 @@ extern NSString * const VLCLibraryModelAlbumDeleted;
 extern NSString * const VLCLibraryModelArtistDeleted;
 extern NSString * const VLCLibraryModelGenreDeleted;
 extern NSString * const VLCLibraryModelGroupDeleted;
+extern NSString * const VLCLibraryModelGroupMediaItemAdded;
+extern NSString * const VLCLibraryModelGroupMediaItemRemoved;
+extern NSString * const VLCLibraryModelGroupMetadataUpdated;
 extern NSString * const VLCLibraryModelPlaylistDeleted;
 
 extern NSString * const VLCLibraryModelAudioMediaItemUpdated;
