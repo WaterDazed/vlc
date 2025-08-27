@@ -25,6 +25,7 @@
 #include "access.h"
 #include "google_api_handler.h"
 #include "cloudstorage_handler.h"
+#include "token_cache.h"
 
 #include <vlc_common.h>
 #include <vlc_access.h>

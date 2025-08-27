@@ -1,5 +1,5 @@
 /*****************************************************************************
- * token_cache.h: Handles persistence of authentication tokens
+ * services_discovery.h: cloud storage services discovery module
  *****************************************************************************
  * Copyright (C) 2025 VideoLabs and VideoLAN
  *
@@ -20,25 +20,38 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-#ifndef TOKEN_CACHE_H
-#define TOKEN_CACHE_H
+#ifndef VLC_CLOUDSTORAGE_SERVICES_DISCOVERY_H
+#define VLC_CLOUDSTORAGE_SERVICES_DISCOVERY_H
 
 #include <string>
+#include <map>
+#include <vector>
 
-struct stream_t;
-struct vlc_url_t;
-struct vlc_object_t;
+#include <vlc_common.h>
+#include <vlc_services_discovery.h>
+#include <vlc_input.h>
 
-class TokenCache
+struct input_thread_t;
+
+int SDOpen( vlc_object_t * );
+void SDClose( vlc_object_t * );
+
+struct provider_item_t
 {
-public:
-    static std::string get(stream_t* access, const vlc_url_t* url);
-    static void set(stream_t* access, const vlc_url_t* url, const std::string& token);
-    static void clear(stream_t* access, const vlc_url_t* url);
+    provider_item_t(input_item_t *, input_thread_t *);
+    ~provider_item_t();
 
-    static std::string get(vlc_object_t* obj, const vlc_url_t* url);
-    static void set(vlc_object_t* obj, const vlc_url_t* url, const std::string& token);
-    static void clear(vlc_object_t* obj, const vlc_url_t* url);
+    input_item_t * item;
+    input_thread_t * thread;
 };
 
-#endif // TOKEN_CACHE_H
+struct services_discovery_sys_t
+{
+    bool auth_progress;
+    std::map< std::string, provider_item_t * > providers_items;
+    std::vector< std::string > providers_list;
+    provider_item_t * auth_item;
+    std::vector<vlc_thread_t> workers;
+};
+
+#endif

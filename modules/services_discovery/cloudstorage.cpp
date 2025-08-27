@@ -1,9 +1,11 @@
 /*****************************************************************************
- * token_cache.h: Handles persistence of authentication tokens
+ * cloudstorage.cpp: cloud storage services discovery module
  *****************************************************************************
- * Copyright (C) 2025 VideoLabs and VideoLAN
+ * Copyright (C) 2017 VideoLabs and VideoLAN
  *
- * Authors: Maksym Yemelianenko <max.yemelianenko@gmail.com>
+ * Authors: William Ung <williamung@msn.com>
+ *          Diogo Silva <dbtdsilva@gmail.com>
+ *          Maksym Yemelianenko <max.yemelianenko@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -20,25 +22,26 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-#ifndef TOKEN_CACHE_H
-#define TOKEN_CACHE_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
 
-#include <string>
+#include <vlc_common.h>
+#include <vlc_plugin.h>
+#include <vlc_services_discovery.h>
 
-struct stream_t;
-struct vlc_url_t;
-struct vlc_object_t;
+#include "../access/cloudstorage/services_discovery.h"
 
-class TokenCache
-{
-public:
-    static std::string get(stream_t* access, const vlc_url_t* url);
-    static void set(stream_t* access, const vlc_url_t* url, const std::string& token);
-    static void clear(stream_t* access, const vlc_url_t* url);
+VLC_SD_PROBE_HELPER("cloudstorage", N_("Cloud Storage"), SD_CAT_INTERNET);
 
-    static std::string get(vlc_object_t* obj, const vlc_url_t* url);
-    static void set(vlc_object_t* obj, const vlc_url_t* url, const std::string& token);
-    static void clear(vlc_object_t* obj, const vlc_url_t* url);
-};
-
-#endif // TOKEN_CACHE_H
+vlc_module_begin()
+    set_shortname("Cloud Storage")
+    set_description(N_("Cloud Storage"))
+    set_subcategory(SUBCAT_PLAYLIST_SD)
+    set_capability("services_discovery", 0)
+    set_callbacks(SDOpen, SDClose)
+    add_shortcut("cloudstorage")
+    
+    VLC_SD_PROBE_SUBMODULE
+    
+vlc_module_end()

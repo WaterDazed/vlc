@@ -39,51 +39,92 @@ static inline void build_credentials_url(const vlc_url_t* src, vlc_url_t* dst)
     dst->psz_username = src ? src->psz_username : NULL;
 }
 
+static std::string keystore_get_impl(vlc_object_t* obj, const vlc_url_t* url)
+{
+    if (!obj || !url || !url->psz_host || !*url->psz_host)
+        return {};
+
+    const char* user = url->psz_username;
+    const char* server = url->psz_host;
+
+    vlc_keystore* ks = vlc_keystore_create(obj);
+    if (!ks)
+        return {};
+
+    const char* values[KEY_MAX];
+    VLC_KEYSTORE_VALUES_INIT(values);
+    values[KEY_PROTOCOL] = "https";
+    values[KEY_SERVER] = server;
+
+    std::string token;
+    vlc_keystore_entry* entries = nullptr;
+    unsigned count = 0;
+
+    if (user && *user) {
+        values[KEY_USER] = user;
+        count = vlc_keystore_find(ks, values, &entries);
+        if (count > 0 && entries[0].p_secret && entries[0].i_secret_len > 0)
+            token.assign(reinterpret_cast<const char*>(entries[0].p_secret), entries[0].i_secret_len);
+    } else {
+        count = vlc_keystore_find(ks, values, &entries);
+        if (count == 1 && entries[0].p_secret && entries[0].i_secret_len > 0)
+            token.assign(reinterpret_cast<const char*>(entries[0].p_secret), entries[0].i_secret_len);
+    }
+
+    if (entries)
+        vlc_keystore_release_entries(entries, count);
+    vlc_keystore_release(ks);
+
+    return token;
+}
+
+static void keystore_set_impl(vlc_object_t* obj, const vlc_url_t* url, const std::string& token)
+{
+    if (!obj || !url || token.empty() || !url->psz_host || !*url->psz_host)
+        return;
+
+    const char* user = url->psz_username;
+    const char* server = url->psz_host;
+
+    vlc_keystore* ks = vlc_keystore_create(obj);
+    if (!ks)
+        return;
+
+    const char* values[KEY_MAX];
+    VLC_KEYSTORE_VALUES_INIT(values);
+    values[KEY_PROTOCOL] = "https";
+    values[KEY_SERVER] = server;
+    values[KEY_USER] = user;
+
+    if (vlc_keystore_store(ks, values,
+                           reinterpret_cast<const uint8_t*>(token.c_str()), -1,
+                           "CloudStorage Token") != VLC_SUCCESS) {
+        msg_Warn(obj, "Failed to store cloudstorage token for %s@%s",
+                 user ? user : "(null)", server);
+    } else {
+        msg_Dbg(obj, "Stored cloudstorage token for %s@%s",
+                user ? user : "(null)", server);
+    }
+
+    vlc_keystore_release(ks);
+}
+
 std::string TokenCache::get(stream_t* access, const vlc_url_t* url)
 {
     if (!access || !url) return {};
-
-    vlc_url_t cred_url; build_credentials_url(url, &cred_url);
-    msg_Dbg(access, "Keystore find: proto=%s server=%s user=%s", cred_url.psz_protocol,
-            cred_url.psz_host ? cred_url.psz_host : "(null)",
-            cred_url.psz_username ? cred_url.psz_username : "(null)");
-
-    vlc_credential crd; vlc_credential_init(&crd, &cred_url);
-    int ret = vlc_credential_get(&crd, VLC_OBJECT(access), nullptr, nullptr, nullptr, nullptr);
-    std::string out;
-    if (ret == 0 && crd.psz_password)
-        out = crd.psz_password;
-    vlc_credential_clean(&crd);
-    return out;
+    msg_Dbg(access, "Keystore find: proto=https server=%s user=%s",
+            url->psz_host ? url->psz_host : "(null)",
+            url->psz_username ? url->psz_username : "(null)");
+    return keystore_get_impl(VLC_OBJECT(access), url);
 }
 
 void TokenCache::set(stream_t* access, const vlc_url_t* url, const std::string& token)
 {
     if (!access || !url || token.empty()) return;
-
-    vlc_url_t cred_url; build_credentials_url(url, &cred_url);
-    msg_Dbg(access, "Keystore store: proto=%s server=%s user=%s", cred_url.psz_protocol,
-            cred_url.psz_host ? cred_url.psz_host : "(null)",
-            cred_url.psz_username ? cred_url.psz_username : "(null)");
-
-    vlc_credential crd; vlc_credential_init(&crd, &cred_url);
-
-    // fetch to avoid rewrites
-    int ret = vlc_credential_get(&crd, VLC_OBJECT(access), nullptr, nullptr, nullptr, nullptr);
-    bool need_store = (ret != 0) || !crd.psz_password || strcmp(crd.psz_password, token.c_str()) != 0;
-
-    crd.b_store = true;
-    crd.psz_username = cred_url.psz_username;
-    crd.psz_password = token.c_str();
-
-    if (need_store) {
-        if (!vlc_credential_store(&crd, VLC_OBJECT(access)))
-            msg_Warn(access, "Failed to store cloudstorage token for %s@%s", cred_url.psz_username, cred_url.psz_host);
-        else
-            msg_Dbg(access, "Stored cloudstorage token for %s@%s", cred_url.psz_username, cred_url.psz_host);
-    }
-
-    vlc_credential_clean(&crd);
+    msg_Dbg(access, "Keystore store: proto=https server=%s user=%s",
+            url->psz_host ? url->psz_host : "(null)",
+            url->psz_username ? url->psz_username : "(null)");
+    keystore_set_impl(VLC_OBJECT(access), url, token);
 }
 
 void TokenCache::clear(stream_t* access, const vlc_url_t* url)
@@ -111,5 +152,45 @@ void TokenCache::clear(stream_t* access, const vlc_url_t* url)
         msg_Dbg(access, "No token entries to remove for %s@%s",
                 user ? user : "(null)", server ? server : "(null)");
 
+    vlc_keystore_release(p_keystore);
+}
+
+std::string TokenCache::get(vlc_object_t* obj, const vlc_url_t* url)
+{
+    if (!obj || !url) return {};
+    msg_Dbg(obj, "Keystore find: proto=https server=%s user=%s",
+            url->psz_host ? url->psz_host : "(null)",
+            url->psz_username ? url->psz_username : "(null)");
+    return keystore_get_impl(obj, url);
+}
+
+void TokenCache::set(vlc_object_t* obj, const vlc_url_t* url, const std::string& token)
+{
+    if (!obj || !url || token.empty()) return;
+    msg_Dbg(obj, "Keystore store: proto=https server=%s user=%s",
+            url->psz_host ? url->psz_host : "(null)",
+            url->psz_username ? url->psz_username : "(null)");
+    keystore_set_impl(obj, url, token);
+}
+
+void TokenCache::clear(vlc_object_t* obj, const vlc_url_t* url)
+{
+    if (!obj || !url) return;
+    const char* user = url->psz_username;
+    const char* server = url->psz_host;
+    vlc_keystore *p_keystore = vlc_keystore_create(obj);
+    if (p_keystore == NULL)
+        return;
+    const char *ppsz_values[KEY_MAX] = { 0 };
+    ppsz_values[KEY_PROTOCOL] = "https";
+    ppsz_values[KEY_SERVER] = server;
+    ppsz_values[KEY_USER] = user;
+    unsigned removed = vlc_keystore_remove(p_keystore, ppsz_values);
+    if (removed > 0)
+        msg_Info(obj, "Removed %u token entrie(s) for %s@%s", removed,
+                 user ? user : "(null)", server ? server : "(null)");
+    else
+        msg_Dbg(obj, "No token entries to remove for %s@%s",
+                user ? user : "(null)", server ? server : "(null)");
     vlc_keystore_release(p_keystore);
 }
