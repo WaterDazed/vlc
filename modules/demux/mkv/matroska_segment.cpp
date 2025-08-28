@@ -922,60 +922,7 @@ mkv_track_t * matroska_segment_c::FindTrackByBlock(
 
 void matroska_segment_c::ComputeTrackPriority()
 {
-    bool b_has_default_video = false;
-    bool b_has_default_audio = false;
-    /* check for default */
-    for( tracks_map_t::const_iterator it = tracks.begin(); it != tracks.end();
-         ++it )
-    {
-        mkv_track_t &track = *it->second;
-
-        bool flag = track.b_enabled && ( track.b_default || track.b_forced );
-
-        switch( track.fmt.i_cat )
-        {
-            case VIDEO_ES: b_has_default_video |= flag; break;
-            case AUDIO_ES: b_has_default_audio |= flag; break;
-            default: break; // ignore
-        }
-    }
-
-    for( tracks_map_t::iterator it = tracks.begin(); it != tracks.end(); ++it )
-    {
-        tracks_map_t::key_type track_id = it->first;
-        mkv_track_t          & track    = *it->second;
-
-        if( unlikely( track.fmt.i_cat == UNKNOWN_ES || track.codec.empty() ) )
-        {
-            msg_Warn( &sys.demuxer, "invalid track[%d]", static_cast<int>( track_id ) );
-            track.p_es = NULL;
-            continue;
-        }
-        else if( unlikely( !b_has_default_video && track.fmt.i_cat == VIDEO_ES ) )
-        {
-            track.b_default = true;
-            b_has_default_video = true;
-        }
-        else if( unlikely( !b_has_default_audio &&  track.fmt.i_cat == AUDIO_ES ) )
-        {
-            track.b_default = true;
-            b_has_default_audio = true;
-        }
-        if( unlikely( !track.b_enabled ) )
-            track.fmt.i_priority = ES_PRIORITY_NOT_SELECTABLE;
-        else if( track.b_forced )
-            track.fmt.i_priority = ES_PRIORITY_SELECTABLE_MIN + 2;
-        else if( track.b_default )
-            track.fmt.i_priority = ES_PRIORITY_SELECTABLE_MIN + 1;
-        else
-            track.fmt.i_priority = ES_PRIORITY_SELECTABLE_MIN;
-
-        /* Avoid multivideo tracks when unnecessary */
-        if( track.fmt.i_cat == VIDEO_ES )
-            track.fmt.i_priority--;
-    }
-
-    // find track(s) with highest priority //
+    tracks.ensureDefault();
     priority_tracks.push_back( tracks.getPriorityTrack() );
 }
 
