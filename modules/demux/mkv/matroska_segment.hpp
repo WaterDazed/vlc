@@ -81,6 +81,7 @@ class tracks_map_t : public std::map<mkv_track_t::track_id_t, std::unique_ptr<mk
     
         std::array<std::vector<mkv_track_t::track_id_t>, ES_CATEGORY_COUNT> tracks_by_cat;
         std::array<bool, ES_CATEGORY_COUNT> contains_default;
+        uint8_t priority_score = UINT8_MAX; // Smallest  is higher priority.
         
 
     public:
@@ -92,12 +93,17 @@ class tracks_map_t : public std::map<mkv_track_t::track_id_t, std::unique_ptr<mk
             auto b_default = v.second->b_default;
 
             tracks_by_cat[cat].push_back(id);
+            priority_score = cat < priority_score? cat: priority_score;
             contains_default[cat] |= b_default;
             printf("id: %d cat: %d\n", id, cat);
 
             return super::insert(std::move(v));
         }
 
+        mkv_track_t::track_id_t getPriorityTrack(){
+            if (priority_score == UINT8_MAX) return -1;
+            return tracks_by_cat[priority_score].front();
+        }
 
 
 
