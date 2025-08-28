@@ -77,11 +77,35 @@ public:
 };
 
 struct demux_sys_t;
+class tracks_map_t : public std::map<mkv_track_t::track_id_t, std::unique_ptr<mkv_track_t>> {
+    
+        std::array<std::vector<mkv_track_t::track_id_t>, ES_CATEGORY_COUNT> tracks_by_cat;
+        std::array<bool, ES_CATEGORY_COUNT> contains_default;
+        
+
+    public:
+        using super = std::map<mkv_track_t::track_id_t, std::unique_ptr<mkv_track_t>>;
+
+        std::pair<super::iterator, bool> insert(super::value_type &&v) {
+            auto id = v.first;
+            uint8_t cat = v.second->fmt.i_cat;
+            auto b_default = v.second->b_default;
+
+            tracks_by_cat[cat].push_back(id);
+            contains_default[cat] |= b_default;
+            printf("id: %d cat: %d\n", id, cat);
+
+            return super::insert(std::move(v));
+        }
+
+
+
+
+};
 
 class matroska_segment_c
 {
 public:
-    typedef std::map<mkv_track_t::track_id_t, std::unique_ptr<mkv_track_t>> tracks_map_t;
     typedef std::vector<Tag>            tags_t;
 
     matroska_segment_c( demux_sys_t &, matroska_iostream_c &, KaxSegment * );
