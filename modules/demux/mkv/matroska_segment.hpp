@@ -31,6 +31,7 @@
 #include <string>
 
 #include <map>
+#include <array>
 #include <set>
 #include <memory>
 
