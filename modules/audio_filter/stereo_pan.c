@@ -95,6 +95,11 @@ static int Open (filter_t *p_filter)
             var_CreateGetFloat( p_aout, "pan-control" ) );
     var_AddCallback( p_aout, "pan-control", paramCallback, p_sys );
 
+    if (p_filter->fmt_in.audio.i_channels < 2) {
+        p_filter->fmt_in.audio.i_channels = 2;
+        p_filter->fmt_in.audio.i_physical_channels = AOUT_CHANS_STEREO;
+    }
+
     p_filter->fmt_out.audio.i_format = VLC_CODEC_FL32;
     p_filter->fmt_in.audio.i_format = VLC_CODEC_FL32;
     aout_FormatPrepare( &p_filter->fmt_in.audio );
