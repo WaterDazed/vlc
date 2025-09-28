@@ -39,9 +39,6 @@
 #include "mediacodec.h"
 #include "../../video_output/android/env.h"
 
-char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
-                         const char *psz_mime, int profile, int *p_quirks);
-
 #define THREAD_NAME "mediacodec_jni"
 
 /*****************************************************************************
@@ -418,19 +415,4 @@ loopclean:
     (*env)->DeleteLocalRef(env, jmime);
 
     return psz_name;
-}
-
-/*****************************************************************************
- * MediaCodecJni_New
- *****************************************************************************/
-int MediaCodecJni_Init(mc_api *api)
-{
-    JNIEnv *env;
-
-    GET_ENV();
-
-    if (!InitJNIFields(api->p_obj, env))
-        return MC_API_ERROR;
-
-    return 0;
 }
