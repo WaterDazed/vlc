@@ -90,27 +90,33 @@ ca_ClearOutBuffers(audio_output_t *p_aout)
 static inline void
 lock_init(struct aout_sys_common *p_sys)
 {
-    if (likely(os_unfair_lock_lock))
+#ifdef OS_UNFAIR_LOCK_DEFINED
+    if (__builtin_available(macOS 10.12, iOS 10, tvOS 10, watchOS 3, *))
         p_sys->lock.unfair = OS_UNFAIR_LOCK_INIT;
     else
+#endif
         vlc_mutex_init(&p_sys->lock.mutex);
 }
 
 static inline void
 lock_lock(struct aout_sys_common *p_sys)
 {
-    if (likely(os_unfair_lock_lock))
+#ifdef OS_UNFAIR_LOCK_DEFINED
+    if (__builtin_available(macOS 10.12, iOS 10, tvOS 10, watchOS 3, *))
         os_unfair_lock_lock(&p_sys->lock.unfair);
     else
+#endif
         vlc_mutex_lock(&p_sys->lock.mutex);
 }
 
 static inline void
 lock_unlock(struct aout_sys_common *p_sys)
 {
-    if (likely(os_unfair_lock_lock))
+#ifdef OS_UNFAIR_LOCK_DEFINED
+    if (__builtin_available(macOS 10.12, iOS 10, tvOS 10, watchOS 3, *))
         os_unfair_lock_unlock(&p_sys->lock.unfair);
     else
+#endif
         vlc_mutex_unlock(&p_sys->lock.mutex);
 }
 
