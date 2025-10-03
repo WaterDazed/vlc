@@ -782,12 +782,12 @@ extern "C" {
 # ifndef TIMER_ABSTIME
 #  define TIMER_ABSTIME 0x01
 # endif
-# ifndef CLOCK_REALTIME
+
+// undefined to discard the availability flags (FIXME only when configure detects it's not usable)
+#  undef CLOCK_REALTIME
+#  undef CLOCK_MONOTONIC
 #  define CLOCK_REALTIME 0
-# endif
-# ifndef CLOCK_MONOTONIC
 #  define CLOCK_MONOTONIC 6
-# endif
 #endif
 
 #ifndef HAVE_CLOCK_GETRES
