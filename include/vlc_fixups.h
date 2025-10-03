@@ -788,12 +788,14 @@ extern "C" {
 # ifndef CLOCK_MONOTONIC
 #  define CLOCK_MONOTONIC 6
 # endif
-# ifndef HAVE_CLOCK_GETTIME
-int clock_gettime(clockid_t clock_id, struct timespec *tp);
-# endif
 # ifndef HAVE_CLOCK_GETRES
 int clock_getres(clockid_t clock_id, struct timespec *tp);
 # endif
+#endif
+
+#ifndef HAVE_CLOCK_GETTIME
+int vlc_clock_gettime(clockid_t clock_id, struct timespec *tp);
+#define clock_gettime(id, tp) vlc_clock_gettime(id, tp)
 #endif
 
 #ifndef HAVE_TIMESPEC_GET
