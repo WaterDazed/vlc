@@ -337,7 +337,6 @@ time_t timegm(struct tm *);
 #define TIME_UTC 1
 #endif
 struct timespec;
-int timespec_get(struct timespec *, int);
 #endif
 
 /* sys/time.h */
@@ -795,6 +794,11 @@ int clock_gettime(clockid_t clock_id, struct timespec *tp);
 # ifndef HAVE_CLOCK_GETRES
 int clock_getres(clockid_t clock_id, struct timespec *tp);
 # endif
+#endif
+
+#ifndef HAVE_TIMESPEC_GET
+int vlc_timespec_get(struct timespec *, int);
+#define timespec_get(s, v) vlc_timespec_get(s, v)
 #endif
 
 #ifndef _WIN32
