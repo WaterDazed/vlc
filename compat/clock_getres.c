@@ -31,7 +31,7 @@
 #include <sys/time.h>
 #include <mach/clock_types.h>
 
-int clock_getres(clockid_t clock_id, struct timespec *tp)
+int (vlc_clock_getres)(clockid_t clock_id, struct timespec *tp)
 {
     switch (clock_id) {
         case CLOCK_MONOTONIC:
