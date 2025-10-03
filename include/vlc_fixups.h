@@ -400,7 +400,9 @@ int posix_memalign(void **, size_t, size_t);
 #endif
 
 #ifndef HAVE_ALIGNED_ALLOC
-void *aligned_alloc(size_t, size_t);
+#include <stdlib.h>
+void *vlc_aligned_alloc(size_t, size_t);
+#define aligned_alloc(s, a) vlc_aligned_alloc(s, a)
 #endif
 
 #ifdef __cplusplus

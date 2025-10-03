@@ -31,7 +31,7 @@
 # include <malloc.h>
 #endif
 
-void *aligned_alloc(size_t align, size_t size)
+void *(vlc_aligned_alloc)(size_t align, size_t size)
 {
     /* align must be a power of 2 */
     /* size must be a multiple of align */
