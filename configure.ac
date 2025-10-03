@@ -1011,7 +1011,9 @@ AM_CONDITIONAL([HAVE_LIBATOMIC], [test "${have_libatomic}" = "yes"])
 
 dnl  Check for clock_* functions, needs to be done here,
 dnl  after the -lrt check
-AC_REPLACE_FUNCS([clock_gettime clock_nanosleep clock_getres])
+AC_REPLACE_FUNCS([clock_gettime clock_nanosleep])
+
+VLC_REPLACE_DECL([clock_getres],[#include <time.h>])
 
 dnl
 dnl Check for headers
