@@ -41,6 +41,8 @@ FocusScope {
 
     signal retract()
 
+    signal currentItemChanged(Item item)
+
     implicitWidth: layout.implicitWidth
 
     implicitHeight: {
@@ -449,6 +451,9 @@ FocusScope {
             Navigation.leftItem: VLCStyle.isScreenSmall ? null : root.enqueueActionBtn
             Navigation.upItem: headerItem
 
+            onCurrentItemChanged: {
+                root.currentItemChanged(currentItem)
+            }
 
             Widgets.MLTableColumns {
                 id: tableColumns
