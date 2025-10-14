@@ -557,6 +557,13 @@ FocusScope {
         contentYBehavior.enabled = false
     }
 
+    function animateFlickableToContainItem(item: Item) {
+        console.assert(item)
+        contentYBehavior.enabled = true
+        Helpers.positionFlickableToContainItem(flickable, item)
+        contentYBehavior.enabled = false
+    }
+
     // Private
 
     // returns true if this requires forceLayout
