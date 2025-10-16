@@ -1032,11 +1032,12 @@ static void *Thread( void *obj )
     p_intf->p_mainPlaylistController = new vlc::playlist::PlaylistController(p_intf->p_playlist);
 
     std::unique_ptr<ModelRecoveryAgent> playlistModelRecoveryAgent;
-    QMetaObject::invokeMethod(&app, [&playlistModelRecoveryAgent, p_intf]() {
+    QMetaObject::invokeMethod(&app, [&playlistModelRecoveryAgent, settings = p_intf->mainSettings, playlistController = p_intf->p_mainPlaylistController]() {
         try {
-            playlistModelRecoveryAgent = std::make_unique<ModelRecoveryAgent>(p_intf->mainSettings,
-                                                                              QStringLiteral("Playlist"),
-                                                                              p_intf->p_mainPlaylistController);
+            if (Q_LIKELY(settings && playlistController))
+                playlistModelRecoveryAgent = std::make_unique<ModelRecoveryAgent>(settings,
+                                                                                  QStringLiteral("Playlist"),
+                                                                                  playlistController);
         } catch (...){ }
     }, Qt::QueuedConnection);
 
@@ -1092,7 +1093,6 @@ static void *Thread( void *obj )
         {
             msg_Err(p_intf, "unable to create main interface");
             delete p_intf->p_mi;
-            p_intf->p_mi = nullptr;
             //process deleteLater events as the main loop will never run
             QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             return ThreadCleanup( p_intf, CLEANUP_ERROR );
@@ -1185,32 +1185,20 @@ static void *ThreadCleanup( qt_intf_t *p_intf, CleanupReason cleanupReason )
     MediaSourceCache::killInstance();
 
     //destroy MainCtx, Compositor shouldn't not use MainCtx after `unloadGUI`
-    if (p_intf->p_mi) {
-        delete p_intf->p_mi;
-        p_intf->p_mi = nullptr;
-    }
+    delete p_intf->p_mi;
 
     if ( p_intf->p_compositor &&  cleanupReason == CLEANUP_APP_TERMINATED)
     {
         p_intf->p_compositor.reset();
 
         delete p_intf->mainSettings;
-        p_intf->mainSettings = nullptr;
     }
 
     /* Destroy the main playlist controller */
-    if (p_intf->p_mainPlaylistController)
-    {
-        delete p_intf->p_mainPlaylistController;
-        p_intf->p_mainPlaylistController = nullptr;
-    }
+    delete p_intf->p_mainPlaylistController;
 
     /* Destroy the main InputManager */
-    if (p_intf->p_mainPlayerController)
-    {
-        delete p_intf->p_mainPlayerController;
-        p_intf->p_mainPlayerController = nullptr;
-    }
+    delete p_intf->p_mainPlayerController;
 
     /* Delete the application automatically */
     return NULL;
