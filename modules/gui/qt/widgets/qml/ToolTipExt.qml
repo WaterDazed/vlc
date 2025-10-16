@@ -25,6 +25,9 @@ import VLC.Style
 T.ToolTip {
     id: control
 
+    //popupType may be undefined with older Qt version
+    readonly property bool isAWindow: (control.popupType === 1 /* Popup.Window */)
+
     x: 0
     y: -implicitHeight - VLCStyle.margin_xxxsmall
 
