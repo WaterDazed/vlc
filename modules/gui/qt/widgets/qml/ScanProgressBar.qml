@@ -47,8 +47,7 @@ T.ProgressBar {
 
     indeterminate: MediaLib.discoveryPending
 
-    background: Rectangle {
-        color: theme.bg.primary
+    background: Item {
     }
 
     contentItem: Column {
