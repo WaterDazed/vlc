@@ -42,6 +42,7 @@
 
 #include "mediacodec.h"
 #include "../hxxx_helper.h"
+#include "../../packetizer/av1_obu.h"
 #include <OMX_Core.h>
 #include <OMX_Component.h>
 #include "omxil_utils.h"
@@ -846,6 +847,28 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init, bool
                     i_profile = i_h264_profile;
             }
             mime = "video/avc";
+            break;
+        case VLC_CODEC_AV1:
+            if (i_profile == -1)
+            {
+                av1_OBU_sequence_header_t *sequence_hdr = NULL;
+
+                if (p_dec->fmt_in->i_extra > 4)
+                {
+                    // in ISOBMFF/WebM/Matroska the first 4 bytes are from the AV1CodecConfigurationRecord
+                    // and then one or more OBU
+                    const uint8_t *obu_start = ((const uint8_t*) p_dec->fmt_in->p_extra) + 4;
+                    int obu_size = p_dec->fmt_in->i_extra - 4;
+                    if (AV1_OBUIsValid(obu_start, obu_size) && AV1_OBUGetType(obu_start) == AV1_OBU_SEQUENCE_HEADER)
+                        sequence_hdr = AV1_OBU_parse_sequence_header(obu_start, obu_size);
+                }
+                if (sequence_hdr)
+                {
+                    int level, tier;
+                    AV1_get_profile_level(sequence_hdr, &i_profile, &level, &tier);
+                }
+            }
+            mime = "video/av01";
             break;
         case VLC_CODEC_H263: mime = "video/3gpp"; break;
         case VLC_CODEC_MP4V: mime = "video/mp4v-es"; break;
