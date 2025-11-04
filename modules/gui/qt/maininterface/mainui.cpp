@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "maininterface/navigationmodel.hpp"
+
 #include "medialibrary/medialib.hpp"
 #include "medialibrary/mlqmltypes.hpp"
 #include "medialibrary/mlcustomcover.hpp"
@@ -39,6 +41,7 @@
 #include "util/imageluminanceextractor.hpp"
 #include "util/keyhelper.hpp"
 #include "style/systempalette.hpp"
+#include "style/vlcicons.hpp"
 #include "util/navigation_history.hpp"
 #include "util/flickable_scroll_handler.hpp"
 #include "util/color_svg_image_provider.hpp"
@@ -210,6 +213,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterUncreatableType<CSDButtonModel>(uri, versionMajor, versionMinor, "CSDButtonModel", "has CSD buttons and provides for communicating CSD events between UI and backend");
         qmlRegisterTypesAndRevisions<CSDMenu>( uri, versionMajor);
         qmlRegisterUncreatableType<NavigationAttached>( uri, versionMajor, versionMinor, "Navigation", "Navigation is only available via attached properties");
+        qmlRegisterTypesAndRevisions<NavigationModel>( uri, versionMajor);
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
     }
@@ -339,6 +343,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterType<ColorContext>(uri, versionMajor, versionMinor, "ColorContext");
         qmlRegisterUncreatableType<ColorProperty>(uri, versionMajor, versionMinor, "colorProperty", "");
         qmlRegisterType<SystemPalette>(uri, versionMajor, versionMinor, "SystemPalette");
+        qmlRegisterTypesAndRevisions<VLCIcons>( uri, versionMajor );
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);

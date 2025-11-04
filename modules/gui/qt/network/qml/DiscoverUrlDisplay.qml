@@ -27,26 +27,15 @@ import VLC.Style
 import VLC.Playlist
 import VLC.Network
 
-FocusScope {
+Widgets.PageExt {
     id: root
 
-    // Properties
+    title: qsTr("URL")
 
-    //behave like a Page
-    property var pagePrefix: []
-
-    readonly property bool hasGridListMode: false
-    readonly property bool isSearchable: urlListDisplay.active
+    hasGridListMode: false
+    isSearchable: urlListDisplay.active
                                     && urlListDisplay.item.isSearchable !== undefined
                                     && urlListDisplay.item.isSearchable
-
-    property int leftPadding: 0
-    property int rightPadding: 0
-
-    property int displayMarginEnd: 0
-
-    property bool enableBeginningFade: true
-    property bool enableEndFade: true
 
     //---------------------------------------------------------------------------------------------
     // Functions
@@ -56,17 +45,13 @@ FocusScope {
         searchField.forceActiveFocus(reason);
     }
 
-    //---------------------------------------------------------------------------------------------
-    // Childs
-    //---------------------------------------------------------------------------------------------
-
     Column {
         anchors.fill: parent
 
         FocusScope {
             id: searchFieldContainer
 
-            width: root.width
+            width: parent.width
             height: searchField.height + VLCStyle.margin_normal * 2
             focus: true
 
@@ -79,7 +64,7 @@ FocusScope {
                 focus: true
                 anchors.centerIn: parent
                 height: VLCStyle.dp(32, VLCStyle.scale)
-                width: root.width * .6
+                width: parent.width * .6
                 placeholderText: qsTr("Paste or write the URL here")
                 selectByMouse: true
 

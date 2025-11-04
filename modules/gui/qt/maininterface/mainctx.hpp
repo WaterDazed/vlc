@@ -66,6 +66,7 @@ class VLCSystray;
 class MediaLib;
 class ColorSchemeModel;
 class VLCVarChoiceModel;
+class SidePanelCtx;
 #ifdef UPDATE_CHECK
 class UpdateModel;
 #endif
@@ -96,11 +97,10 @@ class MainCtx : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
-    Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
-    Q_PROPERTY(double playlistWidthFactor READ getPlaylistWidthFactor WRITE setPlaylistWidthFactor NOTIFY playlistWidthFactorChanged FINAL)
-    Q_PROPERTY(double playerPlaylistWidthFactor READ getPlayerPlaylistWidthFactor WRITE setPlayerPlaylistWidthFactor NOTIFY playerPlaylistFactorChanged FINAL)
-    Q_PROPERTY(double artistAlbumsWidthFactor READ artistAlbumsWidthFactor WRITE setArtistAlbumsWidthFactor NOTIFY artistAlbumsWidthFactorChanged FINAL)
+    Q_PROPERTY(double playerPlaylistWidth READ getPlayerPlaylistWidth WRITE setPlayerPlaylistWidth NOTIFY playerPlaylistWidthChanged FINAL)
+    Q_PROPERTY(SidePanelCtx* playqueuePanel READ getPlayqueuePanel CONSTANT FINAL)
+    Q_PROPERTY(SidePanelCtx* navigationPanel READ getNavigationPanel CONSTANT FINAL)
+    Q_PROPERTY(double artistAlbumsWidth READ artistAlbumsWidth WRITE setArtistAlbumsWidth NOTIFY artistAlbumsWidthChanged FINAL)
     Q_PROPERTY(bool interfaceAlwaysOnTop READ isInterfaceAlwaysOnTop WRITE setInterfaceAlwaysOnTop NOTIFY interfaceAlwaysOnTopChanged FINAL)
     Q_PROPERTY(bool hasEmbededVideo READ hasEmbededVideo NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(bool showRemainingTime READ isShowRemainingTime WRITE setShowRemainingTime NOTIFY showRemainingTimeChanged FINAL)
@@ -129,8 +129,9 @@ class MainCtx : public QObject
     Q_PROPERTY(float safeArea READ safeArea NOTIFY safeAreaChanged FINAL)
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ getVideoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(int mouseHideTimeout READ mouseHideTimeout NOTIFY mouseHideTimeoutChanged FINAL)
-
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
+    Q_PROPERTY(MainViewModes mainViewModes READ getMainViewModes NOTIFY mainViewModesChanged FINAL)
+    Q_PROPERTY(MainViewMode effectiveMainViewMode READ getEffectiveMainViewMode NOTIFY mainViewModesChanged FINAL)
 
     //Property to get Operating System info
     Q_PROPERTY(OsType osName READ getOSName CONSTANT)
@@ -138,6 +139,7 @@ class MainCtx : public QObject
 
     // Expose Property Minimal View for Player View
     Q_PROPERTY(bool minimalView READ isMinimalView WRITE setMinimalView NOTIFY minimalViewChanged FINAL)
+    Q_PROPERTY(bool playerView READ isPlayerView WRITE setPlayerView NOTIFY playerViewChanged FINAL)
 
     // This Property only works if hasAcrylicSurface is set
     Q_PROPERTY(bool acrylicActive READ acrylicActive WRITE setAcrylicActive NOTIFY acrylicActiveChanged FINAL)
@@ -202,11 +204,21 @@ public:
     };
     Q_ENUM(OsType)
 
+    //what should the main view display
+    //multiple modes may be enabled, priority applies across modes
+    //minimal > player > medialib
+    enum MainViewMode {
+        MEDIALIB_MODE = 1,
+        PLAYER_MODE = 2,
+        MINIMAL_MODE = 4
+    };
+    Q_FLAG(MainViewMode);
+    Q_DECLARE_FLAGS(MainViewModes, MainViewMode)
+
     inline QWindow::Visibility interfaceVisibility() const { return m_windowVisibility; }
-    bool isPlaylistDocked() { return b_playlistDocked; }
-    bool isPlaylistVisible() { return m_playlistVisible; }
-    inline double getPlaylistWidthFactor() const { return m_playlistWidthFactor; }
-    inline double getPlayerPlaylistWidthFactor() const { return m_playerPlaylistWidthFactor; }
+    inline SidePanelCtx* getPlayqueuePanel() const { return m_playqueuePanel; }
+    inline SidePanelCtx* getNavigationPanel() const { return m_navigationPanel; }
+    inline double getPlayerPlaylistWidth() const { return m_playerPlaylistWidth; }
     bool isInterfaceAlwaysOnTop() { return b_interfaceOnTop; }
     inline bool isHideAfterCreation() const { return b_hideAfterCreation; }
     inline bool isShowRemainingTime() const  { return m_showRemainingTime; }
@@ -245,7 +257,9 @@ public:
     inline int getOSVersion() const {return m_osVersion;}
 
     inline bool isbgCone() const {return m_bgCone; }
-    inline bool isMinimalView() const {return m_minimalView; }
+    inline bool isMinimalView() const {return m_mainViewModes & MINIMAL_MODE; }
+    inline bool isPlayerView() const {return m_mainViewModes & PLAYER_MODE; }
+
 
     inline bool windowSuportExtendedFrame() const { return m_windowSuportExtendedFrame; }
     inline unsigned windowExtendedMargin() const { return m_windowExtendedMargin; }
@@ -355,6 +369,9 @@ public:
 
     CSDButtonModel *csdButtonModel() { return m_csdButtonModel.get(); }
 
+    inline MainViewModes getMainViewModes() const { return m_mainViewModes; };
+    MainViewMode getEffectiveMainViewMode() const;
+
     Q_INVOKABLE static double dp(const double px, const double scale);
     Q_INVOKABLE double dp(const double px) const;
 
@@ -367,8 +384,8 @@ public:
 
     Q_INVOKABLE QString displayMRL(const QUrl &mrl) const;
 
-    double artistAlbumsWidthFactor() const;
-    void setArtistAlbumsWidthFactor(double newArtistAlbumsWidthFactor);
+    double artistAlbumsWidth() const;
+    void setArtistAlbumsWidth(double newArtistAlbumsWidth);
 
 #ifdef UPDATE_CHECK
     UpdateModel* getUpdateModel() const;
@@ -395,7 +412,8 @@ protected:
     double               m_intfScaleFactor = 1.;
     int                  i_notificationSetting = 0; /// Systray Notifications
     bool                 b_hideAfterCreation = false; /// --qt-start-minimized
-    bool                 b_playlistDocked = false;
+    SidePanelCtx*   m_playqueuePanel = nullptr;
+    SidePanelCtx*   m_navigationPanel = nullptr;
     QWindow::Visibility  m_windowVisibility = QWindow::Windowed;
     bool                 b_interfaceOnTop = false;      ///keep UI on top
     bool                 b_hasWayland = false;
@@ -418,12 +436,10 @@ protected:
     QUrl                 m_dialogFilepath; /* Last path used in dialogs */
 
     /* States */
-    bool                 m_playlistVisible = false;       ///< Is the playlist visible ?
-    double               m_playlistWidthFactor = 4.;   ///< playlist size: root.width / playlistScaleFactor
-    double               m_playerPlaylistWidthFactor = 4.;
-    bool                 m_minimalView = false;
+    double               m_playerPlaylistWidth = 120;
+    MainViewModes        m_mainViewModes = { MEDIALIB_MODE };
 
-    double               m_artistAlbumsWidthFactor = 4.;
+    double               m_artistAlbumsWidth = 120;
 
     VLCVarChoiceModel* m_extraInterfaces = nullptr;
 
@@ -464,10 +480,7 @@ protected:
 public slots:
     void toggleToolbarMenu();
     void toggleInterfaceFullScreen();
-    void setPlaylistDocked( bool );
-    void setPlaylistVisible( bool );
-    void setPlaylistWidthFactor( double );
-    void setPlayerPlaylistWidthFactor( double factor );
+    void setPlayerPlaylistWidth( double factor );
     void setInterfaceAlwaysOnTop( bool );
     void setShowRemainingTime( bool );
     void setGridView( bool );
@@ -485,6 +498,7 @@ public slots:
     void setHasAcrylicSurface(bool);
 
     void setMinimalView(bool);
+    void setPlayerView(bool);
 
     void sendHotkey(Qt::Key key, Qt::KeyboardModifiers modifiers );
     void sendVLCHotkey(int vlcHotkey);
@@ -512,10 +526,7 @@ signals:
     void askRaise();
     void kc_pressed(); /* easter eggs */
 
-    void playlistDockedChanged(bool);
-    void playlistVisibleChanged(bool);
-    void playlistWidthFactorChanged(double);
-    void playerPlaylistFactorChanged(double);
+    void playerPlaylistWidthChanged(double);
     void interfaceAlwaysOnTopChanged(bool);
     void hasEmbededVideoChanged(bool);
     void showRemainingTimeChanged(bool);
@@ -542,6 +553,7 @@ signals:
     void hasAcrylicSurfaceChanged(bool);
 
     void minimalViewChanged();
+    void playerViewChanged();
 
     void acrylicActiveChanged();
 
@@ -563,14 +575,15 @@ signals:
     void windowSuportExtendedFrameChanged();
     void windowExtendedMarginChanged(unsigned margin);
 
-    void requestShowMainView();
-    void requestShowPlayerView();
+    void artistAlbumsWidthChanged( double );
 
-    void artistAlbumsWidthFactorChanged( double );
+    void mainViewModesChanged(MainViewModes);
 
 private:
     void loadPrefs(bool callSignals);
     void loadFromSettingsImpl(bool callSignals);
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(MainCtx::MainViewModes)
 
 #endif

@@ -34,18 +34,6 @@ StackViewExt {
     //list of available pages
     property var pageModel: []
 
-    //indicates whether the subview support grid/list mode
-    readonly property bool hasGridListMode: currentItem?.hasGridListMode ?? false
-
-    readonly property bool isSearchable: currentItem?.isSearchable ?? false
-
-    readonly property var sortModel: currentItem?.sortModel ?? null
-
-    //property is *not* readOnly, a PageLoader may define a localMenuDelegate common for its subviews (music, video)
-    property Component localMenuDelegate: (currentItem?.localMenuDelegate
-                                    && (currentItem.localMenuDelegate instanceof Component)) ? currentItem.localMenuDelegate : null
-
-
     // Functions
 
     /**
@@ -105,6 +93,7 @@ StackViewExt {
                         pageProp[key] = properties[key]
                     }
 
+                    History.update([...pagePrefix, head])
                     root.replace(null, component, pageProp)
                     found = true
                     break;

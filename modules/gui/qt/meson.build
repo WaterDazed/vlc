@@ -73,6 +73,7 @@ moc_headers = files(
     'maininterface/mainctx.hpp',
     'maininterface/mainctx_submodels.hpp',
     'maininterface/mainui.hpp',
+    'maininterface/navigationmodel.hpp',
     'maininterface/videosurface.hpp',
     'maininterface/video_window_handler.hpp',
     'medialibrary/medialib.hpp',
@@ -109,6 +110,7 @@ moc_headers = files(
     'network/networkmediamodel.hpp',
     'network/standardpathmodel.hpp',
     'style/systempalette.hpp',
+    'style/vlcicons.hpp',
     'style/colorcontext.hpp',
     'player/input_models.hpp',
     'player/delay_estimator.hpp',
@@ -286,9 +288,12 @@ qt_plugin_sources = files(
     'maininterface/interface_window_handler.hpp',
     'maininterface/mainctx.cpp',
     'maininterface/mainctx.hpp',
+    'maininterface/mainctx_submodels.cpp',
     'maininterface/mainctx_submodels.hpp',
     'maininterface/mainui.cpp',
     'maininterface/mainui.hpp',
+    'maininterface/navigationmodel.cpp',
+    'maininterface/navigationmodel.hpp',
     'maininterface/videosurface.cpp',
     'maininterface/videosurface.hpp',
     'maininterface/video_window_handler.cpp',
@@ -389,6 +394,8 @@ qt_plugin_sources = files(
     'style/colorcontext.hpp',
     'style/systempalette.cpp',
     'style/systempalette.hpp',
+    'style/vlcicons.cpp',
+    'style/vlcicons.hpp',
     'style/defaultthemeproviders.hpp',
     'style/systempalettethemeprovider.cpp',
     'player/input_models.cpp',
@@ -597,11 +604,14 @@ qml_modules += {
     'target' : 'maininterface',
     'outdir' : 'VLC/MainInterface',
     'sources': files(
-        'maininterface/qml/BannerSources.qml',
+        'maininterface/qml/LocalTopbar.qml',
+        'maininterface/qml/MenuTopbar.qml',
         'maininterface/qml/MainInterface.qml',
         'maininterface/qml/MainViewLoader.qml',
         'maininterface/qml/MainDisplay.qml',
-        'maininterface/qml/NoMedialibHome.qml'
+        'maininterface/qml/NoMedialibHome.qml',
+        'maininterface/qml/SideNavigation.qml',
+        'maininterface/qml/SideNavigationDelegate.qml',
     ),
 }
 qml_modules += {
@@ -783,7 +793,6 @@ qml_modules += {
     'outdir' : 'VLC/Style',
     'singletons': files(
         'style/AcrylicController.qml',
-        'style/VLCIcons.qml',
         'style/VLCStyle.qml',
     ),
 }
@@ -841,6 +850,7 @@ qml_modules += {
         'widgets/qml/EmptyLabelButton.qml',
         'widgets/qml/EmptyLabelHint.qml',
         'widgets/qml/GridItem.qml',
+        'widgets/qml/GridSortFilterControls.qml',
         'widgets/qml/HorizontalResizeHandle.qml',
         'widgets/qml/IconLabel.qml',
         'widgets/qml/IconButton.qml',
@@ -854,7 +864,6 @@ qml_modules += {
         'widgets/qml/TableHeaderDelegate.qml',
         'widgets/qml/DefaultShadow.qml',
         'widgets/qml/ListLabel.qml',
-        'widgets/qml/LocalTabBar.qml',
         'widgets/qml/MediaCover.qml',
         'widgets/qml/SubtitleLabel.qml',
         'widgets/qml/MenuCaption.qml',
@@ -874,6 +883,8 @@ qml_modules += {
         'widgets/qml/SpinBoxExt.qml',
         'widgets/qml/StackViewExt.qml',
         'widgets/qml/PageLoader.qml',
+        'widgets/qml/PageExt.qml',
+        'widgets/qml/DefaultPageHeader.qml',
         'widgets/qml/ButtonExt.qml',
         'widgets/qml/TableColumns.qml',
         'widgets/qml/TextFieldExt.qml',
@@ -1223,6 +1234,27 @@ if qt6_dep.found()
             'link_with': [libvlccore, libvlc],
             'dependencies': [qt6_dep, qt_extra_deps, qtest_qt6_dep],
         }
+
+        vlc_tests += {
+            'name': 'test_qt_navigation_model',
+            'sources': files(
+                'tests/vlc_stub_modules.cpp',
+                'tests/test_navigation_model.cpp',
+                'maininterface/navigationmodel.hpp',
+                'maininterface/navigationmodel.cpp'
+            ),
+            'moc_sources': files(
+                'tests/test_navigation_model.cpp'
+            ),
+            'moc_headers': files(
+                'maininterface/navigationmodel.hpp'
+            ),
+            'suite': ['qt'],
+            'include_directories' : qt_include_dir,
+            'link_with': [libvlccore, libvlc],
+            'dependencies': [qt6_dep, qt_extra_deps, qtest_qt6_dep]
+        }
+
 
         vlc_tests += {
             'name': 'test_qt_renderer_manager',

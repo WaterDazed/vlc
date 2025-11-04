@@ -58,7 +58,7 @@ T.Control {
         TapHandler {
             gesturePolicy: TapHandler.WithinBounds
 
-            onDoubleTapped: MainCtx.requestShowPlayerView()
+            onDoubleTapped: MainCtx.playerView = true
             onTapped: MainPlaylistController.togglePlayPause()
         }
 
@@ -164,7 +164,7 @@ T.Control {
             description: qsTr("maximize player")
             text: VLCIcons.fullscreen
 
-            onClicked: MainCtx.requestShowPlayerView()
+            onClicked: MainCtx.playerView = true
         }
     }
 }
