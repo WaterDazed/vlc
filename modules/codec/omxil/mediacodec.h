@@ -191,4 +191,7 @@ struct mc_api
     int (*set_output_surface)(mc_api*, void *p_surface);
 };
 
+char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
+                         const char *psz_mime, int profile, int *p_quirks);
+
 #endif

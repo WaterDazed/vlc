@@ -39,9 +39,6 @@
 #include "mediacodec.h"
 #include "../../video_output/android/env.h"
 
-char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
-                         const char *psz_mime, int profile, int *p_quirks);
-
 #define THREAD_NAME "mediacodec"
 
 /*****************************************************************************
