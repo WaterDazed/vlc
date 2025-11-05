@@ -41,7 +41,7 @@
 #include <vlc_bits.h>
 
 #include "mediacodec.h"
-#include "../codec/hxxx_helper.h"
+#include "../hxxx_helper.h"
 #include <OMX_Core.h>
 #include <OMX_Component.h>
 #include "omxil_utils.h"
