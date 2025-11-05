@@ -301,7 +301,7 @@ char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
             msg_Warn(p_obj, "Exception occurred in MediaCodecInfo.getCapabilitiesForType");
             goto loopclean;
         }
-        else if (codec_capabilities)
+        if (likely(codec_capabilities))
         {
             profile_levels = (*env)->GetObjectField(env, codec_capabilities, jfields.profile_levels_field);
             if (profile_levels)
