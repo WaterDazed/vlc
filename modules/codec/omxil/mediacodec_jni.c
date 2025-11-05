@@ -48,7 +48,7 @@
 struct jfields
 {
     jclass media_codec_list_class;
-    jmethodID get_codec_count, get_codec_info_at, is_encoder, get_capabilities_for_type;
+    jmethodID get_codec_count, get_codec_info_at, is_encoder, get_capabilities_for_type, is_hardware_accelerated, is_software_only;
     jmethodID is_feature_supported;
     jfieldID profile_levels_field, profile_field, level_field;
     jmethodID get_supported_types, get_name;
@@ -85,6 +85,8 @@ static const struct member members[] = {
     { "getCodecInfoAt", "(I)Landroid/media/MediaCodecInfo;", "android/media/MediaCodecList", OFF(get_codec_info_at), STATIC_METHOD, true },
 
     { "isEncoder", "()Z", "android/media/MediaCodecInfo", OFF(is_encoder), METHOD, true },
+    { "isHardwareAccelerated", "()Z", "android/media/MediaCodecInfo", OFF(is_hardware_accelerated), METHOD, false },
+    { "isSoftwareOnly", "()Z", "android/media/MediaCodecInfo", OFF(is_software_only), METHOD, false },
     { "getSupportedTypes", "()[Ljava/lang/String;", "android/media/MediaCodecInfo", OFF(get_supported_types), METHOD, true },
     { "getName", "()Ljava/lang/String;", "android/media/MediaCodecInfo", OFF(get_name), METHOD, true },
     { "getCapabilitiesForType", "(Ljava/lang/String;)Landroid/media/MediaCodecInfo$CodecCapabilities;", "android/media/MediaCodecInfo", OFF(get_capabilities_for_type), METHOD, true },
@@ -275,6 +277,8 @@ char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
         const char *name_ptr = NULL;
         bool found = false;
         bool b_adaptive = false;
+        int is_hardware_accelerated = -1;
+        int is_software_only = -1;
 
         info = (*env)->CallStaticObjectMethod(env, jfields.media_codec_list_class,
                                               jfields.get_codec_info_at, i);
@@ -314,6 +318,11 @@ char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
             }
         }
         msg_Dbg(p_obj, "Number of profile levels: %d", profile_levels_len);
+
+        if (jfields.is_hardware_accelerated)
+            is_hardware_accelerated = (*env)->CallBooleanMethod(env, info, jfields.is_hardware_accelerated) ? 1 : 0;
+        if (jfields.is_software_only)
+            is_software_only = (*env)->CallBooleanMethod(env, info, jfields.is_software_only) ? 1 : 0;
 
         types = (*env)->CallObjectMethod(env, info, jfields.get_supported_types);
         num_types = (*env)->GetArrayLength(env, types);
@@ -357,7 +366,12 @@ char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
         }
         if (found)
         {
-            msg_Dbg(p_obj, "using %.*s", name_len, name_ptr);
+            const char *hw = "";
+            if (is_software_only == 1)
+                hw = " software-only";
+            else if (is_hardware_accelerated == 1)
+                hw = " hardware";
+            msg_Dbg(p_obj, "using %.*s%s", name_len, name_ptr, hw);
             psz_name = malloc(name_len + 1);
             if (psz_name)
             {
