@@ -155,7 +155,7 @@ struct mc_api
     bool b_direct_rendering;
 
     void (*clean)(mc_api *);
-    int (*prepare)(mc_api *, int i_profile);
+    int (*prepare)(mc_api *, int i_profile, bool b_hardware_only);
     int (*configure_decoder)(mc_api *, union mc_api_args* p_args);
     int (*start)(mc_api *);
     int (*stop)(mc_api *);
@@ -192,6 +192,6 @@ struct mc_api
 };
 
 char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
-                         const char *psz_mime, int profile, int *p_quirks);
+                         const char *psz_mime, int profile, bool b_hardware_only, int *p_quirks);
 
 #endif

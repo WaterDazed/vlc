@@ -156,6 +156,7 @@ typedef struct decoder_sys_t
  * Local prototypes
  *****************************************************************************/
 static int  OpenDecoderNdk(vlc_object_t *);
+static int  OpenDecoderHwNdk(vlc_object_t *);
 static void CleanDecoder(decoder_sys_t *);
 static void CloseDecoder(vlc_object_t *);
 
@@ -214,6 +215,11 @@ vlc_module_begin ()
         set_capability("audio decoder", 0)
         set_callbacks(OpenDecoderNdk, CloseDecoder)
         add_shortcut("mediacodec_ndk")
+    add_submodule ()
+        set_description("Video decoder using Android MediaCodec hardware")
+        set_capability("video decoder", 10001)
+        set_callbacks(OpenDecoderHwNdk, CloseDecoder)
+        add_shortcut("mediacodec_ndk_hw")
 vlc_module_end ()
 
 static void CSDFree(decoder_sys_t *p_sys)
@@ -793,7 +799,7 @@ static void CleanInputVideo(decoder_t *p_dec)
 /*****************************************************************************
  * OpenDecoder: Create the decoder instance
  *****************************************************************************/
-static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
+static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init, bool b_hardware_only)
 {
     decoder_t *p_dec = (decoder_t *)p_this;
 
@@ -910,14 +916,14 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
         free(p_sys);
         return VLC_EGENERIC;
     }
-    if (p_sys->api.prepare(&p_sys->api, i_profile) != 0)
+    if (p_sys->api.prepare(&p_sys->api, i_profile, b_hardware_only) != 0)
     {
         /* If the device can't handle video/wvc1,
          * it can probably handle video/x-ms-wmv */
         if (!strcmp(mime, "video/wvc1") && p_dec->fmt_in->i_codec == VLC_CODEC_VC1)
         {
             p_sys->api.psz_mime = "video/x-ms-wmv";
-            if (p_sys->api.prepare(&p_sys->api, i_profile) != 0)
+            if (p_sys->api.prepare(&p_sys->api, i_profile, b_hardware_only) != 0)
             {
                 p_sys->api.clean(&p_sys->api);
                 free(p_sys);
@@ -1076,7 +1082,12 @@ bailout:
 
 static int OpenDecoderNdk(vlc_object_t *p_this)
 {
-    return OpenDecoder(p_this, MediaCodecNdk_Init);
+    return OpenDecoder(p_this, MediaCodecNdk_Init, false);
+}
+
+static int OpenDecoderHwNdk(vlc_object_t *p_this)
+{
+    return OpenDecoder(p_this, MediaCodecNdk_Init, true);
 }
 
 static void AbortDecoderLocked(decoder_sys_t *p_sys)

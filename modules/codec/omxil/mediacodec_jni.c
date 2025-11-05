@@ -244,7 +244,8 @@ end:
  * MediaCodec_GetName
  *****************************************************************************/
 char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
-                         const char *psz_mime, int profile, int *p_quirks)
+                         const char *psz_mime, int profile, bool b_hardware_only,
+                         int *p_quirks)
 {
     JNIEnv *env;
     int num_codecs;
@@ -333,6 +334,8 @@ char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
             jobject type = (*env)->GetObjectArrayElement(env, types, j);
             if (!jstrcmp(env, type, psz_mime))
             {
+                if (!b_hardware_only || is_hardware_accelerated == 1)
+                {
                 /* The mime type is matching for this component. We
                    now check if the capabilities of the codec is
                    matching the video format. */
@@ -361,17 +364,19 @@ char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
                 }
                 else
                     found = true;
+                }
             }
             (*env)->DeleteLocalRef(env, type);
         }
         if (found)
         {
+            const char *forced = b_hardware_only ? " forced" : "";
             const char *hw = "";
             if (is_software_only == 1)
                 hw = " software-only";
             else if (is_hardware_accelerated == 1)
                 hw = " hardware";
-            msg_Dbg(p_obj, "using %.*s%s", name_len, name_ptr, hw);
+            msg_Dbg(p_obj, "using %.*s%s%s", name_len, name_ptr, forced, hw);
             psz_name = malloc(name_len + 1);
             if (psz_name)
             {

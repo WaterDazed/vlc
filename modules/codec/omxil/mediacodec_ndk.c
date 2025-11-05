@@ -581,13 +581,13 @@ static void Clean(mc_api *api)
 /*****************************************************************************
  * Prepare
  *****************************************************************************/
-static int Prepare(mc_api * api, int i_profile)
+static int Prepare(mc_api * api, int i_profile, bool b_hardware_only)
 {
     free(api->psz_name);
 
     api->i_quirks = 0;
     api->psz_name = MediaCodec_GetName(api->p_obj, api->i_codec, api->psz_mime,
-                                       i_profile, &api->i_quirks);
+                                       i_profile, b_hardware_only, &api->i_quirks);
     if (!api->psz_name)
         return MC_API_ERROR;
     api->i_quirks |= OMXCodec_GetQuirks(api->i_cat, api->i_codec, api->psz_name,
