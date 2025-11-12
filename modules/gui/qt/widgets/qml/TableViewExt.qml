@@ -123,6 +123,9 @@ FocusScope {
     property color headerColor: (interactive && (headerPositioning !== ListView.InlineHeader)) ? colorContext.bg.primary : "transparent"
     property int headerTopPadding: 0
 
+    property bool headerItemAlwaysVisible: false
+    property bool hideSectionTextFromLabel: false
+    property bool preventSortingFromHeader: false
 
     property real rowHeight: VLCStyle.tableRow_height
 
@@ -161,6 +164,7 @@ FocusScope {
     property alias interactive: view.interactive
 
     property alias section: view.section
+    property alias currentSection: view.currentSection
 
     property alias currentIndex: view.currentIndex
     property alias currentItem: view.currentItem
@@ -306,7 +310,7 @@ FocusScope {
                 height: VLCStyle.tableHeaderText_height
                 verticalAlignment: Text.AlignVCenter
 
-                text: view.currentSection
+                text: hideSectionTextFromLabel ? "" : view.currentSection
                 color: view.colorContext.accent
                 visible: view.headerPositioning === ListView.OverlayHeader
                          && text !== ""
@@ -341,7 +345,7 @@ FocusScope {
                     spacing: VLCStyle.column_spacing
 
                     // If there is a specific header, obey to its visibility otherwise hide the header if model is empty:
-                    visible: headerLoader.item ? headerLoader.item.visible : (view.count > 0)
+                    visible: headerLoader.item ? headerLoader.item.visible || root.headerItemAlwaysVisible: (view.count > 0)
 
                     Repeater {
                         model: sortModel
@@ -391,6 +395,8 @@ FocusScope {
 
                             TapHandler {
                                 onTapped: (eventPoint, button) => {
+                                    if (root.preventSortingFromHeader)
+                                        return
                                     if (!(modelData.model.isSortable ?? true))
                                         return
                                     else if (root.model.sortCriteria !== modelData.model.criteria)

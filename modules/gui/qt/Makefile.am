@@ -1020,6 +1020,8 @@ libqml_module_medialibrary_a_QML = \
 	medialibrary/qml/MusicAlbumsDisplay.qml \
 	medialibrary/qml/MusicAlbumsGridExpandDelegate.qml \
 	medialibrary/qml/MusicArtist.qml \
+	medialibrary/qml/MusicAlbumSectionDelegate.qml \
+	medialibrary/qml/MusicAlbumPinnedSectionDelegate.qml \
 	medialibrary/qml/MusicArtistDelegate.qml \
 	medialibrary/qml/MusicArtistsAlbums.qml \
 	medialibrary/qml/MusicAllArtists.qml \

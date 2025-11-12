@@ -35,11 +35,15 @@ FocusScope {
     property int leftPadding: 0
     property int rightPadding: 0
 
-    property var sortModel: [
-        { text: qsTr("Alphabetic"),  criteria: "title" },
-        { text: qsTr("Release Year"),  criteria: "release_year" }
-    ]
-
+    // TODO: Implement release year sorting for artist albums list view
+    property var sortModel: MainCtx.gridView
+        ? [
+            { text: qsTr("Alphabetic"),   criteria: "title" },
+            { text: qsTr("Release Year"), criteria: "release_year" }
+          ]
+        : [
+            { text: qsTr("Alphabetic"),   criteria: "title" }
+          ]
     property int initialIndex: 0
     property int initialAlbumIndex: 0
     property var artistId: undefined

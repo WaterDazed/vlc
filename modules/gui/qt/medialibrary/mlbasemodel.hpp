@@ -78,7 +78,6 @@ public:
      */
     Q_INVOKABLE QJSValue getDataById(MLItemId id);
 
-
     /**
      * @brief getIndexFromId allow getting the row of an item from its id,
      *        if the item is not in cache, data will be retreived until it is

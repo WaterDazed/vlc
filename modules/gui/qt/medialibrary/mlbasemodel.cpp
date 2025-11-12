@@ -301,7 +301,6 @@ Q_INVOKABLE QJSValue MLBaseModel::getDataById(MLItemId id)
     return p;
 }
 
-
 Q_INVOKABLE QJSValue MLBaseModel::getIndexFromId(MLItemId id)
 {
     Q_D(const MLBaseModel);
