@@ -1,5 +1,6 @@
 audio_filterdir = $(pluginsdir)/audio_filter
 
+
 libaudiobargraph_a_plugin_la_SOURCES = audio_filter/audiobargraph_a.c
 libaudiobargraph_a_plugin_la_LIBADD = $(LIBM)
 libchorus_flanger_plugin_la_SOURCES = audio_filter/chorus_flanger.c
@@ -56,6 +57,163 @@ audio_filter_LTLIBRARIES = \
 	libstereo_widen_plugin.la \
 	libcenter_plugin.la \
 	libstereopan_plugin.la
+
+
+libavaudio_common_la_SOURCES = audio_filter/avaudio/avaudio.c audio_filter/avaudio/avaudio.h
+libavaudio_common_la_CFLAGS = $(LIBM) $(AVFILTER_CFLAGS)
+libavaudio_common_la_LIBADD = $(LIBM) $(AVFILTER_LIBS)
+libavaudio_common_la_LDFLAGS = -static
+noinst_LTLIBRARIES += libavaudio_common.la
+
+
+libacrusher_plugin_la_SOURCES = audio_filter/avaudio/acrusher.c
+libacrusher_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libacrusher_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libacrusher_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libadelay_plugin_la_SOURCES = audio_filter/avaudio/adelay.c
+libadelay_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libadelay_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libadelay_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libaecho_plugin_la_SOURCES = audio_filter/avaudio/aecho.c
+libaecho_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libaecho_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libaecho_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libaemphasis_plugin_la_SOURCES = audio_filter/avaudio/aemphasis.c
+libaemphasis_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libaemphasis_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libaemphasis_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libagate_plugin_la_SOURCES = audio_filter/avaudio/agate.c
+libagate_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libagate_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libagate_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libaiir_plugin_la_SOURCES = audio_filter/avaudio/aiir.c
+libaiir_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libaiir_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libaiir_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libalimiter_plugin_la_SOURCES = audio_filter/avaudio/alimiter.c
+libalimiter_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libalimiter_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libalimiter_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libanull_plugin_la_SOURCES = audio_filter/avaudio/anull.c
+libanull_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libanull_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libanull_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libaphaser_plugin_la_SOURCES = audio_filter/avaudio/aphaser.c
+libaphaser_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libaphaser_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libaphaser_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libapulsator_plugin_la_SOURCES = audio_filter/avaudio/apulsator.c
+libapulsator_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libapulsator_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libapulsator_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libasoftclip_plugin_la_SOURCES = audio_filter/avaudio/asoftclip.c
+libasoftclip_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libasoftclip_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libasoftclip_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libastereowiden_plugin_la_SOURCES = audio_filter/avaudio/astereowiden.c
+libastereowiden_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libastereowiden_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libastereowiden_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libbandpass_plugin_la_SOURCES = audio_filter/avaudio/bandpass.c
+libbandpass_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libbandpass_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libbandpass_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libbandreject_plugin_la_SOURCES = audio_filter/avaudio/bandreject.c
+libbandreject_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libbandreject_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libbandreject_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libbiquad_plugin_la_SOURCES = audio_filter/avaudio/biquad.c
+libbiquad_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libbiquad_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libbiquad_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libchorus_plugin_la_SOURCES = audio_filter/avaudio/chorus.c
+libchorus_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libchorus_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libchorus_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libcompensationdelay_plugin_la_SOURCES = audio_filter/avaudio/compensationdelay.c
+libcompensationdelay_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libcompensationdelay_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libcompensationdelay_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libcrossfeed_plugin_la_SOURCES = audio_filter/avaudio/crossfeed.c
+libcrossfeed_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libcrossfeed_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libcrossfeed_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libcrystalizer_plugin_la_SOURCES = audio_filter/avaudio/crystalizer.c
+libcrystalizer_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libcrystalizer_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libcrystalizer_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libdeesser_plugin_la_SOURCES = audio_filter/avaudio/deesser.c
+libdeesser_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libdeesser_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libdeesser_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libextrastereo_plugin_la_SOURCES = audio_filter/avaudio/extrastereo.c
+libextrastereo_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libextrastereo_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libextrastereo_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libflanger_plugin_la_SOURCES = audio_filter/avaudio/flanger.c
+libflanger_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libflanger_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libflanger_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libhaas_plugin_la_SOURCES = audio_filter/avaudio/haas.c
+libhaas_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libhaas_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libhaas_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libhighpass_plugin_la_SOURCES = audio_filter/avaudio/highpass.c
+libhighpass_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libhighpass_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libhighpass_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+liblowpass_plugin_la_SOURCES = audio_filter/avaudio/lowpass.c
+liblowpass_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+liblowpass_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+liblowpass_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libmcompand_plugin_la_SOURCES = audio_filter/avaudio/mcompand.c
+libmcompand_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libmcompand_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libmcompand_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libtreble_plugin_la_SOURCES = audio_filter/avaudio/treble.c
+libtreble_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libtreble_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libtreble_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libtremolo_plugin_la_SOURCES = audio_filter/avaudio/tremolo.c
+libtremolo_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libtremolo_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libtremolo_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+libvibrato_plugin_la_SOURCES = audio_filter/avaudio/vibrato.c
+libvibrato_plugin_la_CFLAGS = $(AVFILTER_CFLAGS) $(AM_CFLAGS)
+libvibrato_plugin_la_LIBADD = $(AVFILTER_LIBS) $(LIBM) libavaudio_common.la
+libvibrato_plugin_la_LDFLAGS = $(AM_LDFLAGS)
+
+audio_filter_LTLIBRARIES += \
+	libacrusher_plugin.la \
+	libadelay_plugin.la \
+	libaecho_plugin.la \
+	libaemphasis_plugin.la \
+	libagate_plugin.la \
+	libaiir_plugin.la \
+	libalimiter_plugin.la \
+	libanull_plugin.la \
+	libaphaser_plugin.la \
+	libapulsator_plugin.la \
+	libasoftclip_plugin.la \
+	libastereowiden_plugin.la \
+	libbandpass_plugin.la \
+	libbandreject_plugin.la \
+	libbiquad_plugin.la \
+	libchorus_plugin.la \
+	libcompensationdelay_plugin.la \
+	libcrossfeed_plugin.la \
+	libcrystalizer_plugin.la \
+	libdeesser_plugin.la \
+	libextrastereo_plugin.la \
+	libflanger_plugin.la \
+	libhaas_plugin.la \
+	libhighpass_plugin.la \
+	liblowpass_plugin.la \
+	libmcompand_plugin.la \
+	libtreble_plugin.la \
+	libtremolo_plugin.la \
+	libvibrato_plugin.la
+
 
 # Channel mixers
 libdolby_surround_decoder_plugin_la_SOURCES = \

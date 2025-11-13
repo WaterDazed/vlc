@@ -26,7 +26,6 @@ FFMPEGCONF = --prefix="$(PREFIX)" --enable-static --disable-shared \
 	--disable-debug \
 	--disable-avdevice \
 	--disable-devices \
-	--disable-avfilter \
 	--disable-filters \
 	--disable-protocol=concat \
 	--disable-bsfs \
@@ -218,7 +217,7 @@ endif
 
 # Build
 PKGS += ffmpeg
-ifeq ($(call need_pkg,"libavcodec >= $(FFMPEG_LAVC_MIN) libavformat >= 53.21.0 libswscale $(MAYBE_POSTPROC)"),)
+ifeq ($(call need_pkg,"libavcodec >= $(FFMPEG_LAVC_MIN) libavformat >= 53.21.0 libavfilter libswscale $(MAYBE_POSTPROC)"),)
 PKGS_FOUND += ffmpeg
 endif
 

@@ -2857,6 +2857,31 @@ AS_IF([test "${enable_avformat}" != "no"], [
 AM_CONDITIONAL([HAVE_AVFORMAT], [test "${enable_avformat}" != "no"])
 
 dnl
+dnl  avfilter audio_filter plugin
+dnl
+
+AC_ARG_ENABLE([avfilter],
+AS_HELP_STRING([--enable-avfilter], [libavfilter containers (default auto)]),, [
+  enable_avfilter="${have_avcodec}"
+])
+have_avfilter="no"
+AS_IF([test "${enable_avfilter}" != "no"], [
+  PKG_CHECK_MODULES(AVFILTER,[libavfilter >= 7.57.100 libavcodec libavutil], [
+      have_avfilter="yes"
+      VLC_SAVE_FLAGS
+      CPPFLAGS="${CPPFLAGS} ${AVFILTER_CFLAGS}"
+      CFLAGS="${CFLAGS} ${AVFILTER_CFLAGS}"
+      AC_CHECK_HEADERS([libavfilter/avfilter.h])
+      AS_IF([test "$enable_merge_ffmpeg" = "no"], [
+        have_avfilter="no"
+      ])
+      VLC_RESTORE_FLAGS
+    ],[
+  ])
+])
+AM_CONDITIONAL([HAVE_AVFILTER], [test "${have_avfilter}" != "no"])
+
+dnl
 dnl  swscale image scaling and conversion plugin
 dnl
 
