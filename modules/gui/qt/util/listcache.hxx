@@ -411,8 +411,8 @@ void ListCache<T>::invalidate()
 
     if (m_appendTask)
     {
-        m_loader->cancelTask(m_appendTask);
-        m_appendTask = 0;
+        m_loader->cancelTask(*m_appendTask);
+        m_appendTask.reset();
     }
 
     if (m_countTask)
@@ -605,7 +605,7 @@ void ListCache<T>::asyncFetchMore()
         return;
 
     if (m_appendTask)
-        m_loader->cancelTask(m_appendTask);
+        m_loader->cancelTask(*m_appendTask);
 
     m_maxReferedIndex = std::min(m_cachedData->queryCount, m_maxReferedIndex);
     size_t count = ((m_maxReferedIndex - m_cachedData->loadedCount) / m_chunkSize + 1 ) * m_chunkSize;
@@ -614,7 +614,7 @@ void ListCache<T>::asyncFetchMore()
         m_offset + m_cachedData->loadedCount, count,
         [this](size_t taskId, std::vector<ItemType>& list)
         {
-            if (taskId != m_appendTask)
+            if (taskId != *m_appendTask)
                 return;
 
             assert(m_cachedData);
@@ -628,7 +628,7 @@ void ListCache<T>::asyncFetchMore()
                 emit localDataChanged(updatedOffset, updatedOffset + updatedCount - 1);
             }
 
-            m_appendTask = 0;
+            m_appendTask.reset();
             if (m_maxReferedIndex > m_cachedData->loadedCount)
             {
                 asyncFetchMore();
