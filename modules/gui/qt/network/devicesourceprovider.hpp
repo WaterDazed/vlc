@@ -118,7 +118,7 @@ signals:
 
 private:
     MainCtx* m_ctx = nullptr;
-    quint64 m_taskId = 0;
+    std::optional<quint64> m_taskId;
 
     NetworkDeviceModel::SDCatType m_sdSource;
     QString m_sourceName; // '*' -> all sources

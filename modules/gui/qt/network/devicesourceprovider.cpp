@@ -220,8 +220,8 @@ DeviceSourceProvider::DeviceSourceProvider(
 
 DeviceSourceProvider::~DeviceSourceProvider()
 {
-    if (m_taskId != 0)
-        m_ctx->threadRunner()->cancelTask(this, m_taskId);
+    if (m_taskId)
+        m_ctx->threadRunner()->cancelTask(this, *m_taskId);
 }
 
 void DeviceSourceProvider::init()
