@@ -347,6 +347,20 @@ FocusScope {
 
             rightPadding: playlistLoader.shown ? 0 : VLCStyle.applicationHorizontalMargin
 
+            onCurrentItemChanged: {
+                if (currentItem) {
+                    {
+                        // Main pages need to compensate for the mini player:
+
+                        if (currentItem.displayMarginEnd !== undefined)
+                            currentItem.displayMarginEnd = Qt.binding(() => { return g_mainDisplay.displayMargin })
+
+                        if (currentItem.enableEndFade !== undefined)
+                            currentItem.enableEndFade = Qt.binding(() => { return (g_mainDisplay.hasMiniPlayer === false) })
+                    }
+                }
+            }
+
             Navigation.parentItem: g_mainDisplay
             Navigation.upItem: localTopbar
             Navigation.rightItem: playlistLoader
