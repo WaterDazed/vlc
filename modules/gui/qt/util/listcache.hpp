@@ -283,7 +283,7 @@ private:
     bool m_needReload = false;
 
     std::optional<uint64_t> m_appendTask;
-    uint64_t m_countTask = 0;
+    std::optional<uint64_t> m_countTask;
 
     std::unique_ptr<CacheData> m_cachedData;
     std::unique_ptr<CacheData> m_oldData;

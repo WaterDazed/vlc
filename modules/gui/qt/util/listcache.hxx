@@ -531,7 +531,7 @@ template<typename T>
 void ListCache<T>::asyncCountAndLoad()
 {
     if (m_countTask)
-        m_loader->cancelTask(m_countTask);
+        m_loader->cancelTask(*m_countTask);
 
     size_t count = std::max(m_maxReferedIndex, m_chunkSize);
 
@@ -539,7 +539,7 @@ void ListCache<T>::asyncCountAndLoad()
         //UI thread
         [this](quint64 taskId, size_t maximumCount, std::vector<ItemType>& list)
         {
-            if (m_countTask != taskId)
+            if (*m_countTask != taskId)
                 return;
 
             //quite unlikley but model may change between count and load
@@ -575,7 +575,7 @@ void ListCache<T>::asyncCountAndLoad()
                     emit localSizeChanged(0, m_cachedData->maximumCount);
             }
 
-            m_countTask = 0;
+            m_countTask.reset();
 
             if (m_needReload)
             {
