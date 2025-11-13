@@ -272,7 +272,7 @@ void DeviceSourceProvider::init()
             }
         },
         //UI thread
-        [this](quint64, Ctx& ctx){
+        [this](ThreadRunner::TaskId, Ctx& ctx){
             m_name = ctx.name;
             emit nameUpdated( m_name );
 

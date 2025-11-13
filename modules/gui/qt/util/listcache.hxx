@@ -537,7 +537,7 @@ void ListCache<T>::asyncCountAndLoad()
 
     m_countTask = m_loader->countAndLoadTask(m_offset, count,
         //UI thread
-        [this](quint64 taskId, size_t maximumCount, std::vector<ItemType>& list)
+        [this](ThreadRunner::TaskId taskId, size_t maximumCount, std::vector<ItemType>& list)
         {
             if (*m_countTask != taskId)
                 return;
@@ -612,7 +612,7 @@ void ListCache<T>::asyncFetchMore()
 
     m_appendTask = m_loader->loadTask(
         m_offset + m_cachedData->loadedCount, count,
-        [this](size_t taskId, std::vector<ItemType>& list)
+        [this](ThreadRunner::TaskId taskId, std::vector<ItemType>& list)
         {
             if (taskId != *m_appendTask)
                 return;

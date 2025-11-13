@@ -204,7 +204,7 @@ void MLBaseModel::sortByColumn(QByteArray criteria, Qt::SortOrder order)
     resetCache();
 }
 
-quint64 MLBaseModel::loadItems(const QVector<int> &indexes, MLBaseModel::ItemCallback cb)
+ThreadRunner::TaskId MLBaseModel::loadItems(const QVector<int> &indexes, MLBaseModel::ItemCallback cb)
 {
     Q_D(MLBaseModel);
     if (!m_itemLoader)
@@ -231,10 +231,10 @@ void MLBaseModel::getDataFlat(const QVector<int> &indexes, QJSValue callback)
     if (!callback.isCallable()) // invalid argument
         return;
 
-    std::shared_ptr<quint64> requestId = std::make_shared<quint64>();
+    std::shared_ptr<ThreadRunner::TaskId> requestId = std::make_shared<ThreadRunner::TaskId>();
 
     ItemCallback cb = [this, indxSize = indexes.size(), callback, requestId]
-    (quint64 id, std::vector<std::unique_ptr<MLItem>> &items) mutable
+    (ThreadRunner::TaskId id, std::vector<std::unique_ptr<MLItem>> &items) mutable
     {
         auto jsEngine = qjsEngine(this);
          if (!jsEngine || *requestId != id)
@@ -284,10 +284,8 @@ Q_INVOKABLE QJSValue MLBaseModel::getDataById(MLItemId id)
 
         m_itemLoader->loadItemByIdTask(
             id,
-            [this, resolve=std::move(resolve), reject=std::move(reject)](size_t taskId, MLListCache::ItemType&& item)
+            [this, resolve=std::move(resolve), reject=std::move(reject)](ThreadRunner::TaskId, MLListCache::ItemType&& item)
             {
-                Q_UNUSED(taskId);
-
                 if (!item)
                 {
                     reject.call();
@@ -341,7 +339,7 @@ void MLBaseModel::addAndPlay(const QModelIndexList &list, const QStringList &opt
     QVector<int> indx;
     std::transform(list.begin(), list.end(), std::back_inserter(indx), std::mem_fn(&QModelIndex::row));
 
-    ItemCallback play = [this, options](quint64, std::vector<std::unique_ptr<MLItem>> &items)
+    ItemCallback play = [this, options](ThreadRunner::TaskId, std::vector<std::unique_ptr<MLItem>> &items)
     {
         if (!m_mediaLib)
             return;
@@ -607,12 +605,12 @@ MLListCacheLoader::MLListCacheLoader(MediaLib* medialib, std::shared_ptr<MLListC
 {
 }
 
-void MLListCacheLoader::cancelTask(size_t taskId)
+void MLListCacheLoader::cancelTask(ThreadRunner::TaskId taskId)
 {
     m_medialib->cancelMLTask(this, taskId);
 }
 
-size_t MLListCacheLoader::countTask(std::function<void(size_t taskId, size_t count)> cb)
+ThreadRunner::TaskId MLListCacheLoader::countTask(std::function<void(ThreadRunner::TaskId taskId, size_t count)> cb)
 {
     struct Ctx {
         size_t count;
@@ -626,14 +624,14 @@ size_t MLListCacheLoader::countTask(std::function<void(size_t taskId, size_t cou
             ctx.count = op->count(ml, &query);
         },
         //UI thread
-        [cb](quint64 taskId, Ctx& ctx)
+        [cb](ThreadRunner::TaskId taskId, Ctx& ctx)
         {
             cb(taskId,  ctx.count);
         });
 }
 
-size_t MLListCacheLoader::loadTask(size_t offset, size_t limit,
-    std::function<void (size_t, std::vector<ItemType>&)> cb)
+ThreadRunner::TaskId MLListCacheLoader::loadTask(size_t offset, size_t limit,
+    std::function<void (ThreadRunner::TaskId, std::vector<ItemType>&)> cb)
 {
     struct Ctx {
         std::vector<MLListCacheLoader::ItemType> list;
@@ -648,14 +646,14 @@ size_t MLListCacheLoader::loadTask(size_t offset, size_t limit,
             ctx.list = op->load(ml, &query);
         },
         //UI thread
-        [cb](quint64 taskId, Ctx& ctx)
+        [cb](ThreadRunner::TaskId taskId, Ctx& ctx)
         {
             cb(taskId, ctx.list);
         });
 }
 
-size_t MLListCacheLoader::countAndLoadTask(size_t offset, size_t limit,
-    std::function<void (size_t, size_t, std::vector<ItemType>&)> cb)
+ThreadRunner::TaskId MLListCacheLoader::countAndLoadTask(size_t offset, size_t limit,
+    std::function<void (ThreadRunner::TaskId, size_t, std::vector<ItemType>&)> cb)
 {
     struct Ctx {
         size_t maximumCount;
@@ -671,12 +669,12 @@ size_t MLListCacheLoader::countAndLoadTask(size_t offset, size_t limit,
             ctx.maximumCount = op->count(ml, &query);
         },
         //UI thread
-        [cb](quint64 taskId, Ctx& ctx) {
+        [cb](ThreadRunner::TaskId taskId, Ctx& ctx) {
             cb(taskId,  ctx.maximumCount, ctx.list);
         });
 }
 
-quint64 MLListCacheLoader::loadItemsTask(size_t offset, const QVector<int> &indexes, MLBaseModel::ItemCallback cb)
+ThreadRunner::TaskId MLListCacheLoader::loadItemsTask(size_t offset, const QVector<int> &indexes, MLBaseModel::ItemCallback cb)
 {
     struct Ctx
     {
@@ -728,13 +726,13 @@ quint64 MLListCacheLoader::loadItemsTask(size_t offset, const QVector<int> &inde
             }
         },
         // UI thread
-        [cb](quint64 id, Ctx &ctx) {
+        [cb](ThreadRunner::TaskId id, Ctx &ctx) {
             cb(id, ctx.items);
         });
 }
 
 
-size_t MLListCacheLoader::loadItemByIdTask(MLItemId itemId, std::function<void (size_t, ItemType&&)> cb) const
+ThreadRunner::TaskId MLListCacheLoader::loadItemByIdTask(MLItemId itemId, std::function<void (ThreadRunner::TaskId, ItemType&&)> cb) const
 {
     struct Ctx {
         ItemType item;
@@ -745,7 +743,7 @@ size_t MLListCacheLoader::loadItemByIdTask(MLItemId itemId, std::function<void (
             ctx.item = op->loadItemById(ml, itemId);
         },
         //UI thread
-        [cb](qint64 taskId, Ctx& ctx) {
+        [cb](ThreadRunner::TaskId taskId, Ctx& ctx) {
             if (!ctx.item)
                 return;
             cb(taskId, std::move(ctx.item));

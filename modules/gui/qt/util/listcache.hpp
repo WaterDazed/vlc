@@ -282,8 +282,8 @@ private:
 
     bool m_needReload = false;
 
-    std::optional<uint64_t> m_appendTask;
-    std::optional<uint64_t> m_countTask;
+    std::optional<ThreadRunner::TaskId> m_appendTask;
+    std::optional<ThreadRunner::TaskId> m_countTask;
 
     std::unique_ptr<CacheData> m_cachedData;
     std::unique_ptr<CacheData> m_oldData;

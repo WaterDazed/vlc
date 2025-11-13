@@ -105,7 +105,7 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
             vlc_ml_playlist_release(playlist);
         }
     },
-    [this, initialItems](quint64, const Ctx& ctx) {
+    [this, initialItems](ThreadRunner::TaskId, const Ctx& ctx) {
         endTransaction(); // this is intentionally called here and not after `append()`
 
         if (ctx.createdPlaylistId.id)

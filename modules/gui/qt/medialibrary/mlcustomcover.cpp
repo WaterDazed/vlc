@@ -216,7 +216,7 @@ private:
                     ctx = extractChildMediaThumbnailsOrIDs(p_ml, thumbnailCount, itemId);
             }
             //UI Thread
-            , [=](quint64, ThumbnailList & ctx)
+            , [=](ThreadRunner::TaskId, ThumbnailList & ctx)
             {
                 if (ctx.toGenerate.empty())
                 {
@@ -262,7 +262,7 @@ private:
             },
             //UI Thread
             [this]
-            (quint64, Context & ctx)
+            (ThreadRunner::TaskId, Context & ctx)
             {
                 doFinish(ctx.img);
             }

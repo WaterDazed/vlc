@@ -76,7 +76,7 @@ void MLUrlModel::addAndPlay( const QString &url )
         ctx.itemId = MLItemId( s->i_id, VLC_ML_PARENT_UNKNOWN );
     },
     //UI Thread
-    [this](quint64, Ctx& ctx){
+    [this](ThreadRunner::TaskId, Ctx& ctx){
         if (!ctx.succeed)
             return;
 
@@ -98,7 +98,7 @@ void MLUrlModel::deleteStream( const MLItemId itemId )
             ctx.succeed = true;
         },
         //UI Thread
-        [this](quint64, Ctx& ctx){
+        [this](ThreadRunner::TaskId, Ctx& ctx){
             if (!ctx.succeed)
                 return;
 

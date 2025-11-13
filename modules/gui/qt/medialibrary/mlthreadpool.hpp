@@ -33,6 +33,9 @@ class ThreadRunner : public QObject
     Q_OBJECT
 
 public:
+    using TaskId = quint64;
+    static constexpr TaskId InvalidTaskId = std::numeric_limits<TaskId>::max();
+
     enum MLTaskStatus {
         ML_TASK_STATUS_SUCCEED,
         ML_TASK_STATUS_CANCELED
@@ -44,16 +47,16 @@ public:
     void setMaxThreadCount(size_t threadCount);
 
     void destroy();
-    void cancelTask(const QObject* object, quint64 taskId);
+    void cancelTask(const QObject* object, ThreadRunner::TaskId taskId);
 
     template<typename Ctx>
-    quint64 runOnThread(const QObject* obj,
+    ThreadRunner::TaskId runOnThread(const QObject* obj,
                           std::function<void (Ctx&)> mlFun,
-                          std::function<void (quint64 taskId, Ctx&)> uiFun,
+                          std::function<void (ThreadRunner::TaskId taskId, Ctx&)> uiFun,
                           const char* queue = nullptr);
 
 private slots:
-    void runOnThreadDone(RunOnThreadBaseRunner* runner, quint64 target, const QObject* object, int status);
+    void runOnThreadDone(RunOnThreadBaseRunner* runner, ThreadRunner::TaskId target, const QObject* object, int status);
     void runOnThreadTargetDestroyed(QObject * object);
 
 
@@ -84,9 +87,9 @@ private:
     QMap<QString, QQueue<QRunnable*>> m_serialTasks;
 
     bool m_shuttingDown = false;
-    quint64 m_taskId = 1;
-    QMap<quint64, RunOnThreadBaseRunner*> m_runningTasks;
-    QMultiMap<const QObject*, quint64> m_objectTasks;
+    ThreadRunner::TaskId m_taskId = 1;
+    QMap<ThreadRunner::TaskId, RunOnThreadBaseRunner*> m_runningTasks;
+    QMultiMap<const QObject*, ThreadRunner::TaskId> m_objectTasks;
     QMutex m_lock;
 };
 
@@ -98,17 +101,17 @@ public:
     virtual void runUICallback() = 0;
     virtual void cancel() = 0;
 signals:
-    void done(RunOnThreadBaseRunner* runner, quint64 target, const QObject* object, int status);
+    void done(RunOnThreadBaseRunner* runner, ThreadRunner::TaskId target, const QObject* object, int status);
 };
 
 template<typename Ctx>
 class RunOnThreadRunner : public RunOnThreadBaseRunner {
 public:
     RunOnThreadRunner(
-        quint64 taskId,
+        ThreadRunner::TaskId taskId,
         const QObject* obj,
         std::function<void (Ctx&)> mlFun,
-        std::function<void (quint64, Ctx&)> uiFun
+        std::function<void (ThreadRunner::TaskId, Ctx&)> uiFun
         )
         : RunOnThreadBaseRunner()
         , m_taskId(taskId)
@@ -142,23 +145,23 @@ public:
     }
 private:
     std::atomic_bool m_canceled {false};
-    quint64 m_taskId;
+    ThreadRunner::TaskId m_taskId;
     Ctx m_ctx; //default constructed
     const QObject* m_obj = nullptr;
     std::function<void (Ctx&)> m_mlFun;
-    std::function<void (quint64, Ctx&)> m_uiFun;
+    std::function<void (ThreadRunner::TaskId, Ctx&)> m_uiFun;
 };
 
 template<typename Ctx>
-quint64 ThreadRunner::runOnThread(const QObject* obj,
+ThreadRunner::TaskId ThreadRunner::runOnThread(const QObject* obj,
                                       std::function<void (Ctx&)> mlFun,
-                                      std::function<void (quint64 taskId, Ctx&)> uiFun,
+                                      std::function<void (ThreadRunner::TaskId taskId, Ctx&)> uiFun,
                                       const char* queue)
 {
     QMutexLocker locker{&m_lock};
 
     if (m_shuttingDown)
-        return 0;
+        return ThreadRunner::InvalidTaskId;
 
     auto taskId = m_taskId++;
     auto runnable = new RunOnThreadRunner<Ctx>(taskId, obj, mlFun, uiFun);

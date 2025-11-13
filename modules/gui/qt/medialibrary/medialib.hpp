@@ -125,30 +125,30 @@ public:
      * @endcode
      */
     template<typename Ctx>
-    quint64 runOnMLThread(const QObject* obj,
+    ThreadRunner::TaskId runOnMLThread(const QObject* obj,
                     std::function< void(vlc_medialibrary_t* ml, Ctx& ctx)> mlCb,
-                    std::function< void(quint64 taskId, Ctx& ctx)> uiCB,
+                    std::function< void(ThreadRunner::TaskId taskId, Ctx& ctx)> uiCB,
                     const char* queue = nullptr);
 
     /**
      * same as runOnMLThread<Ctx> when no context passing is required
      */
-    quint64 runOnMLThread(const QObject* obj,
+    ThreadRunner::TaskId runOnMLThread(const QObject* obj,
                     std::function< void(vlc_medialibrary_t* ml)> mlCb,
                     std::function< void()> uiCB,
                     const char* queue = nullptr);
     /**
      * same as runOnMLThread<Ctx> when no context passing is required
      */
-    quint64 runOnMLThread(const QObject* obj,
+    ThreadRunner::TaskId runOnMLThread(const QObject* obj,
                     std::function< void(vlc_medialibrary_t* ml)> mlCb,
-                    std::function< void(quint64 taskId)> uiCB,
+                    std::function< void(ThreadRunner::TaskId taskId)> uiCB,
                     const char* queue = nullptr);
 
     /**
      * same as runOnMLThread<Ctx> when no ui callback is required
      */
-   quint64 runOnMLThread(const QObject* obj,
+   ThreadRunner::TaskId runOnMLThread(const QObject* obj,
                     std::function< void(vlc_medialibrary_t* ml)> mlCb,
                     const char* queue = nullptr);
 
@@ -164,7 +164,7 @@ public:
      *
      * this must be called from the Qt thread.
      */
-    void cancelMLTask(const QObject* object, quint64 taskId);
+    void cancelMLTask(const QObject* object, ThreadRunner::TaskId taskId);
 
 signals:
     void discoveryStarted();
@@ -195,9 +195,9 @@ private:
 };
 
 template<typename Ctx>
-quint64 MediaLib::runOnMLThread(const QObject* obj,
+ThreadRunner::TaskId MediaLib::runOnMLThread(const QObject* obj,
                                     std::function<void (vlc_medialibrary_t*, Ctx&)> mlFun,
-                                    std::function<void (quint64 taskId, Ctx&)> uiFun,
+                                    std::function<void (ThreadRunner::TaskId taskId, Ctx&)> uiFun,
                                     const char* queue)
 {
     return m_runner->runOnThread<Ctx>(obj, [ml = m_ml, mlFun](Ctx& ctx){mlFun(ml,ctx);}, uiFun, queue);

@@ -150,10 +150,10 @@ protected:
 private:
     static void onVlcMlEvent( void* data, const vlc_ml_event_t* event );
 
-    using ItemCallback = std::function<void (quint64 requestID
+    using ItemCallback = std::function<void (ThreadRunner::TaskId requestID
                                             , std::vector<std::unique_ptr<MLItem>> &items)>;
 
-    quint64 loadItems(const QVector<int> &index, ItemCallback cb);
+    ThreadRunner::TaskId loadItems(const QVector<int> &index, ItemCallback cb);
 
 
 protected:
@@ -206,17 +206,17 @@ public:
     MLListCacheLoader(MediaLib* medialib, std::shared_ptr<MLOp> op, QObject* parent = nullptr);
     ~MLListCacheLoader() = default;
 
-    void cancelTask(size_t taskId) override;
-    size_t countTask(std::function<void(size_t taskId, size_t count)> cb) override;
-    virtual size_t loadTask(size_t offset, size_t limit,
-                            std::function<void(size_t taskId, std::vector<ItemType>& data)> cb) override;
-    virtual size_t countAndLoadTask(size_t offset, size_t limit,
-                                    std::function<void (size_t, size_t, std::vector<ItemType>&)> cb) override;
+    void cancelTask(ThreadRunner::TaskId taskId) override;
+    ThreadRunner::TaskId countTask(std::function<void(ThreadRunner::TaskId taskId, size_t count)> cb) override;
+    virtual ThreadRunner::TaskId loadTask(size_t offset, size_t limit,
+                            std::function<void(ThreadRunner::TaskId taskId, std::vector<ItemType>& data)> cb) override;
+    virtual ThreadRunner::TaskId countAndLoadTask(size_t offset, size_t limit,
+                                    std::function<void (ThreadRunner::TaskId, size_t, std::vector<ItemType>&)> cb) override;
 
 
     //ML specific operations
-    quint64 loadItemsTask(size_t offset, const QVector<int> &indexes, MLBaseModel::ItemCallback cb);
-    size_t loadItemByIdTask(MLItemId itemId, std::function<void (size_t, ItemType&&)> cb) const;
+    ThreadRunner::TaskId loadItemsTask(size_t offset, const QVector<int> &indexes, MLBaseModel::ItemCallback cb);
+    ThreadRunner::TaskId loadItemByIdTask(MLItemId itemId, std::function<void (ThreadRunner::TaskId, ItemType&&)> cb) const;
 
 protected:
     MediaLib* m_medialib = nullptr;
