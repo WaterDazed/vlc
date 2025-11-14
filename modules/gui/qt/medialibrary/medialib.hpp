@@ -150,6 +150,17 @@ public:
                     const char* queue = nullptr);
 
 
+    template<typename Res>
+    QFuture<Res> run(std::function<Res (vlc_medialibrary_t*)> poolCb);
+
+    template<typename Res>
+    void resultToUI(const QObject*, QFuture<Res> result, std::function< void(Res ctx)> uiCB);
+
+    void resultToUI(const QObject *obj, QFuture<void> result, std::function< void(void)> uiCB)
+    {
+        m_runner->resultToUI(obj, result, uiCB);
+    }
+
     /**
      * @brief cancelMLTask, explicitly cancel a running task
      *
@@ -190,6 +201,21 @@ private:
 
     QMap<QVector<MLItemId>, QVector<QJSValue>> m_inputItemQuery;
 };
+
+template<typename Res>
+QFuture<Res> MediaLib::run(std::function<Res (vlc_medialibrary_t*)> poolCb)
+{
+    return m_runner->run<Res>([poolCb, ml = m_ml]() -> Res {
+        return poolCb(ml);
+    });
+}
+
+template<typename Res>
+void MediaLib::resultToUI(const QObject *obj, QFuture<Res> result, std::function< void(Res ctx)> uiCB)
+{
+    m_runner->resultToUI<Res>(obj, result, uiCB);
+}
+
 
 template<typename Ctx>
 quint64 MediaLib::runOnMLThread(const QObject* obj,
