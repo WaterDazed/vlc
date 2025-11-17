@@ -206,17 +206,20 @@ private:
     {
         const int thumbnailCount = data.countX * data.countY;
 
-        ml->runOnMLThread<ThumbnailList>(this,
+        auto res =
+        ml->run<ThumbnailList>(
             //ML thread (get child thumbnails or ids)
-            [itemId = data.id, thumbnailCount](vlc_medialibrary_t *p_ml, ThumbnailList &ctx)
+            [itemId = data.id, thumbnailCount](vlc_medialibrary_t *p_ml) -> ThumbnailList
             {
+                ThumbnailList ctx;
                 if (itemId.type == VLC_ML_PARENT_GENRE)
                     ctx.existing = getGenreMediaThumbnails(p_ml, thumbnailCount, itemId.id);
                 else
                     ctx = extractChildMediaThumbnailsOrIDs(p_ml, thumbnailCount, itemId);
-            }
-            //UI Thread
-            , [=](quint64, ThumbnailList & ctx)
+                return ctx;
+            });
+        ml->resultToUI<ThumbnailList>(this, res,
+            [=](ThumbnailList ctx)
             {
                 if (ctx.toGenerate.empty())
                 {
@@ -243,11 +246,12 @@ private:
     {
         struct Context { QImage img; };
 
-        ml->runOnMLThread<Context>(this,
-            //ML thread
+        auto res =
+        ml->run<Context>(
             [data = this->data, thumbnails]
-            (vlc_medialibrary_t * , Context & ctx)
+            (vlc_medialibrary_t *) -> Context
             {
+                Context ctx;
                 CoverGenerator generator;
                 generator.setCountX(data.countX);
                 generator.setCountY(data.countY);
@@ -259,10 +263,11 @@ private:
                     generator.setDefaultThumbnail(data.defaultCover);
 
                 ctx.img = generator.execute(thumbnails);
-            },
-            //UI Thread
+                return ctx;
+            });
+        ml->resultToUI<Context>(this, res,
             [this]
-            (quint64, Context & ctx)
+            (Context ctx)
             {
                 doFinish(ctx.img);
             }
