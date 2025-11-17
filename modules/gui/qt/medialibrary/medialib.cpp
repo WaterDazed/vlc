@@ -127,14 +127,16 @@ void MediaLib::addToPlaylist(const MLItemId & itemId, const QStringList &options
     struct Context {
         QVector<vlc::playlist::Media> medias;
     };
-    runOnMLThread<Context>(this,
-    //ML thread
+    auto res =
+    run<Context>(
     [itemId, options]
-    (vlc_medialibrary_t* ml, Context& ctx){
+    (vlc_medialibrary_t* ml) -> Context {
+        Context ctx;
         convertMLItemToPlaylistMedias(ml, itemId, options, ctx.medias);
-    },
-    //UI thread
-    [this](quint64, Context& ctx){
+        return ctx;
+    });
+    resultToUI<Context>(this, res,
+    [this](Context ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, false);
     });
@@ -145,15 +147,17 @@ void MediaLib::addToPlaylist(const QVariantList& itemIdList, const QStringList &
     struct Context {
         QVector<vlc::playlist::Media> medias;
     };
-    runOnMLThread<Context>(this,
-    //ML thread
+    auto res =
+    run<Context>(
     [itemIdList, options]
-    (vlc_medialibrary_t* ml, Context& ctx)
+    (vlc_medialibrary_t* ml) -> Context
     {
+        Context ctx;
         convertQVariantListToPlaylistMedias(ml, itemIdList, options, ctx.medias);
-    },
-    //UI thread
-    [this](quint64, Context& ctx){
+        return ctx;
+    });
+    resultToUI<Context>(this, res,
+    [this](Context ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, false);
     });
@@ -166,15 +170,17 @@ void MediaLib::addAndPlay(const MLItemId & itemId, const QStringList &options )
     struct Context {
         QVector<vlc::playlist::Media> medias;
     };
-    runOnMLThread<Context>(this,
-    //ML thread
+    auto res =
+    run<Context>(
     [itemId, options]
-    (vlc_medialibrary_t* ml, Context& ctx)
+    (vlc_medialibrary_t* ml) -> Context
     {
+        Context ctx;
         convertMLItemToPlaylistMedias(ml, itemId, options, ctx.medias);
-    },
-    //UI thread
-    [this](quint64, Context& ctx){
+        return ctx;
+    });
+    resultToUI<Context>(this, res,
+    [this](Context ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, true);
     });
@@ -200,15 +206,17 @@ void MediaLib::addAndPlay(const QVariantList& itemIdList, const QStringList &opt
     struct Context {
         QVector<vlc::playlist::Media> medias;
     };
-    runOnMLThread<Context>(this,
-    //ML thread
+    auto res =
+    run<Context>(
     [itemIdList, options]
-    (vlc_medialibrary_t* ml, Context& ctx)
+    (vlc_medialibrary_t* ml) -> Context
     {
+        Context ctx;
         convertQVariantListToPlaylistMedias(ml, itemIdList, options, ctx.medias);
-    },
-    //UI thread
-    [this](quint64, Context& ctx){
+        return ctx;
+    });
+    resultToUI<Context>(this, res,
+    [this](Context ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, true);
     });
@@ -219,16 +227,18 @@ void MediaLib::insertIntoPlaylist(const size_t index, const QVariantList &itemId
     struct Context {
         QVector<vlc::playlist::Media> medias;
     };
-    runOnMLThread<Context>(this,
-    //ML thread
+    auto res =
+    run<Context>(
     [itemIdList, options]
-    (vlc_medialibrary_t* ml, Context& ctx )
+    (vlc_medialibrary_t* ml ) -> Context
     {
+        Context ctx;
         convertQVariantListToPlaylistMedias(ml, itemIdList, options, ctx.medias);
-    },
-    //UI thread
+        return ctx;
+    });
+    resultToUI<Context>(this, res,
     [this, index]
-    (quint64, Context& ctx) {
+    (Context ctx) {
         if (!ctx.medias.isEmpty())
             m_playlistController->insert( index, ctx.medias );
     });
@@ -286,9 +296,10 @@ void MediaLib::mlInputItem(const QVector<MLItemId>& itemIdVector, QJSValue callb
         return;
     }
 
-    runOnMLThread<Ctx>(this,
-    //ML thread
-    [itemIdVector](vlc_medialibrary_t* ml, Ctx& ctx){
+    auto res =
+    run<Ctx>(
+    [itemIdVector](vlc_medialibrary_t* ml) -> Ctx {
+        Ctx ctx;
         for (auto mlId : itemIdVector)
         {
             // NOTE: When we have a parent it's a collection of media(s).
@@ -311,9 +322,10 @@ void MediaLib::mlInputItem(const QVector<MLItemId>& itemIdVector, QJSValue callb
                     ctx.items.emplace_back(vlc_ml_get_input_item(ml, media.i_id), false);
             }
         }
-    },
-    //UI thread
-    [this, it](quint64, Ctx& ctx) mutable
+        return ctx;
+    });
+    resultToUI<Ctx>(this, res,
+    [this, it](Ctx ctx) mutable
     {
         auto jsEngine = qjsEngine(this);
         if (!jsEngine)
