@@ -37,7 +37,7 @@ void MLVideoModel::setItemPlayed(const QModelIndex & index, bool played)
     int64_t id = video->getId().id;
 
     // ML thread
-    m_mediaLib->runOnMLThread(this, [id, played] (vlc_medialibrary_t * ml)
+    m_mediaLib->run<void>([id, played] (vlc_medialibrary_t * ml)
     {
         vlc_ml_media_set_played(ml, id, played);
     });
@@ -153,7 +153,7 @@ void MLVideoModel::thumbnailUpdated(const QModelIndex& idx, MLItem* mlitem, cons
 
 void MLVideoModel::generateThumbnail(uint64_t id) const
 {
-    m_mediaLib->runOnMLThread(this,
+    m_mediaLib->run<void>(
     //ML thread
     [id](vlc_medialibrary_t* ml){
         vlc_ml_media_generate_thumbnail(ml, id, VLC_ML_THUMBNAIL_SMALL, 512, 320, .15 );
