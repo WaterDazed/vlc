@@ -246,8 +246,7 @@ void MediaLib::insertIntoPlaylist(const size_t index, const QVariantList &itemId
 
 void MediaLib::reload()
 {
-    runOnMLThread(this,
-    //ML thread
+    run<void>(
     [](vlc_medialibrary_t* ml){
         vlc_ml_reload_folder(ml, nullptr);
     });
