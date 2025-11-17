@@ -62,9 +62,10 @@
     struct Ctx {
         std::vector<std::unique_ptr<MLItem>> medias;
     };
-    m_mediaLib->runOnMLThread<Ctx>(this,
-    //ML thread
-    [medias, id, at](vlc_medialibrary_t* ml, Ctx& ctx) {
+    auto res =
+    m_mediaLib->run<Ctx>(
+    [medias, id, at](vlc_medialibrary_t* ml) -> Ctx {
+        Ctx ctx;
         std::vector<int64_t> mediaIdList;
         for (const auto& media : medias)
         {
@@ -85,12 +86,13 @@
             vlc_ml_media_release(ml_media);
         }
         if (mediaIdList.size() == 0)
-            return;
+            return ctx;
 
         vlc_ml_playlist_insert(ml, id, mediaIdList.data(), mediaIdList.size(), at);
-    },
-    //UI thread
-    [this, at](quint64, Ctx& ctx) {
+        return ctx;
+    });
+    m_mediaLib->resultToUI<Ctx>(this, res,
+    [this, at](Ctx ctx) {
         insertItemListInCache(std::move(ctx.medias), at);
         m_need_reset = true;
         endTransaction();
@@ -110,16 +112,18 @@ void MLPlaylistModel::moveImpl(int64_t playlistId, HighLowRanges&& ranges)
         std::tie(low, high) = ranges.lowRanges[ranges.lowRangeIt - 1];
 
         assert(low <= high);
-        m_mediaLib->runOnMLThread<Ctx>(this,
-        //ML thread
+        auto res =
+        m_mediaLib->run<Ctx>(
         [playlistId, high, low, to = ranges.lowTo]
-        (vlc_medialibrary_t* ml, Ctx& ctx) {
+        (vlc_medialibrary_t* ml) -> Ctx {
+            Ctx ctx;
             int nbElement = high - low + 1;
             vlc_ml_playlist_move(ml, playlistId, low, to - 1, nbElement);
             ctx.newTo = to - nbElement;
-        },
-        //UI thread
-        [this, playlistId, high, low, r = std::move(ranges)](quint64, Ctx& ctx) mutable {
+            return ctx;
+        });
+        m_mediaLib->resultToUI<Ctx>(this, res,
+        [this, playlistId, high, low, r = std::move(ranges)](Ctx ctx) mutable {
             moveRangeInCache(low, high, r.lowTo);
             r.lowTo = ctx.newTo;
             --r.lowRangeIt;
@@ -131,15 +135,17 @@ void MLPlaylistModel::moveImpl(int64_t playlistId, HighLowRanges&& ranges)
         std::tie(low, high) = ranges.highRanges[ranges.highRangeIt];
         assert(low <= high);
 
-        m_mediaLib->runOnMLThread<Ctx>(this,
-        //ML thread
-        [playlistId, high, low, to = ranges.highTo](vlc_medialibrary_t* ml, Ctx& ctx) {
+        auto res =
+        m_mediaLib->run<Ctx>(
+        [playlistId, high, low, to = ranges.highTo](vlc_medialibrary_t* ml) -> Ctx {
+            Ctx ctx;
             int nbElement = high - low + 1;
             vlc_ml_playlist_move(ml, playlistId, low, to, nbElement);
             ctx.newTo = to + nbElement;
-        },
-        //UI thread
-        [this, playlistId, low, high, r = std::move(ranges)](quint64, Ctx& ctx) mutable {
+            return ctx;
+        });
+        m_mediaLib->resultToUI<Ctx>(this, res,
+        [this, playlistId, low, high, r = std::move(ranges)](Ctx ctx) mutable {
             moveRangeInCache(low, high, r.highTo);
             r.highTo = ctx.newTo;
             ++r.highRangeIt;
@@ -230,12 +236,12 @@ void MLPlaylistModel::removeImpl(int64_t playlistId, const std::vector<std::pair
 
     std::pair<int, int> range = rangeList[index];
 
-    m_mediaLib->runOnMLThread(this,
-    //ML thread
+    auto res =
+    m_mediaLib->run<void>(
     [playlistId, range](vlc_medialibrary_t* ml) {
         vlc_ml_playlist_remove(ml, playlistId, range.first, range.second - range.first + 1);
-    },
-    //UI thread
+    });
+    m_mediaLib->resultToUI(this, res,
     [this, playlistId, range, rows = std::move(rangeList), index]() {
         deleteRangeInCache(range.first, range.second);
         removeImpl(playlistId, std::move(rows), index+1);
@@ -473,7 +479,7 @@ std::vector<std::pair<int, int>> MLPlaylistModel::getSortedRowsRanges(const QMod
 
 void MLPlaylistModel::generateThumbnail(const MLItemId& itemid) const
 {
-    m_mediaLib->runOnMLThread(this,
+    m_mediaLib->run<void>(
     //ML thread
     [id = itemid.id](vlc_medialibrary_t* ml)
     {
