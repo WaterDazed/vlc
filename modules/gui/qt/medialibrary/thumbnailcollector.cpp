@@ -40,7 +40,7 @@ void ThumbnailCollector::start(MediaLib *ml, const QSet<int64_t> &mlIds)
     m_ml_event_handle.reset(ml->registerEventListener(&onVlcMLEvent, this));
 
     m_pending = mlIds;
-    m_ml->runOnMLThread(this, [ids = mlIds](vlc_medialibrary_t* ml)
+    m_ml->run<void>([ids = mlIds](vlc_medialibrary_t* ml)
     {
         for (const auto id : ids)
             vlc_ml_media_generate_thumbnail(ml, id, VLC_ML_THUMBNAIL_SMALL, 512, 320, .15);
