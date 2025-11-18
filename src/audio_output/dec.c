@@ -1,9 +1,10 @@
 /*****************************************************************************
  * dec.c : audio output API towards decoders
  *****************************************************************************
- * Copyright (C) 2002-2019 VLC authors, VideoLAN and Videolabs SAS
+ * Copyright (C) 2002-2025 VLC authors, VideoLAN and Videolabs SAS
  *
  * Authors: Christophe Massiot <massiot@via.ecp.fr>
+ *          Alexandre Janniaux <ajanni@videolabs.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -34,6 +35,7 @@
 #include <vlc_common.h>
 #include <vlc_aout.h>
 #include <vlc_tracer.h>
+#include <vlc_gyroscope.h>
 
 #include "aout_internal.h"
 #include "clock/clock.h"
@@ -899,9 +901,13 @@ int vlc_aout_stream_Play(vlc_aout_stream *stream, block_t *block)
         if (play_date == VLC_TICK_INVALID)
             return stream_StartDiscontinuity(stream, block);
 
-        if (atomic_load_explicit(&owner->vp.update, memory_order_relaxed))
+        if (owner->vp.device != NULL ||
+            atomic_load_explicit(&owner->vp.update, memory_order_relaxed))
         {
             vlc_mutex_lock (&owner->vp.lock);
+
+            if (owner->vp.device != NULL)
+                vlc_gyroscope_ReadViewpoint(owner->vp.device, &owner->vp.value);
             aout_FiltersChangeViewpoint (stream->filters, &owner->vp.value);
             atomic_store_explicit(&owner->vp.update, false, memory_order_relaxed);
             vlc_mutex_unlock (&owner->vp.lock);

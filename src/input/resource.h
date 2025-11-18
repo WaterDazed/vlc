@@ -27,6 +27,8 @@
 #include <vlc_mouse.h>
 #include "../video_output/vout_internal.h"
 
+struct vlc_gyroscope;
+
 enum input_resource_vout_state
 {
     INPUT_RESOURCE_VOUT_NOTCHANGED,
@@ -96,4 +98,20 @@ input_resource_t *input_resource_Hold( input_resource_t * );
 
 void input_resource_ResetAout( input_resource_t * );
 
+void
+input_resource_SetupGyroscope(input_resource_t *resource,
+                              enum vlc_viewpoint_mode mode,
+                              struct vlc_gyroscope *interface_sensors);
+
+/**
+ * Request a gyroscope device.
+ */
+struct vlc_gyroscope *
+input_resource_RequestGyroscope(input_resource_t *resource);
+
+/**
+ * Notify the resources that we stopped using the gyroscope device.
+ */
+void input_resource_PutGyroscope(input_resource_t *resource,
+                                 struct vlc_gyroscope *gyro);
 #endif

@@ -291,6 +291,12 @@ struct vlc_player_t
     } destructor;
 
     struct vlc_player_timer timer;
+
+    struct {
+        /* Viewpoint provider from the interface */
+        struct vlc_gyroscope *interface;
+        enum vlc_viewpoint_mode mode;
+    } gyro;
 };
 
 #ifndef NDEBUG

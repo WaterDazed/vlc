@@ -2109,6 +2109,25 @@ LIBVLC_API int libvlc_video_update_viewpoint( libvlc_media_player_t *p_mi,
                                               const libvlc_video_viewpoint_t *p_viewpoint,
                                               bool b_absolute);
 
+typedef enum {
+    LIBVLC_VIEWPOINT_MODE_DEFAULT,
+    LIBVLC_VIEWPOINT_MODE_PREFER_SENSORS,
+    LIBVLC_VIEWPOINT_MODE_SENSORS_ONLY,
+} libvlc_viewpoint_mode_t;
+
+/**
+ * Define how the viewpoint is fetched from.
+ *
+ * \version LibVLC 4.0.0 and later
+ *
+ * \param mp    The media player, from which it will notify every video and audio outputs
+ * \param mode  The viewpoint mode to prefer.
+ */
+LIBVLC_API void
+libvlc_media_player_set_viewpoint_mode(libvlc_media_player_t *mp,
+                                       libvlc_viewpoint_mode_t mode);
+
+
 /**
  * Video stereo modes
  */

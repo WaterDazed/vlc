@@ -11,8 +11,7 @@ d3d11_cargs = []
 d3d11_cxxargs = [ libcom_cppflags ]
 d3d11_deps = [ cc.find_library('dxgi'), cc.find_library('d3d11'), cc.find_library('d3dcompiler') ]
 if not have_win_store
-    d3d11_sources += files('d3d11_swapchain.cpp', 'dxgi_swapchain.cpp', 'common.c', 'events.c', 'sensors.cpp', 'win32touch.c')
-    d3d11_cargs += '-DHAVE_WIN32_SENSORS'
+    d3d11_sources += files('d3d11_swapchain.cpp', 'dxgi_swapchain.cpp', 'common.c', 'events.c', 'win32touch.c')
     d3d11_deps += [
         cc.find_library('user32')
     ]
@@ -26,6 +25,12 @@ if get_option('amf_scaler').allowed()
         d3d11_cargs += contrib_inc_args
     endif
 endif
+
+vlc_modules += {
+    'name' : 'win32_sensors',
+    'sources' : files('sensors.cpp', 'sensors.h'),
+    'enabled' : have_win_desktop,
+}
 
 if get_option('directx').allowed()
     vlc_modules += {
@@ -43,7 +48,7 @@ if have_win_desktop
         # Direct3D9 video output
         vlc_modules += {
             'name' : 'direct3d9',
-            'sources' : files('direct3d9.c', 'common.c', 'events.c', 'sensors.cpp', 'win32touch.c'),
+            'sources' : files('direct3d9.c', 'common.c', 'events.c', 'win32touch.c'),
             'link_with' : [ d3d9_common_lib, chroma_copy_lib ],
             'dependencies' : [
                 cc.find_library('user32'),
@@ -68,7 +73,7 @@ if have_win_desktop
         vlc_modules += {
             'name' : 'glwin32',
             'sources' : [
-                files('glwin32.c', 'common.c', 'events.c', 'sensors.cpp', 'win32touch.c'),
+                files('glwin32.c', 'common.c', 'events.c', 'win32touch.c'),
                 opengl_vout_commonsources
             ],
             'c_args' : [ contrib_inc_args, '-DHAVE_WIN32_SENSORS' ],

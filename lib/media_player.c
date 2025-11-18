@@ -2467,6 +2467,24 @@ libvlc_media_player_time_point_get_next_date(const libvlc_media_player_time_poin
     return US_FROM_VLC_TICK(date);
 }
 
+void
+libvlc_media_player_set_viewpoint_mode(libvlc_media_player_t *mp,
+                                       libvlc_viewpoint_mode_t mode)
+{
+    switch (mode)
+    {
+        case LIBVLC_VIEWPOINT_MODE_DEFAULT:
+            vlc_player_SetViewpointMode(mp->player, VLC_VIEWPOINT_MODE_USER_INTERFACE);
+            break;
+        case LIBVLC_VIEWPOINT_MODE_PREFER_SENSORS:
+            vlc_player_SetViewpointMode(mp->player, VLC_VIEWPOINT_MODE_PREFER_SENSORS);
+            break;
+        case LIBVLC_VIEWPOINT_MODE_SENSORS_ONLY:
+            vlc_player_SetViewpointMode(mp->player, VLC_VIEWPOINT_MODE_SENSORS_ONLY);
+            break;
+    }
+}
+
 #include <vlc_vout_display.h>
 
 /* make sure surface structures from libvlc can be passed as such to vlc

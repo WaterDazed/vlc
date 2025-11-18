@@ -54,6 +54,7 @@ install_headers(
     'vlc_fourcc.h',
     'vlc_fs.h',
     'vlc_gcrypt.h',
+    'vlc_gyroscope.h',
     'vlc_http.h',
     'vlc_httpd.h',
     'vlc_image.h',

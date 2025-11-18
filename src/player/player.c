@@ -2100,3 +2100,28 @@ vlc_player_GetObject(vlc_player_t *player)
 {
     return VLC_OBJECT(player);
 }
+
+void
+vlc_player_SetInterfaceViewpointDevice(vlc_player_t *player,
+                                       struct vlc_gyroscope *gyroscope)
+{
+    vlc_mutex_assert(&player->lock);
+    player->gyro.interface = gyroscope;
+    input_resource_SetupGyroscope(player->resource, player->gyro.mode, player->gyro.interface);
+}
+
+void
+vlc_player_SetViewpointMode(vlc_player_t *player,
+                            enum vlc_viewpoint_mode mode)
+{
+    vlc_mutex_assert(&player->lock);
+    player->gyro.mode = mode;
+    input_resource_SetupGyroscope(player->resource, mode, player->gyro.interface);
+}
+
+void
+vlc_player_SetViewpointSensors(vlc_player_t *player,
+                               const char *name)
+{
+
+}

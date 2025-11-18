@@ -37,24 +37,38 @@
 /**
  * Viewpoints
  */
+
+enum vlc_viewpoint_mode
+{
+    VLC_VIEWPOINT_MODE_USER_INTERFACE, //< Viewpoint from mouse input or libvlc-like client
+    VLC_VIEWPOINT_MODE_PREFER_SENSORS, //< Viewpoint from sensors plugin, or fallback
+    VLC_VIEWPOINT_MODE_SENSORS_ONLY, //< Viewpoint from sensors plugin
+    VLC_VIEWPOINT_MODE_MERGE_SENSORS, //< Viewpoint from sensors + yaw from user interface
+    VLC_VIEWPOINT_MODE_SENSORS_THEN_USER_INTERFACE, //< Merge the two rotations in that order
+    VLC_VIEWPOINT_MODE_USER_INTERFACE_THEN_SENSORS, //< Merge the two rotations in that order
+};
+
 struct vlc_viewpoint_t {
-    float yaw;   /* yaw in degrees */
-    float pitch; /* pitch in degrees */
-    float roll;  /* roll in degrees */
+    /**
+     * orientation quaternion with the following properties:
+     *  1/ use ijk = -1 for the operations
+     *  2/ memory layout is [x, y, z, w] (like GLSL)
+     *  3/ system is right-handed
+     */
+    float quat[4];
     float fov;   /* field of view in degrees */
 };
 
 static inline void vlc_viewpoint_init( vlc_viewpoint_t *p_vp )
 {
-    p_vp->yaw = p_vp->pitch = p_vp->roll = 0.0f;
+    p_vp->quat[3] = 1;
+    p_vp->quat[0] = p_vp->quat[1] = p_vp->quat[2] = 0;
     p_vp->fov = FIELD_OF_VIEW_DEGREES_DEFAULT;
 }
 
 static inline void vlc_viewpoint_clip( vlc_viewpoint_t *p_vp )
 {
-    p_vp->yaw = fmodf( p_vp->yaw, 360.f );
-    p_vp->pitch = fmodf( p_vp->pitch, 360.f );
-    p_vp->roll = fmodf( p_vp->roll, 360.f );
+    // TODO: normalize quaternion
     p_vp->fov = VLC_CLIP( p_vp->fov, FIELD_OF_VIEW_DEGREES_MIN,
                           FIELD_OF_VIEW_DEGREES_MAX );
 }

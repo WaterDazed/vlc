@@ -137,3 +137,9 @@ libmedialibrary_plugin_la_LIBADD = $(MEDIALIBRARY_LIBS)
 libmedialibrary_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(miscdir)'
 EXTRA_LTLIBRARIES += libmedialibrary_plugin.la
 misc_LTLIBRARIES += $(LTLIBmedialibrary)
+
+libandroid_sensors_plugin_la_SOURCES = misc/android_sensors.c
+libandroid_sensors_plugin_la_LIBADD = -landroid
+if HAVE_ANDROID
+misc_LTLIBRARIES += libandroid_sensors_plugin.la
+endif

@@ -67,6 +67,7 @@ pluginsinclude_HEADERS.h = \
 	../include/vlc_input_item.h \
 	../include/vlc_interface.h \
 	../include/vlc_interrupt.h \
+	../include/vlc_gyroscope.h \
 	../include/vlc_keystore.h \
 	../include/vlc_list.h \
 	../include/vlc_media_library.h \
@@ -410,6 +411,7 @@ libvlccore_la_SOURCES = \
 	misc/diffutil.c \
 	misc/epg.c \
 	misc/exit.c \
+	misc/gyroscope.c \
 	misc/image.c \
 	misc/messages.c \
 	misc/tracer.c \
