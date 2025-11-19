@@ -51,6 +51,18 @@
                            selector:@selector(libraryModelGroupUpdated:)
                                name:VLCLibraryModelGroupUpdated
                              object:nil];
+    [notificationCenter addObserver:self
+                           selector:@selector(libraryModelGroupMediaItemAdded:)
+                               name:VLCLibraryModelGroupMediaItemAdded
+                             object:nil];
+    [notificationCenter addObserver:self
+                           selector:@selector(libraryModelGroupMediaItemRemoved:)
+                               name:VLCLibraryModelGroupMediaItemRemoved
+                             object:nil];
+    [notificationCenter addObserver:self
+                           selector:@selector(libraryModelGroupMetadataUpdated:)
+                               name:VLCLibraryModelGroupMetadataUpdated
+                             object:nil];
 
     [self reloadData];
 }
@@ -94,6 +106,48 @@
         // the master table view has changed after reloading the target index. In this case, we want
         // to reselect. If the selection has been maintained then we need to reload the detail table
         // view.
+        if (rowIndex == selectedMasterRow && self.masterTableView.selectedRow != selectedMasterRow) {
+            [self.masterTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:selectedMasterRow]
+                              byExtendingSelection:NO];
+        } else {
+            [self.detailTableView reloadData];
+        }
+    }
+}
+
+- (void)libraryModelGroupMediaItemAdded:(NSNotification *)notification
+{
+    [self.collectionView reloadData];
+    [self reloadTableViewData:notification];
+}
+
+- (void)libraryModelGroupMediaItemRemoved:(NSNotification *)notification
+{
+    [self.collectionView reloadData];
+    [self reloadTableViewData:notification];
+}
+
+- (void)libraryModelGroupMetadataUpdated:(NSNotification *)notification
+{
+    VLCMediaLibraryGroup * const group = notification.object;
+    NSIndexPath * const indexPath = [self indexPathForLibraryItem:group];
+
+    if (indexPath != nil) {
+        [self.collectionView reloadItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
+    }
+    
+    [self reloadTableViewData:notification];
+}
+
+- (void)reloadTableViewData:(NSNotification *)notification
+{
+    VLCMediaLibraryGroup * const group = notification.object;
+    const NSInteger rowIndex = [self rowForLibraryItem:group];
+    if (rowIndex != NSNotFound) {
+        const NSInteger selectedMasterRow = self.masterTableView.selectedRow;
+        [self.masterTableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:rowIndex]
+                                        columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+
         if (rowIndex == selectedMasterRow && self.masterTableView.selectedRow != selectedMasterRow) {
             [self.masterTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:selectedMasterRow]
                               byExtendingSelection:NO];
