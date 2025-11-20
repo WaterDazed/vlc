@@ -486,9 +486,13 @@ static int ModuleThread_UpdateAudioFormat( decoder_t *p_dec )
 {
     vlc_input_decoder_t *p_owner = dec_get_owner( p_dec );
 
+    audio_sample_format_t preparedformat = p_dec->fmt_out.audio;
+    preparedformat.i_format = p_dec->fmt_out.i_codec;
+    aout_FormatPrepare( &preparedformat );
+
     if( p_owner->p_aout &&
-       ( !AOUT_FMTS_IDENTICAL(&p_dec->fmt_out.audio, &p_owner->fmt.audio) ||
-         p_dec->fmt_out.i_codec != p_dec->fmt_out.audio.i_format ||
+       ( !AOUT_FMTS_IDENTICAL(&preparedformat, &p_owner->fmt.audio) ||
+         p_dec->fmt_out.i_codec != p_owner->fmt.audio.i_format ||
          p_dec->fmt_out.i_profile != p_owner->fmt.i_profile ) )
     {
         audio_output_t *p_aout = p_owner->p_aout;
@@ -503,6 +507,8 @@ static int ModuleThread_UpdateAudioFormat( decoder_t *p_dec )
 
         input_resource_PutAout( p_owner->p_resource, p_aout );
     }
+
+    p_dec->fmt_out.audio = preparedformat;
 
     /* Check if only replay gain has changed */
     if( replay_gain_Compare( &p_dec->fmt_in->audio_replay_gain,
