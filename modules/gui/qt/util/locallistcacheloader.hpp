@@ -31,9 +31,9 @@ class LocalListCacheLoaderObj: public QObject
     Q_OBJECT
 
 protected:
-    inline size_t runTaskAsync(std::function<void(size_t taskId)> task)
+    inline ThreadRunner::TaskId runTaskAsync(std::function<void(ThreadRunner::TaskId taskId)> task)
     {
-        size_t taskId = ++m_taskCounter;
+        ThreadRunner::TaskId taskId = ++m_taskCounter;
         m_validTasks.insert(taskId);
 
         QMetaObject::invokeMethod(
@@ -49,8 +49,8 @@ protected:
         return taskId;
     }
 
-    size_t m_taskCounter = 0;
-    std::unordered_set<size_t> m_validTasks = {};
+    ThreadRunner::TaskId m_taskCounter = 0;
+    std::unordered_set<ThreadRunner::TaskId> m_validTasks = {};
 };
 
 /**
@@ -104,25 +104,25 @@ public:
     {
     }
 
-    void cancelTask(size_t taskId) override
+    void cancelTask(ThreadRunner::TaskId taskId) override
     {
         m_validTasks.erase(taskId);
     }
 
-    size_t countTask(std::function<void(size_t taskId, size_t count)> cb) override
+    ThreadRunner::TaskId countTask(std::function<void(ThreadRunner::TaskId taskId, size_t count)> cb) override
     {
-        return runTaskAsync([this, cb](size_t taskId) {
+        return runTaskAsync([this, cb](ThreadRunner::TaskId taskId) {
             if (!updateData())
                 return;
             cb(taskId, m_items.size());
         });
     }
 
-    size_t loadTask(
+    ThreadRunner::TaskId loadTask(
         size_t offset, size_t limit,
-        std::function<void(size_t taskId, std::vector<ItemType>& data)> cb) override
+        std::function<void(ThreadRunner::TaskId taskId, std::vector<ItemType>& data)> cb) override
     {
-         return runTaskAsync([this, offset, limit, cb](size_t taskId) {
+         return runTaskAsync([this, offset, limit, cb](ThreadRunner::TaskId taskId) {
             if (!updateData())
                 return;
             std::vector<ItemType> data;
@@ -142,11 +142,11 @@ public:
         });
     }
 
-    size_t countAndLoadTask(
+    ThreadRunner::TaskId countAndLoadTask(
         size_t offset, size_t limit,
-        std::function<void(size_t taskId, size_t count, std::vector<ItemType>& data)> cb) override
+        std::function<void(ThreadRunner::TaskId taskId, size_t count, std::vector<ItemType>& data)> cb) override
     {
-        return runTaskAsync([this, offset, limit, cb](size_t taskId) {
+        return runTaskAsync([this, offset, limit, cb](ThreadRunner::TaskId taskId) {
             if (!updateData())
                 return;
             std::vector<ItemType> data;

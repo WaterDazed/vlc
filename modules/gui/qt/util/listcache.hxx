@@ -411,8 +411,8 @@ void ListCache<T>::invalidate()
 
     if (m_appendTask)
     {
-        m_loader->cancelTask(m_appendTask);
-        m_appendTask = 0;
+        m_loader->cancelTask(*m_appendTask);
+        m_appendTask.reset();
     }
 
     if (m_countTask)
@@ -531,15 +531,15 @@ template<typename T>
 void ListCache<T>::asyncCountAndLoad()
 {
     if (m_countTask)
-        m_loader->cancelTask(m_countTask);
+        m_loader->cancelTask(*m_countTask);
 
     size_t count = std::max(m_maxReferedIndex, m_chunkSize);
 
     m_countTask = m_loader->countAndLoadTask(m_offset, count,
         //UI thread
-        [this](quint64 taskId, size_t maximumCount, std::vector<ItemType>& list)
+        [this](ThreadRunner::TaskId taskId, size_t maximumCount, std::vector<ItemType>& list)
         {
-            if (m_countTask != taskId)
+            if (*m_countTask != taskId)
                 return;
 
             //quite unlikley but model may change between count and load
@@ -575,7 +575,7 @@ void ListCache<T>::asyncCountAndLoad()
                     emit localSizeChanged(0, m_cachedData->maximumCount);
             }
 
-            m_countTask = 0;
+            m_countTask.reset();
 
             if (m_needReload)
             {
@@ -605,16 +605,16 @@ void ListCache<T>::asyncFetchMore()
         return;
 
     if (m_appendTask)
-        m_loader->cancelTask(m_appendTask);
+        m_loader->cancelTask(*m_appendTask);
 
     m_maxReferedIndex = std::min(m_cachedData->queryCount, m_maxReferedIndex);
     size_t count = ((m_maxReferedIndex - m_cachedData->loadedCount) / m_chunkSize + 1 ) * m_chunkSize;
 
     m_appendTask = m_loader->loadTask(
         m_offset + m_cachedData->loadedCount, count,
-        [this](size_t taskId, std::vector<ItemType>& list)
+        [this](ThreadRunner::TaskId taskId, std::vector<ItemType>& list)
         {
-            if (taskId != m_appendTask)
+            if (taskId != *m_appendTask)
                 return;
 
             assert(m_cachedData);
@@ -628,7 +628,7 @@ void ListCache<T>::asyncFetchMore()
                 emit localDataChanged(updatedOffset, updatedOffset + updatedCount - 1);
             }
 
-            m_appendTask = 0;
+            m_appendTask.reset();
             if (m_maxReferedIndex > m_cachedData->loadedCount)
             {
                 asyncFetchMore();

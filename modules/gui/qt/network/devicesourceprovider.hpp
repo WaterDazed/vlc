@@ -34,6 +34,7 @@
 #include "util/shared_input_item.hpp"
 #include "vlcmediasourcewrapper.hpp"
 #include "util/singleton.hpp"
+#include "../medialibrary/mlthreadpool.hpp"
 
 static inline std::size_t qHash(const SharedInputItem& item, size_t seed = 0) noexcept
 {
@@ -118,7 +119,7 @@ signals:
 
 private:
     MainCtx* m_ctx = nullptr;
-    quint64 m_taskId = 0;
+    std::optional<ThreadRunner::TaskId> m_taskId;
 
     NetworkDeviceModel::SDCatType m_sdSource;
     QString m_sourceName; // '*' -> all sources

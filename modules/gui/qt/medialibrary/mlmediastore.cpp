@@ -62,7 +62,7 @@ void MLMediaStore::insert(const QString &mrl)
             ctx.media = MLMedia(media.get());
     },
     //UI thread
-    [this, mrl](quint64, Ctx &ctx)
+    [this, mrl](ThreadRunner::TaskId, Ctx &ctx)
     {
         if (!ctx.media.valid())
             return; // failed to get media, TODO: notify??
@@ -162,7 +162,7 @@ void MLMediaStore::update(const MLItemId &id)
         ctx.media = media ? MLMedia(media.get()) : MLMedia {};
     },
     //UI thread
-    [this, id](quint64, Ctx &ctx)
+    [this, id](ThreadRunner::TaskId, Ctx &ctx)
     {
         if (!m_mrls.contains(id))
             return; // item was removed?

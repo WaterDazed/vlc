@@ -117,7 +117,7 @@ bool MLBookmarkModel::setData(const QModelIndex &index, const QVariant &value, i
     },
     //UI thread
     [this, updateName, mediaId = m_currentMediaId, row, str]
-    (quint64, Ctx& ctx)
+    (ThreadRunner::TaskId, Ctx& ctx)
     {
         if (!ctx.updateSucceed)
             return;
@@ -410,7 +410,7 @@ void MLBookmarkModel::updateMediaId(uint64_t revision, const QString &mediaUri)
         ctx.newBookmarks.reset( vlc_ml_list_media_bookmarks( ml, &params, ctx.newMLid ) );
     },
     //UI thread
-    [this, revision](quint64, Ctx& ctx) {
+    [this, revision](ThreadRunner::TaskId, Ctx& ctx) {
         bool valid;
         {
             vlc::threads::mutex_locker lock{ m_mutex };
@@ -453,7 +453,7 @@ void MLBookmarkModel::refresh(MLBookmarkModel::RefreshOperation forceClear )
             ctx.newBookmarks.reset( vlc_ml_list_media_bookmarks( ml, &params, mediaId ) );
         },
         //UI thread
-        [this, mediaId](quint64, Ctx& ctx)
+        [this, mediaId](ThreadRunner::TaskId, Ctx& ctx)
         {
             beginResetModel();
             if (m_currentMediaId == mediaId)

@@ -90,7 +90,7 @@
         vlc_ml_playlist_insert(ml, id, mediaIdList.data(), mediaIdList.size(), at);
     },
     //UI thread
-    [this, at](quint64, Ctx& ctx) {
+    [this, at](ThreadRunner::TaskId, Ctx& ctx) {
         insertItemListInCache(std::move(ctx.medias), at);
         m_need_reset = true;
         endTransaction();
@@ -119,7 +119,7 @@ void MLPlaylistModel::moveImpl(int64_t playlistId, HighLowRanges&& ranges)
             ctx.newTo = to - nbElement;
         },
         //UI thread
-        [this, playlistId, high, low, r = std::move(ranges)](quint64, Ctx& ctx) mutable {
+        [this, playlistId, high, low, r = std::move(ranges)](ThreadRunner::TaskId, Ctx& ctx) mutable {
             moveRangeInCache(low, high, r.lowTo);
             r.lowTo = ctx.newTo;
             --r.lowRangeIt;
@@ -139,7 +139,7 @@ void MLPlaylistModel::moveImpl(int64_t playlistId, HighLowRanges&& ranges)
             ctx.newTo = to + nbElement;
         },
         //UI thread
-        [this, playlistId, low, high, r = std::move(ranges)](quint64, Ctx& ctx) mutable {
+        [this, playlistId, low, high, r = std::move(ranges)](ThreadRunner::TaskId, Ctx& ctx) mutable {
             moveRangeInCache(low, high, r.highTo);
             r.highTo = ctx.newTo;
             ++r.highRangeIt;

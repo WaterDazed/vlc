@@ -149,7 +149,7 @@ void MLFoldersBaseModel::updateImpl(vlc_ml_folder_list_t* (*folderListFunc)( vlc
         }
     },
     //UI thread
-    [this](quint64, Ctx& ctx)
+    [this](ThreadRunner::TaskId, Ctx& ctx)
     {
         beginResetModel();
         m_mrls = std::move(ctx.r);

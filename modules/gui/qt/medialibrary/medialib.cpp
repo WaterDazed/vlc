@@ -132,7 +132,7 @@ void MediaLib::addToPlaylist(const MLItemId & itemId, const QStringList &options
         convertMLItemToPlaylistMedias(ml, itemId, options, ctx.medias);
     },
     //UI thread
-    [this](quint64, Context& ctx){
+    [this](ThreadRunner::TaskId, Context& ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, false);
     });
@@ -151,7 +151,7 @@ void MediaLib::addToPlaylist(const QVariantList& itemIdList, const QStringList &
         convertQVariantListToPlaylistMedias(ml, itemIdList, options, ctx.medias);
     },
     //UI thread
-    [this](quint64, Context& ctx){
+    [this](ThreadRunner::TaskId, Context& ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, false);
     });
@@ -172,7 +172,7 @@ void MediaLib::addAndPlay(const MLItemId & itemId, const QStringList &options )
         convertMLItemToPlaylistMedias(ml, itemId, options, ctx.medias);
     },
     //UI thread
-    [this](quint64, Context& ctx){
+    [this](ThreadRunner::TaskId, Context& ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, true);
     });
@@ -206,7 +206,7 @@ void MediaLib::addAndPlay(const QVariantList& itemIdList, const QStringList &opt
         convertQVariantListToPlaylistMedias(ml, itemIdList, options, ctx.medias);
     },
     //UI thread
-    [this](quint64, Context& ctx){
+    [this](ThreadRunner::TaskId, Context& ctx){
         if (!ctx.medias.empty())
             m_playlistController->append(ctx.medias, true);
     });
@@ -225,8 +225,7 @@ void MediaLib::insertIntoPlaylist(const size_t index, const QVariantList &itemId
         convertQVariantListToPlaylistMedias(ml, itemIdList, options, ctx.medias);
     },
     //UI thread
-    [this, index]
-    (quint64, Context& ctx) {
+    [this, index](ThreadRunner::TaskId, Context& ctx) {
         if (!ctx.medias.isEmpty())
             m_playlistController->insert( index, ctx.medias );
     });
@@ -311,7 +310,7 @@ void MediaLib::mlInputItem(const QVector<MLItemId>& itemIdVector, QJSValue callb
         }
     },
     //UI thread
-    [this, it](quint64, Ctx& ctx) mutable
+    [this, it](ThreadRunner::TaskId, Ctx& ctx) mutable
     {
         auto jsEngine = qjsEngine(this);
         if (!jsEngine)
@@ -404,7 +403,7 @@ void MediaLib::onMediaLibraryEvent( void* data, const vlc_ml_event_t* event )
     }
 }
 
-quint64 MediaLib::runOnMLThread(const QObject* obj,
+ThreadRunner::TaskId MediaLib::runOnMLThread(const QObject* obj,
                 std::function< void(vlc_medialibrary_t* ml)> mlCb,
                 std::function< void()> uiCb,
                 const char* queue)
@@ -414,28 +413,28 @@ quint64 MediaLib::runOnMLThread(const QObject* obj,
     [mlCb, ml=m_ml](NoCtx&){
         mlCb(ml);
     },
-    [uiCb](quint64, NoCtx&){
+    [uiCb](ThreadRunner::TaskId, NoCtx&){
         uiCb();
     },
     queue);
 }
 
-quint64 MediaLib::runOnMLThread(const QObject* obj,
+ThreadRunner::TaskId MediaLib::runOnMLThread(const QObject* obj,
                 std::function< void(vlc_medialibrary_t* ml)> mlCb,
-                std::function< void(quint64)> uiCb, const char* queue)
+                std::function< void(ThreadRunner::TaskId)> uiCb, const char* queue)
 {
     struct NoCtx{};
     return m_runner->runOnThread<NoCtx>(obj,
     [mlCb, ml=m_ml](NoCtx&){
         mlCb(ml);
     },
-    [uiCb](quint64 requestId, NoCtx&){
+    [uiCb](ThreadRunner::TaskId requestId, NoCtx&){
         uiCb(requestId);
     },
     queue);
 }
 
-quint64 MediaLib::runOnMLThread(const QObject* obj,
+ThreadRunner::TaskId MediaLib::runOnMLThread(const QObject* obj,
                 std::function< void(vlc_medialibrary_t* ml)> mlCb,
                 const char* queue)
 {
@@ -444,13 +443,12 @@ quint64 MediaLib::runOnMLThread(const QObject* obj,
     [mlCb, ml=m_ml](NoCtx&){
         mlCb(ml);
     },
-    [](quint64, NoCtx&){
+    [](ThreadRunner::TaskId, NoCtx&){
     },
     queue);
 }
 
-void MediaLib::cancelMLTask(const QObject* object, quint64 taskId)
+void MediaLib::cancelMLTask(const QObject* object, ThreadRunner::TaskId taskId)
 {
     m_runner->cancelTask(object, taskId);
 }
-

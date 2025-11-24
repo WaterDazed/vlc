@@ -20,6 +20,7 @@
 #define LISTCACHELOADER_HPP
 
 #include <functional>
+#include "../medialibrary/mlthreadpool.hpp"
 
 /**
  * Provide operations for the list cache to load an count data
@@ -36,14 +37,14 @@ struct ListCacheLoader
 
     virtual ~ListCacheLoader() = default;
 
-    virtual void cancelTask(size_t taskId) = 0;
-    virtual size_t countTask(std::function<void(size_t taskId, size_t count)> cb) = 0;
-    virtual size_t loadTask(
+    virtual void cancelTask(ThreadRunner::TaskId taskId) = 0;
+    virtual ThreadRunner::TaskId countTask(std::function<void(ThreadRunner::TaskId taskId, size_t count)> cb) = 0;
+    virtual ThreadRunner::TaskId loadTask(
         size_t offset, size_t limit,
-        std::function<void(size_t taskId, std::vector<T>& data)>) = 0;
-    virtual size_t countAndLoadTask(
+        std::function<void(ThreadRunner::TaskId taskId, std::vector<T>& data)>) = 0;
+    virtual ThreadRunner::TaskId countAndLoadTask(
         size_t offset, size_t limit,
-        std::function<void(size_t taskId, size_t count, std::vector<T>& data)> cb) = 0;
+        std::function<void(ThreadRunner::TaskId taskId, size_t count, std::vector<T>& data)> cb) = 0;
 };
 
 #endif

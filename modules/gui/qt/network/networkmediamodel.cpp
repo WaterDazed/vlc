@@ -247,7 +247,7 @@ public:
                         ctx.succeed = (ret == VLC_SUCCESS);
                     },
                     //UI thread
-                    [this, uri](quint64, Ctx& ctx){
+                    [this, uri](ThreadRunner::TaskId, Ctx& ctx){
                         if (!ctx.succeed)
                             return;
 
@@ -393,7 +393,7 @@ public:
                         ctx.succeed = (ret == VLC_SUCCESS);
                     },
                     //ML thread
-                    [this](quint64,Ctx& ctx){
+                    [this](ThreadRunner::TaskId,Ctx& ctx){
                         Q_Q(NetworkMediaModel);
                         if (!ctx.succeed)
                             return;
@@ -655,7 +655,7 @@ bool NetworkMediaModel::setData( const QModelIndex& idx, const QVariant& value, 
         ctx.succeed = res == VLC_SUCCESS;
     },
     //UI thread
-    [this, uri, enabled](qint64, Ctx& ctx){
+    [this, uri, enabled](ThreadRunner::TaskId, Ctx& ctx){
         Q_D(NetworkMediaModel);
         if (!ctx.succeed)
             return;
@@ -690,7 +690,7 @@ void NetworkMediaModel::setIndexed(bool indexed)
         ctx.success = (res == VLC_SUCCESS);
     },
     //UI thread
-    [this, indexed](quint64, Ctx& ctx){
+    [this, indexed](ThreadRunner::TaskId, Ctx& ctx){
         if (ctx.success)
         {
             d_func()->m_indexed = indexed;

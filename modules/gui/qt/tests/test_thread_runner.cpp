@@ -539,7 +539,7 @@ private slots:
             },
             "samequeue");
 
-        quint64 task2 = runner->runOnThread<Ctx>(
+        ThreadRunner::TaskId task2 = runner->runOnThread<Ctx>(
             dummy.get(),
             [&task2ret](Ctx&) {
                 //this should not be executed
@@ -571,7 +571,7 @@ private slots:
 
         TaskStatus taskRet = PENDING;
 
-        quint64 taskId = runner->runOnThread<Ctx>(
+        ThreadRunner::TaskId taskId = runner->runOnThread<Ctx>(
             dummy.get(),
             [&barrierPre, &barrierPost, &taskRet](Ctx&) {
                 if (!barrierPre.wait(TASK_TIMEOUT))
@@ -611,7 +611,7 @@ private slots:
 
         TaskStatus taskRet = PENDING;
 
-        quint64 taskId = runner->runOnThread<Ctx>(
+        ThreadRunner::TaskId taskId = runner->runOnThread<Ctx>(
             dummy.get(),
             [&barrierPre, &barrierPost, &taskRet](Ctx&) {
                 if (!barrierPre.wait(TASK_TIMEOUT))

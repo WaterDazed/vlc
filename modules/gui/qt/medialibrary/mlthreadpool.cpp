@@ -116,7 +116,7 @@ void ThreadRunner::processQueueLocked(const QString& queueName)
             if (task->autoDelete())
                 delete task;
         },
-        [this, queueName](quint64, const Ctx&){
+        [this, queueName](ThreadRunner::TaskId, const Ctx&){
              QMutexLocker lock(&m_serialTaskLock);
              processQueueLocked(queueName);
         });
@@ -135,7 +135,7 @@ void ThreadRunner::destroy()
     for (auto taskIt = m_objectTasks.begin(); taskIt != m_objectTasks.end(); /**/)
     {
         const QObject* object = taskIt.key();
-        quint64 key = taskIt.value();
+        ThreadRunner::TaskId key = taskIt.value();
         auto task = m_runningTasks.value(key, nullptr);
         if (tryTake(task))
         {
@@ -155,7 +155,7 @@ void ThreadRunner::destroy()
     }
 }
 
-void ThreadRunner::cancelTask(const QObject* object, quint64 taskId)
+void ThreadRunner::cancelTask(const QObject* object, ThreadRunner::TaskId taskId)
 {
     assert(taskId != 0);
     QMutexLocker locker{&m_lock};
@@ -173,7 +173,7 @@ void ThreadRunner::cancelTask(const QObject* object, quint64 taskId)
         disconnect(object, &QObject::destroyed, this, &ThreadRunner::runOnThreadTargetDestroyed);
 }
 
-void ThreadRunner::runOnThreadDone(RunOnThreadBaseRunner* runner, quint64 target, const QObject* object, int status)
+void ThreadRunner::runOnThreadDone(RunOnThreadBaseRunner* runner, ThreadRunner::TaskId target, const QObject* object, int status)
 {
     QMutexLocker locker{&m_lock};
     if (!m_runningTasks.contains(target))
