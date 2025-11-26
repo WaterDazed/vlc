@@ -203,7 +203,6 @@ private slots:
         ThreadRunner* runner = getRunner();
 
         std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
-        QMutex mutex;
 
         Barrier barrierPre(3);
 
@@ -213,7 +212,7 @@ private slots:
         runner->runOnThread<Ctx>(
             dummy.get(),
             //T1
-            [&mutex, &barrierPre, &ret1](Ctx&) {
+            [&barrierPre, &ret1](Ctx&) {
                 if (!barrierPre.wait(TASK_TIMEOUT))
                 {
                     ret1 = FAILED;
