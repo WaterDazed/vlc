@@ -29,6 +29,22 @@ ifdef HAVE_WIN32
 LIBARCHIVE_CONF += -DENABLE_OPENSSL=OFF
 endif
 
+ifdef HAVE_DARWIN_OS
+# CMake looks in non-standard locations, causing it to
+# link against Homebrew or MacPorts installed libraries
+# without actually properly setting the linker search path.
+# There is seemingly no way to disable this helpful
+# "feature" so just disable all default-enabled libs on Darwin
+LIBARCHIVE_CONF += \
+	-DENABLE_LZ4=OFF \
+	-DENABLE_LIBB2=OFF \
+	-DENABLE_OPENSSL=OFF \
+	-DENABLE_ZSTD=OFF \
+	-DENABLE_BZip2=OFF \
+	-DENABLE_PCREPOSIX=OFF \
+	-DENABLE_PCRE2POSIX=OFF
+endif
+
 $(TARBALLS)/libarchive-$(LIBARCHIVE_VERSION).tar.gz:
 	$(call download_pkg,$(LIBARCHIVE_URL),libarchive)
 
