@@ -1,5 +1,5 @@
 # ZSTD
-ZSTD_VERSION := 1.5.5
+ZSTD_VERSION := 1.5.7
 ZSTD_URL := $(GITHUB)/facebook/zstd/releases/download/v$(ZSTD_VERSION)/zstd-$(ZSTD_VERSION).tar.gz
 
 PKGS += zstd
@@ -17,6 +17,7 @@ zstd: zstd-$(ZSTD_VERSION).tar.gz .sum-zstd
 	$(MOVE)
 
 ZSTD_CONF = -DZSTD_BUILD_STATIC=ON \
+			-DZSTD_BUILD_SHARED=OFF \
 			-DZSTD_BUILD_PROGRAMS=OFF
 
 .zstd: zstd toolchain.cmake
