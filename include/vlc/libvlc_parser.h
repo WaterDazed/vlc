@@ -22,6 +22,7 @@
 #define VLC_LIBVLC_PARSER_H 1
 
 #include <vlc/libvlc.h>
+#include <vlc/libvlc_picture.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -38,6 +39,7 @@ typedef struct libvlc_parser_t libvlc_parser_t;
 
 typedef struct libvlc_media_t libvlc_media_t;
 typedef struct libvlc_picture_list_t libvlc_picture_list_t;
+typedef struct libvlc_picture_t libvlc_picture_t;
 typedef enum libvlc_media_parsed_status_t libvlc_media_parsed_status_t;
 typedef enum libvlc_picture_type_t libvlc_picture_type_t;
 
@@ -47,10 +49,16 @@ typedef enum libvlc_picture_type_t libvlc_picture_type_t;
 typedef struct libvlc_parser_request_t libvlc_parser_request_t;
 
 /**
- * Opaque handle of a parsing task.
+ * A thumbnailer request object
+ */
+typedef struct libvlc_thumbnailer_request_t libvlc_thumbnailer_request_t;
+
+/**
+ * Opaque handle of a parsing/thumbnailing task.
  *
- * Identifies a task request submitted via libvlc_parser_queue().
- * It can be passed to libvlc_parser_cancel_request() to cancel that request.
+ * Identifies a task request submitted via libvlc_parser_queue()
+ * or libvlc_parser_queue_thumbnailing(). It can be passed to
+ * libvlc_parser_cancel_request() to cancel that request.
  *
  * \note Validity starts when a submit function returns a non-NULL handle
  * and ends with libvlc_parser_task_release().
@@ -81,6 +89,30 @@ typedef enum libvlc_media_parse_flag_t
      */
     libvlc_media_do_interact = 0x08,
 } libvlc_media_parse_flag_t;
+
+/**
+ * Thumbnailer seek type
+ */
+typedef enum libvlc_thumbnailer_seek_type_t
+{
+    /** Don't seek (default) */
+    libvlc_thumbnailer_seek_none,
+    /** Seek by time */
+    libvlc_thumbnailer_seek_time,
+    /** Seek by position */
+    libvlc_thumbnailer_seek_pos,
+} libvlc_thumbnailer_seek_type_t;
+
+/**
+ * Thumbnailer seek speed
+ */
+typedef enum libvlc_thumbnailer_seek_speed_t
+{
+    /** Precise, but potentially slow */
+    libvlc_media_thumbnail_seek_precise,
+    /** Fast, but potentially imprecise */
+    libvlc_media_thumbnail_seek_fast,
+} libvlc_thumbnailer_seek_speed_t;
 
 /**
  * struct defining callbacks for libvlc_parser_queue
@@ -161,6 +193,124 @@ struct libvlc_parser_request_t
 };
 
 /**
+ * struct defining callbacks for libvlc_parser_queue_thumbnailing
+ */
+struct libvlc_thumbnailer_cbs
+{
+/**
+ * Initial version of the struct defining callbacks for
+ * libvlc_parser_queue_thumbnailing
+ */
+#define LIBVLC_THUMBNAILER_CBS_VER_0 0
+#define LIBVLC_THUMBNAILER_CBS_VER_LATEST LIBVLC_THUMBNAILER_CBS_VER_0
+
+    /**
+     * Version of struct libvlc_thumbnailer_cbs
+     */
+    uint32_t version;
+
+    /**
+     * Callback prototype that notify when a thumbnailer request finishes
+     *
+     * \note Mandatory (can't be NULL),
+     * available since \ref LIBVLC_THUMBNAILER_CBS_VER_0
+     *
+     * \param opaque opaque pointer set in cbs_opaque
+     * \param task opaque handle returned by libvlc_parser_queue_thumbnailing()
+     * \param picture generated thumbnail, the picture is only valid from this
+     * callback, it can be held separately with libvlc_picture_retain().
+     * NULL in case of an error, timeout or request was cancelled.
+     */
+    void (*on_ended)( void *opaque, libvlc_parser_task *task, libvlc_picture_t *picture );
+};
+
+/**
+ * struct defining a thumbnailer request
+ */
+struct libvlc_thumbnailer_request_t
+{
+/**
+ * Initial version of libvlc_thumbnailer_request_t
+ */
+#define LIBVLC_THUMBNAILER_REQUEST_VER_0 0
+#define LIBVLC_THUMBNAILER_REQUEST_VER_LATEST LIBVLC_THUMBNAILER_REQUEST_VER_0
+
+    /**
+     * Version of libvlc_thumbnailer_request_t
+     */
+    uint32_t version;
+
+    /**
+     * Media source of the thumbnail
+     */
+    libvlc_media_t *media;
+
+    /**
+     * Thumbnail width (0 by default)
+     * \note The resulting thumbnail size can either be:
+     * 
+     * - Hardcoded by providing both width & height. In which case, the image will
+     *   be stretched to match the provided aspect ratio, or cropped if crop is true.
+     * 
+     * - Derived from the media aspect ratio if only width or height is provided and
+     *   the other one is set to 0.
+     * 
+     * - Of the same size as the media if both width and height are set to 0.
+     */
+    unsigned int width;
+
+    /**
+     * Thumbnail height (0 by default)
+     * \note The resulting thumbnail size can either be:
+     * 
+     * - Hardcoded by providing both width & height. In which case, the image will
+     *   be stretched to match the provided aspect ratio, or cropped if crop is true.
+     * 
+     * - Derived from the media aspect ratio if only width or height is provided and
+     *   the other one is set to 0.
+     * 
+     * - Of the same size as the media if both width and height are set to 0.
+     */
+    unsigned int height;
+
+    /**
+     * True to enable crop (false by default)
+     */
+    bool crop;
+
+    /**
+     * Picture type
+     */
+    libvlc_picture_type_t type;
+
+    /**
+     * Seek parameters
+     */
+    struct
+    {
+        /**
+         * by time or by position
+         */
+        libvlc_thumbnailer_seek_type_t type;
+        union
+        {
+            /** Seek time, only use if type == libvlc_thumbnailer_seek_time */
+            libvlc_time_t time;
+            /** Seek position, only use if type == libvlc_thumbnailer_seek_pos */
+            double pos;
+        };
+
+        /** precise or fast mode */
+        libvlc_thumbnailer_seek_speed_t speed;
+    } seek;
+
+    /**
+     * True to enable hardware decoder (false by default)
+     */
+    bool hw_dec;
+};
+
+/**
  * struct defining parser configuration
  */
 struct libvlc_parser_cfg
@@ -181,6 +331,12 @@ struct libvlc_parser_cfg
      * (1 thread)
      */
     uint32_t max_parser_threads;
+
+    /**
+     * The maximum number of threads used by the thumbnailer, 0 for default
+     * (1 thread)
+     */
+    uint32_t max_thumbnailer_threads;
 
     /**
      * Timeout of the parser in ms, 0 for no limits.
@@ -234,10 +390,34 @@ libvlc_parser_queue(libvlc_parser_t *parser, const libvlc_parser_request_t *req,
                     const struct libvlc_parser_cbs *cbs, void *cbs_opaque);
 
 /**
+ * Generate a thumbnail asynchronously
+ *
+ * \note It is possible to cancel the request with
+ * libvlc_parser_cancel_request()
+ *
+ * If the request is successfully queued, the \ref
+ * libvlc_thumbnailer_cbs.on_ended callback is guaranteed to be called
+ *
+ * \param parser the parser
+ * \param req a pointer to a valid request struct
+ * \param cbs a pointer to a valid callbacks struct
+ * \param cbs_opaque an opaque pointer to be passed to the callbacks
+ * \return NULL in case of error, or a valid handle if the item was
+ * scheduled for thumbnailing. If this returns an error, the \ref
+ * libvlc_thumbnailer_cbs.on_ended callback will *not* be called.
+ * \version LibVLC 4.0.0 or later
+ */
+LIBVLC_API libvlc_parser_task *
+libvlc_parser_queue_thumbnailing(libvlc_parser_t *parser,
+                                 const libvlc_thumbnailer_request_t *req,
+                                 const struct libvlc_thumbnailer_cbs *cbs,
+                                 void *cbs_opaque);
+
+/**
  * Cancel a parser request
  *
  * \param parser the parser
- * \param task A parser task returned by libvlc_parser_queue(),
+ * \param task A parser task returned by libvlc_parser_queue(), libvlc_parser_queue_thumbnailing()
  * or NULL to cancel all requests.
  * \return the number of requests cancelled
  *
@@ -255,7 +435,7 @@ LIBVLC_API size_t libvlc_parser_cancel_request(libvlc_parser_t *parser,
 /**
  * Fetch the media associated with the task handle.
  *
- * \param task A parser task returned by libvlc_parser_queue()
+ * \param task A parser task returned by libvlc_parser_queue() or libvlc_parser_queue_thumbnailing()
  * \return libvlc_media_t associated with the task
  *
  * \note The returned media is held by the task, it must not be
@@ -274,7 +454,7 @@ libvlc_parser_task_get_media(libvlc_parser_task *task);
  *
  * - Mandatory to call to avoid memory leaks.
  *
- * - It is safe to call this API from within the on_parsed callback.
+ * - It is safe to call this API from within the on_parsed/on_ended callback.
  *
  * - The task handle should not be used after calling this function.
  *
@@ -282,104 +462,6 @@ libvlc_parser_task_get_media(libvlc_parser_task *task);
  *   use libvlc_parser_cancel_request() for that.
  */
 LIBVLC_API void libvlc_parser_task_release(libvlc_parser_task *task);
-
-/**
- * \brief libvlc_media_thumbnail_request_t An opaque thumbnail request object
- */
-typedef struct libvlc_media_thumbnail_request_t libvlc_media_thumbnail_request_t;
-
-typedef enum libvlc_thumbnailer_seek_speed_t
-{
-    libvlc_media_thumbnail_seek_precise,
-    libvlc_media_thumbnail_seek_fast,
-} libvlc_thumbnailer_seek_speed_t;
-
-/**
- * \brief libvlc_media_request_thumbnail_by_time Start an asynchronous thumbnail generation
- *
- * If the request is successfully queued, the libvlc_MediaThumbnailGenerated is
- * guaranteed to be emitted (except if the request is destroyed early by the
- * user).
- * The resulting thumbnail size can either be:
- * - Hardcoded by providing both width & height. In which case, the image will
- *   be stretched to match the provided aspect ratio, or cropped if crop is true.
- * - Derived from the media aspect ratio if only width or height is provided and
- *   the other one is set to 0.
- *
- * \param inst LibVLC instance to generate the thumbnail with
- * \param md media descriptor object
- * \param time The time at which the thumbnail should be generated
- * \param speed The seeking speed \sa{libvlc_thumbnailer_seek_speed_t}
- * \param width The thumbnail width
- * \param height the thumbnail height
- * \param crop Should the picture be cropped to preserve source aspect ratio
- * \param picture_type The thumbnail picture type \sa{libvlc_picture_type_t}
- * \param timeout A timeout value in ms, or 0 to disable timeout
- *
- * \return A valid opaque request object, or NULL in case of failure.
- * It must be released by libvlc_media_thumbnail_request_destroy() and
- * can be cancelled by calling it early.
- *
- * \version libvlc 4.0 or later
- *
- * \see libvlc_picture_t
- * \see libvlc_picture_type_t
- */
-LIBVLC_API libvlc_media_thumbnail_request_t*
-libvlc_media_thumbnail_request_by_time( libvlc_instance_t *inst,
-                                        libvlc_media_t *md, libvlc_time_t time,
-                                        libvlc_thumbnailer_seek_speed_t speed,
-                                        unsigned int width, unsigned int height,
-                                        bool crop, libvlc_picture_type_t picture_type,
-                                        libvlc_time_t timeout );
-
-/**
- * \brief libvlc_media_request_thumbnail_by_pos Start an asynchronous thumbnail generation
- *
- * If the request is successfully queued, the libvlc_MediaThumbnailGenerated is
- * guaranteed to be emitted (except if the request is destroyed early by the
- * user).
- * The resulting thumbnail size can either be:
- * - Hardcoded by providing both width & height. In which case, the image will
- *   be stretched to match the provided aspect ratio, or cropped if crop is true.
- * - Derived from the media aspect ratio if only width or height is provided and
- *   the other one is set to 0.
- *
- * \param inst LibVLC instance to generate the thumbnail with
- * \param md media descriptor object
- * \param pos The position at which the thumbnail should be generated
- * \param speed The seeking speed \sa{libvlc_thumbnailer_seek_speed_t}
- * \param width The thumbnail width
- * \param height the thumbnail height
- * \param crop Should the picture be cropped to preserve source aspect ratio
- * \param picture_type The thumbnail picture type \sa{libvlc_picture_type_t}
- * \param timeout A timeout value in ms, or 0 to disable timeout
- *
- * \return A valid opaque request object, or NULL in case of failure.
- * It must be released by libvlc_media_thumbnail_request_destroy().
- *
- * \version libvlc 4.0 or later
- *
- * \see libvlc_picture_t
- * \see libvlc_picture_type_t
- */
-LIBVLC_API libvlc_media_thumbnail_request_t*
-libvlc_media_thumbnail_request_by_pos( libvlc_instance_t *inst,
-                                       libvlc_media_t *md, double pos,
-                                       libvlc_thumbnailer_seek_speed_t speed,
-                                       unsigned int width, unsigned int height,
-                                       bool crop, libvlc_picture_type_t picture_type,
-                                       libvlc_time_t timeout );
-
-/**
- * @brief libvlc_media_thumbnail_destroy destroys a thumbnail request
- * @param p_req An opaque thumbnail request object.
- *
- * This will also cancel the thumbnail request, no events will be emitted after
- * this call.
- */
-LIBVLC_API void
-libvlc_media_thumbnail_request_destroy( libvlc_media_thumbnail_request_t *p_req );
 
 /** @} */
 
