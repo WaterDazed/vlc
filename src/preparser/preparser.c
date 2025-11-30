@@ -935,12 +935,6 @@ input_item_t *vlc_preparser_req_GetItem(vlc_preparser_req *req)
     return req->item;
 }
 
-void vlc_preparser_SetTimeout( vlc_preparser_t *preparser,
-                               vlc_tick_t timeout )
-{
-    preparser->timeout = timeout;
-}
-
 void vlc_preparser_req_Release( vlc_preparser_req *req )
 {
     assert(req != NULL);
