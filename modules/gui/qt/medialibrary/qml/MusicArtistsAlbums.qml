@@ -41,10 +41,6 @@ Widgets.PageExt {
     property alias model: artistModel
     property alias selectionModel: selectionModel
 
-    property alias searchPattern: albumSubView.searchPattern
-    property alias sortOrder: albumSubView.sortOrder
-    property alias sortCriteria: albumSubView.sortCriteria
-
     property alias currentIndex: artistList.currentIndex
     property alias currentAlbumIndex: albumSubView.currentIndex
 
@@ -372,6 +368,9 @@ Widgets.PageExt {
 
             Layout.fillHeight: true
             Layout.fillWidth: true
+
+            search: root.search
+            sort: root.sort
 
             enableBeginningFade: root.enableBeginningFade
             enableEndFade: root.enableEndFade

@@ -129,9 +129,9 @@ Widgets.PageExt {
 
                 property var model: MLVideoModel {
                     ml: MediaLib
-                    searchPattern: MainCtx.search.pattern
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
+                    searchPattern: root.search.pattern
+                    sortOrder: root.sort.order
+                    sortCriteria: root.sort.criteria
                 }
 
                 property var gridLabels: videoAll.getLabel
@@ -169,9 +169,9 @@ Widgets.PageExt {
 
                 property var model: MLVideoGroupsModel {
                     ml: MediaLib
-                    searchPattern: MainCtx.search.pattern
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
+                    searchPattern: root.search.pattern
+                    sortOrder: root.sort.order
+                    sortCriteria: root.sort.criteria
                 }
 
                 property string sectionProperty: {
@@ -232,9 +232,9 @@ Widgets.PageExt {
 
                 property var model: MLVideoFoldersModel {
                     ml: MediaLib
-                    searchPattern: MainCtx.search.pattern
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
+                    searchPattern: root.search.pattern
+                    sortOrder: root.sort.order
+                    sortCriteria: root.sort.criteria
                 }
 
                 property string sectionProperty: {

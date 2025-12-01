@@ -53,46 +53,8 @@ FocusScope {
 
     property bool isSearchable: true
 
-    property string searchPattern
-    property int sortOrder
-    property string sortCriteria
-
-    readonly property MLBaseModel _effectiveModel: MainCtx.gridView ? albumModel : trackModel
-
-    onSearchPatternChanged: {
-        _effectiveModel.searchPattern = root.searchPattern
-    }
-
-    onSortOrderChanged: {
-        _effectiveModel.sortOrder = root.sortOrder
-    }
-
-    onSortCriteriaChanged: {
-        // FIXME: Criteria is set to empty for a brief period during initialization,
-        //        call later prevents setting the criteria empty.
-        Qt.callLater(() => {
-            _effectiveModel.sortCriteria = root.sortCriteria
-        })
-    }
-
-    Connections {
-        target: root._effectiveModel
-
-        function onSearchPatternChanged() {
-            if (root.searchPattern !== root._effectiveModel.searchPattern)
-                root.searchPattern = root._effectiveModel.searchPattern
-        }
-
-        function onSortOrderChanged() {
-            if (root.sortOrder !== root._effectiveModel.sortOrder)
-                root.sortOrder = root._effectiveModel.sortOrder
-        }
-
-        function onSortCriteriaChanged() {
-            if (root.sortCriteria !== root._effectiveModel.sortCriteria)
-                root.sortCriteria = root._effectiveModel.sortCriteria
-        }
-    }
+    required property SearchCtx search
+    required property SortCtx sort
 
     property SortMenu sortMenu: null
 
@@ -386,6 +348,9 @@ FocusScope {
 
                 sortMenu: root.sortMenu
 
+                search: root.search
+                sort: root.sort
+
                 leftPadding: root._contentLeftMargin
                 rightPadding: root._contentRightMargin
                 bottomPadding: VLCStyle.layoutTitle_bottom_padding -
@@ -487,6 +452,10 @@ FocusScope {
         ml: MediaLib
         parentId: artistId
 
+        searchPattern: root.search.pattern
+        sortOrder: root.sort.order
+        sortCriteria: root.sort.criteria
+
         onCountChanged: {
             if (albumModel.count > 0 && !albumSelectionModel.hasSelection) {
                 root.resetFocus()
@@ -515,6 +484,10 @@ FocusScope {
 
         ml: MediaLib
         parentId: albumModel.parentId
+
+        searchPattern: root.search.pattern
+        sortOrder: root.sort.order
+        sortCriteria: root.sort.criteria
     }
 
     MLContextMenu {

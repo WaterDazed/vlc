@@ -32,9 +32,9 @@ Widgets.PageExt {
     MusicAlbums {
         anchors.fill: parent
 
-        searchPattern: MainCtx.search.pattern
-        sortCriteria: MainCtx.sort.criteria
-        sortOrder: MainCtx.sort.order
+        searchPattern: root.search.pattern
+        sortCriteria: root.sort.criteria
+        sortOrder: root.sort.order
 
 
         displayMarginBeginning: root.displayMarginBeginning

@@ -57,6 +57,7 @@ Widgets.PageLoader {
         id: componentAll
 
         Widgets.PageExt {
+            id: playlistPage
 
             title: qsTr("Playlists")
 
@@ -66,9 +67,9 @@ Widgets.PageLoader {
 
                 isMusic: true
 
-                searchPattern: MainCtx.search.pattern
-                sortOrder: MainCtx.sort.order
-                sortCriteria: MainCtx.sort.criteria
+                searchPattern: playlistPage.search.pattern
+                sortOrder: playlistPage.sort.order
+                sortCriteria: playlistPage.sort.criteria
 
                 displayMarginBeginning: root.displayMarginBeginning
                 displayMarginEnd: root.displayMarginEnd
@@ -93,9 +94,9 @@ Widgets.PageLoader {
 
             isMusic: true
 
-            searchPattern: MainCtx.search.pattern
-            sortOrder: MainCtx.sort.order
-            sortCriteria: MainCtx.sort.criteria
+            searchPattern: playlist.search.pattern
+            sortOrder: playlist.sort.order
+            sortCriteria: playlist.sort.criteria
 
             displayMarginBeginning: root.displayMarginBeginning
             displayMarginEnd: root.displayMarginEnd
