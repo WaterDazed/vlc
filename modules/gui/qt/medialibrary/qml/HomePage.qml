@@ -156,12 +156,7 @@ Widgets.PageExt {
             anchors.leftMargin: flickable._hasMedias ? newMediaRow.contentLeftMargin : 0
 
             Navigation.parentItem: root
-            Navigation.downAction: function() {
-                if (continueWatchingRow.visible)
-                    continueWatchingRow.setCurrentItemFocus(Qt.TabFocusReason)
-                else
-                    continueWatchingRow.Navigation.defaultNavigationDown()
-            }
+            Navigation.downItem: mediaRows
 
             onActiveFocusChanged: {
                 contentYBehavior.enabled = true
@@ -170,7 +165,7 @@ Widgets.PageExt {
             }
         }
 
-        Column {
+        Widgets.NavigableCol {
             id: mediaRows
 
             anchors.top: coneNButtons.bottom
@@ -181,6 +176,17 @@ Widgets.PageExt {
 
             Navigation.parentItem: root
             Navigation.upItem: coneNButtons
+
+            Widgets.ViewHeader {
+                visible: continueWatchingRow.visible
+                text: qsTr("Continue Watching")
+                view: continueWatchingRow
+                seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.model.count
+
+                onSeeAllButtonClicked: function (reason) {
+                    root.seeAllButtonClicked("continueWatching", reason)
+                }
+            }
 
             VideoAll {
                 id: continueWatchingRow
@@ -210,12 +216,6 @@ Widgets.PageExt {
                 listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
-                Navigation.downAction: function() {
-                    if (favoritesRow.visible)
-                        favoritesRow.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        favoritesRow.Navigation.defaultNavigationDown()
-                }
 
                 model: MLRecentVideoModel {
                     ml: MediaLib
@@ -228,32 +228,10 @@ Widgets.PageExt {
                     limit: MainCtx.gridView ? Math.max(continueWatchingRow.currentItem?.nbItemPerRow ?? null, 1) : 5
                 }
 
-                header: Widgets.ViewHeader {
-                    view: continueWatchingRow
-
-                    text: qsTr("Continue Watching")
-
-                    seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.model.count
-
-                    Navigation.parentItem: continueWatchingRow
-                    Navigation.downAction: function () {
-                        if (continueWatchingRow.currentItem?.setCurrentItemFocus)
-                            continueWatchingRow.currentItem.setCurrentItemFocus(Qt.TabFocusReason)
-                    }
-
-                    Component.onCompleted: {
-                        seeAllButtonClicked.connect(continueWatchingRow.seeAllButtonClicked)
-                    }
-                }
-
                 contextMenu: MLContextMenu {
                     model: continueWatchingRow.model
 
                     showPlayAsAudioAction: true
-                }
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("continueWatching", reason)
                 }
 
                 onActiveFocusChanged: {
@@ -274,6 +252,17 @@ Widgets.PageExt {
                             contentYBehavior.enabled = false
                         }
                     }
+                }
+            }
+
+            Widgets.ViewHeader {
+                visible: favoritesRow.visible
+                text: qsTr("Continue Watching")
+                view: favoritesRow
+                seeAllButton.visible: favoritesRow.model.maximumCount > favoritesRow.model.count
+
+                onSeeAllButtonClicked: function (reason) {
+                    root.seeAllButtonClicked("favorites", reason)
                 }
             }
 
@@ -305,18 +294,6 @@ Widgets.PageExt {
                 listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
-                Navigation.upAction: function() {
-                    if (continueWatchingRow.visible)
-                        continueWatchingRow.setCurrentItemFocus(Qt.BacktabFocusReason)
-                    else
-                        continueWatchingRow.Navigation.defaultNavigationUp()
-                }
-                Navigation.downAction: function() {
-                    if (newMediaRow.visible)
-                        newMediaRow.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        newMediaRow.Navigation.defaultNavigationDown()
-                }
 
                 model: MLMediaModel {
                     favoriteOnly: true
@@ -329,12 +306,6 @@ Widgets.PageExt {
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(favoritesRow.currentItem?.nbItemPerRow ?? null, 1) : 5
-                }
-
-                headerText: qsTr("Favorites")
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("favorites", reason)
                 }
 
                 onActiveFocusChanged: {
@@ -355,6 +326,17 @@ Widgets.PageExt {
                             contentYBehavior.enabled = true
                         }
                     }
+                }
+            }
+
+            Widgets.ViewHeader {
+                text: qsTr("New Medias")
+                visible: newMediaRow.visible
+                view: newMediaRow
+                seeAllButton.visible: newMediaRow.model.maximumCount > newMediaRow.model.count
+
+                onSeeAllButtonClicked: function (reason) {
+                    root.seeAllButtonClicked("newMedia", reason)
                 }
             }
 
@@ -386,12 +368,6 @@ Widgets.PageExt {
                 listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
-                Navigation.upAction: function() {
-                    if (favoritesRow.visible)
-                        favoritesRow.setCurrentItemFocus(Qt.BacktabFocusReason)
-                    else
-                        favoritesRow.Navigation.defaultNavigationUp()
-                }
 
                 model: MLMediaModel {
                     ml: MediaLib
@@ -402,12 +378,6 @@ Widgets.PageExt {
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(newMediaRow.currentItem?.nbItemPerRow ?? null, 1) : 5
-                }
-
-                headerText: qsTr("New Media")
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("newMedia", reason)
                 }
 
                 onActiveFocusChanged: {
