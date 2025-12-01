@@ -118,6 +118,7 @@ T.Pane {
             Layout.fillHeight: false
             Layout.fillWidth: true
             Layout.leftMargin: VLCStyle.margin_normal
+            Layout.topMargin: VLCStyle.layoutTitle_top_padding
 
             spacing: VLCStyle.margin_xxxsmall
 
