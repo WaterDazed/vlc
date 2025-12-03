@@ -2248,71 +2248,61 @@ static int ParseRealText( vlc_object_t *p_obj, subs_properties_t *p_props,
     VLC_UNUSED(p_obj);
     VLC_UNUSED(p_props);
     VLC_UNUSED( i_idx );
-    char *psz_text = NULL;
 
     for( ;; )
     {
         const char *s = TextGetLine( txt );
-        free( psz_text );
-
         if( !s )
             return VLC_EGENERIC;
-
-        psz_text = malloc( strlen( s ) + 1 );
-        if( !psz_text )
-            return VLC_ENOMEM;
 
         /* Find the good beginning. This removes extra spaces at the beginning
            of the line.*/
-        char *psz_temp = strcasestr( s, "<time");
-        if( psz_temp != NULL )
+        const char *psz_temp = strcasestr( s, "<time");
+        if( psz_temp == NULL )
+            continue;
+
+        psz_temp += 5;
+        const char *psz_begin = strcasestr( psz_temp,  " begin=\"" );
+        if( !psz_begin )
+            continue;
+        psz_begin += 8;
+
+        vlc_tick_t starttime = ParseRealTime( psz_begin );
+        vlc_tick_t endtime = VLC_TICK_MIN;
+
+        const char *psz_end = strcasestr( psz_temp,  " end=\"" );
+        if( psz_end )
         {
-            char psz_end[12], psz_begin[12];
-            vlc_tick_t end = VLC_TICK_MIN;
-            /* Line has begin and end */
-            if( sscanf( psz_temp,
-                  "<%*[t|T]ime %*[b|B]egin=\"%11[^\"]\" %*[e|E]nd=\"%11[^\"]%*[^>]%[^\n\r]",
-                            psz_begin, psz_end, psz_text) == 3 )
-            {
-                end = ParseRealTime( psz_end );
-            }
-            else if ( sscanf( psz_temp,
-                                "<%*[t|T]ime %*[b|B]egin=\"%11[^\"]\"%*[^>]%[^\n\r]",
-                                psz_begin, psz_text ) != 2)
-                /* Line is not recognized */
-            {
-                continue;
-            }
-
-            /* Get the times */
-            vlc_tick_t i_time = ParseRealTime( psz_begin );
-            if (i_time != VLC_TICK_MIN)
-                p_subtitle->i_start = i_time;
-            else
-                p_subtitle->i_start = -1;
-
-            if (end != VLC_TICK_MIN)
-                p_subtitle->i_stop = end;
-            else
-                p_subtitle->i_stop = -1;
-            break;
+            psz_end += 6;
+            endtime = ParseRealTime( psz_end );
         }
+
+        psz_temp = strchr( psz_end ? psz_end : psz_begin, '>' );
+        if( !psz_temp )
+          continue;
+        psz_temp += 1;
+
+        p_subtitle->i_start = starttime;
+        p_subtitle->i_stop = endtime;
+
+        p_subtitle->psz_text = strdup( psz_temp );
+        if( !p_subtitle->psz_text )
+            return VLC_ENOMEM;
+
+        break;
     }
 
-    /* Get the following Lines */
-    size_t i_old = strlen( psz_text );
+    /* Merge with the following Lines */
+    size_t i_old = strlen( p_subtitle->psz_text );
     for( ;; )
     {
         const char *s = TextGetLine( txt );
-
         if( !s )
-        {
-            free( psz_text );
-            return VLC_EGENERIC;
-        }
+            break;
 
         size_t i_len = strlen( s );
-        if( i_len == 0 ) break;
+        if( i_len == 0 )
+            break;
 
         if( strcasestr( s, "<time" ) ||
             strcasestr( s, "<clear/") )
@@ -2321,20 +2311,16 @@ static int ParseRealText( vlc_object_t *p_obj, subs_properties_t *p_props,
             break;
         }
 
-        psz_text = realloc_or_free( psz_text, i_old + i_len + 1 + 1 );
-        if( !psz_text )
+        p_subtitle->psz_text = realloc_or_free( p_subtitle->psz_text, i_old + i_len + 1 + 1 );
+        if( !p_subtitle->psz_text )
             return VLC_ENOMEM;
 
-        memcpy( &psz_text[i_old], s, i_len );
-        psz_text[i_old + i_len + 0] = '\n';
+        memcpy( &p_subtitle->psz_text[i_old], s, i_len );
+        p_subtitle->psz_text[i_old + i_len + 0] = '\n';
         i_old += i_len + 1;
     }
 
-    psz_text[i_old] = '\0';
-    /* Remove the starting ">" that remained after the sscanf */
-    memmove( &psz_text[0], &psz_text[1], strlen( psz_text ) );
-
-    p_subtitle->psz_text = psz_text;
+    p_subtitle->psz_text[i_old] = '\0';
 
     return VLC_SUCCESS;
 }
