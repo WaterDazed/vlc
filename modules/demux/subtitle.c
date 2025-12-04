@@ -247,6 +247,16 @@ static vlc_tick_t vlc_tick_from_HMS( int h, int m, int s )
     return vlc_tick_from_sec(h * INT64_C(3600) + m * INT64_C(60) + s);
 }
 
+static bool check_neg_impl(const int* arr, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        if (arr[i] < 0) return true;
+    }
+    return false;
+}
+
+#define negative_ints(...) \
+    check_neg_impl((int[]){__VA_ARGS__}, sizeof((int[]){__VA_ARGS__}) / sizeof(int))
+
 /*****************************************************************************
  * Decoder format output function
  *****************************************************************************/
@@ -283,9 +293,10 @@ static block_t *ToEIA608Block( const subtitle_t *p_subtitle )
 
     char *saveptr = NULL;
     char *psz_tok = strtok_r( p_subtitle->psz_text, " ", &saveptr );
-    unsigned a, b;
+    int a, b;
     while( psz_tok &&
            sscanf( psz_tok, "%2x%2x", &a, &b ) == 2 &&
+           !negative_ints( 2, a, b ) &&
            i_block - p_block->i_buffer >= 3 )
     {
         uint8_t *p_data = &p_block->p_buffer[p_block->i_buffer];
@@ -1029,8 +1040,8 @@ static int ParseMicroDvd( vlc_object_t *p_obj, subs_properties_t *p_props,
 
         i_start = 0;
         i_stop  = -1;
-        if( sscanf( s, "{%d}{}%[^\r\n]", &i_start, psz_text ) == 2 ||
-            sscanf( s, "{%d}{%d}%[^\r\n]", &i_start, &i_stop, psz_text ) == 3)
+        if( ( sscanf( s, "{%d}{}%[^\r\n]", &i_start, psz_text ) == 2 && i_start >= 0 ) ||
+            ( sscanf( s, "{%d}{%d}%[^\r\n]", &i_start, &i_stop, psz_text ) == 3 && !negative_ints( 2, i_start, i_stop ) ) )
         {
             if( i_start != 1 || i_stop != 1 )
                 break;
@@ -1151,11 +1162,13 @@ static int subtitle_ParseSubRipTimingValue(vlc_tick_t *timing_value,
     char sep;
     if (sscanf(s, "%d:%d:%d%c%d%n", &h1, &m1, &s1, &sep, &d1, &count) == 5
         && (sep =='.' || sep == ',')
+        && !negative_ints(4, h1, m1, s1, d1)
         && (size_t)count <= length)
         goto success;
 
     d1 = 0;
     if (sscanf(s, "%d:%d:%d%n", &h1, &m1, &s1, &count) == 3
+        && !negative_ints( 3, h1, m1, s1 )
         && (size_t)count <= length)
         goto success;
 
@@ -1209,7 +1222,8 @@ static int subtitle_ParseSubViewerTiming( subtitle_t *p_subtitle,
     int h1, m1, s1, d1, h2, m2, s2, d2;
 
     if( sscanf( s, "%d:%d:%d.%d,%d:%d:%d.%d",
-                &h1, &m1, &s1, &d1, &h2, &m2, &s2, &d2) != 8 )
+                &h1, &m1, &s1, &d1, &h2, &m2, &s2, &d2) != 8 ||
+        negative_ints( 8, h1, m1, s1, d1, h2, m2, s2, d2 ) )
         return VLC_EGENERIC;
 
     p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
@@ -1287,7 +1301,8 @@ static int  ParseSSA( vlc_object_t *p_obj, subs_properties_t *p_props,
                     temp,
                     &h1, &m1, &s1, &c1,
                     &h2, &m2, &s2, &c2,
-                    psz_text ) == 10 )
+                    psz_text ) == 10 &&
+                    !negative_ints( 8, h1, m1, s1, c1, h2, m2, s2, c2 ) )
         {
             /* The dec expects: ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV, Effect, Text */
             /* (Layer comes from ASS specs ... it's empty for SSA.) */
@@ -1362,7 +1377,8 @@ static int ParseVplayer( vlc_object_t *p_obj, subs_properties_t *p_props,
             return VLC_ENOMEM;
 
         if( sscanf( s, "%d:%d:%d%*c%[^\r\n]",
-                    &h1, &m1, &s1, psz_text ) == 4 )
+                    &h1, &m1, &s1, psz_text ) == 4 &&
+                   !negative_ints( 3, h1, m1, s1 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 );
             p_subtitle->i_stop  = -1;
@@ -1522,9 +1538,9 @@ static int ParseDVDSubtitle(vlc_object_t *p_obj, subs_properties_t *p_props,
         if( !s )
             return VLC_EGENERIC;
 
-        if( sscanf( s,
-                    "{T %d:%d:%d:%d",
-                    &h1, &m1, &s1, &c1 ) == 4 )
+        if( sscanf( s, "{T %d:%d:%d:%d",
+                    &h1, &m1, &s1, &c1 ) == 4 &&
+            !negative_ints( 4, h1, m1, s1, c1 ) )
         {
             p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
                                   VLC_TICK_FROM_MS( c1 * 10 ) + VLC_TICK_0;
@@ -1597,8 +1613,8 @@ static int ParseMPL2(vlc_object_t *p_obj, subs_properties_t *p_props,
 
         i_start = 0;
         i_stop  = -1;
-        if( sscanf( s, "[%d][] %[^\r\n]", &i_start, psz_text ) == 2 ||
-            sscanf( s, "[%d][%d] %[^\r\n]", &i_start, &i_stop, psz_text ) == 3)
+        if( ( sscanf( s, "[%d][] %[^\r\n]", &i_start, psz_text ) == 2 && i_start >= 0 )||
+            ( sscanf( s, "[%d][%d] %[^\r\n]", &i_start, &i_stop, psz_text ) == 3 && !negative_ints( 2, i_start, i_stop ) ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + VLC_TICK_FROM_MS(i_start * 100);
             p_subtitle->i_stop  = i_stop >= 0 ? VLC_TICK_0 + VLC_TICK_FROM_MS(i_stop  * 100) : VLC_TICK_INVALID;
@@ -1652,8 +1668,14 @@ static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt
         }
 
         /* Data Lines */
-        if( sscanf (s, "-->> %d", &t) == 1)
+        if( sscanf(s, "-->> %d", &t) == 1 && t >= 0 )
         {
+            if( t < 0 )
+            {
+                free( psz_text );
+                psz_text = NULL;
+                continue;
+            }
             /* Starting of a subtitle */
             if( i_firstline )
             {
@@ -1715,7 +1737,7 @@ static int ParsePJS(vlc_object_t *p_obj, subs_properties_t *p_props,
             return VLC_ENOMEM;
 
         /* Data Lines */
-        if( sscanf (s, "%d,%d,\"%[^\n\r]", &t1, &t2, psz_text ) == 3 )
+        if( sscanf (s, "%d,%d,\"%[^\n\r]", &t1, &t2, psz_text ) == 3 && !negative_ints( 2, t1, t2 ) )
         {
             /* 1/10th of second ? Frame based ? FIXME */
             p_subtitle->i_start = VLC_TICK_0 + INT64_C(10) * t1;
@@ -1769,7 +1791,7 @@ static int ParseMPSub( vlc_object_t *p_obj, subs_properties_t *p_props,
 
         /* Data Lines */
         float wait, duration;
-        if( sscanf( s, "%f %f", &wait, &duration ) == 2 )
+        if( sscanf( s, "%f %f", &wait, &duration ) == 2 && wait >= 0 && duration >= 0 )
         {
             float f1 = wait;
             float f2 = duration;
@@ -1868,7 +1890,8 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
         /* Complete time lines */
         int h1, h2, m1, m2, s1, s2, f1, f2;
         if( sscanf( s, "%d:%d:%d.%d %d:%d:%d.%d %[^\n\r]",
-                    &h1, &m1, &s1, &f1, &h2, &m2, &s2, &f2, psz_text ) == 9 )
+                    &h1, &m1, &s1, &f1, &h2, &m2, &s2, &f2, psz_text ) == 9 &&
+            !negative_ints( 8, h1, h2, m1, m2, s1, s2, f1, f2 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 ) +
                 vlc_tick_from_sec( ( f1 +  p_props->jss.i_time_shift ) / p_props->jss.i_time_resolution );
@@ -1877,7 +1900,8 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             break;
         }
         /* Short time lines */
-        else if( sscanf( s, "@%d @%d %[^\n\r]", &f1, &f2, psz_text ) == 3 )
+        else if( sscanf( s, "@%d @%d %[^\n\r]", &f1, &f2, psz_text ) == 3 &&
+                 !negative_ints( 2, f1, f2 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 +
                     vlc_tick_from_sec( (f1 + p_props->jss.i_time_shift ) / p_props->jss.i_time_resolution );
@@ -1911,17 +1935,18 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                          inv = -1;
                      }
 
-                     if( sscanf( &psz_text[shift], "%*d:%d", &m ) == 1 )
+                     if( sscanf( &psz_text[shift], "%*d:%d", &m ) == 1 && m >= 0 )
                      {
-                         if( sscanf( &psz_text[shift], "%*d:%*d:%d", &sec ) == 1 )
+                         if( sscanf( &psz_text[shift], "%*d:%*d:%d", &sec ) == 1 && sec >= 0 )
                          {
-                             if( sscanf( &psz_text[shift], "%*d:%*d:%*d.%d", &f ) != 1 )
+                             if( sscanf( &psz_text[shift], "%*d:%*d:%*d.%d", &f ) != 1 || f < 0 )
                                 f = 1;
                          }
                          else
                          {
                              h = 0;
-                             if( sscanf( &psz_text[shift], "%d:%d.%d", &m, &sec, &f ) == 3 )
+                             if( sscanf( &psz_text[shift], "%d:%d.%d", &m, &sec, &f ) == 3 &&
+                                 !negative_ints( 3, m, sec, f ) )
                                 m *= inv;
                              else
                              {
@@ -1933,7 +1958,8 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                      else
                      {
                          h = m = 0;
-                         if( sscanf( &psz_text[shift], "%d.%d", &sec, &f) == 2 )
+                         if( sscanf( &psz_text[shift], "%d.%d", &sec, &f) == 2 &&
+                             !negative_ints( 2, sec, f ) )
                             sec *= inv;
                          else
                          {
@@ -1950,8 +1976,8 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                 if ( shift > line_length )
                     break;
 
-                sscanf( &psz_text[shift], "%d", &p_props->jss.i_time_resolution );
-                if( !p_props->jss.i_time_resolution )
+                if( sscanf( &psz_text[shift], "%d", &p_props->jss.i_time_resolution ) != 1 ||
+                    p_props->jss.i_time_resolution <= 0 )
                     p_props->jss.i_time_resolution = 30;
                 break;
             }
@@ -2117,7 +2143,8 @@ static int ParsePSB( vlc_object_t *p_obj, subs_properties_t *p_props,
             return VLC_ENOMEM;
 
         if( sscanf( s, "{%d:%d:%d}{%d:%d:%d}%[^\r\n]",
-                    &h1, &m1, &s1, &h2, &m2, &s2, psz_text ) == 7 )
+                    &h1, &m1, &s1, &h2, &m2, &s2, psz_text ) == 7 &&
+                    !negative_ints( 6, h1, m1, s1, h2, m2, s2 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 );
             p_subtitle->i_stop  = VLC_TICK_0 + vlc_tick_from_HMS( h2, m2, s2 );
@@ -2143,27 +2170,31 @@ static vlc_tick_t ParseRealTime( const char *psz )
 {
     if( *psz == '\0' ) return VLC_TICK_0;
     int h, m, s, f;
-    if( sscanf( psz, "%d:%d:%d.%d", &h, &m, &s, &f ) == 4 )
+    if( sscanf( psz, "%d:%d:%d.%d", &h, &m, &s, &f ) == 4 &&
+        !negative_ints( 4, h, m, s, f ) )
     {
         return vlc_tick_from_HMS( h, m, s )
                + VLC_TICK_FROM_MS(f * 10) + VLC_TICK_0;
     }
-    if( sscanf( psz, "%d:%d.%d", &m, &s, &f ) == 3 )
+    if( sscanf( psz, "%d:%d.%d", &m, &s, &f ) == 3 &&
+        !negative_ints( 3, m, s, f ) )
     {
         return vlc_tick_from_HMS( 0, m, s )
                + VLC_TICK_FROM_MS(f * 10) + VLC_TICK_0;
     }
-    if( sscanf( psz, "%d.%d", &s, &f ) == 2 )
+    if( sscanf( psz, "%d.%d", &s, &f ) == 2 &&
+        !negative_ints( 2, s, f ) )
     {
         return vlc_tick_from_sec( s )
                + VLC_TICK_FROM_MS(f * 10) + VLC_TICK_0;
     }
-    if( sscanf( psz, "%d:%d", &m, &s ) == 2 )
+    if( sscanf( psz, "%d:%d", &m, &s ) == 2 &&
+        !negative_ints( 2, m, s ) )
     {
         return vlc_tick_from_HMS( 0, m, s )
                + VLC_TICK_0;
     }
-    if( sscanf( psz, "%d", &s ) == 1 )
+    if( sscanf( psz, "%d", &s ) == 1 && s >= 0 )
     {
         return vlc_tick_from_sec( s )
                + VLC_TICK_0;
@@ -2294,7 +2325,7 @@ static int ParseDKS( vlc_object_t *p_obj, subs_properties_t *p_props,
             return VLC_ENOMEM;
 
         if( sscanf( s, "[%d:%d:%d]%[^\r\n]",
-                    &h1, &m1, &s1, psz_text ) == 4 )
+                    &h1, &m1, &s1, psz_text ) == 4 && !negative_ints( 3, h1, m1, s1 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 );
 
@@ -2305,7 +2336,7 @@ static int ParseDKS( vlc_object_t *p_obj, subs_properties_t *p_props,
                 return VLC_EGENERIC;
             }
 
-            if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 )
+            if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 && !negative_ints( 3, h2, m2, s2 ) )
                 p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 );
             else
                 p_subtitle->i_stop  = -1;
@@ -2343,7 +2374,7 @@ static int ParseSubViewer1( vlc_object_t *p_obj, subs_properties_t *p_props,
         if( !s )
             return VLC_EGENERIC;
 
-        if( sscanf( s, "[%d:%d:%d]", &h1, &m1, &s1 ) == 3 )
+        if( sscanf( s, "[%d:%d:%d]", &h1, &m1, &s1 ) == 3 && !negative_ints( 3, h1, m1, s1 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 );
 
@@ -2362,7 +2393,7 @@ static int ParseSubViewer1( vlc_object_t *p_obj, subs_properties_t *p_props,
                 return VLC_EGENERIC;
             }
 
-            if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 )
+            if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 && !negative_ints( 3, h2, m2, s2 ) )
                 p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 );
             else
                 p_subtitle->i_stop  = -1;
@@ -2395,7 +2426,8 @@ static int ParseCommonSBV( vlc_object_t *p_obj, subs_properties_t *p_props,
 
         if( sscanf( s,"%d:%d:%d.%d,%d:%d:%d.%d",
                     &h1, &m1, &s1, &d1,
-                    &h2, &m2, &s2, &d2 ) == 8 )
+                    &h2, &m2, &s2, &d2 ) == 8 &&
+            !negative_ints( 8, h1, m1, s1, d1, h2, m2, s2, d2 ) )
         {
             p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
                                   VLC_TICK_FROM_MS( d1 ) + VLC_TICK_0;
@@ -2479,6 +2511,7 @@ static int ParseSCC( vlc_object_t *p_obj, subs_properties_t *p_props,
         unsigned h, m, s, f;
         char c;
         if( sscanf( psz_line, "%u:%u:%u%c%u ", &h, &m, &s, &c, &f ) != 5 ||
+            negative_ints( 4, h, m, s, f ) ||
                 ( c != ':' && c != ';' ) )
             continue;
 
