@@ -130,6 +130,7 @@ struct vlc_player_input
         bool has_audio_tracks;
     } ml;
 
+    bool play_and_pause;
     unsigned repeat;
 };
 
