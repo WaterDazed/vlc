@@ -303,7 +303,8 @@ void Oggseek_ProbeEnd( demux_t *p_demux )
     }
 
 clean:
-    vlc_stream_Seek( p_demux->s, i_backup_pos );
+    if( vlc_stream_Seek( p_demux->s, i_backup_pos ) != VLC_SUCCESS )
+        msg_Warn( p_demux, "Oggseek_ProbeEnd: failed to restore stream position" );
 
     ogg_sync_clear( &oy );
     ogg_stream_clear( &os );
@@ -967,7 +968,8 @@ int64_t oggseek_read_page( demux_t *p_demux )
 
     if ( vlc_stream_Read ( p_demux->s, header, PAGE_HEADER_BYTES ) < PAGE_HEADER_BYTES )
     {
-        vlc_stream_Seek( p_demux->s, i_in_pos );
+        if( vlc_stream_Seek( p_demux->s, i_in_pos )  )
+            msg_Warn( p_demux, "oggseek_read_page: failed to restore stream position" );
         msg_Dbg ( p_demux, "Reached clean EOF in ogg file" );
         return 0;
     }
@@ -976,7 +978,8 @@ int64_t oggseek_read_page( demux_t *p_demux )
 
     if ( vlc_stream_Read ( p_demux->s, header+PAGE_HEADER_BYTES, i_nsegs ) < i_nsegs )
     {
-        vlc_stream_Seek( p_demux->s, i_in_pos );
+        if( vlc_stream_Seek( p_demux->s, i_in_pos ) != VLC_SUCCESS )
+            msg_Warn( p_demux, "oggseek_read_page: failed to restore stream position" );
         msg_Warn ( p_demux, "Reached broken EOF in ogg file" );
         return 0;
     }
