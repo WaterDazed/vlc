@@ -78,6 +78,7 @@ check_PROGRAMS = \
 	test_modules_demux_timestamps \
 	test_modules_demux_timestamps_filter \
 	test_modules_demux_ts_pes \
+	test_modules_demux_subtitles \
 	test_modules_playlist_m3u \
 	test_modules_stream_out_pcr_sync \
 	test_modules_tls \
@@ -343,6 +344,8 @@ test_modules_demux_ts_pes_LDADD = $(LIBVLCCORE) $(LIBVLC)
 test_modules_demux_ts_pes_SOURCES = modules/demux/ts_pes.c \
 				../modules/demux/mpeg/ts_pes.c \
 				../modules/demux/mpeg/ts_pes.h
+test_modules_demux_subtitles_SOURCES = modules/demux/subtitles.c
+test_modules_demux_subtitles_LDADD = $(LIBM) $(LIBVLCCORE) $(LIBVLC)
 test_modules_playlist_m3u_SOURCES = modules/demux/playlist/m3u.c
 test_modules_playlist_m3u_LDADD = $(LIBVLCCORE) $(LIBVLC)
 

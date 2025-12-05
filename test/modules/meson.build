@@ -101,6 +101,14 @@ vlc_tests += {
 }
 
 vlc_tests += {
+    'name' : 'test_modules_demux_subtitles',
+    'sources' : files('demux/subtitles.c'),
+    'suite' : ['modules', 'test_modules'],
+    'link_with' : [libvlc, libvlccore],
+    'module_depends' : vlc_plugins_targets.keys()
+}
+
+vlc_tests += {
     'name' : 'test_modules_codec_hxxx_helper',
     'sources' : files('codec/hxxx_helper.c'),
     'suite' : ['modules', 'test_modules'],
