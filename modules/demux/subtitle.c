@@ -166,7 +166,7 @@ typedef struct
     bool        b_sorted;
 
     double      f_rate;
-    vlc_tick_t  i_next_demux_date;
+    vlc_tick_t  i_next_demux_date_nz;
 
     struct
     {
@@ -257,6 +257,9 @@ static bool check_neg_impl(const int* arr, size_t len) {
 #define negative_ints(...) \
     check_neg_impl((int[]){__VA_ARGS__}, sizeof((int[]){__VA_ARGS__}) / sizeof(int))
 
+#define AS_DURATION(x) (x - VLC_TICK_0)
+#define FROM_DURATION(x) (x + VLC_TICK_0)
+
 /*****************************************************************************
  * Decoder format output function
  *****************************************************************************/
@@ -337,7 +340,7 @@ static int Open ( vlc_object_t *p_this )
     p_sys->b_slave = false;
     p_sys->b_first_time = true;
     p_sys->b_sorted = false;
-    p_sys->i_next_demux_date = 0;
+    p_sys->i_next_demux_date_nz = 0;
     p_sys->f_rate = 1.0;
 
     p_sys->pf_convert = ToTextBlock;
@@ -776,8 +779,8 @@ ResetCurrentIndex( demux_t *p_demux )
     demux_sys_t *p_sys = p_demux->p_sys;
     for( size_t i = 0; i < p_sys->subtitles.i_count; i++ )
     {
-        if( p_sys->subtitles.p_array[i].i_start * p_sys->f_rate >
-            p_sys->i_next_demux_date && i > 0 )
+        if( AS_DURATION(p_sys->subtitles.p_array[i].i_start) * p_sys->f_rate >
+            p_sys->i_next_demux_date_nz && i > 0 )
             break;
         p_sys->subtitles.i_current = i;
     }
@@ -802,13 +805,17 @@ static int Control( demux_t *p_demux, int i_query, va_list args )
             return VLC_SUCCESS;
 
         case DEMUX_GET_TIME:
-            *va_arg( args, vlc_tick_t * ) = p_sys->i_next_demux_date;
+            *va_arg( args, vlc_tick_t * ) = VLC_TICK_0 + p_sys->i_next_demux_date_nz;
             return VLC_SUCCESS;
 
         case DEMUX_SET_TIME:
         {
             p_sys->b_first_time = true;
-            p_sys->i_next_demux_date = va_arg( args, vlc_tick_t );
+            p_sys->i_next_demux_date_nz = va_arg( args, vlc_tick_t );
+            /* Handle difference as sent to the core */
+            static_assert(VLC_TICK_0 == 1, "TS_0 offset has changed");
+            if( p_sys->i_next_demux_date_nz == VLC_TICK_0 )
+                p_sys->i_next_demux_date_nz = 0;
             ResetCurrentIndex( p_demux );
             return VLC_SUCCESS;
         }
@@ -821,7 +828,7 @@ static int Control( demux_t *p_demux, int i_query, va_list args )
             }
             else if( p_sys->subtitles.i_count > 0 && p_sys->i_length )
             {
-                *pf = p_sys->i_next_demux_date;
+                *pf = p_sys->i_next_demux_date_nz;
                 *pf /= p_sys->i_length;
             }
             else
@@ -848,7 +855,10 @@ static int Control( demux_t *p_demux, int i_query, va_list args )
             return VLC_SUCCESS;
         case DEMUX_SET_NEXT_DEMUX_TIME:
             p_sys->b_slave = true;
-            p_sys->i_next_demux_date = va_arg( args, vlc_tick_t ) - VLC_TICK_0;
+            p_sys->i_next_demux_date_nz = va_arg( args, vlc_tick_t );
+            /* Handle difference as sent to the core */
+            if( p_sys->i_next_demux_date_nz == VLC_TICK_0 )
+                p_sys->i_next_demux_date_nz = 0;
             return VLC_SUCCESS;
 
         case DEMUX_CAN_PAUSE:
@@ -880,17 +890,17 @@ static int Demux( demux_t *p_demux )
     if ( !p_sys->b_slave )
         Fix( p_demux );
 
-    vlc_tick_t i_barrier = p_sys->i_next_demux_date;
+    vlc_tick_t i_barrier_nz = p_sys->i_next_demux_date_nz;
 
     while( p_sys->subtitles.i_current < p_sys->subtitles.i_count &&
-           ( p_sys->subtitles.p_array[p_sys->subtitles.i_current].i_start *
-             p_sys->f_rate ) <= i_barrier )
+           ( AS_DURATION(p_sys->subtitles.p_array[p_sys->subtitles.i_current].i_start) *
+             p_sys->f_rate ) <= i_barrier_nz )
     {
         const subtitle_t *p_subtitle = &p_sys->subtitles.p_array[p_sys->subtitles.i_current];
 
         if ( !p_sys->b_slave && p_sys->b_first_time )
         {
-            es_out_SetPCR( p_demux->out, VLC_TICK_0 + i_barrier );
+            es_out_SetPCR( p_demux->out, VLC_TICK_0 + i_barrier_nz );
             p_sys->b_first_time = false;
         }
 
@@ -900,7 +910,7 @@ static int Demux( demux_t *p_demux )
             if( p_block )
             {
                 p_block->i_dts =
-                p_block->i_pts = VLC_TICK_0 + p_subtitle->i_start * p_sys->f_rate;
+                p_block->i_pts = p_subtitle->i_start * p_sys->f_rate;
                 if( p_subtitle->i_stop != VLC_TICK_INVALID && p_subtitle->i_stop >= p_subtitle->i_start )
                     p_block->i_length = (p_subtitle->i_stop - p_subtitle->i_start) * p_sys->f_rate;
 
@@ -913,8 +923,8 @@ static int Demux( demux_t *p_demux )
 
     if ( !p_sys->b_slave )
     {
-        es_out_SetPCR( p_demux->out, VLC_TICK_0 + i_barrier );
-        p_sys->i_next_demux_date += VLC_TICK_FROM_MS(125);
+        es_out_SetPCR( p_demux->out, VLC_TICK_0 + i_barrier_nz );
+        p_sys->i_next_demux_date_nz += VLC_TICK_FROM_MS(125);
     }
 
     if( p_sys->subtitles.i_current >= p_sys->subtitles.i_count )
