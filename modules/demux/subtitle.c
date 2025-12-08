@@ -1123,7 +1123,7 @@ static int ParseSubRipSubViewer( vlc_object_t *p_obj, subs_properties_t *p_props
             return VLC_EGENERIC;
 
         if( pf_parse_timing( p_subtitle, s) == VLC_SUCCESS &&
-            p_subtitle->i_start < p_subtitle->i_stop )
+            p_subtitle->i_start <= p_subtitle->i_stop )
         {
             break;
         }
