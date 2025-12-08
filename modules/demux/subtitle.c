@@ -1904,7 +1904,7 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                  if ( shift > line_length )
                      break;
 
-                 if( sscanf( &psz_text[shift], "%d", &h ) )
+                 if( sscanf( &psz_text[shift], "%d", &h ) == 1 )
                  {
                      /* Negative shifting */
                      if( h < 0 )
@@ -1913,25 +1913,34 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                          inv = -1;
                      }
 
-                     if( sscanf( &psz_text[shift], "%*d:%d", &m ) )
+                     if( sscanf( &psz_text[shift], "%*d:%d", &m ) == 1 )
                      {
-                         if( sscanf( &psz_text[shift], "%*d:%*d:%d", &sec ) )
+                         if( sscanf( &psz_text[shift], "%*d:%*d:%d", &sec ) == 1 )
                          {
-                             sscanf( &psz_text[shift], "%*d:%*d:%*d.%d", &f );
+                             if( sscanf( &psz_text[shift], "%*d:%*d:%*d.%d", &f ) != 1 )
+                                f = 1;
                          }
                          else
                          {
                              h = 0;
-                             sscanf( &psz_text[shift], "%d:%d.%d",
-                                     &m, &sec, &f );
-                             m *= inv;
+                             if( sscanf( &psz_text[shift], "%d:%d.%d", &m, &sec, &f ) == 3 )
+                                m *= inv;
+                             else
+                             {
+                                m = 0;
+                                sec = f = 1;
+                             }
                          }
                      }
                      else
                      {
                          h = m = 0;
-                         sscanf( &psz_text[shift], "%d.%d", &sec, &f);
-                         sec *= inv;
+                         if( sscanf( &psz_text[shift], "%d.%d", &sec, &f) == 2 )
+                            sec *= inv;
+                         else
+                         {
+                            sec = f = 1;
+                         }
                      }
                      p_props->jss.i_time_shift = ( ( h * INT64_C(3600) + m * INT64_C(60) + sec )
                          * p_props->jss.i_time_resolution + f ) * inv;
