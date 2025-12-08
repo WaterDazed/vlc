@@ -151,6 +151,11 @@ const char testdata_SubRip[] =
 "TEXT0\n"
 "\n"
 
+// Zero duration (stop == start) check
+"12\n"
+"00:05:11,000 --> 00:05:11,000\n"
+"ZERO\n"
+"\n"
 // signed cases (should be rejected)
 "9\n"
 "00:-05:30,000 --> 00:05:31,000\n"
@@ -227,6 +232,13 @@ static int check_SubRip(struct subtitles_es_out_ctx_t *ctx)
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+24) + VLC_TICK_FROM_MS(948));
     EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+26) + VLC_TICK_FROM_MS(247) - OUT->i_pts);
     EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
+    POP;
+
+    // 12 - Zero duration (stop time equals start time)
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(5*60+11));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "ZERO\n"));
     POP;
 
     // Last, no return
