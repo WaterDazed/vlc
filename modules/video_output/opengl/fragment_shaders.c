@@ -365,6 +365,14 @@ tc_base_fetch_locations(opengl_tex_converter_t *tc, GLuint program)
     }
 #endif
 
+#ifdef HAVE_LIBLCMS2
+if ( tc->clut_is_active ) {
+    tc->clutId = tc->vt->GetUniformLocation(program, "clut3d");
+    if (tc->clutId == -1)
+        return VLC_EGENERIC;
+}
+#endif
+
     return VLC_SUCCESS;
 }
 
@@ -429,6 +437,11 @@ tc_base_prepare_shader(const opengl_tex_converter_t *tc,
             break;
         }
     }
+#endif
+
+#ifdef HAVE_LIBLCMS2
+    if ( tc->clut_is_active )
+        tc->vt->Uniform1i(tc->clutId, tc->tex_count);
 #endif
 }
 
@@ -610,7 +623,13 @@ opengl_fragment_shader_init_impl(opengl_tex_converter_t *tc, GLenum tex_target,
              "varying vec2 TexCoord%u;\n", sampler, i, i);
 
 #ifdef HAVE_LIBPLACEBO
+#ifdef HAVE_LIBLCMS2
+    /* Disable libplacebo tone mapping if color correction is active
+     * Tone mapping is done by the 3D LUT */
+    if (tc->pl_sh && !tc->clut_is_active) {
+#else
     if (tc->pl_sh) {
+#endif
         struct pl_shader *sh = tc->pl_sh;
         struct pl_color_map_params color_params = pl_color_map_default_params;
         color_params.intent = var_InheritInteger(tc->gl, "rendering-intent");
@@ -703,6 +722,11 @@ opengl_fragment_shader_init_impl(opengl_tex_converter_t *tc, GLenum tex_target,
     if (is_yuv)
         ADD("uniform vec4 Coefficients[4];\n");
 
+#ifdef HAVE_LIBLCMS2
+    if ( tc->clut_is_active )
+        ADD("uniform sampler3D clut3d ;\n");
+#endif
+
     ADD("uniform vec4 FillColor;\n"
         "void main(void) {\n"
         " float val;vec4 colors;\n");
@@ -771,6 +795,11 @@ opengl_fragment_shader_init_impl(opengl_tex_converter_t *tc, GLenum tex_target,
         assert(res->output == PL_SHADER_SIG_COLOR);
         ADDF(" result = %s(result);\n", res->name);
     }
+#endif
+
+#ifdef HAVE_LIBLCMS2
+    if ( tc->clut_is_active )
+        ADD(" result.rgb = texture3D( clut3d, result.rgb ).rgb;\n" );
 #endif
 
     ADD(" gl_FragColor = result * FillColor;\n"

@@ -118,6 +118,11 @@ typedef struct {
     vlc_viewpoint_t viewpoint;
 } vout_display_cfg_t;
 
+struct vout_display_clut {
+    uint16_t *p_clut;
+    uint16_t  size;
+};
+
 /**
  * Information from a vout_display_t to configure
  * the core behaviour.
@@ -343,6 +348,8 @@ struct vout_display_t {
      * It must not be overwritten nor used directly by a module.
      */
     vout_display_owner_t owner;
+    
+    struct vout_display_clut clut;
 };
 
 static inline void vout_display_SendEvent(vout_display_t *vd, int query, ...)

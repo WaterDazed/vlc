@@ -12,8 +12,8 @@ OPENGL_COMMONSOURCES = video_output/opengl/vout_helper.c \
 	video_output/opengl/internal.h video_output/opengl/fragment_shaders.c \
 	video_output/opengl/converter_sw.c
 
-OPENGL_COMMONCLFAGS = $(LIBPLACEBO_CFLAGS)
-OPENGL_COMMONLIBS = $(LIBPLACEBO_LIBS)
+OPENGL_COMMONCLFAGS = $(LIBPLACEBO_CFLAGS) $(LIBLCMS2_CFLAGS)
+OPENGL_COMMONLIBS = $(LIBPLACEBO_LIBS) $(LIBLCMS2_LIBS)
 
 if HAVE_DECKLINK
 libdecklinkoutput_plugin_la_SOURCES = video_output/decklink.cpp
@@ -80,6 +80,9 @@ libgl_plugin_la_CFLAGS = $(AM_CFLAGS) $(GL_CFLAGS) $(OPENGL_COMMONCLFAGS)
 libgl_plugin_la_LIBADD = $(LIBM) $(OPENGL_COMMONLIBS)
 if HAVE_WIN32
 libgl_plugin_la_CFLAGS += -DHAVE_GL_CORE_SYMBOLS
+if HAVE_LIBLCMS2
+libgl_plugin_la_LIBADD += -lglew32
+endif
 libgl_plugin_la_LIBADD += $(GL_LIBS)
 endif
 
@@ -335,7 +338,11 @@ libwgl_plugin_la_SOURCES = video_output/win32/wgl.c $(OPENGL_COMMONSOURCES)
 libglwin32_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) \
 	-DMODULE_NAME_IS_glwin32
 
+if HAVE_LIBLCMS2
+libglwin32_plugin_la_LIBADD = libchroma_copy.la -lglew32 -lopengl32 -lgdi32 $(LIBCOM) -luuid $(OPENGL_COMMONLIBS)
+else
 libglwin32_plugin_la_LIBADD = libchroma_copy.la -lopengl32 -lgdi32 $(LIBCOM) -luuid $(OPENGL_COMMONLIBS)
+endif
 libwgl_plugin_la_LIBADD = -lopengl32 -lgdi32 $(OPENGL_COMMONLIBS)
 
 libglwin32_plugin_la_CFLAGS = $(AM_CFLAGS) $(OPENGL_COMMONCLFAGS) -DHAVE_GL_CORE_SYMBOLS

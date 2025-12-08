@@ -104,6 +104,45 @@ static vout_display_t *vout_display_New(vlc_object_t *obj,
     vd->sys = NULL;
 
     vd->owner = *owner;
+    
+    vd->clut.p_clut = NULL;
+    vd->clut.size = 0;
+#ifdef HAVE_LIBLCMS2
+    /* Icc file reading, 3D LUT allocation */
+    vd->clut.size = var_InheritInteger( vd, "icc_lsize" );
+    if ( vd->clut.size < 1 )
+        vd->clut.size = 64;
+    else if ( vd->clut.size > ICC_3D_LUT_SIZE_MAX )
+        vd->clut.size = ICC_3D_LUT_SIZE_MAX;
+    msg_Dbg( vd, "Display color correction LUT size = %i", vd->clut.size );
+    
+    char *filename = var_InheritString( vd, "icc_profile" );
+    if ( filename != NULL )
+    {
+        vd->clut.p_clut = malloc( sizeof( uint16_t ) *
+                    vd->clut.size * vd->clut.size * vd->clut.size * 3 );
+        if ( vd->clut.p_clut == NULL )
+        {
+            msg_Dbg( vd, "Could not allocate color correction table");
+        }
+        else
+        {
+            int err = SetCorrectionLUT( vd->clut.p_clut, vd, &vd->fmt, filename );
+            if ( err != VLC_SUCCESS )
+            {
+                msg_Dbg( vd, "Could not create Color Correction LUT, "
+                                "disabling color correction" );
+                free( vd->clut.p_clut );
+                vd->clut.p_clut = NULL;
+            }
+        }
+        free( filename );
+    }
+    else {
+        msg_Dbg( vd, "Absent or invalid path to icc correction profile, "
+                     "disabling color correction" );
+    }
+#endif
 
     if (load_module) {
         vd->module = module_need(vd, "vout display", module, module && *module != '\0');
@@ -127,6 +166,14 @@ static void vout_display_Delete(vout_display_t *vd)
 
     video_format_Clean(&vd->source);
     video_format_Clean(&vd->fmt);
+    
+#ifdef HAVE_LIBLCMS2
+    if ( vd->clut.p_clut != NULL )
+    {
+        free(vd->clut.p_clut);
+        vd->clut.p_clut = NULL;
+    }
+#endif
 
     vlc_object_release(vd);
 }
@@ -1540,3 +1587,428 @@ void vout_SendDisplayEventMouse(vout_thread_t *vout, const vlc_mouse_t *m)
         vout_SendEventMouseDoubleClick(vout);
     vout->p->mouse = *m;
 }
+/*******************************************************************************
+ * Display color correction with user icc profile
+ * Creates the 3D-LUT from image/video reported colorspace, icc profile file
+ * and lcms2 functions
+ * The LUT is a member of the video_display_t and can be used by vout modules  
+ * ****************************************************************************/
+#ifdef HAVE_LIBLCMS2                                                
+float icc_eotf_pq( float x )
+{
+    float m1 = 0.1593017578125, m2 = 78.84375,
+          c1 = 0.8359375, c2 = 18.8515625, c3 = 18.6875;
+
+    return powf( fmaxf( powf( x, 1.0 / m2 ) - c1, 0.0 ) /
+                        ( c2 - c3 * powf( x, 1.0 / m2 ) ), 1.0 / m1 );
+}
+
+void icc_set_eotf_pq( icc_eotf_data *eotf_data )
+{
+    float x = 0.0;
+    for ( size_t i = 0 ; i <  eotf_data->trc_size ; i++ )
+    {
+        x = (float) i / (float) ( eotf_data->trc_size - 1 );
+        eotf_data->trc[i] = icc_eotf_pq( x );
+    }
+    return;
+}
+
+void icc_set_eotf_hlg( icc_eotf_data *eotf_data )
+{
+    float a = 0.17883277, b = 0.28466892, c = 0.55991073;
+    float x = 0.0;
+
+    for ( size_t i = 0 ; i <  eotf_data->trc_size  ; i++ )
+    {
+        x = (float) i / (float) ( eotf_data->trc_size - 1 );
+        if ( x < 0.5 )
+            eotf_data->trc[i] = x * x / 3.0;
+        else
+            eotf_data->trc[i] = expf( ( x - c ) / a + b ) / 12.0;
+    }
+    return;
+}
+
+void icc_set_eotf_bt1886( icc_eotf_data *eotf_data )
+{
+    float bt1886_g = 2.4;
+    float lb = powf( eotf_data->master_bp, 1.0 / bt1886_g );
+    float lw = powf( eotf_data->master_lum, 1.0 / bt1886_g );
+    float a = powf( lw - lb, bt1886_g ) / eotf_data->master_lum;
+    float b = lb / ( lw - lb );
+
+    for ( size_t i = 0; i < eotf_data->trc_size ; i++ )
+    {
+        eotf_data->trc[i] = a * powf( (float) i / (float) ( eotf_data->trc_size - 1 ) +
+                                b, bt1886_g );
+    }
+}
+
+void icc_set_eotf_srgb( icc_eotf_data *eotf_data)
+{
+    for ( size_t i = 0; i < eotf_data->trc_size ; i++ )
+    {
+        float v = (float) i / (float) ( eotf_data->trc_size - 1 );
+        if ( v < 0.04045 )
+            eotf_data->trc[i] = v / 12.92;
+        else
+            eotf_data->trc[i] = powf( ( v + 0.055  ) / 1.055, 2.4 );
+    }
+}
+
+/* Hermite spline function to compute the knee in bt2048 */
+float icc_hermite_spl( float x,
+               float x0, float p0, float m0,
+               float x1, float p1, float m1 )
+{
+    float a = ( x - x0 ) / ( x1 - x0 ),
+          a2 = a * a,
+          a3 = a2 * a;
+
+    return ( 2.0 * a3 - 3.0 * a2 + 1.0) * p0 +
+           (       a3 - 2.0 * a2 + a )  * ( x1 - x0 ) * m0 +
+           (-2.0 * a3 + 3.0 * a2 )      * p1 +
+           (       a3 -       a2 )      * ( x1 - x0 ) * m1;
+}
+
+void icc_hdr_to_hdr_lum_bt2408( icc_eotf_data *eotf_data )
+{
+    /* Compute EETF wrt BT2408 for highlights */
+    float max_lum = 0.0;
+    float ks = 0.0;
+    float target_lum = eotf_data->target_lum;
+    float *trc = eotf_data->trc;
+    size_t trc_size = eotf_data->trc_size;
+
+    for ( size_t i = 0 ; i < trc_size ; i++ )
+    {
+        if ( trc[i] * 10000.0 > target_lum )
+        {
+            max_lum = (float) i / (float) ( trc_size - 1 );
+            break;
+        }
+    }
+
+    ks = 1.5 * max_lum - 0.5;
+    float v = 0.0;
+
+    for ( size_t i = 0; i < trc_size ; i++ )
+    {
+        v = (float) i / ( (float) trc_size - 1.0 );
+        if ( v > ks )
+            trc[i] = icc_eotf_pq ( icc_hermite_spl( v, ks, ks, 1.0,
+                                     1.0, max_lum, 0.0 ) );
+        else
+            trc[i] = icc_eotf_pq( v );
+    }
+    /* If target display is SDR ( non-PQ ), scale to [ 0, 1 ] */
+    if ( target_lum < ICC_HDR_LUM_THRESH )
+    {
+        for ( size_t i = 0; i < trc_size ; i++ )
+        {
+            trc[i] *= 10000.0 / target_lum;
+        }
+    }
+
+}
+
+int SetCorrectionLUT( uint16_t *lut, vout_display_t *vd,
+                      const video_format_t *fmt, const char *filename )
+{
+     /* We use LittleCMS to compute the correction 3DLUT
+     * Video profile is built with LCMS routines
+     * Display profile is read from the path given by the user in the advanced
+     * configuration parameters. */
+    size_t lut_size = vd->clut.size;
+     /* First, read the user icc file and other GUI parameters */
+    msg_Dbg( vd, "User icc profile path %s", filename );
+    cmsHPROFILE  hOutProfile = cmsOpenProfileFromFile( filename, "r");
+    if ( hOutProfile == NULL ) 
+    {
+        msg_Dbg( vd, "Could not read user display icc profile" );
+        return VLC_EGENERIC;
+    }
+
+    int icc_user_contrast;
+    float icc_bp_ratio;
+
+    int icc_bp_offset_mode = var_InheritInteger( vd, "icc_bp_offset_mode");
+    if ( icc_bp_offset_mode < 0 || icc_bp_offset_mode > 1 )
+    {
+        icc_bp_offset_mode = 0;
+        msg_Dbg( vd, "Black point offset mode not recognized, taking default" );
+    }
+    /* msg_Dbg( vd, "Black point offset mode = %s",
+                  icc_bp_mode_text[ icc_bp_offset_mode ]  ); */
+
+    switch ( icc_bp_offset_mode )
+    {
+        case ICC_BP_MODE_USER:
+            icc_user_contrast = var_InheritInteger(vd, "icc_contrast");
+            msg_Dbg( vd, "Contrast provided by user = %i", icc_user_contrast );
+            if ( icc_user_contrast < 1 )
+                icc_bp_ratio = 0.0;
+            else
+                icc_bp_ratio = 1.0 / (float) icc_user_contrast;
+
+            break;
+
+        default:
+            icc_bp_ratio = 0.001;
+    }
+
+    msg_Dbg( vd, "Create source colorspace profile from video format");
+
+    /* Building the Tone Response Curve in Lcms format */
+    cmsToneCurve *trc[3];
+
+    cmsContext cms_ctx = cmsCreateContext(NULL, NULL);
+
+    if ( cms_ctx == NULL ) 
+    {
+        msg_Dbg( vd,"Could not create cms context" );
+        cmsCloseProfile(hOutProfile);
+        return VLC_ENOMEM;
+    }
+
+    int icc_master_trc_type = fmt->transfer;
+    void (*icc_set_eotf_f)( icc_eotf_data* );
+    icc_eotf_data icc_eotf_d;
+    float trc_tab[ICC_TRC_TAB_SIZE];
+    icc_eotf_d.trc = trc_tab;
+    icc_eotf_d.trc_size = ICC_TRC_TAB_SIZE;
+
+    icc_eotf_d.master_lum = ICC_HDR_MASTER_LUM;
+    icc_eotf_d.master_bp = ICC_HDR_MASTER_BP;
+    icc_eotf_d.target_lum = ICC_SDR_MASTER_LUM;
+    icc_eotf_d.target_bp = ICC_SDR_MASTER_BP;
+    bool b_hdr_downlum = false;
+
+    cmsCIEXYZ *profile_lum = cmsReadTag(hOutProfile, cmsSigLuminanceTag );
+
+    if ( profile_lum == NULL || ( profile_lum->Y < ICC_HDR_MASTER_BP ) )
+    {
+        icc_eotf_d.target_lum = ICC_SDR_MASTER_LUM;
+        msg_Dbg( vd,"No user display luminance or zero value in profile, "
+                    "assuming SDR display." );
+    }
+    else
+    {
+        icc_eotf_d.target_lum = profile_lum->Y;
+        msg_Dbg( vd,"Display luminance in profile = %f nits", icc_eotf_d.target_lum );
+    }
+
+    if ( ( icc_master_trc_type == TRANSFER_FUNC_SMPTE_ST2084 ) ||
+         ( icc_master_trc_type == TRANSFER_FUNC_HLG ) )
+    {
+        icc_eotf_d.master_lum = fmaxf( 1000.0,
+                                (float) fmt->mastering.max_luminance / 10000.0 );
+        icc_eotf_d.master_bp =  fminf( 0.005,
+                                (float) fmt->mastering.min_luminance / 10000.0 );
+
+        if ( icc_eotf_d.target_lum < icc_eotf_d.master_lum  &&
+             icc_master_trc_type == TRANSFER_FUNC_SMPTE_ST2084 )
+        {
+            b_hdr_downlum = true;
+            msg_Dbg( vd, "HDR luminance adaptation by icc color correction LUT" );
+        }
+    }
+
+    if ( var_InheritBool( vd, "force_bt709") ) {
+        icc_master_trc_type = TRANSFER_FUNC_BT709;
+    }
+
+    switch ( icc_master_trc_type ) {
+
+        case TRANSFER_FUNC_SRGB:
+            icc_set_eotf_f = &icc_set_eotf_srgb;
+            msg_Dbg( vd, "Tone response curve for source profile = sRGB TRC" );
+        break;
+
+        case TRANSFER_FUNC_SMPTE_ST2084:
+            icc_set_eotf_f = &icc_set_eotf_pq;
+            msg_Dbg( vd, "Tone response curve for source profile = SMPTE_ST2084 "
+                         "(PQ) TRC" );
+            break;
+
+        case TRANSFER_FUNC_HLG:
+            icc_set_eotf_f = &icc_set_eotf_hlg;
+            msg_Dbg( vd, "Tone response curve for source profile = SMPTE_HLG TRC" );
+            break;
+
+        /* Default is BT1886 TRC*/
+        default:
+            icc_set_eotf_f = &icc_set_eotf_bt1886;
+            icc_eotf_d.master_lum = ICC_SDR_MASTER_LUM;
+            icc_eotf_d.master_bp = icc_bp_ratio * icc_eotf_d.master_lum;
+
+            msg_Dbg( vd, "Tone response curve for source profile = BT1886 TRC" );
+    }
+
+    /* Build the TRC */
+    icc_set_eotf_f( &icc_eotf_d );
+    if ( b_hdr_downlum )
+        icc_hdr_to_hdr_lum_bt2408( &icc_eotf_d );
+
+
+    for ( size_t i = 0; i < 3 ; i++ )
+    {
+        trc[i] = cmsBuildTabulatedToneCurveFloat( cms_ctx, ICC_TRC_TAB_SIZE,
+                                                  icc_eotf_d.trc );
+
+        if ( trc[i] == NULL ) {
+            cmsDeleteContext(cms_ctx) ;
+            cmsCloseProfile(hOutProfile);
+            return VLC_ENOMEM;
+        }
+    }
+
+    /* Select the primaries in LCMS input format from format info */
+    cmsCIExyYTRIPLE m_prim;
+    int primaries = fmt->primaries;
+    if ( var_InheritBool( vd, "force_bt709") ) {
+        primaries = COLOR_PRIMARIES_BT709;
+    }
+
+    switch ( primaries ) {
+
+        case COLOR_PRIMARIES_BT601_525:
+            msg_Dbg( vd, "BT601_525 (NTSC) primaries for source profile" );
+            m_prim = icc_bt601_525_prim;
+            break;
+
+        case COLOR_PRIMARIES_BT601_625:
+            msg_Dbg( vd, "BT601_625 (PAL) primaries for source profile" );
+            m_prim = icc_bt601_625_prim;
+            break;
+
+        case COLOR_PRIMARIES_BT2020:
+            msg_Dbg( vd, "BT2020 primaries for source profile" );
+            m_prim = icc_bt2020_prim;
+            break;
+
+        case COLOR_PRIMARIES_BT709:
+            msg_Dbg( vd, "BT709 primaries for source profile" );
+            m_prim = icc_bt709_prim;
+            break;
+
+        case COLOR_PRIMARIES_DCI_P3:
+            msg_Dbg( vd, "DCI-P3 primaries for source profile" );
+            m_prim = icc_dcip3_prim;
+            break;
+
+        default:
+            msg_Dbg( vd, "Default image primaries for source profile (BT 709)" );
+            m_prim = icc_bt709_prim;
+
+    }
+    /* Creation of the source profile */
+    cmsHPROFILE hInProfile = cmsCreateRGBProfile( &icc_d65_wp, &m_prim, trc );
+    if ( hInProfile == NULL ) {
+        msg_Dbg( vd, "Could not create image colorspace profile" );
+        cmsFreeToneCurveTriple(trc);
+        cmsDeleteContext(cms_ctx) ;
+        cmsCloseProfile(hOutProfile);
+        return VLC_ENOMEM;
+    }
+
+    int icc_user_intent = var_InheritInteger( vd, "icc_intent");
+    if ( icc_user_intent < 0 || icc_user_intent > 3 )
+    {
+        msg_Dbg( vd, "Unrecognized rendering intent, taking Perceptual" );
+        icc_user_intent = ICC_INTENT_PERCEPTUAL;
+    }
+    else
+        //msg_Dbg( vd, "User rendering intent = %s", icc_intent_text[icc_user_intent] );
+
+
+    msg_Dbg( vd, "Creating lcms Transform");
+    cmsHTRANSFORM hTransform = cmsCreateTransform(
+        hInProfile,  TYPE_RGB_16,
+        hOutProfile, TYPE_RGB_16,
+        icc_user_intent, cmsFLAGS_HIGHRESPRECALC |
+                         cmsFLAGS_BLACKPOINTCOMPENSATION );
+
+    if ( hTransform == NULL ) {
+        cmsCloseProfile(hInProfile);
+        cmsFreeToneCurveTriple(trc);
+        cmsDeleteContext(cms_ctx) ;
+        cmsCloseProfile(hOutProfile);
+        return VLC_ENOMEM;
+    }
+
+    msg_Dbg( vd, "Creating icc correction lut table");
+    size_t index;
+    uint16_t *rgb = malloc( sizeof(uint16_t) * lut_size * lut_size * lut_size * 3 );
+    if (rgb == NULL )
+    {
+        msg_Dbg( vd, "Could not allocate color correction intermediate buffer" );
+        return VLC_ENOMEM;
+    }
+
+    int scale = UINT16_MAX / ( lut_size - 1 );
+    for ( size_t b = 0 ; b < lut_size ; b++ )
+    {
+        for ( size_t g = 0 ; g < lut_size ; g++ )
+        {
+            for ( size_t r = 0 ; r < lut_size ; r++ )
+            {
+                index = 3 * ( ( b * lut_size + g ) * lut_size
+                                    + r );
+                rgb[ index ]     = r * scale;
+                rgb[ index + 1 ] = g * scale;
+                rgb[ index + 2 ] = b * scale;
+            }
+        }
+    }
+    cmsDoTransform( hTransform, rgb, lut, lut_size * lut_size * lut_size );
+    free( rgb );
+    
+    if ( b_hdr_downlum )
+    {
+        msg_Dbg( vd, "HDR to SDR : Increase saturation");
+        float f_r = 0.0, f_g = 0.0, f_b = 0.0;
+        float y = 0.0, cb = 0.0, cr = 0.0;
+        float sat_ratio = 1.0;
+        for ( size_t b = 0 ; b < lut_size ; b++ )
+        {
+            for ( size_t g = 0 ; g < lut_size ; g++ )
+            {
+                for ( size_t r = 0 ; r < lut_size ; r++ )
+                {
+                    index = 3 * ( ( b * lut_size + g ) * lut_size
+                                        + r );
+                    f_r = (float) lut[ index ] / (float) UINT16_MAX;
+                    f_g = (float) lut[ index + 1 ] / (float) UINT16_MAX;
+                    f_b = (float) lut[ index + 2 ] / (float) UINT16_MAX;
+
+                    y = 0.2627 * f_r + 0.678 * f_g + 0.0593 * f_b;
+                    sat_ratio = 1.0 + 0.2 * ( 1.0 - powf( y, 3.0 ) );
+                    cb = sat_ratio * ( f_b - y ) / 1.8814;
+                    cr = sat_ratio * ( f_r - y ) / 1.4746;
+
+                    f_r = 1.4746 * cr + y;
+                    f_r = fminf( 1.0, fmaxf ( 0.0, f_r ) );
+                    f_b = 1.8814 * cb + y;
+                    f_b = fminf( 1.0, fmaxf ( 0.0, f_b ) );
+                    f_g = ( y - 0.2627 * f_r - 0.0593 * f_b ) / 0.678;
+                    f_g = fminf( 1.0, fmaxf ( 0.0, f_g ) );
+
+                    lut[ index ] = (uint16_t) floorf( f_r * (float) UINT16_MAX + 0.5 );
+                    lut[ index + 1 ] = (uint16_t) floorf( f_g * (float) UINT16_MAX + 0.5 );
+                    lut[ index + 2 ] = (uint16_t) floorf( f_b * (float) UINT16_MAX + 0.5 );
+                }
+            }
+        }
+    }
+
+    msg_Dbg( vd, "3D color LUT created");
+    cmsDeleteTransform( hTransform );
+    cmsCloseProfile(hInProfile);
+    cmsCloseProfile(hOutProfile);
+    cmsFreeToneCurveTriple(trc);
+    cmsDeleteContext(cms_ctx);
+    return VLC_SUCCESS;
+}
+#endif /* HAVE_LCMS2 */

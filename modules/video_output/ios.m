@@ -203,7 +203,8 @@ static int Open(vlc_object_t *this)
             goto bailout;
 
         vout_display_opengl_t *vgl = vout_display_opengl_New(&vd->fmt, &subpicture_chromas,
-                                                             sys->gl, &vd->cfg->viewpoint);
+                                                             sys->gl, &vd->cfg->viewpoint,
+                                                             &vd->clut);
         vlc_gl_ReleaseCurrent(sys->gl);
         if (!vgl)
             goto bailout;

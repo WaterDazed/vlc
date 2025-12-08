@@ -1200,6 +1200,44 @@ static const char *const psz_recursive_list_text[] = {
     "The playlist can use a tree to categorize some items, like the " \
     "contents of a directory." )
 
+#ifdef HAVE_LIBLCMS2
+static enum icc_bp_mode { ICC_BP_MODE_DEFAULT, ICC_BP_MODE_USER };
+static const int icc_bp_mode_list[] = { ICC_BP_MODE_DEFAULT, ICC_BP_MODE_USER };
+static const char * const icc_bp_mode_text[] = { "Default value (1000)", 
+                                                 "User defined value" };
+static enum icc_intent { ICC_INTENT_PERCEPTUAL, ICC_INTENT_RELATIVE_COLORIMETRIC, 
+     ICC_INTENT_SATURATION, ICC_INTENT_ABSOLUTE_COLORIMETRIC };
+static const int icc_intent_list[] = { ICC_INTENT_PERCEPTUAL,
+ICC_INTENT_RELATIVE_COLORIMETRIC, ICC_INTENT_SATURATION, 
+ICC_INTENT_ABSOLUTE_COLORIMETRIC };
+static const char * const icc_intent_text[] = { "Perceptual",
+    "Relative Colorimetric", "Saturation", "Absolute Colorimetric" };
+
+#define ICC_MODE_TEXT N_("Black point offset mode")
+#define ICC_MODE_LONGTEXT N_("Black point offset mode, \
+    change to user value if image constrast is not satisfactory.")
+
+#define ICC_FILE_TEXT N_("File path to display icc profile")
+#define ICC_FILE_LONGTEXT N_( \
+    "File path to your display icc profile (.icc, .icm) for color correction.")
+
+#define ICC_CTST_TEXT N_("Display source contrast")
+#define ICC_CTST_LONGTEXT N_("This is an assumption on the contrast ratio of " \
+    "the display used for the video creation. Used to compute the black point " \
+    "compensation.")
+    
+#define ICC_RI_TEXT N_("Rendering intent")
+#define ICC_RI_LONGTEXT N_("Usual values are perceptual or relative " \
+    "colorimetric.")
+    
+#define ICC_LSIZE_TEXT N_("3D LUT size")
+#define ICC_LSIZE_LONGTEXT N_("Lut size per component. Usual value is 64, " \
+                              "Max is 256")
+    
+#define ICC_BT709_TEXT N_("Force BT709 colorspace (HDTV) for the source")
+#define ICC_BT709_LONGTEXT N_("Try this with hdmi or usb sources (webcam...) " \
+    "if colors seem wrong.")
+#endif
 
 /*****************************************************************************
  * Hotkeys
@@ -1656,6 +1694,20 @@ vlc_module_begin ()
     set_subcategory( SUBCAT_VIDEO_VOUT )
     add_module( "vout", "vout display", NULL, VOUT_TEXT, VOUT_LONGTEXT, true )
         change_short('V')
+
+#ifdef HAVE_LIBLCMS2
+    set_section("Display color correction", NULL)
+    add_loadfile("icc_profile", "", ICC_FILE_TEXT, ICC_FILE_LONGTEXT, true )
+    add_integer("icc_bp_offset_mode", ICC_BP_MODE_DEFAULT, ICC_MODE_TEXT,
+                ICC_MODE_LONGTEXT, true)
+    change_integer_list( icc_bp_mode_list, icc_bp_mode_text)
+    add_integer("icc_contrast", 2000, ICC_CTST_TEXT, ICC_CTST_LONGTEXT, true )
+    add_integer("icc_intent", ICC_INTENT_PERCEPTUAL, ICC_RI_TEXT, ICC_RI_LONGTEXT, true)
+    change_integer_list( icc_intent_list, icc_intent_text)
+    add_integer("icc_lsize", 64, ICC_LSIZE_TEXT, ICC_LSIZE_LONGTEXT, true)
+    add_bool("force_bt709", false, ICC_BT709_TEXT, ICC_BT709_LONGTEXT, true)
+#endif
+
 
     set_subcategory( SUBCAT_VIDEO_VFILTER )
     add_module_list( "video-filter", "video filter", NULL,

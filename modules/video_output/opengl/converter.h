@@ -26,6 +26,8 @@
 #include <vlc_picture_pool.h>
 #include <vlc_opengl.h>
 
+#include <vlc_vout_display.h>
+
 /* if USE_OPENGL_ES2 is defined, OpenGL ES version 2 will be used, otherwise
  * normal OpenGL will be used */
 #ifdef __APPLE__
@@ -46,6 +48,9 @@
 #  include <GLES2/gl2ext.h>
 # else
 #  ifdef _WIN32
+#   ifndef GLEW_STATIC
+#    define GLEW_STATIC 1
+#   endif
 #   include <GL/glew.h>
 #  endif
 #  include <GL/gl.h>
@@ -89,6 +94,9 @@ typedef void (APIENTRY *PFNGLGETTEXLEVELPARAMETERIVPROC) (GLenum target, GLint l
 typedef void (APIENTRY *PFNGLPIXELSTOREIPROC) (GLenum pname, GLint param);
 typedef void (APIENTRY *PFNGLTEXENVFPROC)(GLenum target, GLenum pname, GLfloat param);
 typedef void (APIENTRY *PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels);
+#ifdef HAVE_LIBLCMS2
+typedef void (APIENTRY *PFNGLTEXIMAGE3DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *data);
+#endif
 typedef void (APIENTRY *PFNGLTEXPARAMETERFPROC) (GLenum target, GLenum pname, GLfloat param);
 typedef void (APIENTRY *PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
 typedef void (APIENTRY *PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
@@ -173,6 +181,9 @@ typedef struct {
     PFNGLTEXPARAMETERFPROC  TexParameterf;
     PFNGLTEXPARAMETERIPROC  TexParameteri;
     PFNGLTEXSUBIMAGE2DPROC  TexSubImage2D;
+#ifdef HAVE_LIBLCMS2
+    PFNGLTEXIMAGE3DPROC     TexImage3D;
+#endif
     PFNGLVIEWPORTPROC       Viewport;
 
     /* GL only core functions: NULL for GLES2 */
@@ -339,6 +350,13 @@ struct opengl_tex_converter_t
 
     struct pl_shader *pl_sh;
     const struct pl_shader_res *pl_sh_res;
+
+#ifdef HAVE_LIBLCMS2
+     /* Data needed to the display color correction LUT (Texture3D) */
+     GLint clutId;
+     GLuint clut_tex;
+     bool clut_is_active;
+#endif
 
     /* Private context */
     void *priv;

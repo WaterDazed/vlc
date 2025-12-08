@@ -171,6 +171,12 @@ struct vout_display_opengl_t {
     float f_z;    /* Position of the camera on the shpere radius vector */
     float f_z_min;
     float f_sar;
+    
+#ifdef HAVE_LIBLCMS2
+    /* Data needed to the icc color correction LUT (Texture3D)
+     * Initialized in opengl_init_program */
+    uint16_t *icc_3dlut;
+#endif
 };
 
 static const GLfloat identity[] = {
@@ -574,6 +580,15 @@ opengl_deinit_program(vout_display_opengl_t *vgl, struct prgm *prgm)
         pl_context_destroy(&tc->pl_ctx);
 #endif
 
+
+//#ifdef HAVE_LIBLCMS2
+    //if ( vgl->icc_3dlut != NULL )
+    //{
+        //free( vgl->icc_3dlut );
+        //vgl->icc_3dlut = NULL;
+    //}   
+//#endif
+
     vlc_object_release(tc);
 }
 
@@ -597,6 +612,7 @@ opengl_init_program(vout_display_opengl_t *vgl, struct prgm *prgm,
                     const char *glexts, const video_format_t *fmt, bool subpics,
                     bool b_dump_shaders)
 {
+
     opengl_tex_converter_t *tc =
         vlc_object_create(vgl->gl, sizeof(opengl_tex_converter_t));
     if (tc == NULL)
@@ -639,6 +655,16 @@ opengl_init_program(vout_display_opengl_t *vgl, struct prgm *prgm,
             tc->pl_sh = pl_shader_alloc(tc->pl_ctx, NULL, 0, 0);
 #   endif
         }
+    }
+#endif
+
+#ifdef HAVE_LIBLCMS2
+    if (!subpics)
+    {
+        if ( vgl->icc_3dlut != NULL )
+            tc->clut_is_active = true;
+        else 
+            tc->clut_is_active = false;
     }
 #endif
 
@@ -739,8 +765,10 @@ ResizeFormatToGLMaxTexSize(video_format_t *fmt, unsigned int max_tex_size)
 vout_display_opengl_t *vout_display_opengl_New(video_format_t *fmt,
                                                const vlc_fourcc_t **subpicture_chromas,
                                                vlc_gl_t *gl,
-                                               const vlc_viewpoint_t *viewpoint)
+                                               const vlc_viewpoint_t *viewpoint,
+                                               const struct vout_display_clut *clut )
 {
+    
     if (gl->getProcAddress == NULL) {
         msg_Err(gl, "getProcAddress not implemented, bailing out\n");
         return NULL;
@@ -795,6 +823,9 @@ vout_display_opengl_t *vout_display_opengl_New(video_format_t *fmt,
     GET_PROC_ADDR_CORE(TexParameterf);
     GET_PROC_ADDR_CORE(TexParameteri);
     GET_PROC_ADDR_CORE(TexSubImage2D);
+#ifdef HAVE_LIBLCMS2
+    GET_PROC_ADDR_CORE(TexImage3D);
+#endif
     GET_PROC_ADDR_CORE(Viewport);
 
     GET_PROC_ADDR_CORE_GL(GetTexLevelParameteriv);
@@ -896,6 +927,14 @@ vout_display_opengl_t *vout_display_opengl_New(video_format_t *fmt,
 
     vgl->prgm = &vgl->prgms[0];
     vgl->sub_prgm = &vgl->prgms[1];
+    
+#ifdef HAVE_LIBLCMS2
+    vgl->icc_3dlut = NULL;
+    if ( clut->p_clut != NULL )
+    {
+        vgl->icc_3dlut = clut->p_clut;
+    }
+#endif
 
     GL_ASSERT_NOERROR();
     int ret;
@@ -955,6 +994,25 @@ vout_display_opengl_t *vout_display_opengl_New(video_format_t *fmt,
             return NULL;
         }
     }
+/* Color correction texture */
+#ifdef HAVE_LIBLCMS2
+    if ( vgl->prgm->tc->clut_is_active )
+    {
+        vgl->vt.GenTextures(1, &vgl->prgm->tc->clut_tex);
+        vgl->vt.BindTexture(GL_TEXTURE_3D, vgl->prgm->tc->clut_tex);
+        msg_Dbg(gl, "Allocating 3D Lut with TexImage3D");
+        vgl->vt.TexImage3D( GL_TEXTURE_3D, 0, GL_RGB,
+                            clut->size, clut->size, clut->size, 0,
+                            GL_RGB, GL_UNSIGNED_SHORT, vgl->icc_3dlut );
+        /* Set sampling parameters, clamp to edge, weird colors otherwise */
+        vgl->vt.TexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        vgl->vt.TexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        vgl->vt.TexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        vgl->vt.TexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        vgl->vt.TexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        msg_Dbg(gl, "Icc correction texture allocated");
+    }
+#endif
 
     /* */
     vgl->vt.Disable(GL_BLEND);
@@ -1602,6 +1660,14 @@ static void DrawWithShaders(vout_display_opengl_t *vgl, struct prgm *prgm)
                                      0, 0, 0);
     }
 
+#ifdef HAVE_LIBLCMS2
+    if ( vgl->prgm->tc->clut_is_active )
+    {
+        vgl->vt.ActiveTexture(GL_TEXTURE0 + vgl->prgm->tc->tex_count );
+        vgl->vt.BindTexture(GL_TEXTURE_3D, vgl->prgm->tc->clut_tex );
+    }
+#endif
+
     vgl->vt.BindBuffer(GL_ARRAY_BUFFER, vgl->vertex_buffer_object);
     vgl->vt.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, vgl->index_buffer_object);
     vgl->vt.EnableVertexAttribArray(prgm->aloc.VertexPosition);
@@ -1814,4 +1880,3 @@ int vout_display_opengl_Display(vout_display_opengl_t *vgl,
 
     return VLC_SUCCESS;
 }
-

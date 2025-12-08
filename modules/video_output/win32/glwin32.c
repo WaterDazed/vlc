@@ -146,8 +146,11 @@ static int Open(vlc_object_t *object)
     const vlc_fourcc_t *subpicture_chromas;
     if (vlc_gl_MakeCurrent (sys->gl))
         goto error;
+
     sys->vgl = vout_display_opengl_New(&fmt, &subpicture_chromas, sys->gl,
-                                       &vd->cfg->viewpoint);
+                                       &vd->cfg->viewpoint,
+                                       &vd->clut);
+
     vlc_gl_ReleaseCurrent (sys->gl);
     if (!sys->vgl)
         goto error;

@@ -4308,6 +4308,27 @@ AS_IF([test "$enable_libplacebo" != "no"], [
 ])
 AM_CONDITIONAL(HAVE_LIBPLACEBO, [test "$enable_libplacebo" != "no"])
 
+dnl
+dnl  liblcms2 support
+dnl
+AC_ARG_ENABLE(color-correction,
+  [AS_HELP_STRING([--disable-color-correction],
+      [disable display color correction support (default auto, disabled if
+       --enable-gles2)])])
+
+AS_IF([test "$enable_gles2" != "yes"], [
+  AS_IF([test "$enable_color_correction" != "no"], [
+    PKG_CHECK_MODULES([LIBLCMS2], [lcms2 >= 2.9], [
+      AC_DEFINE([HAVE_LIBLCMS2], [1], [Define to 1 if liblcms2 is present.])
+    ], [
+      AS_IF([test -n "${enable_color_correction}"], [
+        AC_MSG_ERROR([${LIBLCMS2_PKG_ERRORS}.])
+      ])
+      enable_color_correction="no"
+    ])
+  ])
+])
+AM_CONDITIONAL(HAVE_LIBLCMS2, [test "$enable_color_correction" != "no"])
 
 dnl
 dnl  Endianness check

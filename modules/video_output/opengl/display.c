@@ -143,7 +143,9 @@ static int Open (vlc_object_t *obj)
         goto error;
 
     sys->vgl = vout_display_opengl_New (&vd->fmt, &spu_chromas, sys->gl,
-                                        &vd->cfg->viewpoint);
+                                        &vd->cfg->viewpoint,
+                                        &vd->clut );
+
     vlc_gl_ReleaseCurrent (sys->gl);
 
     if (sys->vgl == NULL)
