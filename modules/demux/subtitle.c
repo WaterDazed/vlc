@@ -1904,9 +1904,9 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             !negative_ints( 8, h1, h2, m1, m2, s1, s2, f1, f2 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 ) +
-                vlc_tick_from_sec( ( f1 +  p_props->jss.i_time_shift ) / p_props->jss.i_time_resolution );
+                vlc_tick_from_frac( f1 +  p_props->jss.i_time_shift, p_props->jss.i_time_resolution );
             p_subtitle->i_stop = VLC_TICK_0 + vlc_tick_from_HMS( h2, m2, s2 ) +
-                vlc_tick_from_sec( ( f2 +  p_props->jss.i_time_shift ) / p_props->jss.i_time_resolution );
+                vlc_tick_from_frac( f2 +  p_props->jss.i_time_shift, p_props->jss.i_time_resolution );
             break;
         }
         /* Short time lines */
@@ -1914,9 +1914,9 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                  !negative_ints( 2, f1, f2 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 +
-                    vlc_tick_from_sec( (f1 + p_props->jss.i_time_shift ) / p_props->jss.i_time_resolution );
+                    vlc_tick_from_frac( f1 + p_props->jss.i_time_shift, p_props->jss.i_time_resolution );
             p_subtitle->i_stop = VLC_TICK_0 +
-                    vlc_tick_from_sec( (f2 + p_props->jss.i_time_shift ) / p_props->jss.i_time_resolution );
+                    vlc_tick_from_frac( f2 + p_props->jss.i_time_shift, p_props->jss.i_time_resolution );
             break;
         }
         /* General Directive lines */
