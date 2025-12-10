@@ -1237,9 +1237,8 @@ static vlc_render_subpicture *RenderSPUs(vout_thread_sys_t *sys,
                       ignore_osd);
 }
 
-static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
-                            picture_t **out_pic,
-                            vlc_render_subpicture **out_subpic)
+static picture_t *PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
+                            vlc_render_subpicture **out_subpic, vlc_tick_t system_pts)
 {
     vout_display_t *vd = sys->display;
 
@@ -1374,7 +1373,7 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
 
     todisplay = vout_ConvertForDisplay(vd, todisplay);
     if (todisplay == NULL) {
-        return VLC_EGENERIC;
+        return NULL;
     }
 
     if (!vd_does_blending && !blending_before_converter && sys->spu_blend)
@@ -1389,7 +1388,6 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
         }
     }
 
-    *out_pic = todisplay;
     if (vd_does_blending)
         *out_subpic = RenderSPUs(sys, vd->info.subpicture_chromas, &fmt_spu_rot,
                                  system_now, render_subtitle_date,
@@ -1397,7 +1395,10 @@ static int PrerenderPicture(vout_thread_sys_t *sys, picture_t *filtered,
     else
         *out_subpic = NULL;
 
-    return VLC_SUCCESS;
+    if (vd->ops->prepare != NULL)
+        vd->ops->prepare(vd, todisplay, *out_subpic, system_pts);
+
+    return todisplay;
 }
 
 static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
@@ -1410,39 +1411,32 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
     if (!filtered)
         return VLC_EGENERIC;
 
+    const vlc_tick_t pts = filtered->date;
+
     vlc_clock_Lock(sys->clock);
     sys->clock_nowait = false;
-    vlc_clock_Unlock(sys->clock);
-    vlc_queuedmutex_lock(&sys->display_lock);
-
-    picture_t *todisplay;
-    vlc_render_subpicture *subpic;
-    int ret = PrerenderPicture(sys, filtered, &todisplay, &subpic);
-    if (ret != VLC_SUCCESS)
-    {
-        vlc_queuedmutex_unlock(&sys->display_lock);
-        return ret;
-    }
-
     vlc_tick_t system_now = vlc_tick_now();
-    const vlc_tick_t pts = todisplay->date;
     vlc_tick_t system_pts;
     if (render_now)
         system_pts = system_now;
     else
     {
-        vlc_clock_Lock(sys->clock);
         assert(!sys->displayed.current->b_force);
         system_pts = vlc_clock_ConvertToSystem(sys->clock, system_now, pts,
                                                sys->rate, NULL);
-        vlc_clock_Unlock(sys->clock);
     }
+    vlc_clock_Unlock(sys->clock);
+    vlc_queuedmutex_lock(&sys->display_lock);
 
-    const unsigned frame_rate = todisplay->format.i_frame_rate;
-    const unsigned frame_rate_base = todisplay->format.i_frame_rate_base;
-
-    if (vd->ops->prepare != NULL)
-        vd->ops->prepare(vd, todisplay, subpic, system_pts);
+    picture_t *todisplay;
+    vlc_render_subpicture *subpic;
+    todisplay = PrerenderPicture(sys, filtered, &subpic, system_pts);
+    if (todisplay == NULL)
+    {
+        vlc_queuedmutex_unlock(&sys->display_lock);
+        return VLC_EGENERIC;
+    }
+    assert(todisplay->date == pts);
 
     vout_chrono_Stop(&sys->chrono.render);
 
@@ -1509,6 +1503,10 @@ static int RenderPicture(vout_thread_sys_t *sys, bool render_now)
 
     /* Display the direct buffer returned by vout_RenderPicture */
     vout_display_Display(vd, todisplay);
+
+    const unsigned frame_rate = todisplay->format.i_frame_rate;
+    const unsigned frame_rate_base = todisplay->format.i_frame_rate_base;
+
     vlc_clock_Lock(sys->clock);
     vlc_tick_t drift = vlc_clock_UpdateVideo(sys->clock,
                                              vlc_tick_now(),
