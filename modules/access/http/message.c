@@ -904,7 +904,8 @@ unsigned vlc_http_msg_get_retry_after(const struct vlc_http_msg *m)
 
 uintmax_t vlc_http_msg_get_size(const struct vlc_http_msg *m)
 {   /* IETF RFC7230 §3.3.3 */
-    if ((m->status / 100) == 1 /* Informational 1xx (implicitly void) */
+    if (m->status <= 0
+     || (m->status / 100) == 1 /* Informational 1xx (implicitly void) */
      || m->status == 204 /* No Content (implicitly void) */
      || m->status == 205 /* Reset Content (must be explicitly void) */
      || m->status == 304 /* Not Modified */)
