@@ -499,6 +499,12 @@ static int Open ( vlc_object_t *p_this )
                 p_sys->props.i_type = SUB_TYPE_SAMI;
                 break;
             }
+            else if( sscanf( s, "{%d:%d:%d}",
+                                &i_dummy, &i_dummy, &i_dummy ) == 3 )
+            {
+                p_sys->props.i_type = SUB_TYPE_PSB;
+                break;
+            }
             else if( sscanf( s, "{%d}{%d}", &i_dummy, &i_dummy ) == 2 ||
                      sscanf( s, "{%d}{}", &i_dummy ) == 1)
             {
@@ -619,12 +625,6 @@ static int Open ( vlc_object_t *p_this )
             else if( sscanf( s, "%d,%d,", &i_dummy, &i_dummy ) == 2 )
             {
                 p_sys->props.i_type = SUB_TYPE_PJS;
-                break;
-            }
-            else if( sscanf( s, "{%d:%d:%d}",
-                                &i_dummy, &i_dummy, &i_dummy ) == 3 )
-            {
-                p_sys->props.i_type = SUB_TYPE_PSB;
                 break;
             }
             else if( strcasestr( s, "<time" ) )
