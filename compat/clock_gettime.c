@@ -33,13 +33,13 @@
 
 /**
  * Get the absolute time at which the system was booted
- * 
+ *
  * This time is changed whenever the clock is adjusted to
  * correctly reflect the boot time with the adjusted clock,
  * so just querying it once and reusing the value is not safe.
  *
  * \param[out]  tv   Timeval struct to write the boottime to
- * 
+ *
  * \note
  * The boot time only has microsecond precision
  *
@@ -58,10 +58,10 @@ static int vlc__get_system_boottime(struct timeval *tv)
 
 /**
  * Get the monotonic time (CLOCK_MONOTONIC)
- * 
+ *
  * Calculates a monotically incrasing time since system boot
  * that continues to increment when the system is asleep.
- * 
+ *
  * Warnings to everyone trying to simplify this:
  * - Using mach_continuous_time is not equivalent to this, see
  *   the darwin manpage about CLOCK_MONOTONIC_RAW for an explanation.
@@ -102,7 +102,7 @@ static int vlc__get_monotonic(struct timeval *tv)
     return 0;
 }
 
-int clock_gettime(clockid_t clock_id, struct timespec *tp)
+int (vlc_clock_gettime)(clockid_t clock_id, struct timespec *tp)
 {
     int ret = 0;
     struct timeval tv;

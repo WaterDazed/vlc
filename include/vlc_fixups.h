@@ -337,7 +337,6 @@ time_t timegm(struct tm *);
 #define TIME_UTC 1
 #endif
 struct timespec;
-int timespec_get(struct timespec *, int);
 #endif
 
 /* sys/time.h */
@@ -400,7 +399,9 @@ int posix_memalign(void **, size_t, size_t);
 #endif
 
 #ifndef HAVE_ALIGNED_ALLOC
-void *aligned_alloc(size_t, size_t);
+#include <stdlib.h>
+void *vlc_aligned_alloc(size_t, size_t);
+#define aligned_alloc(s, a) vlc_aligned_alloc(s, a)
 #endif
 
 #ifdef __cplusplus
@@ -781,18 +782,27 @@ extern "C" {
 # ifndef TIMER_ABSTIME
 #  define TIMER_ABSTIME 0x01
 # endif
-# ifndef CLOCK_REALTIME
+
+// undefined to discard the availability flags (FIXME only when configure detects it's not usable)
+#  undef CLOCK_REALTIME
+#  undef CLOCK_MONOTONIC
 #  define CLOCK_REALTIME 0
-# endif
-# ifndef CLOCK_MONOTONIC
 #  define CLOCK_MONOTONIC 6
-# endif
-# ifndef HAVE_CLOCK_GETTIME
-int clock_gettime(clockid_t clock_id, struct timespec *tp);
-# endif
-# ifndef HAVE_CLOCK_GETRES
-int clock_getres(clockid_t clock_id, struct timespec *tp);
-# endif
+#endif
+
+#ifndef HAVE_CLOCK_GETRES
+int vlc_clock_getres(clockid_t clock_id, struct timespec *tp);
+# define clock_getres(id, tp) vlc_clock_getres(id, tp)
+#endif
+
+#ifndef HAVE_CLOCK_GETTIME
+int vlc_clock_gettime(clockid_t clock_id, struct timespec *tp);
+#define clock_gettime(id, tp) vlc_clock_gettime(id, tp)
+#endif
+
+#ifndef HAVE_TIMESPEC_GET
+int vlc_timespec_get(struct timespec *, int);
+#define timespec_get(s, v) vlc_timespec_get(s, v)
 #endif
 
 #ifndef _WIN32

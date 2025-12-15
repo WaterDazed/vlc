@@ -160,7 +160,7 @@ GetRouteSharingPolicy(audio_output_t *p_aout)
     /* LongFormAudio by default */
     AVAudioSessionRouteSharingPolicy policy = AVAudioSessionRouteSharingPolicyLongFormAudio;
     AVAudioSessionRouteSharingPolicy video_policy;
-#if TARGET_OS_IOS || TARGET_OS_VISION
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_VISION) && TARGET_OS_VISION)
     if (@available(iOS 13.0 VISIONOS_AVAILABLE, *))
         video_policy = AVAudioSessionRouteSharingPolicyLongFormVideo;
     else
@@ -224,7 +224,7 @@ avas_SetActive(audio_output_t *p_aout, AVAudioSession *instance, bool active,
             /* Not AVAudioSessionRouteSharingPolicy on older devices */
         }
         ret = ret && [instance setActive:YES withOptions:options error:&error];
-#if TARGET_OS_VISION
+#if defined(TARGET_OS_VISION) && TARGET_OS_VISION
         ret = ret && [instance setIntendedSpatialExperience:AVAudioSessionSpatialExperienceFixed
                                                     options:nil
                                                       error:&error];

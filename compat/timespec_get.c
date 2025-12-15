@@ -25,7 +25,7 @@
 #ifdef _WIN32
 #include <windows.h>
 
-int timespec_get(struct timespec *ts, int base)
+int (vlc_timespec_get)(struct timespec *ts, int base)
 {
     FILETIME ft;
     ULARGE_INTEGER s;
