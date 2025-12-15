@@ -2526,23 +2526,29 @@ static int ParseSCC( vlc_object_t *p_obj, subs_properties_t *p_props,
             continue;
 
         /* convert everything to seconds */
-        int64_t i_frames = h * INT64_C(3600) + m * INT64_C(60) + s;
+        int64_t i_display_seconds = h * INT64_C(3600) + m * INT64_C(60) + s;
+
+        vlc_rational_t i_nominal_rate = p_rate->rate;
+        if( p_rate->b_drop_allowed ) /* dropframe */
+            i_nominal_rate.den = 1000;
+
+        int64_t i_continuous_frames = i_display_seconds * i_nominal_rate.num / i_nominal_rate.den + f;
 
         if( c == ';' && p_rate->b_drop_allowed ) /* dropframe */
         {
             /* convert to frame # to be accurate between inter drop drift
              * of 18 frames see http://andrewduncan.net/timecodes/ */
-            const unsigned i_mins = h * 60 + m;
-            i_frames = i_frames * p_rate[+1].rate.num + f
-                    - (p_rate[+1].rate.den * 2 * (i_mins - i_mins % 10));
+            int i_dropped_frames_per_minute = (p_rate->val == 2997) ? 2: 4;
+            int64_t i_total_minutes = h * INT64_C(60) + m;
+            int64_t i_dropped_frames = i_dropped_frames_per_minute * (i_total_minutes - i_total_minutes / 10);
+            /* Subtract the gap get the actual linear frame index
+               00:00:59;29 -> 1799
+               00:01:00;02 -> 1800 instead of 1804 */
+            i_continuous_frames -= i_dropped_frames;
         }
-        else
-        {
-            /* convert to frame # at 29.97 */
-            i_frames = i_frames * framerates[3].rate.num / framerates[3].rate.den + f;
-        }
-        p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_sec(i_frames)*
-                                         p_rate->rate.den / p_rate->rate.num;
+
+        p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_frac( i_continuous_frames * p_rate->rate.den, p_rate->rate.num );
+
         p_subtitle->i_stop = -1;
 
         const char *psz_text = strchr( psz_line, '\t' );
