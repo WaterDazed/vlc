@@ -2347,7 +2347,7 @@ static int ParseDKS( vlc_object_t *p_obj, subs_properties_t *p_props,
             }
 
             if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 && !negative_ints( 3, h2, m2, s2 ) )
-                p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 );
+                p_subtitle->i_stop  = VLC_TICK_0 + vlc_tick_from_HMS( h2, m2, s2 );
             else
                 p_subtitle->i_stop  = -1;
             break;
@@ -2404,7 +2404,7 @@ static int ParseSubViewer1( vlc_object_t *p_obj, subs_properties_t *p_props,
             }
 
             if( sscanf( s, "[%d:%d:%d]", &h2, &m2, &s2 ) == 3 && !negative_ints( 3, h2, m2, s2 ) )
-                p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 );
+                p_subtitle->i_stop  = VLC_TICK_0 + vlc_tick_from_HMS( h2, m2, s2 );
             else
                 p_subtitle->i_stop  = -1;
 
