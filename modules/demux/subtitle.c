@@ -81,6 +81,7 @@ vlc_module_end ()
 /*****************************************************************************
  * Prototypes:
  *****************************************************************************/
+// check for most refs https://wiki.whatwg.org/wiki/timed_track_formats
 enum subtitle_type_e
 {
     SUB_TYPE_UNKNOWN = -1,
@@ -1072,6 +1073,9 @@ static int ParseMicroDvd( vlc_object_t *p_obj, subs_properties_t *p_props,
  *      ...
  *      [empty line]
  *  We ignore line number for SubRip
+ *  https://wiki.videolan.org/SubViewer
+ *  https://web.archive.org/web/20070208014139/http://divxstation.com/article.asp?aId=27
+ *  http://breizhbill.baroud.free.fr/Subviewer.htm
  */
 static int ParseSubRipSubViewer( vlc_object_t *p_obj, subs_properties_t *p_props,
                                  text_t *txt, subtitle_t *p_subtitle,
@@ -1380,6 +1384,7 @@ static int ParseVplayer( vlc_object_t *p_obj, subs_properties_t *p_props,
 }
 
 /* ParseSami
+ * https://learn.microsoft.com/fr-fr/previous-versions/windows/desktop/dnacc/understanding-sami-1.0
  */
 static const char *ParseSamiSearch( text_t *txt,
                                     const char *psz_start, const char *psz_str )
@@ -1567,6 +1572,8 @@ static int ParseDVDSubtitle(vlc_object_t *p_obj, subs_properties_t *p_props,
  *  Format
  *     [n1][n2]Line1|Line2|Line3...
  *  where n1 and n2 are the video frame number (n2 can be empty)
+ *  https://wiki.multimedia.cx/index.php/MPL2
+ *  https://web.archive.org/web/20070714041554/https://napisy.ussbrowarek.org/mpl2-eng.html
  */
 static int ParseMPL2(vlc_object_t *p_obj, subs_properties_t *p_props,
                      text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
@@ -1618,6 +1625,11 @@ static int ParseMPL2(vlc_object_t *p_obj, subs_properties_t *p_props,
     return VLC_SUCCESS;
 }
 
+/* AQTitle
+ * https://web.archive.org/web/20080205023026/https://trac.annodex.net/wiki/AQTitle
+ * https://web.archive.org/web/20040405175928/http://www.volny.cz/aberka/czech/aqt.html
+ * https://streams.videolan.org/samples/sub/AQT/Total%20recall.aqt
+ */
 static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
     VLC_UNUSED(p_obj);
@@ -1678,6 +1690,10 @@ static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt
     return VLC_SUCCESS;
 }
 
+/* Phoenix Subtitle
+ * https://web.archive.org/web/20070426045652/https://trac.annodex.net/wiki/PJS
+ *
+ */
 static int ParsePJS(vlc_object_t *p_obj, subs_properties_t *p_props,
                     text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
@@ -1726,6 +1742,9 @@ static int ParsePJS(vlc_object_t *p_obj, subs_properties_t *p_props,
     return VLC_SUCCESS;
 }
 
+/* MPlayer sub
+ * http://www.mplayerhq.hu/DOCS/tech/mpsub.sub
+ */
 static int ParseMPSub( vlc_object_t *p_obj, subs_properties_t *p_props,
                        text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
@@ -1816,6 +1835,9 @@ static int ParseMPSub( vlc_object_t *p_obj, subs_properties_t *p_props,
     return VLC_SUCCESS;
 }
 
+/* JacoSub
+ * http://unicorn.us.com/jacosub/jscripts.html
+ */
 static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                      text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
@@ -2061,6 +2083,9 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
     return VLC_SUCCESS;
 }
 
+/* PowerDivX
+ *
+ */
 static int ParsePSB( vlc_object_t *p_obj, subs_properties_t *p_props,
                      text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
@@ -2104,6 +2129,9 @@ static int ParsePSB( vlc_object_t *p_obj, subs_properties_t *p_props,
     return VLC_SUCCESS;
 }
 
+/* RealText
+ * https://web.archive.org/web/20060220020920/http://service.real.com/help/library/guides/realtext/realtext.htm
+ */
 static vlc_tick_t ParseRealTime( const char *psz )
 {
     if( *psz == '\0' ) return VLC_TICK_0;
@@ -2233,6 +2261,9 @@ static int ParseRealText( vlc_object_t *p_obj, subs_properties_t *p_props,
     return VLC_SUCCESS;
 }
 
+/*
+ * https://web.archive.org/web/20110813234607/http://www.allsubs.org/subs-download/tommy-boy-dks/149169/
+ */
 static int ParseDKS( vlc_object_t *p_obj, subs_properties_t *p_props,
                      text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
