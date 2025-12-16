@@ -254,6 +254,648 @@ static int check_SubRip(struct subtitles_es_out_ctx_t *ctx)
     return 0;
 }
 
+const char testdata_SubViewer[] =
+"[INFORMATION]\n"
+"[END INFORMATION]\n"
+"[SUBTITLE]\n"
+"00:04:35.03,00:04:38.82\n"
+"LINE0\n"
+"\n"
+//"[PROP]bidule\n"
+"00:05:00.19,00:05:03.47\n"
+"LINE0[br]LINE1\n"
+;
+
+static int check_SubViewer(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    // 1
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(4*60+35) + VLC_TICK_FROM_MS(30));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(4*60+38) + VLC_TICK_FROM_MS(820) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    POP;
+
+    // 2
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(5*60) + VLC_TICK_FROM_MS(190));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(5*60+3) + VLC_TICK_FROM_MS(470) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    POP;
+
+    // Final check that the chain is now empty
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_SSA2[] =
+"Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+"Dialogue: Marked=0,0:02:40.65,0:02:41.79,Wolf main,Cher,0000,0000,0000,,TEXT0"
+;
+
+static int check_SSA2(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    // 1
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+40) + VLC_TICK_FROM_MS(650));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+41) + VLC_TICK_FROM_MS(790) - OUT->i_pts);
+//    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_ASS[] =
+"Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+"Dialogue: Layer#,0:02:40.65,0:02:41.79,Wolf main,Cher,0000,0000,0000,,TEXT0"
+;
+
+static int check_ASS(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    // 1
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+40) + VLC_TICK_FROM_MS(650));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+41) + VLC_TICK_FROM_MS(790) - OUT->i_pts);
+//    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_Vplayer[] =
+"00:01:01:LINE0\n"
+"00:02:01 LINE0|LINE1\n"
+"00:03:01: \n"
+"00:04:01:\n" // rejected
+"00:05:01: " // no trailing \n
+;
+
+static int check_Vplayer(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(1*60+01));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+01));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(3*60+01));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, " "));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(5*60+01));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, " "));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_Sami[] =
+"<SAMI>\n"
+"\n"
+"<HEAD>\n"
+"<TITLE>SAMI Example</TITLE>\n"
+"</HEAD>\n"
+"<BODY>\n"
+"<SYNC Start=0>\n"
+//"<P Class=ENUSCC ID=Source>Source0</P>\n"
+"<P Class=ENUSCC>TEXT0</P>\n"
+//"<P Class=FRFRCC ID=Source>Source1</P>\n"
+//"<P Class=FRFRCC>TEXT1</P>\n"
+"</SYNC>\n"
+"\n"
+"<SYNC Start=1000>\n"
+"<P Class=ENUSCC>TEXT0</P>\n"
+//"<P Class=FRFRCC>TEXT1</P>\n"
+"</SYNC>\n"
+"\n"
+"</BODY>\n"
+"</SAMI>\n"
+;
+
+static int check_Sami(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0);
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(1));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_DVDSubtitle[] =
+"{T 00:00:01:10\n"
+"LINE0\n"
+"}\n"
+"{T 00:00:02:300\n"
+"LINE0\n"
+"LINE1\n"
+"}\n"
+;
+
+static int check_DVDSubtitle(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(1) + VLC_TICK_FROM_MS(100));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2) + VLC_TICK_FROM_MS(300));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_MPL2[] =
+"[10][20] LINE0\n"
+"[223][324] /LINE0|LINE1\n"
+;
+
+static int check_MPL2(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(1));
+    EXPECT(OUT->i_length == vlc_tick_from_sec(1));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(22) + VLC_TICK_FROM_MS(300));
+    EXPECT(OUT->i_length == vlc_tick_from_sec(10) + VLC_TICK_FROM_MS(100));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_AQT[] =
+//"-->> 00000000\n"
+//"\n"
+"-->> 00001000\n"
+"LINE0\n"
+"-->> 00002000\n"
+"\n"
+"-->> 00003000\n"
+"LINE0\n"
+"LINE1\n"
+"-->> 00004000\n"
+;
+
+static int check_AQT(struct subtitles_es_out_ctx_t *ctx)
+{
+#define ATQ_TIMING(x) (VLC_TICK_FROM_MS(40)*(x))
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + ATQ_TIMING(1000));
+    EXPECT(OUT->i_length == VLC_TICK_0 + ATQ_TIMING(2000) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + ATQ_TIMING(3000));
+    EXPECT(OUT->i_length == VLC_TICK_0 + ATQ_TIMING(4000) - OUT->i_pts);
+    //EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_PJS[] =
+//"    0,     0,\"\"\n"
+"  100,   200,\"LINE0\"\n"
+"  300,   400,\"LINE0|LINE1\"\n"
+//"    0, 99999,\"\"\n"
+//"99999, 99999,\"\"\n"
+;
+
+static int check_PJS(struct subtitles_es_out_ctx_t *ctx)
+{
+#define PJS_TIMING(x) (INT64_C(10)*(x))
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + PJS_TIMING(100));
+    EXPECT(OUT->i_length == PJS_TIMING(100));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + PJS_TIMING(300));
+    EXPECT(OUT->i_length == PJS_TIMING(100));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_MPSub[] =
+"TITLE=foo\n"
+"FORMAT=TIME\n"
+"\n"
+"15 3\n"
+"LINE0\n"
+"\n"
+"2 3.5\n"
+"LINE0\n"
+"LINE1\n"
+"\n"
+;
+
+static int check_MPSub(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(15));
+    EXPECT(OUT->i_length == vlc_tick_from_sec(3));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(15 + 3 + 2));
+    EXPECT(OUT->i_length == vlc_tick_from_sec(3) + VLC_TICK_FROM_MS(500));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_MPSub2[] =
+"TITLE=foo\n"
+"FORMAT=30\n"
+"\n"
+"15 3\n"
+"LINE0\n"
+"\n"
+"2.5 3\n"
+"LINE0\n"
+"LINE1\n"
+"\n"
+;
+
+static int check_MPSub2(struct subtitles_es_out_ctx_t *ctx)
+{
+//#define MPSUB_TIMING(x) (VLC_TICK_FROM_MS(40)*x)
+#define MPSUB_TIMING(x) (VLC_TICK_FROM_MS(10)*(x))
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + MPSUB_TIMING(15));
+    EXPECT(OUT->i_length == MPSUB_TIMING(3));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + MPSUB_TIMING(15 + 3 + 2.5));
+    EXPECT(OUT->i_length == MPSUB_TIMING(3));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_JSS[] =
+"#TIMERES 100\n"
+"#RAMP 2.20\n"
+"0:00:22.30 0:00:27.80 VL3 LINE0\\BBold\\NNormal\\IItalic\\N\n"
+"0:01:00.30 0:01:27.80 vl5 LINE0\\nLINE1\n"
+"#T 50\n" // change resolution on-the-fly
+"0:01:10.25 0:01:11.00 vl5 LINE0\n"
+;
+
+static int check_JSS(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(22) + VLC_TICK_FROM_MS(300));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(27) + VLC_TICK_FROM_MS(800) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0BoldNormalItalic"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(60) + VLC_TICK_FROM_MS(300));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(60+27) + VLC_TICK_FROM_MS(800) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(70) + VLC_TICK_FROM_MS(500));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(71) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_PSB[] =
+"{00:00:00}{00:00:01}LINE0\n"
+"{00:01:00}{00:02:00}LINE0|LINE1\n"
+;
+
+static int check_PSB(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0);
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(1) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(60));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(120) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_Realtime[] =
+"<window duration=\"30\" bgcolor=\"yellow\">\n"
+//"TEXT0\n"
+"<br/><time begin=\"3\"/>TEXT1\n"
+"<br/><time begin=\"4\" end=\"5\"/>TEXT0\n"
+"<br/><time begin=\"01:00\"/>TEXT0\n"
+"<br/><time begin=\"01:01.00\"/>TEXT0\n"
+"<br/><time begin=\"00:01:01.30\"/>TEXT0\n"
+"</window>"
+;
+
+static int check_Realtime(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+    // EXPECT(OUT);
+    // EXPECT(OUT->i_pts == VLC_TICK_0);
+    // EXPECT(OUT->i_length == 0);
+    // EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    // POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(3));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT1"));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(4));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(5) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(60));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(61));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(61) + VLC_TICK_FROM_MS(300));
+    EXPECT(OUT->i_length == 0);
+    //EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_DKS[] =
+"[01:01:01]LINE0\n"
+"[01:02:01]\n"
+"[01:03:01]LINE0[br]LINE1\n"
+"[01:04:01]\n"
+;
+
+static int check_DKS(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(3600+60+1));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(3600+120+1) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(3600+180+1));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(3600+240+1) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_SubViewer1[] =
+"*** START SCRIPT ***\n"
+"[01:01:01]\n"
+"LINE0\n"
+"[01:02:01]\n"
+"[01:03:01]\n"
+"LINE0\n"
+"[01:04:01]\n"
+;
+
+static int check_SubViewer1(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(3600+60+1));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(3600+120+1) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(3600+180+1));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(3600+240+1) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_SBV[] =
+"0\n"
+"00:00:00.000,00:00:00.500\n"
+"TEXT0\n"
+"\n"
+
+// Multiline
+"1\n"
+"00:01:00.440,00:02:00.440\n"
+"TEXT0\n"
+"TEXT1\n"
+;
+
+static int check_SBV(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0);
+    EXPECT(OUT->i_length == VLC_TICK_0 + VLC_TICK_FROM_MS(500) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(60) + VLC_TICK_FROM_MS(440));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(120) + VLC_TICK_FROM_MS(440) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\nTEXT1\n"));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
+const char testdata_SCC[] =
+"Scenarist_SCC V1.0\n"
+"00:00:02:00 9420 c2ef 6eea\n"
+"00:00:02;00 9421 c2ef 6eea\n" // dropframe
+"00:00:59;29 9520\n" // dropframe predrop
+"00:01:00;02 9620\n" // dropframe postdrop
+"00:02:00:00 9422 c2ef 6e\n"
+"00:03:00;00 94 20 c2 ef 6e ea\n"  // dropframe
+"00:04:00:15 9420 c2ef 6eea\n"
+"20:00:00;00 9520\n" //dropframe
+"20:00:00:00 9420\n"
+"00:00:03:00\n" // rejected
+;
+
+static int check_SCC(struct subtitles_es_out_ctx_t *ctx)
+{
+    int count;
+    block_ChainProperties(OUT, &count, NULL, NULL);
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac(2 * 30 * 1001, 30000));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!memcmp((const char *)OUT->p_buffer, "\xFC\x94\x20\xFC\xc2\xef\xFC\x6e\xea", __MIN(OUT->i_buffer, 9)));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac(2 * 30 * 1001, 30000)); //dropframe case
+    EXPECT(!memcmp((const char *)OUT->p_buffer, "\xFC\x94\x21\xFC\xc2\xef\xFC\x6e\xea", __MIN(OUT->i_buffer, 9)));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac(1799 * 1001, 30000)); // dropframe predrop 60026634
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!memcmp((const char *)OUT->p_buffer, "\xFC\x95\x20", __MIN(OUT->i_buffer, 3)));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac(1800 * 1001, 30000)); // dropframe postdrop 60060001
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!memcmp((const char *)OUT->p_buffer, "\xFC\x96\x20", __MIN(OUT->i_buffer, 3)));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac(2 * 60 * 30 * 1001, 30000));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!memcmp((const char *)OUT->p_buffer, "\xFC\x94\x22\xFC\xc2\xef", __MIN(OUT->i_buffer, 6)));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac((3 * 60 * 30 - 3 * 2) * 1001, 30000)); // 3 dropframe case
+    EXPECT(OUT->i_length == 0);
+    EXPECT(OUT->i_buffer == 0);
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac((4 * 60 * 30 + 15) * 1001, 30000));
+    EXPECT(OUT->i_length == 0);
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac((INT64_C(20) * 3600 * 30 - 2160) * 1001, 30000));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!memcmp((const char *)OUT->p_buffer, "\xFC\x95\x20", __MIN(OUT->i_buffer, 3)));
+    POP;
+
+    EXPECT(OUT);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_frac((INT64_C(20) * 3600 * 30) * 1001, 30000));
+    EXPECT(OUT->i_length == 0);
+    EXPECT(!memcmp((const char *)OUT->p_buffer, "\xFC\x94\x20", __MIN(OUT->i_buffer, 3)));
+    POP;
+
+    EXPECT(!OUT);
+
+    return 0;
+}
+
 static int run_demuxer_test(libvlc_instance_t *vlc,
                             int (check_data)(struct subtitles_es_out_ctx_t *),
                             const char *testdata, size_t datasize)
@@ -283,6 +925,11 @@ static int run_demuxer_test(libvlc_instance_t *vlc,
     return ret;
 }
 
+#define RUN_TEST(x) \
+    if(ret == 0) { \
+        fprintf(stderr,"Running tests for " #x "\n");\
+        ret = run_demuxer_test(vlc, check_##x, testdata_##x, sizeof(testdata_##x)); }
+
 int main(void)
 {
     test_init();
@@ -302,7 +949,26 @@ int main(void)
     var_SetFloat(&vlc->p_libvlc_int->obj, "sub-original-fps", 0 ); /* do not rely on changed value */
 
     int ret = 0;
-    ret = run_demuxer_test(vlc, check_SubRip, testdata_SubRip, sizeof(testdata_SubRip));
+
+    RUN_TEST(SubRip);
+    RUN_TEST(SubViewer);
+    RUN_TEST(SSA2);
+    RUN_TEST(ASS);
+    RUN_TEST(Vplayer);
+    RUN_TEST(Sami);
+    RUN_TEST(DVDSubtitle);
+    RUN_TEST(MPL2);
+    RUN_TEST(AQT);
+    RUN_TEST(PJS);
+    RUN_TEST(MPSub);
+    RUN_TEST(MPSub2);
+    RUN_TEST(JSS);
+    RUN_TEST(PSB);
+    RUN_TEST(Realtime);
+    RUN_TEST(DKS);
+    RUN_TEST(SubViewer1);
+    RUN_TEST(SBV);
+    RUN_TEST(SCC);
 
     libvlc_release(vlc);
     return ret;
