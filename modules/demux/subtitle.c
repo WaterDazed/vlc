@@ -265,6 +265,15 @@ static bool check_neg_impl(const int* arr, size_t len) {
 #define negative_ints(...) \
     check_neg_impl((int[]){__VA_ARGS__}, sizeof((int[]){__VA_ARGS__}) / sizeof(int))
 
+static void clearFinalNewline( char *s )
+{
+    if(!s)
+        return;
+    size_t len = strlen( s );
+    if( len && s[len-1] == '\n' )
+        s[len-1] = 0;
+}
+
 #define AS_DURATION(x) (x - VLC_TICK_0)
 #define FROM_DURATION(x) (x + VLC_TICK_0)
 
@@ -1140,6 +1149,7 @@ static int ParseSubRipSubViewer( vlc_object_t *p_obj, subs_properties_t *p_props
         i_len = s ? strlen( s ) : 0;
         if( i_len == 0 )
         {
+            clearFinalNewline( psz_text );
             p_subtitle->psz_text = psz_text;
             return VLC_SUCCESS;
         }
@@ -1608,6 +1618,7 @@ static int ParseDVDSubtitle(vlc_object_t *p_obj, subs_properties_t *p_props,
         {
             if (psz_text)
                 psz_text[i_old] = '\0';
+            clearFinalNewline( psz_text );
             p_subtitle->psz_text = psz_text;
             return VLC_SUCCESS;
         }
@@ -1746,6 +1757,7 @@ static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt
     }
     if (psz_text)
         psz_text[i_old] = '\0';
+    clearFinalNewline( psz_text );
     p_subtitle->psz_text = psz_text;
     return VLC_SUCCESS;
 }
@@ -1891,6 +1903,7 @@ static int ParseMPSub( vlc_object_t *p_obj, subs_properties_t *p_props,
 
     if (psz_text)
         psz_text[i_old] = '\0';
+    clearFinalNewline( psz_text );
     p_subtitle->psz_text = psz_text;
     return VLC_SUCCESS;
 }
@@ -2478,6 +2491,7 @@ static int ParseCommonSBV( vlc_object_t *p_obj, subs_properties_t *p_props,
         {
             if (psz_text)
                 psz_text[i_old] = '\0';
+            clearFinalNewline( psz_text );
             p_subtitle->psz_text = psz_text;
             return VLC_SUCCESS;
         }
