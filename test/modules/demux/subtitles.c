@@ -475,8 +475,8 @@ static int check_MPL2(struct subtitles_es_out_ctx_t *ctx)
 }
 
 const char testdata_AQT[] =
-//"-->> 00000000\n"
-//"\n"
+"-->> 00000000\n"
+"\n"
 "-->> 00001000\n"
 "LINE0\n"
 "-->> 00002000\n"
@@ -485,6 +485,8 @@ const char testdata_AQT[] =
 "LINE0\n"
 "LINE1\n"
 "-->> 00004000\n"
+"LINENEXT\n"
+"-->> 00005000\n"
 ;
 
 static int check_AQT(struct subtitles_es_out_ctx_t *ctx)
@@ -501,7 +503,12 @@ static int check_AQT(struct subtitles_es_out_ctx_t *ctx)
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + ATQ_TIMING(3000));
     EXPECT(OUT->i_length == VLC_TICK_0 + ATQ_TIMING(4000) - OUT->i_pts);
-    //EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
+    POP;
+
+    EXPECT(OUT->i_pts == VLC_TICK_0 + ATQ_TIMING(4000));
+    EXPECT(OUT->i_length == VLC_TICK_0 + ATQ_TIMING(5000) - OUT->i_pts);
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINENEXT"));
     POP;
 
     EXPECT(!OUT);
@@ -510,11 +517,10 @@ static int check_AQT(struct subtitles_es_out_ctx_t *ctx)
 }
 
 const char testdata_PJS[] =
-//"    0,     0,\"\"\n"
+"   50,   100,\"\"\n" // discarded by ToTextBlock
 "  100,   200,\"LINE0\"\n"
 "  300,   400,\"LINE0|LINE1\"\n"
-//"    0, 99999,\"\"\n"
-//"99999, 99999,\"\"\n"
+"  500, 99999,\"\n" // discarded
 ;
 
 static int check_PJS(struct subtitles_es_out_ctx_t *ctx)

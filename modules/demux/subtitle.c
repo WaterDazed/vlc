@@ -156,6 +156,11 @@ typedef struct
         const char *psz_start;
     } sami;
 
+    struct
+    {
+        int prev_time;
+    } aqt;
+
 } subs_properties_t;
 
 typedef struct
@@ -372,6 +377,7 @@ static int Open ( vlc_object_t *p_this )
     p_sys->props.jss.b_inited       = false;
     p_sys->props.mpsub.b_inited     = false;
     p_sys->props.sami.psz_start     = NULL;
+    p_sys->props.aqt.prev_time      = -1;
 
     /* Get the FPS */
     f_fps = var_CreateGetFloat( p_demux, "sub-original-fps" );
@@ -1698,13 +1704,12 @@ static int ParseMPL2(vlc_object_t *p_obj, subs_properties_t *p_props,
 static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
     VLC_UNUSED(p_obj);
-    VLC_UNUSED(p_props);
     VLC_UNUSED( i_idx );
 
     char *psz_text = NULL;
     size_t i_old = 0;
     size_t i_len;
-    int i_firstline = 1;
+    int prevt = p_props->aqt.prev_time;
 
     for( ;; )
     {
@@ -1727,18 +1732,27 @@ static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt
                 psz_text = NULL;
                 continue;
             }
-            /* Starting of a subtitle */
-            if( i_firstline )
+
+            p_props->aqt.prev_time = t;
+
+            if( psz_text )
             {
-                p_subtitle->i_start = VLC_TICK_0 + t * p_props->i_microsecperframe;
-                i_firstline = 0;
+                if( prevt < 0 )
+                {
+                    // something is wrong, no previous time tag
+                    free( psz_text );
+                    psz_text = NULL;
+                }
+                else
+                {
+                    p_subtitle->i_start = VLC_TICK_0 + prevt * p_props->i_microsecperframe;
+                    p_subtitle->i_stop = VLC_TICK_0 + t * p_props->i_microsecperframe;
+                    TextPreviousLine( txt ); // reuse timing line for next
+                    break; // validate and return subtitle
+                }
             }
-            /* We have been too far: end of the subtitle, begin of next */
-            else
-            {
-                p_subtitle->i_stop  = VLC_TICK_0 + t * p_props->i_microsecperframe;
-                break;
-            }
+
+            prevt = t;
         }
         /* Text Lines */
         else
@@ -1751,12 +1765,12 @@ static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt
             memcpy( &psz_text[i_old], s, i_len );
             psz_text[i_old + i_len + 0] = '\n';
             i_old += i_len + 1;
+            psz_text[i_old] = '\0';
             if( txt->i_line == txt->i_line_count )
                 break;
         }
     }
-    if (psz_text)
-        psz_text[i_old] = '\0';
+
     clearFinalNewline( psz_text );
     p_subtitle->psz_text = psz_text;
     return VLC_SUCCESS;
