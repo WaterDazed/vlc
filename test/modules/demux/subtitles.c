@@ -200,52 +200,52 @@ static int check_SubRip(struct subtitles_es_out_ctx_t *ctx)
     // 0
     EXPECT(OUT->i_pts == VLC_TICK_0);
     EXPECT(OUT->i_length == VLC_TICK_FROM_MS(500));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
     POP;
 
     // 0
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(0) + VLC_TICK_FROM_MS(500));
     EXPECT(OUT->i_length == vlc_tick_from_sec(1));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT0"));
     POP;
 
     // 0
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(1) + VLC_TICK_FROM_MS(500));
     EXPECT(OUT->i_length == vlc_tick_from_sec(1));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT1\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT1"));
     POP;
 
     // 0
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2));
     EXPECT(OUT->i_length == vlc_tick_from_sec(1));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT2\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT2"));
     POP;
 
     // 1
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+17) + VLC_TICK_FROM_MS(440));
     EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+20) + VLC_TICK_FROM_MS(375) - OUT->i_pts);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\nTEXT1\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\nTEXT1"));
     POP;
 
     // 3 - With coordinates
     EXPECT(OUT);
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+24) + VLC_TICK_FROM_MS(948));
     EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+26) + VLC_TICK_FROM_MS(247) - OUT->i_pts);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
     POP;
 
     // 12 - Zero duration (stop time equals start time)
     EXPECT(OUT);
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(5*60+11));
     EXPECT(OUT->i_length == 0);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "ZERO\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "ZERO"));
     POP;
 
     // Last, no return
     EXPECT(OUT);
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(5*60+30));
     EXPECT(OUT->i_length == vlc_tick_from_sec(1));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LAST\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LAST"));
     POP;
 
     // Final check that the chain is now empty
@@ -275,13 +275,13 @@ static int check_SubViewer(struct subtitles_es_out_ctx_t *ctx)
     // 1
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(4*60+35) + VLC_TICK_FROM_MS(30));
     EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(4*60+38) + VLC_TICK_FROM_MS(820) - OUT->i_pts);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
     POP;
 
     // 2
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(5*60) + VLC_TICK_FROM_MS(190));
     EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(5*60+3) + VLC_TICK_FROM_MS(470) - OUT->i_pts);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
     POP;
 
     // Final check that the chain is now empty
@@ -435,12 +435,12 @@ static int check_DVDSubtitle(struct subtitles_es_out_ctx_t *ctx)
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(1) + VLC_TICK_FROM_MS(100));
     EXPECT(OUT->i_length == 0);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
     POP;
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2) + VLC_TICK_FROM_MS(300));
     EXPECT(OUT->i_length == 0);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
     POP;
 
     EXPECT(!OUT);
@@ -496,12 +496,12 @@ static int check_AQT(struct subtitles_es_out_ctx_t *ctx)
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + ATQ_TIMING(1000));
     EXPECT(OUT->i_length == VLC_TICK_0 + ATQ_TIMING(2000) - OUT->i_pts);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
     POP;
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + ATQ_TIMING(3000));
     EXPECT(OUT->i_length == VLC_TICK_0 + ATQ_TIMING(4000) - OUT->i_pts);
-    //EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    //EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
     POP;
 
     EXPECT(!OUT);
@@ -560,12 +560,12 @@ static int check_MPSub(struct subtitles_es_out_ctx_t *ctx)
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(15));
     EXPECT(OUT->i_length == vlc_tick_from_sec(3));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
     POP;
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(15 + 3 + 2));
     EXPECT(OUT->i_length == vlc_tick_from_sec(3) + VLC_TICK_FROM_MS(500));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
     POP;
 
     EXPECT(!OUT);
@@ -596,12 +596,12 @@ static int check_MPSub2(struct subtitles_es_out_ctx_t *ctx)
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + MPSUB_TIMING(15));
     EXPECT(OUT->i_length == MPSUB_TIMING(3));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0"));
     POP;
 
     EXPECT(OUT->i_pts == VLC_TICK_0 + MPSUB_TIMING(15 + 3 + 2.5));
     EXPECT(OUT->i_length == MPSUB_TIMING(3));
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "LINE0\nLINE1"));
     POP;
 
     EXPECT(!OUT);
@@ -806,13 +806,13 @@ static int check_SBV(struct subtitles_es_out_ctx_t *ctx)
     EXPECT(OUT);
     EXPECT(OUT->i_pts == VLC_TICK_0);
     EXPECT(OUT->i_length == VLC_TICK_0 + VLC_TICK_FROM_MS(500) - OUT->i_pts);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0"));
     POP;
 
     EXPECT(OUT);
     EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(60) + VLC_TICK_FROM_MS(440));
     EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(120) + VLC_TICK_FROM_MS(440) - OUT->i_pts);
-    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\nTEXT1\n"));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\nTEXT1"));
     POP;
 
     EXPECT(!OUT);
