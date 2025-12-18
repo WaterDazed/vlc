@@ -110,13 +110,13 @@ enum subtitle_type_e
 
 typedef struct
 {
-    size_t  i_line_count;
-    size_t  i_line;
-    char    **line;
+    stream_t *s;
+    char   *current_line;
+    char   *next_line;
 } text_t;
 
-static int  TextLoad( text_t *, stream_t *s );
-static void TextUnload( text_t * );
+static void TextLinesInit( text_t *, stream_t *s );
+static void TextLinesClean( text_t * );
 
 typedef struct
 {
@@ -691,7 +691,7 @@ static int Open ( vlc_object_t *p_this )
 
     /* Load the whole file */
     text_t txtlines;
-    TextLoad( &txtlines, p_demux->s );
+    TextLinesInit( &txtlines, p_demux->s );
 
     /* Parse it */
     for( size_t i_max = 0; i_max < SIZE_MAX - 500 * sizeof(subtitle_t); )
@@ -702,7 +702,7 @@ static int Open ( vlc_object_t *p_this )
             subtitle_t *p_realloc = realloc( p_sys->subtitles.p_array, sizeof(subtitle_t) * i_max );
             if( p_realloc == NULL )
             {
-                TextUnload( &txtlines );
+                TextLinesClean( &txtlines );
                 Close( p_this );
                 return VLC_ENOMEM;
             }
@@ -717,7 +717,7 @@ static int Open ( vlc_object_t *p_this )
         p_sys->subtitles.i_count++;
     }
     /* Unload */
-    TextUnload( &txtlines );
+    TextLinesClean( &txtlines );
 
     msg_Dbg(p_demux, "loaded %zu subtitles", p_sys->subtitles.i_count );
 
@@ -978,69 +978,38 @@ static void Fix( demux_t *p_demux )
     p_sys->b_sorted = true;
 }
 
-static int TextLoad( text_t *txt, stream_t *s )
+static void TextLinesInit( text_t *txt, stream_t *s )
 {
-    size_t i_line_max;
-
-    /* init txt */
-    i_line_max          = 500;
-    txt->i_line_count   = 0;
-    txt->i_line         = 0;
-    txt->line           = calloc( i_line_max, sizeof( char * ) );
-    if( !txt->line )
-        return VLC_ENOMEM;
-
-    /* load the complete file */
-    for( ;; )
-    {
-        char *psz = vlc_stream_ReadLine( s );
-
-        if( psz == NULL )
-            break;
-
-        txt->line[txt->i_line_count] = psz;
-        if( txt->i_line_count + 1 >= i_line_max )
-        {
-            i_line_max += 100;
-            char **p_realloc = realloc( txt->line, i_line_max * sizeof( char * ) );
-            if( p_realloc == NULL )
-                return VLC_ENOMEM;
-            txt->line = p_realloc;
-        }
-        txt->i_line_count++;
-    }
-
-    if( txt->i_line_count == 0 )
-    {
-        free( txt->line );
-        return VLC_EGENERIC;
-    }
-
-    return VLC_SUCCESS;
-}
-static void TextUnload( text_t *txt )
-{
-    if( txt->i_line_count )
-    {
-        for( size_t i = 0; i < txt->i_line_count; i++ )
-            free( txt->line[i] );
-        free( txt->line );
-    }
-    txt->i_line       = 0;
-    txt->i_line_count = 0;
+    txt->current_line = NULL;
+    txt->next_line = NULL;
+    txt->s = s;
 }
 
-static char *TextGetLine( text_t *txt )
+static void TextLinesClean( text_t *txt )
 {
-    if( txt->i_line >= txt->i_line_count )
-        return( NULL );
+    free(txt->current_line);
+    free(txt->next_line);
+}
 
-    return txt->line[txt->i_line++];
+static const char *TextGetLine( text_t *txt )
+{
+    free( txt->current_line );
+    if( txt->next_line ) // rewinded
+    {
+        txt->current_line = txt->next_line;
+        txt->next_line = NULL;
+    }
+    else
+    {
+        txt->current_line = vlc_stream_ReadLine( txt->s );
+    }
+    return txt->current_line;
 }
 static void TextPreviousLine( text_t *txt )
 {
-    if( txt->i_line > 0 )
-        txt->i_line--;
+    free( txt->next_line );
+    txt->next_line = txt->current_line;
+    txt->current_line = NULL;
 }
 
 /*****************************************************************************
@@ -1766,8 +1735,6 @@ static int ParseAQT(vlc_object_t *p_obj, subs_properties_t *p_props, text_t *txt
             psz_text[i_old + i_len + 0] = '\n';
             i_old += i_len + 1;
             psz_text[i_old] = '\0';
-            if( txt->i_line == txt->i_line_count )
-                break;
         }
     }
 
@@ -2368,7 +2335,7 @@ static int ParseDKS( vlc_object_t *p_obj, subs_properties_t *p_props,
     {
         int h1, m1, s1;
         int h2, m2, s2;
-        char *s = TextGetLine( txt );
+        const char *s = TextGetLine( txt );
 
         if( !s )
             return VLC_EGENERIC;
@@ -2422,7 +2389,7 @@ static int ParseSubViewer1( vlc_object_t *p_obj, subs_properties_t *p_props,
     {
         int h1, m1, s1;
         int h2, m2, s2;
-        char *s = TextGetLine( txt );
+        const char *s = TextGetLine( txt );
 
         if( !s )
             return VLC_EGENERIC;
