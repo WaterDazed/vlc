@@ -51,7 +51,7 @@ public:
     CompositorDirectComposition(qt_intf_t *p_intf, QObject* parent = nullptr);
     ~CompositorDirectComposition();
 
-    bool init() override;
+    bool init(bool enforce = false) override;
 
     bool makeMainInterface(MainCtx*, std::function<void (QQuickWindow *)> aboutToShowQuickWindowCallback = {}) override;
     void destroyMainInterface() override;

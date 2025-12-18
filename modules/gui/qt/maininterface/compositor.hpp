@@ -71,7 +71,7 @@ public:
 public:
     virtual ~Compositor() = default;
 
-    [[nodiscard]] virtual bool init() = 0;
+    [[nodiscard]] virtual bool init(bool enforce = false) = 0;
 
     [[nodiscard]] virtual bool makeMainInterface(MainCtx* intf, std::function<void(QQuickWindow*)> aboutToShowQuickWindowCallback = {}) = 0;
 

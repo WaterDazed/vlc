@@ -104,7 +104,7 @@ CompositorDirectComposition::~CompositorDirectComposition()
     assert(!m_acrylicSurface);
 }
 
-bool CompositorDirectComposition::init()
+bool CompositorDirectComposition::init(bool)
 {
 #if !defined(QRhiD3D11_ACTIVE) && !defined(QRhiD3D12_ACTIVE)
     msg_Warn(m_intf, "compositor_dcomp was not built with D3D11 or D3D12 headers. It will not work.");

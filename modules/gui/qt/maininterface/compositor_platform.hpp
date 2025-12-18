@@ -25,6 +25,8 @@
 
 #include <memory>
 
+#include "vlc_window.h"
+
 class QQuickView;
 
 namespace vlc {
@@ -36,7 +38,7 @@ class CompositorPlatform : public CompositorVideo
 public:
     CompositorPlatform(qt_intf_t *p_intf, QObject* parent = nullptr);
 
-    bool init() override;
+    bool init(bool enforce = false) override;
 
     bool makeMainInterface(MainCtx *, std::function<void(QQuickWindow*)> aboutToShowQuickWindowCallback = {}) override;
     void destroyMainInterface() override;
@@ -52,6 +54,7 @@ public:
 private:
     int windowEnable(const vlc_window_cfg_t *) override;
     void windowDisable() override;
+    void windowDestroy() override;
 
 private slots:
     void onSurfacePositionChanged(const QPointF& position) override;
@@ -61,6 +64,8 @@ private:
     std::unique_ptr<QWindow> m_rootWindow;
     QPointer<QWindow> m_videoWindow;
     QPointer<QQuickView> m_quickWindow;
+
+    vlc_window_type m_windowType;
 };
 
 }

@@ -38,7 +38,7 @@ public:
     CompositorDummy(qt_intf_t *p_intf, QObject* parent = nullptr);
     virtual ~CompositorDummy();
 
-    bool init() override;
+    bool init(bool enforce = false) override;
 
     bool makeMainInterface(MainCtx*, std::function<void(QQuickWindow*)> aboutToShowQuickWindowCallback = {}) override;
 

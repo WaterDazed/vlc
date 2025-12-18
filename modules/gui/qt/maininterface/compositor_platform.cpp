@@ -29,6 +29,38 @@
 #include <objc/runtime.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+#if QT_VERSION >= QT_VERSION(6, 5, 0)
+#define EMSCRIPTEN_SUPPORT
+#include <emscripten/html5.h>
+#endif
+#endif
+
+#ifdef QT_GUI_PRIVATE
+#include <QtGui/qpa/qplatformnativeinterface.h>
+#include <QtGui/qpa/qplatformwindow.h>
+#include <QtGui/qpa/qplatformwindow_p.h>
+#include <QtGui/qguiapplication_platform.h>
+
+#ifndef X_DISPLAY_MISSING
+#include <X11/Xlib.h>
+#define X_ADJUST_DISPLAY
+#endif
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+#if defined(Q_OS_UNIX)
+#define QT_FEATURE_wayland 1
+#else
+#define QT_FEATURE_wayland -1
+#endif
+#endif
+
+#if QT_CONFIG(wayland) && QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+// Don't bother with older versions, use CompositorWayland in that case.
+#define WAYLAND_SUPPORT
+#endif
+#endif
+
 using namespace vlc;
 
 
@@ -38,7 +70,7 @@ CompositorPlatform::CompositorPlatform(qt_intf_t *p_intf, QObject *parent)
 
 }
 
-bool CompositorPlatform::init()
+bool CompositorPlatform::init(bool enforce)
 {
     // TODO: For now only qwindows and qdirect2d
     //       running on Windows 8+, and cocoa
@@ -47,17 +79,48 @@ bool CompositorPlatform::init()
     const QString& platformName = qApp->platformName();
 
 #ifdef _WIN32
-    if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8)
+    if ((QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8) || Q_UNLIKELY(enforce))
     {
         if (platformName == QLatin1String("windows") || platformName == QLatin1String("direct2d"))
+        {
+            m_windowType = VLC_WINDOW_TYPE_HWND;
             return true;
+        }
     }
 #endif
 
 #ifdef __APPLE__
     if (platformName == QLatin1String("cocoa"))
+    {
+        m_windowType = VLC_WINDOW_TYPE_NSOBJECT;
         return true;
+    }
 #endif
+
+    if (Q_UNLIKELY(enforce))
+    {
+#ifdef EMSCRIPTEN_SUPPORT
+        if (platformName == QLatin1String("wasm"))
+        {
+            m_windowType = VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL;
+            return true;
+        }
+#endif
+
+#ifdef WAYLAND_SUPPORT
+        if (platformName.startsWith(QLatin1String("wayland")))
+        {
+            m_windowType = VLC_WINDOW_TYPE_WAYLAND;
+            return true;
+        }
+#endif
+
+        if (platformName == QLatin1String("xcb"))
+        {
+            m_windowType = VLC_WINDOW_TYPE_XID;
+            return true;
+        }
+    }
 
     return false;
 }
@@ -69,6 +132,11 @@ bool CompositorPlatform::makeMainInterface(MainCtx *mainCtx, std::function<void 
     m_rootWindow = std::make_unique<QWindow>();
 
     m_videoWindow = new QWindow(m_rootWindow.get());
+
+#ifdef EMSCRIPTEN_SUPPORT
+    if (m_windowType == VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL)
+        m_videoWindow->setSurfaceType(QSurface::OpenGLSurface);
+#endif
 
     m_quickWindow = new QQuickView(m_rootWindow.get());
     m_quickWindow->setResizeMode(QQuickView::SizeRootObjectToView);
@@ -129,21 +197,89 @@ bool CompositorPlatform::setupVoutWindow(vlc_window_t *p_wnd, VoutDestroyCb dest
 
     commonSetupVoutWindow(p_wnd, destroyCb);
 
+    const auto setup = [&]() -> bool {
 #ifdef __WIN32
-    p_wnd->type = VLC_WINDOW_TYPE_HWND;
-    p_wnd->handle.hwnd = reinterpret_cast<void*>(m_videoWindow->winId());
-
-    return true;
+        if (Q_LIKELY(m_windowType == VLC_WINDOW_TYPE_HWND))
+        {
+            p_wnd->handle.hwnd = reinterpret_cast<void*>(m_videoWindow->winId());
+            return true;
+        }
 #endif
 
 #ifdef __APPLE__
-    p_wnd->type = VLC_WINDOW_TYPE_NSOBJECT;
-    p_wnd->handle.nsobject = reinterpret_cast<id>(m_videoWindow->winId());
-
-    return true;
+        if (Q_LIKELY(m_windowType == VLC_WINDOW_TYPE_NSOBJECT))
+        {
+            p_wnd->handle.nsobject = reinterpret_cast<id>(m_videoWindow->winId());
+            return true;
+        }
 #endif
 
-    vlc_assert_unreachable();
+#ifdef EMSCRIPTEN_SUPPORT
+        if (Q_LIKELY(m_windowType == VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL))
+        {
+            // VLC emscripten "window" is actually a OpenGL context, so
+            // providing the DOM canvas is not enough, we need to create
+            // the context. We could use `QOpenGLContext`, but with Qt 6
+            // Qt 6 it does not seem to provide the native handle...
+
+            const WId winId = m_videoWindow->winId();
+
+            // Create OpenGL context, similar to how `QWasmOpenGLContext`
+            // is created:
+            const std::string canvas = "!qtwindow" + std::to_string(winId);
+
+            EmscriptenWebGLContextAttributes attributes;
+            emscripten_webgl_init_context_attributes(&attributes);
+            attributes.explicitSwapControl = 1;
+
+            const EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context(canvas.c_str(), &attributes);
+
+            if (!context)
+                return false;
+
+            p_wnd->handle.em_context = reinterpret_cast<uint32_t>(context);
+
+            return true;
+        }
+#endif
+
+        if (m_windowType == VLC_WINDOW_TYPE_XID)
+        {
+            p_wnd->type = VLC_WINDOW_TYPE_XID;
+            p_wnd->handle.xid = m_videoWindow->winId();
+#ifdef X_ADJUST_DISPLAY
+            assert(qGuiApp);
+            const auto x11App = qGuiApp->nativeInterface<QNativeInterface::QX11Application>();
+            assert(x11App);
+            p_wnd->display.x11 = XDisplayString(x11App->display());
+#endif
+            return true;
+        }
+
+#ifdef WAYLAND_SUPPORT
+        if (m_windowType == VLC_WINDOW_TYPE_WAYLAND)
+        {
+            assert(qGuiApp);
+            const auto waylandApp = qGuiApp->nativeInterface<QNativeInterface::QWaylandApplication>();
+            assert(waylandApp);
+            const auto waylandWindow = dynamic_cast<QNativeInterface::Private::QWaylandWindow *>(m_videoWindow->handle());
+            assert(waylandWindow);
+
+            p_wnd->handle.wl = waylandWindow->surface();
+            p_wnd->display.wl = waylandApp->display();
+        }
+#endif
+
+        return false;
+    };
+
+    if (setup())
+    {
+        p_wnd->type = m_windowType;
+        return true;
+    }
+
+    return false;
 }
 
 QWindow *CompositorPlatform::interfaceMainWindow() const
@@ -198,6 +334,19 @@ int CompositorPlatform::windowEnable(const vlc_window_cfg_t *)
 void CompositorPlatform::windowDisable()
 {
     commonWindowDisable();
+}
+
+void CompositorPlatform::windowDestroy()
+{
+#ifdef EMSCRIPTEN_SUPPORT
+    if (m_wnd && (m_wnd->type == VLC_WINDOW_TYPE_EMSCRIPTEN_WEBGL) && m_wnd->handle.em_context)
+    {
+        emscripten_webgl_destroy_context(reinterpret_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(m_wnd->handle.em_context));
+        m_wnd->handle.em_context = 0;
+    }
+#endif
+
+    CompositorVideo::windowDestroy();
 }
 
 void CompositorPlatform::onSurfacePositionChanged(const QPointF &position)

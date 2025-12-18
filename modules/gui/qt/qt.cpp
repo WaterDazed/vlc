@@ -291,8 +291,10 @@ static const char *const compositor_vlc[] = {
     "auto",
 #ifdef _WIN32
     "dcomp",
-    "platform",
     "win7",
+#endif
+#if defined(_WIN32) || defined(__APPLE__)
+    "platform",
 #endif
 #ifdef QT_HAS_WAYLAND_COMPOSITOR
     "wayland",
@@ -306,8 +308,10 @@ static const char *const compositor_user[] = {
     N_("Automatic"),
 #ifdef _WIN32
     "Direct Composition",
-    "Platform Composition",
     "Windows 7",
+#endif
+#if defined(_WIN32) || defined(__APPLE__)
+    "Platform Composition",
 #endif
 #ifdef QT_HAS_WAYLAND_COMPOSITOR
     "Wayland",

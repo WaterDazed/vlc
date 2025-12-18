@@ -61,6 +61,7 @@ struct {
     {"dcomp", &instanciateCompositor<CompositorDirectComposition> },
 #endif
 #if defined(_WIN32) || defined(__APPLE__)
+#define PLATFORM_COMPOSITION_SUPPORT_ASSUMED
     {"platform", &instanciateCompositor<CompositorPlatform> },
 #endif
 #if defined(_WIN32)
@@ -73,6 +74,10 @@ struct {
     {"x11", &instanciateCompositor<CompositorX11> },
 #endif
     {"dummy", &instanciateCompositor<CompositorDummy> }
+#ifndef PLATFORM_COMPOSITION_SUPPORT_ASSUMED
+    // Last in the list:
+    , {"platform", &instanciateCompositor<CompositorPlatform> }
+#endif
 };
 
 CompositorFactory::CompositorFactory(qt_intf_t *p_intf, const char* compositor)
@@ -83,15 +88,16 @@ CompositorFactory::CompositorFactory(qt_intf_t *p_intf, const char* compositor)
 
 Compositor* CompositorFactory::createCompositor()
 {
+    const bool isAuto = (m_compositorName == QLatin1String("auto"));
     for (; m_compositorIndex < ARRAY_SIZE(compositorList); m_compositorIndex++)
     {
-        if (m_compositorName == "auto" || m_compositorName == compositorList[m_compositorIndex].name)
+        if (isAuto || m_compositorName == compositorList[m_compositorIndex].name)
         {
             std::unique_ptr<Compositor> compositor {
                 compositorList[m_compositorIndex].instantiate(m_intf)
             };
 
-            if (compositor->init())
+            if (compositor->init(!isAuto))
             {
                 //avoid looping over the same compositor if the current ones fails further initialisation steps
                 m_compositorIndex++;
