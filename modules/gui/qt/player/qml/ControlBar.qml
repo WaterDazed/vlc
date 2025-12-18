@@ -68,6 +68,10 @@ T.Pane {
 
     Accessible.name: qsTr("Player controls")
 
+    Component.onCompleted: {
+        MainCtx.playerControlBar = root
+    }
+
     function showChapterMarks() {
         if (contentItem.trackPositionSlider)
             contentItem.trackPositionSlider.showChapterMarks()

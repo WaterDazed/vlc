@@ -17,8 +17,9 @@
  *****************************************************************************/
 
 import QtQuick
+import QtQuick.Templates as T
 
-
+import VLC.MainInterface
 import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Player
@@ -27,13 +28,6 @@ Widgets.IconToolButton {
     id: root
 
     // Proprerties
-
-    readonly property var _parentItem: {
-        if ((typeof rootPlayer !== 'undefined') && (rootPlayer !== null))
-            return rootPlayer
-        else
-            return g_mainDisplay
-    }
 
     // Signals
 
@@ -60,10 +54,10 @@ Widgets.IconToolButton {
         sourceComponent: TracksMenu {
             id: menu
 
-            parent: root._parentItem
+            parent: MainCtx.playerControlBar?.background ?? T.Overlay.overlay
 
             x: 0
-            y: (parent.positionSliderY - height)
+            y: (parent === T.Overlay.overlay) ? (parent.height / 2 - height / 2) : -height
             z: 1
 
             focus: true

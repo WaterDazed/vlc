@@ -75,7 +75,7 @@ Item {
     }
 
     Item {
-        id: g_mainInterface
+        id: mainInterface
 
         anchors.fill: parent
         anchors.topMargin: MainCtx.windowExtendedMargin
@@ -86,13 +86,13 @@ Item {
         Binding {
             target: VLCStyle
             property: "appWidth"
-            value: g_mainInterface.width
+            value: mainInterface.width
         }
 
         Binding {
             target: VLCStyle
             property: "appHeight"
-            value: g_mainInterface.height
+            value: mainInterface.height
         }
 
         Binding {
@@ -307,7 +307,7 @@ Item {
             Component.onCompleted: {
                 setSource(
                     "qrc:///qt/qml/VLC/Widgets/CSDMouseStealer.qml", {
-                        target: g_mainInterface,
+                        target: mainInterface,
                         anchorInside: Qt.binding(() => !_extendedFrameVisible)
                     })
             }
@@ -318,7 +318,7 @@ Item {
     //provide them but support extended frame
     Widgets.RoundedRectangleShadow {
         id: effect
-        parent: g_mainInterface
+        parent: mainInterface
         hollow: Window.window && (Window.window.color.a < 1.0) // the interface may be translucent if the window has backdrop blur
         blending: false // stacked below everything, no need for blending even though it is not opaque
         visible: _extendedFrameVisible && !MainCtx.platformHandlesShadowsWithCSD()
