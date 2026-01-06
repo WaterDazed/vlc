@@ -1897,8 +1897,7 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                      text_t *txt, subtitle_t *p_subtitle, size_t i_idx )
 {
     VLC_UNUSED( i_idx );
-    char         *psz_text, *psz_orig;
-    char         *psz_text2, *psz_orig2;
+    char *psz_input_alloc;
 
     if( !p_props->jss.b_inited )
     {
@@ -1917,15 +1916,14 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             return VLC_EGENERIC;
 
         size_t line_length = strlen( s );
-        psz_orig = malloc( line_length + 1 );
-        if( !psz_orig )
+        psz_input_alloc = malloc( line_length + 1 );
+        if( !psz_input_alloc )
             return VLC_ENOMEM;
-        psz_text = psz_orig;
 
         /* Complete time lines */
         int h1, h2, m1, m2, s1, s2, f1, f2;
         if( sscanf( s, "%d:%d:%d.%d %d:%d:%d.%d %[^\n\r]",
-                    &h1, &m1, &s1, &f1, &h2, &m2, &s2, &f2, psz_text ) == 9 &&
+                    &h1, &m1, &s1, &f1, &h2, &m2, &s2, &f2, psz_input_alloc ) == 9 &&
             !negative_ints( 8, h1, h2, m1, m2, s1, s2, f1, f2 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 + vlc_tick_from_HMS( h1, m1, s1 ) +
@@ -1935,7 +1933,7 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             break;
         }
         /* Short time lines */
-        else if( sscanf( s, "@%d @%d %[^\n\r]", &f1, &f2, psz_text ) == 3 &&
+        else if( sscanf( s, "@%d @%d %[^\n\r]", &f1, &f2, psz_input_alloc ) == 3 &&
                  !negative_ints( 2, f1, f2 ) )
         {
             p_subtitle->i_start = VLC_TICK_0 +
@@ -1952,16 +1950,16 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             unsigned shift = 1;
             int inv = 1;
 
-            strcpy( psz_text, s );
+            strcpy( psz_input_alloc, s );
 
-            switch( toupper( (unsigned char)psz_text[1] ) )
+            switch( toupper( (unsigned char)psz_input_alloc[1] ) )
             {
             case 'S':
-                 shift = isalpha( (unsigned char)psz_text[2] ) ? 6 : 2 ;
+                 shift = isalpha( (unsigned char)psz_input_alloc[2] ) ? 6 : 2 ;
                  if ( shift > line_length )
                      break;
 
-                 if( sscanf( &psz_text[shift], "%d", &h ) == 1 )
+                 if( sscanf( &psz_input_alloc[shift], "%d", &h ) == 1 )
                  {
                      /* Negative shifting */
                      if( h < 0 )
@@ -1970,17 +1968,17 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                          inv = -1;
                      }
 
-                     if( sscanf( &psz_text[shift], "%*d:%d", &m ) == 1 && m >= 0 )
+                     if( sscanf( &psz_input_alloc[shift], "%*d:%d", &m ) == 1 && m >= 0 )
                      {
-                         if( sscanf( &psz_text[shift], "%*d:%*d:%d", &sec ) == 1 && sec >= 0 )
+                         if( sscanf( &psz_input_alloc[shift], "%*d:%*d:%d", &sec ) == 1 && sec >= 0 )
                          {
-                             if( sscanf( &psz_text[shift], "%*d:%*d:%*d.%d", &f ) != 1 || f < 0 )
+                             if( sscanf( &psz_input_alloc[shift], "%*d:%*d:%*d.%d", &f ) != 1 || f < 0 )
                                 f = 1;
                          }
                          else
                          {
                              h = 0;
-                             if( sscanf( &psz_text[shift], "%d:%d.%d", &m, &sec, &f ) == 3 &&
+                             if( sscanf( &psz_input_alloc[shift], "%d:%d.%d", &m, &sec, &f ) == 3 &&
                                  !negative_ints( 3, m, sec, f ) )
                                 m *= inv;
                              else
@@ -1993,7 +1991,7 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                      else
                      {
                          h = m = 0;
-                         if( sscanf( &psz_text[shift], "%d.%d", &sec, &f) == 2 &&
+                         if( sscanf( &psz_input_alloc[shift], "%d.%d", &sec, &f) == 2 &&
                              !negative_ints( 2, sec, f ) )
                             sec *= inv;
                          else
@@ -2007,33 +2005,33 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                  break;
 
             case 'T':
-                shift = isalpha( (unsigned char)psz_text[2] ) ? 8 : 2 ;
+                shift = isalpha( (unsigned char)psz_input_alloc[2] ) ? 8 : 2 ;
                 if ( shift > line_length )
                     break;
 
-                if( sscanf( &psz_text[shift], "%d", &p_props->jss.i_time_resolution ) != 1 ||
+                if( sscanf( &psz_input_alloc[shift], "%d", &p_props->jss.i_time_resolution ) != 1 ||
                     p_props->jss.i_time_resolution <= 0 )
                     p_props->jss.i_time_resolution = 30;
                 break;
             }
-            free( psz_orig );
+            free( psz_input_alloc );
             continue;
         }
         else
             /* Unknown type line, probably a comment */
         {
-            free( psz_orig );
+            free( psz_input_alloc );
             continue;
         }
     }
 
-    while( psz_text[ strlen( psz_text ) - 1 ] == '\\' )
+    while( psz_input_alloc[ strlen( psz_input_alloc ) - 1 ] == '\\' )
     {
         const char *s2 = TextGetLine( txt );
 
         if( !s2 )
         {
-            free( psz_orig );
+            free( psz_input_alloc );
             return VLC_EGENERIC;
         }
 
@@ -2041,24 +2039,27 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
         if( i_len == 0 )
             break;
 
-        size_t i_old = strlen( psz_text );
+        size_t i_old = strlen( psz_input_alloc );
 
-        psz_text = realloc_or_free( psz_text, i_old + i_len + 1 );
-        if( !psz_text )
+        psz_input_alloc = realloc_or_free( psz_input_alloc, i_old + i_len + 1 );
+        if( !psz_input_alloc )
              return VLC_ENOMEM;
-
-        psz_orig = psz_text;
-        strcat( psz_text, s2 );
+        strcat( psz_input_alloc, s2 );
     }
 
+    /*
+     * Now loaded the full text, switch to tokens parsing
+     */
+    const char *psz_input = psz_input_alloc;
+
     /* Skip the blanks */
-    while( *psz_text == ' ' || *psz_text == '\t' ) psz_text++;
+    while( *psz_input == ' ' || *psz_input == '\t' ) psz_input++;
 
     /* Parse the directives */
-    if( isalpha( (unsigned char)*psz_text ) || *psz_text == '[' )
+    if( isalpha( (unsigned char)*psz_input ) || *psz_input == '[' )
     {
-        while( *psz_text && *psz_text != ' ' )
-            ++psz_text;
+        while( *psz_input && *psz_input != ' ' )
+            ++psz_input;
 
         /* Directives are NOT parsed yet */
         /* This has probably a better place in a decoder ? */
@@ -2067,16 +2068,16 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
     }
 
     /* Skip the blanks after directives */
-    while( *psz_text == ' ' || *psz_text == '\t' ) psz_text++;
+    while( *psz_input == ' ' || *psz_input == '\t' ) psz_input++;
 
     /* Clean all the lines from inline comments and other stuffs */
-    psz_orig2 = calloc( strlen( psz_text) + 1, 1 );
-    psz_text2 = psz_orig2;
+    char *psz_output_alloc = calloc( strlen(psz_input) + 1, 1 );
+    char *psz_output = psz_output_alloc;
 
-    for( ; *psz_text != '\0' && *psz_text != '\n' && *psz_text != '\r'; )
+    for( ; *psz_input != '\0' && *psz_input != '\n' && *psz_input != '\r'; )
     {
-        char nextchar = psz_text[1];
-        switch( *psz_text )
+        char nextchar = psz_input[1];
+        switch( *psz_input )
         {
         case '{':
             p_props->jss.i_comment++;
@@ -2085,14 +2086,14 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             if( p_props->jss.i_comment )
             {
                 p_props->jss.i_comment = 0;
-                if( nextchar == ' ' ) psz_text++;
+                if( nextchar == ' ' ) psz_input++;
             }
             break;
         case '~':
             if( !p_props->jss.i_comment )
             {
-                *psz_text2 = ' ';
-                psz_text2++;
+                *psz_output = ' ';
+                psz_output++;
             }
             break;
         case ' ':
@@ -2101,43 +2102,43 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
                 break;
             if( !p_props->jss.i_comment )
             {
-                *psz_text2 = ' ';
-                psz_text2++;
+                *psz_output = ' ';
+                psz_output++;
             }
             break;
         case '\\':
             if( nextchar == 'n' )
             {
-                *psz_text2 = '\n';
-                psz_text++;
-                psz_text2++;
+                *psz_output = '\n';
+                psz_input++;
+                psz_output++;
                 break;
             }
             if( strchr( "cCfFBbIiUuDN", nextchar ) )
             {
-                psz_text++;
+                psz_input++;
                 break;
             }
             if( strchr( "~{\\", nextchar ) )
-                psz_text++;
-            else if( ( nextchar == '\r' ||  nextchar == '\n' ) && psz_text[2] != '\0' )
+                psz_input++;
+            else if( ( nextchar == '\r' ||  nextchar == '\n' ) && psz_input[2] != '\0' )
             {
-                psz_text++;
+                psz_input++;
             }
             break;
         default:
             if( !p_props->jss.i_comment )
             {
-                *psz_text2 = *psz_text;
-                psz_text2++;
+                *psz_output = *psz_input;
+                psz_output++;
             }
         }
-        psz_text++;
+        psz_input++;
     }
 
-    p_subtitle->psz_text = psz_orig2;
+    p_subtitle->psz_text = psz_output_alloc;
     msg_Dbg( p_obj, "%s", p_subtitle->psz_text );
-    free( psz_orig );
+    free( psz_input_alloc );
     return VLC_SUCCESS;
 }
 
