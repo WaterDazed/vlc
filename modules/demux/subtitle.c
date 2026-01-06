@@ -2096,27 +2096,20 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             break;
         case '~':
             if( !p_props->jss.i_comment )
-            {
-                *psz_output = ' ';
-                psz_output++;
-            }
+                *psz_output++ = ' ';
             break;
         case ' ':
         case '\t':
             if( nextchar == ' ' || nextchar == '\t' )
                 break;
             if( !p_props->jss.i_comment )
-            {
-                *psz_output = ' ';
-                psz_output++;
-            }
+                *psz_output++ = ' ';
             break;
         case '\\':
             if( nextchar == 'n' )
             {
-                *psz_output = '\n';
+                *psz_output++ = '\n';
                 psz_input++;
-                psz_output++;
                 break;
             }
             if( strchr( "cCfFBbIiUuDN", nextchar ) )
