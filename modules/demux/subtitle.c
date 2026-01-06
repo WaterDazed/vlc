@@ -2075,6 +2075,7 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
 
     for( ; *psz_text != '\0' && *psz_text != '\n' && *psz_text != '\r'; )
     {
+        char nextchar = psz_text[1];
         switch( *psz_text )
         {
         case '{':
@@ -2084,7 +2085,7 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             if( p_props->jss.i_comment )
             {
                 p_props->jss.i_comment = 0;
-                if( (*(psz_text + 1 ) ) == ' ' ) psz_text++;
+                if( nextchar == ' ' ) psz_text++;
             }
             break;
         case '~':
@@ -2096,7 +2097,7 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             break;
         case ' ':
         case '\t':
-            if( (*(psz_text + 1 ) ) == ' ' || (*(psz_text + 1 ) ) == '\t' )
+            if( nextchar == ' ' || nextchar == '\t' )
                 break;
             if( !p_props->jss.i_comment )
             {
@@ -2105,32 +2106,21 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
             }
             break;
         case '\\':
-            if( (*(psz_text + 1 ) ) == 'n' )
+            if( nextchar == 'n' )
             {
                 *psz_text2 = '\n';
                 psz_text++;
                 psz_text2++;
                 break;
             }
-            if( ( toupper((unsigned char)*(psz_text + 1 ) ) == 'C' ) ||
-                    ( toupper((unsigned char)*(psz_text + 1 ) ) == 'F' ) )
+            if( strchr( "cCfFBbIiUuDN", nextchar ) )
             {
                 psz_text++;
                 break;
             }
-            if( (*(psz_text + 1 ) ) == 'B' || (*(psz_text + 1 ) ) == 'b' ||
-                (*(psz_text + 1 ) ) == 'I' || (*(psz_text + 1 ) ) == 'i' ||
-                (*(psz_text + 1 ) ) == 'U' || (*(psz_text + 1 ) ) == 'u' ||
-                (*(psz_text + 1 ) ) == 'D' || (*(psz_text + 1 ) ) == 'N' )
-            {
+            if( strchr( "~{\\", nextchar ) )
                 psz_text++;
-                break;
-            }
-            if( (*(psz_text + 1 ) ) == '~' || (*(psz_text + 1 ) ) == '{' ||
-                (*(psz_text + 1 ) ) == '\\' )
-                psz_text++;
-            else if( ( *(psz_text + 1 ) == '\r' ||  *(psz_text + 1 ) == '\n' ) &&
-                     *(psz_text + 1 ) != '\0' )
+            else if( ( nextchar == '\r' ||  nextchar == '\n' ) && psz_text[2] != '\0' )
             {
                 psz_text++;
             }
