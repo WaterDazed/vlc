@@ -189,7 +189,8 @@ static int Mux(sout_mux_t *mux)
 
         if (data)
         {
-            data->i_flags |= BLOCK_FLAG_HEADER;
+            data->i_flags |=
+                (VLC_FRAME_FLAG_HEADER | VLC_FRAME_FLAG_RANDOM_ACCESS);
             sout_AccessOutWrite(mux->p_access, data);
         }
         sys->header_done = true;

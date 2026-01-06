@@ -47,7 +47,7 @@ typedef struct
     block_t *begin;
     block_t **end;
     vlc_tick_t length;
-    block_t *last_header;
+    block_t *segment_start;
 } hls_block_chain_t;
 
 static inline void hls_block_chain_Reset(hls_block_chain_t *chain)
@@ -55,7 +55,7 @@ static inline void hls_block_chain_Reset(hls_block_chain_t *chain)
     chain->begin = NULL;
     chain->end = &chain->begin;
     chain->length = 0;
-    chain->last_header = NULL;
+    chain->segment_start = NULL;
 }
 
 /**
@@ -490,7 +490,7 @@ static hls_block_chain_t ExtractCommonSegment(hls_block_chain_t *muxed_output,
     block_t *segment_end = NULL;
     for (block_t *it = muxed_output->begin; it != NULL; it = it->p_next)
     {
-        if (it->i_flags & BLOCK_FLAG_HEADER)
+        if (it->i_flags & VLC_FRAME_FLAG_RANDOM_ACCESS)
         {
             segment_end = prev;
             segment.length += gop_length;
@@ -532,12 +532,12 @@ static hls_block_chain_t ExtractSubtitleSegment(hls_block_chain_t *muxed_output,
     for (block_t *it = muxed_output->begin; it != NULL; it = it->p_next)
     {
         /* Subtitle segments are segmented at mux level by the
-         * hls_sub_segmenter. They have varying length so we use the header flag
+         * hls_sub_segmenter. They have varying length so we use the random access flag
          * to extract them properly. */
-        if (it->p_next != NULL && it->p_next->i_flags & BLOCK_FLAG_HEADER)
+        if (it->p_next != NULL && it->p_next->i_flags & VLC_FRAME_FLAG_RANDOM_ACCESS)
         {
             muxed_output->begin = it->p_next;
-            muxed_output->last_header = it->p_next;
+            muxed_output->segment_start = it->p_next;
             it->p_next = NULL;
             return segment;
         }
@@ -560,7 +560,7 @@ static bool IsSegmentSelfDecodable(const hls_block_chain_t *segment)
     if (segment->begin == NULL)
         return false;
 
-    return segment->begin->i_flags & BLOCK_FLAG_HEADER;
+    return segment->begin->i_flags & BLOCK_FLAG_RANDOM_ACCESS;
 }
 
 static int ExtractAndAddSegment(hls_playlist_t *playlist,
@@ -620,11 +620,11 @@ static bool IsSegmentReady(enum hls_playlist_type type,
                            hls_block_chain_t *buffer,
                            vlc_tick_t seglen)
 {
-    /* The subtitle header outputs one header per segment.  Let's wait until we
-     * received the next header before considering the current segment
-     * finished. */
-    if( type == HLS_PLAYLIST_TYPE_WEBVTT)
-        return buffer->begin != buffer->last_header;
+    /* The subtitle outputs one WebVTT header per segment.
+     * Let's wait until we received the next header before considering the
+     * current segment finished. */
+    if( type == HLS_PLAYLIST_TYPE_WEBVTT )
+        return buffer->begin != buffer->segment_start;
 
     /* Only consider full segments as ready for now. */
     return buffer->length >= seglen;
@@ -662,8 +662,8 @@ static ssize_t AccessOutWrite(sout_access_out_t *access, block_t *block)
         {
             block_ChainLastAppend(&it->muxed_output.end, block);
             it->muxed_output.length += length;
-            if (block->i_flags & BLOCK_FLAG_HEADER)
-                it->muxed_output.last_header = block;
+            if (block->i_flags & VLC_FRAME_FLAG_RANDOM_ACCESS)
+                it->muxed_output.segment_start = block;
         }
 
         if (!IsSegmentReady(

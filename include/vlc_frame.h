@@ -85,6 +85,12 @@ typedef struct vlc_frame_t vlc_frame_t;
 #define VLC_FRAME_FLAG_HEADER        0x0020
 /** This frame contains the last part of a sequence  */
 #define VLC_FRAME_FLAG_END_OF_SEQUENCE 0x0040
+/**
+ * Indicates a muxed sequence that decoders can safely start from.
+ * Primarily used by muxers to mark blocks that contain synchronized keyframes
+ * from all tracks.
+ */
+#define VLC_FRAME_FLAG_RANDOM_ACCESS 0x0080
 /** This frame is scrambled */
 #define VLC_FRAME_FLAG_SCRAMBLED     0x0100
 /** This frame has to be decoded but not be displayed */
