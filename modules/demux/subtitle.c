@@ -2072,6 +2072,11 @@ static int ParseJSS( vlc_object_t *p_obj, subs_properties_t *p_props,
 
     /* Clean all the lines from inline comments and other stuffs */
     char *psz_output_alloc = calloc( strlen(psz_input) + 1, 1 );
+    if( !psz_output_alloc )
+    {
+        free( psz_input_alloc );
+        return VLC_ENOMEM;
+    }
     char *psz_output = psz_output_alloc;
 
     for( ; *psz_input != '\0' && *psz_input != '\n' && *psz_input != '\r'; )
