@@ -63,6 +63,8 @@ static const char *const ppsz_sub_type[] =
     "subviewer1", "sbv"
 };
 
+static_assert(VLC_TICK_INVALID < VLC_TICK_0, "TICK_INVALID not below 0 reference for stop time");
+
 vlc_module_begin ()
     set_shortname( N_("Subtitles"))
     set_description( N_("Text subtitle parser") )
@@ -2232,7 +2234,7 @@ static vlc_tick_t ParseRealTime( const char *psz )
         return vlc_tick_from_sec( s )
                + VLC_TICK_0;
     }
-    return VLC_TICK_MIN;
+    return VLC_TICK_INVALID;
 }
 
 static int ParseRealText( vlc_object_t *p_obj, subs_properties_t *p_props,
@@ -2261,7 +2263,7 @@ static int ParseRealText( vlc_object_t *p_obj, subs_properties_t *p_props,
         psz_begin += 8;
 
         vlc_tick_t starttime = ParseRealTime( psz_begin );
-        vlc_tick_t endtime = VLC_TICK_MIN;
+        vlc_tick_t endtime = VLC_TICK_INVALID;
 
         const char *psz_end = strcasestr( psz_temp,  " end=\"" );
         if( psz_end )
