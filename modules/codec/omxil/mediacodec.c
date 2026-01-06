@@ -31,17 +31,14 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include <vlc_common.h>
 #include <vlc_aout.h>
 #include <vlc_plugin.h>
 #include <vlc_codec.h>
 #include <vlc_block_helper.h>
-#include <vlc_timestamp_helper.h>
 #include <vlc_threads.h>
 #include <vlc_bits.h>
 
 #include "mediacodec.h"
-#include "../codec/hxxx_helper.h"
 #include <OMX_Core.h>
 #include <OMX_Component.h>
 #include "omxil_utils.h"
@@ -51,111 +48,9 @@
 #define DECODE_FLAG_RESTART (0x01)
 #define DECODE_FLAG_DRAIN (0x02)
 
-#define MAX_PIC 64
-
-/**
- * Callback called when a new block is processed from DecodeBlock.
- * It returns -1 in case of error, 0 if block should be dropped, 1 otherwise.
- */
-typedef int (*dec_on_new_block_cb)(decoder_t *, block_t **);
-
-/**
- * Callback called when decoder is flushing.
- */
-struct decoder_sys_t;
-typedef void (*dec_on_flush_cb)(struct decoder_sys_t *);
-
-/**
- * Callback called when DecodeBlock try to get an output buffer (pic or block).
- * It returns -1 in case of error, or the number of output buffer returned.
- */
-typedef int (*dec_process_output_cb)(decoder_t *, mc_api_out *, picture_t **,
-                                     block_t **);
-
-struct android_picture_ctx
-{
-    picture_context_t s;
-    atomic_uint refs;
-    atomic_int index;
-};
-
-typedef struct decoder_sys_t
-{
-    mc_api api;
-
-    /* Codec Specific Data buffer: sent in DecodeBlock after a start or a flush
-     * with the BUFFER_FLAG_CODEC_CONFIG flag.*/
-    #define MAX_CSD_COUNT 3
-    block_t *pp_csd[MAX_CSD_COUNT];
-    size_t i_csd_count;
-    size_t i_csd_send;
-
-    bool b_has_format;
-
-    int64_t i_preroll_end;
-    int     i_quirks;
-
-    /* Specific Audio/Video callbacks */
-    dec_on_new_block_cb     pf_on_new_block;
-    dec_on_flush_cb         pf_on_flush;
-    dec_process_output_cb   pf_process_output;
-
-    vlc_mutex_t     lock;
-    vlc_thread_t    out_thread;
-    /* Cond used to signal the output thread */
-    vlc_cond_t      cond;
-    /* Cond used to signal the decoder thread */
-    vlc_cond_t      dec_cond;
-    /* Set to true by pf_flush to signal the output thread to flush */
-    bool            b_flush_out;
-    /* If true, the output thread will start to dequeue output pictures */
-    bool            b_output_ready;
-    /* If true, the first input block was successfully dequeued */
-    bool            b_input_dequeued;
-    bool            b_aborted;
-    bool            b_drained;
-    bool            b_adaptive;
-
-    /* If true, the decoder_t object has been closed and decoder_* functions
-     * are now unavailable. */
-    bool            b_decoder_dead;
-
-    int             i_decode_flags;
-
-    enum es_format_category_e cat;
-    union
-    {
-        struct
-        {
-            vlc_video_context *ctx;
-            struct android_picture_ctx apic_ctxs[MAX_PIC];
-            void *p_surface, *p_jsurface;
-            unsigned i_angle;
-            unsigned i_input_offset_x, i_input_offset_y;
-            unsigned i_input_width, i_input_height;
-            unsigned i_input_visible_width, i_input_visible_height;
-            unsigned int i_stride, i_slice_height;
-            int i_pixel_format;
-            struct hxxx_helper hh;
-            timestamp_fifo_t *timestamp_fifo;
-            int i_mpeg_dar_num, i_mpeg_dar_den;
-            struct vlc_asurfacetexture *surfacetexture;
-        } video;
-        struct {
-            date_t i_end_date;
-            int i_channels;
-            bool b_extract;
-            /* Some audio decoders need a valid channel count */
-            bool b_need_channels;
-            int pi_extraction[AOUT_CHAN_MAX];
-        } audio;
-    };
-} decoder_sys_t;
-
 /*****************************************************************************
  * Local prototypes
  *****************************************************************************/
-static int  OpenDecoderJni(vlc_object_t *);
 static int  OpenDecoderNdk(vlc_object_t *);
 static void CleanDecoder(decoder_sys_t *);
 static void CloseDecoder(vlc_object_t *);
@@ -215,15 +110,6 @@ vlc_module_begin ()
         set_capability("audio decoder", 0)
         set_callbacks(OpenDecoderNdk, CloseDecoder)
         add_shortcut("mediacodec_ndk")
-    add_submodule ()
-        set_description("Video decoder using Android MediaCodec via JNI")
-        set_capability("video decoder", 0)
-        set_callbacks(OpenDecoderJni, CloseDecoder)
-        add_shortcut("mediacodec_jni")
-    add_submodule ()
-        set_capability("audio decoder", 0)
-        set_callbacks(OpenDecoderJni, CloseDecoder)
-        add_shortcut("mediacodec_jni")
 vlc_module_end ()
 
 static void CSDFree(decoder_sys_t *p_sys)
@@ -538,6 +424,9 @@ static int StartMediaCodec(decoder_t *p_dec)
     {
         return MC_API_ERROR;
     }
+
+    if (p_sys->api.b_support_imagereader)
+        p_dec->fmt_out.i_codec = VLC_CODEC_I420;
 
     return p_sys->api.start(&p_sys->api);
 }
@@ -1093,11 +982,6 @@ static int OpenDecoderNdk(vlc_object_t *p_this)
     return OpenDecoder(p_this, MediaCodecNdk_Init);
 }
 
-static int OpenDecoderJni(vlc_object_t *p_this)
-{
-    return OpenDecoder(p_this, MediaCodecJni_Init);
-}
-
 static void AbortDecoderLocked(decoder_sys_t *p_sys)
 {
     if (!p_sys->b_aborted)
@@ -1166,7 +1050,7 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
     (void) pp_out_block;
     assert(pp_out_pic);
 
-    if (p_out->type == MC_OUT_TYPE_BUF)
+    if (p_out->type == MC_OUT_TYPE_BUF && !p_sys->api.b_support_imagereader)
     {
         picture_t *p_pic = NULL;
 
@@ -1231,12 +1115,59 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
         assert(!(*pp_out_pic));
         *pp_out_pic = p_pic;
         return 1;
+    } else if (p_out->type == MC_OUT_TYPE_BUF && p_sys->api.b_support_imagereader)
+    {
+        picture_t *p_pic = NULL;
+
+        /* If the oldest input block had no PTS, the timestamp of
+         * the frame returned by MediaCodec might be wrong so we
+         * overwrite it with the corresponding dts. Call FifoGet
+         * first in order to avoid a gap if buffers are released
+         * due to an invalid format or a preroll */
+        int64_t forced_ts = timestamp_FifoGet(p_sys->video.timestamp_fifo);
+
+        if (!p_sys->b_has_format) {
+            msg_Warn(p_dec, "Buffers returned before output format is set, dropping frame");
+            p_sys->api.delete_image(p_out);
+            return 0;
+        }
+
+        if (p_out->buf.i_ts <= p_sys->i_preroll_end)
+        {
+            p_sys->api.delete_image(p_out);
+            return 0;
+        }
+
+        if (!p_sys->api.b_direct_rendering && p_out->buf.p_ptr == NULL)
+        {
+            /* This can happen when receiving an EOS buffer */
+            msg_Warn(p_dec, "Invalid buffer, dropping frame");
+            p_sys->api.delete_image(p_out);
+            return 0;
+        }
+
+        p_pic = p_sys->api.create_pic_from_img(p_dec, p_out);
+        if (!p_pic) {
+            msg_Warn(p_dec, "NewPicture failed");
+            p_sys->api.delete_image(p_out);
+            return 0;
+        }
+
+        if (forced_ts == VLC_TICK_INVALID)
+            p_pic->date = p_out->buf.i_ts;
+        else
+            p_pic->date = forced_ts;
+        p_pic->b_progressive = true;
+
+        assert(!(*pp_out_pic));
+        *pp_out_pic = p_pic;
+        return 1;
     } else {
         assert(p_out->type == MC_OUT_TYPE_CONF);
         p_sys->video.i_pixel_format = p_out->conf.video.pixel_format;
 
         const char *name;
-        if (!p_sys->api.b_direct_rendering
+        if (!p_sys->api.b_support_imagereader && !p_sys->api.b_direct_rendering
          && (p_dec->fmt_out.i_codec =
              GetVlcChromaFormat(p_sys->video.i_pixel_format)) == 0)
         {
@@ -1534,7 +1465,31 @@ static void *OutThread(void *data)
          || i_index == MC_API_INFO_OUTPUT_BUFFERS_CHANGED)
         {
             struct mc_api_out out;
-            int i_ret = p_sys->api.get_out(&p_sys->api, i_index, &out);
+            int i_ret = -1;
+            if (p_sys->api.b_support_imagereader)
+            {
+                if (i_index >= 0)
+                {
+                    p_sys->api.release_out(&p_sys->api, i_index, true);
+
+                    unsigned long id = vlc_thread_id();
+                    msg_Dbg(p_dec, "OutThread thread: %lu", id);
+
+                    i_ret = p_sys->api.acquire_latest_image(&p_sys->api, i_index, &out);
+                    if (i_ret == MC_API_INFO_TRYAGAIN)
+                    {
+                        continue;
+                    }
+                }
+                else if (i_index == MC_API_INFO_OUTPUT_FORMAT_CHANGED)
+                {
+                    i_ret = p_sys->api.update_format(&p_sys->api, i_index, &out);
+                }
+            }
+            else
+            {
+                i_ret = p_sys->api.get_out(&p_sys->api, i_index, &out);
+            }
 
             if (i_ret == 1)
             {

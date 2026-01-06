@@ -33,6 +33,8 @@
 #include <vlc_common.h>
 
 #include <media/NdkMediaCodec.h>
+#include <media/NdkImage.h>
+#include <media/NdkImageReader.h>
 #include <OMX_Core.h>
 #include <OMX_Component.h>
 #include "omxil_utils.h"
@@ -46,14 +48,13 @@ static_assert(MC_API_NO_QUIRKS == OMXCODEC_NO_QUIRKS
     && MC_API_AUDIO_QUIRKS_NEED_CHANNELS == OMXCODEC_AUDIO_QUIRKS_NEED_CHANNELS,
     "mediacodec.h/omx_utils.h mismatch");
 
-char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
-                         const char *psz_mime, int profile, int *p_quirks);
-
 #define THREAD_NAME "mediacodec_ndk"
 
 /* Not in NdkMedia API but we need it since we send config data via input
  * buffers and not via "csd-*" buffers from AMediaFormat */
 #define AMEDIACODEC_FLAG_CODEC_CONFIG 2
+
+#define MAX_IMAGES 24
 
 /*****************************************************************************
  * NdkMediaCodec.h
@@ -124,6 +125,33 @@ typedef void (*pf_AMediaFormat_setInt32)(AMediaFormat*,
 typedef bool (*pf_AMediaFormat_getInt32)(AMediaFormat*,
         const char *name, int32_t *out);
 
+typedef media_status_t (*pf_AImageReader_new)(int32_t width,
+        int32_t height, int32_t format,
+        int32_t maxImages, AImageReader **reader);
+
+typedef media_status_t (*pf_AImageReader_getWindow)(AImageReader *reader, ANativeWindow **window);
+
+typedef media_status_t (*pf_AImageReader_setImageListener)(AImageReader*,
+        AImageReader_ImageListener*);
+
+typedef media_status_t (*pf_AImageReader_acquireLatestImage)(AImageReader*,
+        AImage**);
+
+typedef void (*pf_AImage_delete)(AImage*);
+
+typedef media_status_t (*pf_AImage_getWidth)(const AImage*, int32_t*);
+
+typedef media_status_t (*pf_AImage_getHeight)(const AImage*,int32_t*);
+
+typedef media_status_t (*pf_AImage_getPlaneData)(const AImage*, int, uint8_t**, int*);
+
+typedef media_status_t (*pf_AImage_getPlanePixelStride)(const AImage *image, int planeIdx, int32_t *pixelStride);
+
+typedef media_status_t (*pf_AImage_getPlaneRowStride)(const AImage *image, int planeIdx, int32_t *rowStride);
+
+typedef media_status_t (*pf_AImage_getNumberOfPlanes)(const AImage *image, int32_t *numPlanes);
+
+
 struct syms
 {
     struct {
@@ -150,6 +178,21 @@ struct syms
         pf_AMediaFormat_setInt32 setInt32;
         pf_AMediaFormat_getInt32 getInt32;
     } AMediaFormat;
+    struct {
+        pf_AImageReader_new new;
+        pf_AImageReader_getWindow getWindow;
+        pf_AImageReader_setImageListener setImageListener;
+        pf_AImageReader_acquireLatestImage acquireLatestImage;
+    } AImageReader;
+    struct {
+        pf_AImage_delete delete;
+        pf_AImage_getHeight getHeight;
+        pf_AImage_getWidth getWidth;
+        pf_AImage_getPlaneData getPlaneData;
+        pf_AImage_getPlanePixelStride getPlanePixelStride;
+        pf_AImage_getPlaneRowStride getPlaneRowStride;
+        pf_AImage_getNumberOfPlanes getNumberOfPlanes;
+    } AImage;
 };
 static struct syms syms;
 
@@ -184,6 +227,21 @@ static struct members members[] =
     { "AMediaFormat_setString", OFF(setString), true },
     { "AMediaFormat_setInt32", OFF(setInt32), true },
     { "AMediaFormat_getInt32", OFF(getInt32), true },
+#undef OFF
+#define OFF(x) offsetof(struct syms, AImageReader.x)
+    { "AImageReader_new", OFF(new), true },
+    { "AImageReader_getWindow", OFF(getWindow), true },
+    { "AImageReader_setImageListener", OFF(setImageListener), true },
+    { "AImageReader_acquireLatestImage", OFF(acquireLatestImage), true },
+#undef OFF
+#define OFF(x) offsetof(struct syms, AImage.x)
+    { "AImage_delete", OFF(delete), true },
+    { "AImage_getHeight", OFF(getHeight), true },
+    { "AImage_getWidth", OFF(getWidth), true },
+    { "AImage_getPlaneData", OFF(getPlaneData), true },
+    { "AImage_getPlaneRowStride", OFF(getPlaneRowStride), true },
+    { "AImage_getPlanePixelStride", OFF(getPlanePixelStride), true },
+    { "AImage_getNumberOfPlanes", OFF(getNumberOfPlanes), true },
 #undef OFF
     { NULL, 0, false }
 };
@@ -233,19 +291,41 @@ end:
 /****************************************************************************
  * Local prototypes
  ****************************************************************************/
+struct image_reader_ctx
+{
+    AImageReader *p_image_reader;
+    ANativeWindow *window;
+};
+
+typedef struct
+{
+    picture_context_t ctx;
+    AImage *image;
+} imagereader_picture_context_t;
 
 struct mc_api_sys
 {
     AMediaCodec* p_codec;
     AMediaFormat* p_format;
     AMediaCodecBufferInfo info;
+    struct image_reader_ctx ctx;
 };
+
+
+static void on_image_available(void* ctx, AImageReader* reader)
+{
+    decoder_sys_t *p_sys = (decoder_sys_t *)ctx;
+    msg_Dbg(p_sys->api.p_obj, "on_image_available called");
+}
 
 /*****************************************************************************
  * ConfigureDecoder
  *****************************************************************************/
 static int ConfigureDecoder(mc_api *api, union mc_api_args *p_args)
 {
+    decoder_t *p_dec = (decoder_t *)api->p_obj;
+    decoder_sys_t *p_dec_sys = (decoder_sys_t *)p_dec->p_sys;
+
     mc_api_sys *p_sys = api->p_sys;
     ANativeWindow *p_anw = NULL;
 
@@ -257,6 +337,32 @@ static int ConfigureDecoder(mc_api *api, union mc_api_args *p_args)
         msg_Err(api->p_obj, "AMediaCodec.createCodecByName for %s failed",
                 api->psz_name);
         return MC_API_ERROR;
+    }
+
+    api->b_support_imagereader = true;
+    if (syms.AImageReader.new(p_args->video.i_width, p_args->video.i_height,
+                              AIMAGE_FORMAT_YUV_420_888, MAX_IMAGES,
+                              &p_sys->ctx.p_image_reader) != AMEDIA_OK)
+    {
+        api->b_support_imagereader = false;
+        msg_Err(api->p_obj, "AImageReader.new failed");
+    }
+
+    if (syms.AImageReader.getWindow(p_sys->ctx.p_image_reader, &p_sys->ctx.window) != AMEDIA_OK)
+    {
+        api->b_support_imagereader = false;
+        msg_Err(api->p_obj, "AImageReader.getWindow failed");
+    }
+
+    AImageReader_ImageListener listener = {
+            .context = p_dec_sys,
+            .onImageAvailable = on_image_available
+    };
+
+    if (syms.AImageReader.setImageListener(p_sys->ctx.p_image_reader, &listener) != AMEDIA_OK)
+    {
+        api->b_support_imagereader = false;
+        msg_Err(api->p_obj, "AImageReader.setImageListener failed");
     }
 
     p_sys->p_format = syms.AMediaFormat.new();
@@ -281,6 +387,7 @@ static int ConfigureDecoder(mc_api *api, union mc_api_args *p_args)
         syms.AMediaFormat.setInt32(p_sys->p_format, "color-range", p_args->video.color_range);
         syms.AMediaFormat.setInt32(p_sys->p_format, "color-standard", p_args->video.color_standard);
         syms.AMediaFormat.setInt32(p_sys->p_format, "color-transfer", p_args->video.color_transfer);
+        syms.AMediaFormat.setInt32(p_sys->p_format, "color-format", COLOR_FormatYUV420Flexible);
 
         if (p_args->video.p_surface)
         {
@@ -299,6 +406,12 @@ static int ConfigureDecoder(mc_api *api, union mc_api_args *p_args)
         syms.AMediaFormat.setInt32(p_sys->p_format, "channel-count", p_args->audio.i_channel_count);
     }
 
+    if (!p_anw && api->b_support_imagereader == true)
+    {
+        p_anw = p_sys->ctx.window;
+        msg_Dbg(api->p_obj, "Using AImageReader Surface");
+    }
+
     if (syms.AMediaCodec.configure(p_sys->p_codec, p_sys->p_format,
                                    p_anw, NULL, 0) != AMEDIA_OK)
     {
@@ -306,7 +419,8 @@ static int ConfigureDecoder(mc_api *api, union mc_api_args *p_args)
         return MC_API_ERROR;
     }
 
-    api->b_direct_rendering = !!p_anw;
+    if (!api->b_support_imagereader)
+        api->b_direct_rendering = !!p_anw;
 
     return 0;
 }
@@ -437,6 +551,121 @@ static int32_t GetFormatInteger(AMediaFormat *p_format, const char *psz_name)
     return i_out;
 }
 
+static int DeleteImage(mc_api_out *out)
+{
+    AImage* image = (AImage *)out->buf.p_ptr;
+    syms.AImage.delete(image);
+    image = NULL;
+    return 0;
+}
+
+static int AcquireLatestImage(mc_api *api, int i_index, mc_api_out *p_out)
+{
+    mc_api_sys *p_sys = api->p_sys;
+    assert(i_index >= 0);
+    p_out->type = MC_OUT_TYPE_BUF;
+    p_out->buf.i_index = i_index;
+
+    p_out->buf.i_ts = p_sys->info.presentationTimeUs;
+    p_out->b_eos = p_sys->info.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM;
+
+    AImage *image = NULL;
+    media_status_t status = syms.AImageReader.acquireLatestImage(p_sys->ctx.p_image_reader,
+                                                                     &image);
+    msg_Dbg(api->p_obj, "AcquireLatestImage returned %d", status);
+
+    if (status == AMEDIA_IMGREADER_MAX_IMAGES_ACQUIRED || status == AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE)
+        return MC_API_INFO_TRYAGAIN;
+    if (status != AMEDIA_OK)
+    {
+        return MC_API_ERROR;
+    }
+    p_out->buf.p_ptr = (uint8_t *)image;
+    return 1;
+}
+
+static void ImageReaderPictureContextDestroy(picture_context_t *ctx)
+{
+    imagereader_picture_context_t *myctx = (imagereader_picture_context_t *)ctx;
+
+    if (myctx->image)
+        syms.AImage.delete(myctx->image);
+
+    free(myctx);
+}
+
+static picture_t *CreatePictureFromAImage(decoder_t *p_dec, mc_api_out *out)
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+
+    imagereader_picture_context_t *p_image_ctx = malloc(sizeof(imagereader_picture_context_t));
+    if (!p_image_ctx)
+        return NULL;
+
+    p_image_ctx->ctx.destroy = ImageReaderPictureContextDestroy;
+    p_image_ctx->ctx.copy = NULL;
+    p_image_ctx->ctx.vctx = NULL;
+    p_image_ctx->image = (AImage *)out->buf.p_ptr;
+
+    if (!p_sys->b_image_format_found)
+    {
+        int num_planes = -1;
+        int plane_0_pixel_stride = -1;
+        int plane_1_pixel_stride = -1;
+        int plane_2_pixel_stride = -1;
+        syms.AImage.getNumberOfPlanes((AImage *)out->buf.p_ptr, &num_planes);
+
+        assert(num_planes == 3);
+
+        syms.AImage.getPlanePixelStride((AImage *)out->buf.p_ptr, 0, &plane_0_pixel_stride);
+        syms.AImage.getPlanePixelStride((AImage *)out->buf.p_ptr, 1, &plane_1_pixel_stride);
+        syms.AImage.getPlanePixelStride((AImage *)out->buf.p_ptr, 2, &plane_2_pixel_stride);
+
+        if (plane_1_pixel_stride == 2 && plane_2_pixel_stride == 2)
+        {
+            p_dec->fmt_out.i_codec = VLC_CODEC_NV12;
+            p_sys->video.i_pixel_format = OMX_COLOR_FormatYUV420SemiPlanar;
+        }
+
+        if (plane_1_pixel_stride == 1 && plane_2_pixel_stride == 1)
+        {
+            p_dec->fmt_out.i_codec = VLC_CODEC_I420;
+            p_sys->video.i_pixel_format = OMX_COLOR_FormatYUV420Planar;
+        }
+
+        if (decoder_UpdateVideoOutput(p_dec, p_sys->video.ctx) != 0)
+        {
+            msg_Err(p_dec, "UpdateVout failed");
+            return NULL;
+        }
+        p_sys->b_image_format_found = true;
+    }
+
+
+    picture_t *pic = decoder_NewPicture(p_dec);
+    if (!pic)
+        return NULL;
+
+    pic->context = &p_image_ctx->ctx;
+
+    for (int i = 0; i < pic->i_planes; i++)
+    {
+        uint8_t *planeData = NULL;
+        int rowStride = 0;
+        int dataLength = 0;
+        int pixelStride = 0;
+
+        syms.AImage.getPlaneData((AImage *)out->buf.p_ptr, i, &planeData, &dataLength);
+        syms.AImage.getPlaneRowStride((AImage *)out->buf.p_ptr, i, &rowStride);
+        syms.AImage.getPlanePixelStride((AImage *)out->buf.p_ptr, i, &pixelStride);
+
+        pic->p[i].p_pixels = planeData;
+        pic->p[i].i_pitch = rowStride;
+        pic->p[i].i_pixel_pitch = pixelStride;
+    }
+    return pic;
+}
+
 /*****************************************************************************
  * DequeueOutput
  *****************************************************************************/
@@ -522,6 +751,36 @@ static int GetOutput(mc_api *api, int i_index, mc_api_out *p_out)
             p_out->conf.audio.channel_count = GetFormatInteger(format, "channel-count");
             p_out->conf.audio.channel_mask  = GetFormatInteger(format, "channel-mask");
             p_out->conf.audio.sample_rate   = GetFormatInteger(format, "sample-rate");
+        }
+        syms.AMediaFormat.delete(format);
+        return 1;
+    }
+    return 0;
+}
+
+static int UpdateFormat(mc_api *api, int i_index, mc_api_out *p_out)
+{
+    mc_api_sys *p_sys = api->p_sys;
+
+    if (i_index == MC_API_INFO_OUTPUT_FORMAT_CHANGED)
+    {
+        AMediaFormat *format = syms.AMediaCodec.getOutputFormat(p_sys->p_codec);
+        if (unlikely(format == NULL))
+            return MC_API_ERROR;
+
+        p_out->type = MC_OUT_TYPE_CONF;
+        p_out->b_eos = false;
+        if (api->i_cat == VIDEO_ES)
+        {
+            p_out->conf.video.width         = GetFormatInteger(format, "width");
+            p_out->conf.video.height        = GetFormatInteger(format, "height");
+            p_out->conf.video.stride        = GetFormatInteger(format, "stride");
+            p_out->conf.video.slice_height  = GetFormatInteger(format, "slice-height");
+            p_out->conf.video.pixel_format  = GetFormatInteger(format, "color-format");
+            p_out->conf.video.crop_left     = GetFormatInteger(format, "crop-left");
+            p_out->conf.video.crop_top      = GetFormatInteger(format, "crop-top");
+            p_out->conf.video.crop_right    = GetFormatInteger(format, "crop-right");
+            p_out->conf.video.crop_bottom   = GetFormatInteger(format, "crop-bottom");
         }
         syms.AMediaFormat.delete(format);
         return 1;
@@ -626,6 +885,10 @@ int MediaCodecNdk_Init(mc_api *api)
     api->release_out = ReleaseOutput;
     api->release_out_ts = ReleaseOutputAtTime;
     api->set_output_surface = SetOutputSurface;
+    api->acquire_latest_image = AcquireLatestImage;
+    api->create_pic_from_img = CreatePictureFromAImage;
+    api->delete_image = DeleteImage;
+    api->update_format = UpdateFormat;
 
     api->b_support_rotation = true;
     return 0;

@@ -21,8 +21,11 @@
 #ifndef VLC_MEDIACODEC_H
 #define VLC_MEDIACODEC_H
 
+#include <vlc_codec.h>
 #include <vlc_common.h>
+#include <vlc_timestamp_helper.h>
 #include "../../video_output/android/utils.h"
+#include "../codec/hxxx_helper.h"
 
 typedef struct mc_api mc_api;
 typedef struct mc_api_sys mc_api_sys;
@@ -30,7 +33,9 @@ typedef struct mc_api_out mc_api_out;
 
 typedef int (*pf_MediaCodecApi_init)(mc_api*);
 
-int MediaCodecJni_Init(mc_api*);
+char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
+                         const char *psz_mime, int profile, int *p_quirks);
+
 int MediaCodecNdk_Init(mc_api*);
 
 #define MC_API_ERROR (-1)
@@ -48,6 +53,9 @@ int MediaCodecNdk_Init(mc_api*);
 /* MediaCodec only QUIRKS */
 #define MC_API_VIDEO_QUIRKS_ADAPTIVE 0x1000
 #define MC_API_VIDEO_QUIRKS_IGNORE_SIZE 0x2000
+
+/* Used for imagereader */
+#define COLOR_FormatYUV420Flexible 0x7f420888
 
 /* cf. https://github.com/FFmpeg/FFmpeg/blob/00f5a34c9a5f0adee28aca11971918d6aca48745/libavcodec/mediacodec_wrapper.h#L348
  * cf. https://developer.android.com/reference/android/media/MediaFormat#constants_1*/
@@ -152,6 +160,7 @@ struct mc_api
     int  i_quirks;
     char *psz_name;
     bool b_support_rotation;
+    bool b_support_imagereader;
 
     bool b_started;
     bool b_direct_rendering;
@@ -191,6 +200,114 @@ struct mc_api
     /* Dynamically sets the output surface
      * Returns 0 on success, or MC_API_ERROR */
     int (*set_output_surface)(mc_api*, void *p_surface, void *p_jsurface);
+
+    int (*acquire_latest_image)(mc_api*, int i_index, mc_api_out*);
+    int (*delete_image)(mc_api_out*);
+    picture_t *(*create_pic_from_img)(decoder_t *p_dec, mc_api_out*);
+    int (*update_format)(mc_api *api, int i_index, mc_api_out *p_out);
 };
+
+#define MAX_PIC 64
+
+/**
+ * Callback called when a new block is processed from DecodeBlock.
+ * It returns -1 in case of error, 0 if block should be dropped, 1 otherwise.
+ */
+typedef int (*dec_on_new_block_cb)(decoder_t *, block_t **);
+
+/**
+ * Callback called when decoder is flushing.
+ */
+struct decoder_sys_t;
+typedef void (*dec_on_flush_cb)(struct decoder_sys_t *);
+
+/**
+ * Callback called when DecodeBlock try to get an output buffer (pic or block).
+ * It returns -1 in case of error, or the number of output buffer returned.
+ */
+typedef int (*dec_process_output_cb)(decoder_t *, mc_api_out *, picture_t **,
+                                     block_t **);
+
+struct android_picture_ctx
+{
+    picture_context_t s;
+    atomic_uint refs;
+    atomic_int index;
+};
+
+typedef struct decoder_sys_t
+{
+    mc_api api;
+
+    /* Codec Specific Data buffer: sent in DecodeBlock after a start or a flush
+     * with the BUFFER_FLAG_CODEC_CONFIG flag.*/
+#define MAX_CSD_COUNT 3
+    block_t *pp_csd[MAX_CSD_COUNT];
+    size_t i_csd_count;
+    size_t i_csd_send;
+
+    bool b_has_format;
+
+    int64_t i_preroll_end;
+    int     i_quirks;
+
+    /* Specific Audio/Video callbacks */
+    dec_on_new_block_cb     pf_on_new_block;
+    dec_on_flush_cb         pf_on_flush;
+    dec_process_output_cb   pf_process_output;
+
+    vlc_mutex_t     lock;
+    vlc_thread_t    out_thread;
+    /* Cond used to signal the output thread */
+    vlc_cond_t      cond;
+    /* Cond used to signal the decoder thread */
+    vlc_cond_t      dec_cond;
+
+    /* Set to true by pf_flush to signal the output thread to flush */
+    bool            b_flush_out;
+    /* If true, the output thread will start to dequeue output pictures */
+    bool            b_output_ready;
+    /* If true, the first input block was successfully dequeued */
+    bool            b_input_dequeued;
+    bool            b_aborted;
+    bool            b_drained;
+    bool            b_adaptive;
+    bool            b_image_format_found;
+
+    /* If true, the decoder_t object has been closed and decoder_* functions
+     * are now unavailable. */
+    bool            b_decoder_dead;
+
+    int             i_decode_flags;
+
+    enum es_format_category_e cat;
+    union
+    {
+        struct
+        {
+            vlc_video_context *ctx;
+            struct android_picture_ctx apic_ctxs[MAX_PIC];
+            void *p_surface, *p_jsurface;
+            unsigned i_angle;
+            unsigned i_input_offset_x, i_input_offset_y;
+            unsigned i_input_width, i_input_height;
+            unsigned i_input_visible_width, i_input_visible_height;
+            unsigned int i_stride, i_slice_height;
+            int i_pixel_format;
+            struct hxxx_helper hh;
+            timestamp_fifo_t *timestamp_fifo;
+            int i_mpeg_dar_num, i_mpeg_dar_den;
+            struct vlc_asurfacetexture *surfacetexture;
+        } video;
+        struct {
+            date_t i_end_date;
+            int i_channels;
+            bool b_extract;
+            /* Some audio decoders need a valid channel count */
+            bool b_need_channels;
+            int pi_extraction[AOUT_CHAN_MAX];
+        } audio;
+    };
+} decoder_sys_t;
 
 #endif
