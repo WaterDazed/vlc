@@ -103,6 +103,36 @@ static int32_t video_format_to_adataspace(const video_format_t *fmt)
     return standard | transfer | range;
 }
 
+static bool video_format_to_smpte2086(const video_format_t *fmt,
+                                      struct AHdrMetadata_smpte2086 *out)
+{
+    if (fmt->mastering.max_luminance == 0)
+        return false;
+
+    out->displayPrimaryGreen.x = fmt->mastering.primaries[0] / 50000.0f;
+    out->displayPrimaryGreen.y = fmt->mastering.primaries[1] / 50000.0f;
+    out->displayPrimaryBlue.x  = fmt->mastering.primaries[2] / 50000.0f;
+    out->displayPrimaryBlue.y  = fmt->mastering.primaries[3] / 50000.0f;
+    out->displayPrimaryRed.x   = fmt->mastering.primaries[4] / 50000.0f;
+    out->displayPrimaryRed.y   = fmt->mastering.primaries[5] / 50000.0f;
+    out->whitePoint.x          = fmt->mastering.white_point[0] / 50000.0f;
+    out->whitePoint.y          = fmt->mastering.white_point[1] / 50000.0f;
+    out->maxLuminance          = fmt->mastering.max_luminance / 10000.0f;
+    out->minLuminance          = fmt->mastering.min_luminance / 10000.0f;
+    return true;
+}
+
+static bool video_format_to_cta861_3(const video_format_t *fmt,
+                                     struct AHdrMetadata_cta861_3 *out)
+{
+    if (fmt->lighting.MaxCLL == 0 && fmt->lighting.MaxFALL == 0)
+        return false;
+
+    out->maxContentLightLevel      = fmt->lighting.MaxCLL;
+    out->maxFrameAverageLightLevel = fmt->lighting.MaxFALL;
+    return true;
+}
+
 struct subpicture
 {
     vlc_window_t *window;
@@ -683,6 +713,15 @@ static int CreateSurfaceControl(vout_display_t *vd)
     int32_t dataspace = video_format_to_adataspace(vd->source);
     if (dataspace != ADATASPACE_UNKNOWN)
         asc_api->ASurfaceTransaction.setBufferDataSpace(txn, sc, dataspace);
+
+    /* Set HDR static metadata if available */
+    struct AHdrMetadata_smpte2086 smpte2086;
+    if (video_format_to_smpte2086(vd->source, &smpte2086))
+        asc_api->ASurfaceTransaction.setHdrMetadata_smpte2086(txn, sc, &smpte2086);
+
+    struct AHdrMetadata_cta861_3 cta861_3;
+    if (video_format_to_cta861_3(vd->source, &cta861_3))
+        asc_api->ASurfaceTransaction.setHdrMetadata_cta861_3(txn, sc, &cta861_3);
 
     asc_api->ASurfaceTransaction.apply(txn);
     asc_api->ASurfaceTransaction.delete(txn);
