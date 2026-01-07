@@ -82,10 +82,11 @@ static void subtitles_es_out_ctx_Init(struct subtitles_es_out_ctx_t *ctx)
 }
 
 const char testdata_SubRip[] =
-//"0\n"
-//"00:00:00,000 --> 00:00:00,500\n"
-//"TEXT0\n"
-//"\n"
+"0\n"
+"00:00:00,000 --> 00:00:00,500\n"
+"TEXT0\n"
+"\n"
+
 // Multiline
 "1\n"
 "00:02:17,440 --> 00:02:20,375\n"
@@ -141,22 +142,21 @@ static int check_SubRip(struct subtitles_es_out_ctx_t *ctx)
     EXPECT(OUT);
 
     // 0
-//    EXPECT(OUT->i_pts == VLC_TICK_0);
-//    EXPECT(OUT->i_length == 0 /*VLC_TICK_FROM_MS(500)*/);
-//    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
-//    POP;
+    EXPECT(OUT->i_pts == VLC_TICK_0);
+    EXPECT(OUT->i_length == VLC_TICK_FROM_MS(500));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
+    POP;
 
     // 1
-     fprintf(stderr,"OUT %ld %ld\n", OUT->i_pts,  VLC_TICK_0 + vlc_tick_from_sec(2*60+17));
-    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+17) /*+ VLC_TICK_FROM_MS(440)*/ );
-    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+20) /*+ VLC_TICK_FROM_MS(375)*/ - OUT->i_pts);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+17) + VLC_TICK_FROM_MS(440));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+20) + VLC_TICK_FROM_MS(375) - OUT->i_pts);
     EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\nTEXT1\n"));
     POP;
 
     // 3 - With coordinates
     EXPECT(OUT);
-    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+24) /*+ VLC_TICK_FROM_MS(948)*/);
-    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+26) /*+ VLC_TICK_FROM_MS(247)*/ - OUT->i_pts);
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2*60+24) + VLC_TICK_FROM_MS(948));
+    EXPECT(OUT->i_length == VLC_TICK_0 + vlc_tick_from_sec(2*60+26) + VLC_TICK_FROM_MS(247) - OUT->i_pts);
     EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
     POP;
 
