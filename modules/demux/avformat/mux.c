@@ -424,13 +424,18 @@ static int MuxBlock( sout_mux_t *p_mux, sout_input_t *p_input )
     return VLC_SUCCESS;
 }
 
-static int WriteToAccess( sout_mux_t *mux, block_t *buff )
+static int WriteToAccess( sout_mux_t *mux, block_t *buff,
+                          enum AVIODataMarkerType type )
 {
     sout_mux_sys_t *sys = mux->p_sys;
     if( sys->b_write_header )
         buff->i_flags |= BLOCK_FLAG_HEADER;
     if( !sys->b_header_done )
         buff->i_flags |= BLOCK_FLAG_HEADER;
+
+    if( type == AVIO_DATA_MARKER_SYNC_POINT ||
+        type == AVIO_DATA_MARKER_BOUNDARY_POINT)
+        buff->i_flags |= BLOCK_FLAG_RANDOM_ACCESS;
 
     if( sys->b_write_keyframe )
     {
@@ -465,7 +470,7 @@ int IOWriteTyped(void *opaque, const uint8_t *buf, int buf_size,
 
     if( !p_sys->b_header_done && type != AVIO_DATA_MARKER_HEADER )
         p_sys->b_header_done = true;
-    return WriteToAccess(p_mux, buff);
+    return WriteToAccess( p_mux, buff, type );
 }
 
 /*****************************************************************************
@@ -567,7 +572,7 @@ static int IOWrite( void *opaque, const uint8_t *buf, int buf_size )
     block_t *p_buf = block_Alloc( buf_size );
     if( buf_size > 0 ) memcpy( p_buf->p_buffer, buf, buf_size );
 
-    return WriteToAccess( p_mux, p_buf );
+    return WriteToAccess( p_mux, p_buf, AVIO_DATA_MARKER_UNKNOWN );
 }
 
 static int64_t IOSeek( void *opaque, int64_t offset, int whence )
