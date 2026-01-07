@@ -57,7 +57,7 @@ ToolTipExt {
 
             implicitHeight: arrow.diagonalSize / 2
 
-            clip: true
+            clip: (parent.color.a < 1.0) || ((arrow.x < (parent.radius)) || (arrow.x > (width - arrow.width - parent.radius)))
 
             Rectangle {
                 id: arrow
