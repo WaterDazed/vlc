@@ -247,6 +247,14 @@ static vlc_tick_t vlc_tick_from_HMS( int h, int m, int s )
     return vlc_tick_from_sec(h * INT64_C(3600) + m * INT64_C(60) + s);
 }
 
+/* Shifts value in base 10 to fill the missing digits */
+static int expandDigits(int v, int digits, int width)
+{
+    for(;digits<width;digits++)
+        v *= 10;
+    return v;
+}
+
 static bool negative_ints( int count, ... )
 {
     va_list vl;
@@ -1193,11 +1201,16 @@ static int subtitle_ParseSubRipTimingValue(vlc_tick_t *timing_value,
         && (sep =='.' || sep == ',')
         && !negative_ints(3, h1, m1, s1)
         && (size_t)count <= length)
-        goto success;
-
-    if (checked_sscanf(s, "%d:%d:%d.%d%n", &h1, &m1, &s1, &d1, &count) == 4
-        && (size_t)count <= length)
-        goto success;
+    {
+        int precision;
+        if(checked_sscanf(s+count, "%d%n", &d1, &precision) == 1
+           && precision < 4
+           && (size_t)precision <= length - count)
+        {
+            d1 = expandDigits(d1, precision, 3);
+            goto success;
+        }
+    }
 
     d1 = 0;
     if (checked_sscanf(s, "%d:%d:%d%n", &h1, &m1, &s1, &count) == 3
@@ -1252,11 +1265,16 @@ static int subtitle_ParseSubViewerTiming( subtitle_t *p_subtitle,
                                    const char *s )
 {
     int h1, m1, s1, d1, h2, m2, s2, d2;
-
-    if( checked_sscanf( s, "%d:%d:%d.%d,%d:%d:%d.%d",
-                &h1, &m1, &s1, &d1, &h2, &m2, &s2, &d2) != 8 )
+    int before, after;
+    if( checked_sscanf( s, "%d:%d:%d.%n%d%n",
+                &h1, &m1, &s1, &before, &d1, &after ) != 4 )
         return VLC_EGENERIC;
+    d1 = expandDigits( d1, after - before, 3 );
 
+    if( checked_sscanf( s + after, ",%d:%d:%d.%n%d%n",
+                &h2, &m2, &s2, &before, &d2, &after ) != 4 )
+        return VLC_EGENERIC;
+    d2 = expandDigits( d2, after - before, 3 );
     p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
                           VLC_TICK_FROM_MS( d1 ) + VLC_TICK_0;
 
@@ -1291,6 +1309,7 @@ static int  ParseSSA( vlc_object_t *p_obj, subs_properties_t *p_props,
     {
         const char *s = TextGetLine( txt );
         int h1, m1, s1, c1, h2, m2, s2, c2;
+        int B1, A1, B2, A2;
         char *psz_text, *psz_temp;
         char temp[16];
 
@@ -1328,10 +1347,10 @@ static int  ParseSSA( vlc_object_t *p_obj, subs_properties_t *p_props,
         }
         else if( s[0] == 'D' &&
             sscanf( s,
-                    "Dialogue: %15[^,],%d:%d:%d.%d,%d:%d:%d.%d,%[^\r\n]",
+                    "Dialogue: %15[^,],%d:%d:%d.%n%d%n,%d:%d:%d.%n%d%n,%[^\r\n]",
                     temp,
-                    &h1, &m1, &s1, &c1,
-                    &h2, &m2, &s2, &c2,
+                    &h1, &m1, &s1, &B1, &c1, &A1,
+                    &h2, &m2, &s2, &B2, &c2, &A2,
                     psz_text ) == 10 &&
                     !negative_ints( 8, h1, m1, s1, c1, h2, m2, s2, c2 ) )
         {
@@ -1358,10 +1377,13 @@ static int  ParseSSA( vlc_object_t *p_obj, subs_properties_t *p_props,
                 psz_text = psz_temp;
             }
 
+            c1 = expandDigits( c1, A1-B1, 3 );
+            c2 = expandDigits( c2, A2-B2, 3 );
+
             p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
-                                  VLC_TICK_FROM_MS( c1 * 10 ) + VLC_TICK_0;
+                                  VLC_TICK_FROM_MS( c1 ) + VLC_TICK_0;
             p_subtitle->i_stop  = vlc_tick_from_HMS( h2, m2, s2 ) +
-                                  VLC_TICK_FROM_MS( c2 * 10 ) + VLC_TICK_0;
+                                  VLC_TICK_FROM_MS( c2 ) + VLC_TICK_0;
             p_subtitle->psz_text = psz_text;
             return VLC_SUCCESS;
         }
@@ -1565,16 +1587,18 @@ static int ParseDVDSubtitle(vlc_object_t *p_obj, subs_properties_t *p_props,
     {
         const char *s = TextGetLine( txt );
         int h1, m1, s1, c1;
+        int A1, B1;
 
         if( !s )
             return VLC_EGENERIC;
 
         if( checked_sscanf( s,
-                    "{T %d:%d:%d:%d",
-                    &h1, &m1, &s1, &c1 ) == 4 )
+                    "{T %d:%d:%d:%n%d%n",
+                    &h1, &m1, &s1, &B1, &c1, &A1 ) == 4 )
         {
+            c1 = expandDigits( c1, A1-B1, 3 );
             p_subtitle->i_start = vlc_tick_from_HMS( h1, m1, s1 ) +
-                                  VLC_TICK_FROM_MS( c1 * 10 ) + VLC_TICK_0;
+                                  VLC_TICK_FROM_MS( c1 ) + VLC_TICK_0;
             p_subtitle->i_stop = -1;
             break;
         }
