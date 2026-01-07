@@ -94,6 +94,14 @@ typedef struct hls_playlist
     struct hls_storage *manifest;
     httpd_url_t *http_manifest;
 
+    /**
+     * Media initialization section as in RFC 8216 section 3.3.
+     */
+    struct hls_storage *init_section;
+    char *init_section_url;
+    httpd_url_t *http_init_section;
+    block_t *init_buff;
+
     bool ended;
 
     /**
@@ -430,6 +438,9 @@ GeneratePlaylistManifest(const hls_playlist_t *playlist,
     MANIFEST_ADD_TAG("#EXT-X-MEDIA-SEQUENCE:%u",
                      (first_seg == NULL) ? 0u : first_seg->id);
 
+    if (playlist->init_section != NULL)
+        MANIFEST_ADD_TAG("#EXT-X-MAP:URI=\"%s\"", playlist->init_section_url);
+
     const hls_segment_t *segment;
     hls_segment_queue_Foreach_const(&playlist->segments, segment)
     {
@@ -630,10 +641,86 @@ static bool IsSegmentReady(enum hls_playlist_type type,
     return buffer->length >= seglen;
 }
 
+static void ReplaceInitSection(hls_playlist_t *playlist, block_t *content)
+{
+    const char *section_name =
+        playlist->init_section_url + strlen(playlist->config->base_url) + 1;
+    const struct hls_storage_config storage_config = {
+        .name = section_name,
+        .mime = "video/mp4",
+    };
+    struct hls_storage *init;
+    const int status = hls_storage_FromBlocks(
+        content, &storage_config, playlist->config, &init);
+    if (status != 0)
+    {
+        vlc_error(playlist->logger,
+                  "Failed to generate init section: %s",
+                  vlc_strerror(-status));
+        return;
+    }
+    
+    if (playlist->http_init_section != NULL)
+    {
+        httpd_UrlCatch(playlist->http_init_section,
+                       HTTPD_MSG_GET,
+                       HTTPCallback,
+                       (httpd_callback_sys_t *)init);
+    }
+
+    if (playlist->init_section != NULL)
+        hls_storage_Destroy(playlist->init_section);
+    playlist->init_section = init;
+
+}
+
+static block_t *block_ChainExtractInitSection(block_t *chain, block_t **init_section)
+{
+    block_t *last_header = NULL;
+    block_t *it = chain;
+    while (it != NULL && it->i_flags & BLOCK_FLAG_HEADER)
+    {
+        last_header = it;
+        it = it->p_next;
+    }
+
+    if (last_header != NULL)
+    {
+        last_header->p_next = NULL;
+        *init_section = chain;
+    }
+    else
+        *init_section = NULL;
+    return it;
+}
+
+static block_t *PlaylistExtractInitSection(hls_playlist_t *playlist,
+                                           block_t *blocks)
+{
+    block_t *init;
+    blocks = block_ChainExtractInitSection(blocks, &init);
+    if (init != NULL)
+        block_ChainAppend(&playlist->init_buff, init);
+    else if (playlist->init_buff != NULL)
+    {
+        ReplaceInitSection(playlist, playlist->init_buff);
+        playlist->init_buff = NULL;
+    }
+
+    return blocks;
+}
+
 static int PlaylistWriteMuxedOutput(hls_playlist_t *playlist,
                                     block_t *blocks,
                                     vlc_tick_t output_duration)
 {
+    if (playlist->type == HLS_PLAYLIST_TYPE_MP4)
+    {
+        blocks = PlaylistExtractInitSection(playlist, blocks);
+        if (blocks == NULL)
+            return VLC_SUCCESS;
+    }
+
     block_ChainLastAppend(&playlist->muxed_output.end, blocks);
     playlist->muxed_output.length += output_duration;
 
@@ -727,16 +814,33 @@ static sout_access_out_t *CreateAccessOut(sout_stream_t *stream)
     return access;
 }
 
-static inline char *FormatPlaylistManifestURL(const hls_playlist_t *playlist)
+static inline char *FormatPlaylistURL(const hls_playlist_t *playlist,
+                                      const char *file_type)
 {
     char *url;
     const int status = asprintf(&url,
-                                "%s/playlist-%u-index.m3u8",
+                                "%s/playlist-%u-%s",
                                 playlist->config->base_url,
-                                playlist->id);
+                                playlist->id,
+                                file_type);
     if (unlikely(status == -1))
         return NULL;
     return url;
+}
+
+static sout_mux_t *CreateFMP4Muxer(sout_access_out_t *access,
+                                   const struct hls_config *config)
+{
+    char *mux_config;
+    if (asprintf(&mux_config,
+                 "avformat{mux=mp4,options{movflags=frag_keyframe+"
+                 "delay_moov+dash,frag_duration=%" PRIi64 "}}",
+                 US_FROM_VLC_TICK(config->segment_length)) == -1)
+        return NULL;
+
+    sout_mux_t *mp4 = sout_MuxNew(access, mux_config);
+    free(mux_config);
+    return mp4;
 }
 
 static sout_mux_t *CreatePlaylistMuxer(sout_access_out_t *access,
@@ -747,6 +851,8 @@ static sout_mux_t *CreatePlaylistMuxer(sout_access_out_t *access,
     {
         case HLS_PLAYLIST_TYPE_TS:
             return sout_MuxNew(access, "ts{use-key-frames}");
+        case HLS_PLAYLIST_TYPE_MP4:
+            return CreateFMP4Muxer(access, config);
         case HLS_PLAYLIST_TYPE_WEBVTT:
             return CreateSubtitleSegmenter(access, config);
     }
@@ -776,9 +882,13 @@ static hls_playlist_t *CreatePlaylist(sout_stream_t *stream,
     playlist->ended = false;
     playlist->muxed_duration = 0;
 
-    playlist->url = FormatPlaylistManifestURL(playlist);
+    playlist->url = FormatPlaylistURL(playlist, "manifest.m3u8");
     if (unlikely(playlist->url == NULL))
         goto url_err;
+
+    playlist->init_section_url = FormatPlaylistURL(playlist, "init.mp4");
+    if (unlikely(playlist->init_section_url == NULL))
+        goto init_section_url_err;
 
     playlist->name = playlist->url + strlen(sys->config.base_url) + 1;
 
@@ -797,15 +907,26 @@ static hls_playlist_t *CreatePlaylist(sout_stream_t *stream,
     hls_block_chain_Reset(&playlist->muxed_output);
 
     playlist->manifest = NULL;
+    playlist->init_section = NULL;
     if (sys->http_host != NULL)
     {
         playlist->http_manifest =
             httpd_UrlNew(sys->http_host, playlist->url, NULL, NULL);
         if (playlist->http_manifest == NULL)
             goto manifest_err;
+
+        playlist->http_init_section = httpd_UrlNew(
+            sys->http_host, playlist->init_section_url, NULL, NULL);
+        if (playlist->http_init_section == NULL)
+            goto init_section_err;
     }
     else
+    {
         playlist->http_manifest = NULL;
+        playlist->http_init_section = NULL;
+    }
+    playlist->init_buff = NULL;
+
 
     if (UpdatePlaylistManifest(playlist) != VLC_SUCCESS)
         goto error;
@@ -816,12 +937,17 @@ static hls_playlist_t *CreatePlaylist(sout_stream_t *stream,
 
     return playlist;
 error:
+    if (playlist->http_init_section != NULL)
+        httpd_UrlDelete(playlist->http_init_section);
+init_section_err:
     if (playlist->http_manifest != NULL)
         httpd_UrlDelete(playlist->http_manifest);
 manifest_err:
     hls_segment_queue_Clear(&playlist->segments);
     vlc_LogDestroy(playlist->logger);
 log_err:
+    free(playlist->init_section_url);
+init_section_url_err:
     free(playlist->url);
 url_err:
     sout_MuxDelete(playlist->mux);
@@ -840,9 +966,13 @@ static void DeletePlaylist(hls_playlist_t *playlist)
 
     if (playlist->http_manifest != NULL)
         httpd_UrlDelete(playlist->http_manifest);
+    if (playlist->http_init_section != NULL)
+        httpd_UrlDelete(playlist->http_init_section);
 
     if (playlist->manifest != NULL)
         hls_storage_Destroy(playlist->manifest);
+    if (playlist->init_section != NULL)
+        hls_storage_Destroy(playlist->init_section);
 
     block_ChainRelease(playlist->muxed_output.begin);
     hls_segment_queue_Clear(&playlist->segments);
@@ -851,6 +981,7 @@ static void DeletePlaylist(hls_playlist_t *playlist)
 
     vlc_LogDestroy(playlist->logger);
     free(playlist->url);
+    free(playlist->init_section_url);
 
     free(playlist);
 }
@@ -1216,9 +1347,11 @@ variant_error:
 #define SEGTYPE_TEXT N_("Segment muxed format")
 static const char *const SEGMENT_TYPE_LIST[] = {
     "ts",
+    "fmp4",
 };
 static const char *const SEGMENT_TYPE_TEXT[] = {
     "MPEG TS",
+    N_("Fragmented MP4"),
 };
 
 vlc_module_begin()
