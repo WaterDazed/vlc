@@ -87,6 +87,57 @@ const char testdata_SubRip[] =
 "TEXT0\n"
 "\n"
 
+// Date format tests
+"0\n"
+"0:0:0,5 --> 0:0:1,5\n"
+"FORMAT0\n"
+"\n"
+
+"0\n"
+"0:0:1.5 --> 0:0:2.5\n"
+"FORMAT1\n"
+"\n"
+
+"0\n"
+"0:0:2 --> 0:0:3\n"
+"FORMAT2\n"
+"\n"
+// INVALID Date format tests (rejected)
+"0\n"
+"00:00:03,000 -->\n"
+"FAIL\n"
+"\n"
+
+"0\n"
+"--> 00:00:04,000\n"
+"FAIL\n"
+"\n"
+
+"0\n"
+"00:00:03,000 --> 00:04\n"
+"FAIL\n"
+"\n"
+
+"0\n"
+"0:3 --> 0:4\n"
+"FAIL\n"
+"\n"
+
+"0\n"
+"0:3 --> 0:0:4,0\n"
+"FAIL\n"
+"\n"
+
+"0\n"
+"0:0:3,0 --> 0:4\n"
+"FAIL\n"
+"\n"
+
+"0\n"
+"3 --> 4\n"
+"FAIL\n"
+"\n"
+
 // Multiline
 "1\n"
 "00:02:17,440 --> 00:02:20,375\n"
@@ -145,6 +196,24 @@ static int check_SubRip(struct subtitles_es_out_ctx_t *ctx)
     EXPECT(OUT->i_pts == VLC_TICK_0);
     EXPECT(OUT->i_length == VLC_TICK_FROM_MS(500));
     EXPECT(!strcmp((const char *)OUT->p_buffer, "TEXT0\n"));
+    POP;
+
+    // 0
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(0) + VLC_TICK_FROM_MS(500));
+    EXPECT(OUT->i_length == vlc_tick_from_sec(1));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT0\n"));
+    POP;
+
+    // 0
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(1) + VLC_TICK_FROM_MS(500));
+    EXPECT(OUT->i_length == vlc_tick_from_sec(1));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT1\n"));
+    POP;
+
+    // 0
+    EXPECT(OUT->i_pts == VLC_TICK_0 + vlc_tick_from_sec(2));
+    EXPECT(OUT->i_length == vlc_tick_from_sec(1));
+    EXPECT(!strcmp((const char *)OUT->p_buffer, "FORMAT2\n"));
     POP;
 
     // 1
