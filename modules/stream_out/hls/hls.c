@@ -31,6 +31,7 @@
 #include <vlc_list.h>
 #include <vlc_memstream.h>
 #include <vlc_messages.h>
+#include <vlc_boxes.h>
 #include <vlc_plugin.h>
 #include <vlc_sout.h>
 #include <vlc_tick.h>
@@ -558,12 +559,43 @@ static hls_block_chain_t ExtractSubtitleSegment(hls_block_chain_t *muxed_output,
     return segment;
 }
 
+static int ForceSTYP(hls_block_chain_t *segment) {
+
+    bo_t box;
+    if (!bo_init(&box, 24))
+        return VLC_ENOMEM;
+
+    bo_add_32be(&box, 24);
+    bo_add_fourcc(&box, "styp");
+    bo_add_fourcc(&box, "msdh");
+    bo_add_32be(&box, 0);
+    bo_add_fourcc(&box, "msdh");
+    bo_add_fourcc(&box, "msix");
+    box.b->p_next = segment->begin;
+    segment->begin = box.b;
+    return VLC_SUCCESS;
+}
+
 static hls_block_chain_t ExtractSegment(hls_playlist_t *playlist)
 {
     const vlc_tick_t seglen = playlist->config->segment_length;
-    if (playlist->type == HLS_PLAYLIST_TYPE_WEBVTT)
-        return ExtractSubtitleSegment(&playlist->muxed_output, seglen);
-    return ExtractCommonSegment(&playlist->muxed_output, seglen);
+    switch (playlist->type)
+    {
+        case HLS_PLAYLIST_TYPE_WEBVTT:
+            return ExtractSubtitleSegment(&playlist->muxed_output, seglen);
+        case HLS_PLAYLIST_TYPE_TS:
+            return ExtractCommonSegment(&playlist->muxed_output, seglen);
+        case HLS_PLAYLIST_TYPE_MP4:
+        {
+            hls_block_chain_t segment =
+                ExtractCommonSegment(&playlist->muxed_output, seglen);
+            ForceSTYP(&segment);
+            return segment;
+        }
+        default:
+            vlc_assert_unreachable();
+            break;
+    }
 }
 
 static bool IsSegmentSelfDecodable(const hls_block_chain_t *segment)
