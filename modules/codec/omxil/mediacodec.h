@@ -76,6 +76,13 @@ enum mc_media_format_color_transfer_t
     MC_COLOR_TRANSFER_HLG         = 0x7,
 };
 
+struct mc_video_color_info
+{
+    enum mc_media_format_color_range_t range;
+    enum mc_media_format_color_standard_t standard;
+    enum mc_media_format_color_transfer_t transfer;
+};
+
 struct mc_api_out
 {
     enum {
@@ -126,9 +133,7 @@ union mc_api_args
         int i_angle;
         bool b_tunneled_playback;
         bool b_adaptive_playback;
-        enum mc_media_format_color_transfer_t color_transfer;
-        enum mc_media_format_color_range_t color_range;
-        enum mc_media_format_color_standard_t color_standard;
+        struct mc_video_color_info color;
     } video;
     struct
     {
