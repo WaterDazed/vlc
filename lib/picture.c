@@ -39,16 +39,6 @@
 
 #include "picture_internal.h"
 
-struct libvlc_picture_t
-{
-    vlc_atomic_rc_t rc;
-    libvlc_picture_type_t type;
-    block_t* converted;
-    video_format_t fmt;
-    libvlc_time_t time;
-    input_attachment_t* attachment;
-};
-
 struct libvlc_picture_list_t
 {
     size_t count;

@@ -25,6 +25,16 @@
 
 #include <vlc_picture.h>
 
+struct libvlc_picture_t
+{
+    vlc_atomic_rc_t rc;
+    libvlc_picture_type_t type;
+    block_t* converted;
+    video_format_t fmt;
+    libvlc_time_t time;
+    input_attachment_t* attachment;
+};
+
 /**
  * \brief libvlc_picture_new Wraps a libvlccore's picture_t to a libvlc_picture_t
  * \param p_obj A vlc object

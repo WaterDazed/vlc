@@ -150,3 +150,27 @@ endif
 	else \
 		echo "Cross-compilation: cache generation skipped!" ; \
 	fi
+
+#
+# Mediainfo executable
+#
+
+if HAVE_DYNAMIC_PLUGINS
+pkglibexec_PROGRAMS += vlc-mediainfo
+endif
+
+vlc_mediainfo_SOURCES = mediainfo.c
+vlc_mediainfo_CFLAGS = $(AM_CFLAGS) \
+	-DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
+	-DTOP_SRCDIR=\"$$(cd "$(top_srcdir)"; pwd)\" \
+	$(NULL)
+vlc_mediainfo_CPPFLAGS = $(AM_CPPFLAGS) -DSRCDIR=\"$(srcdir)\"
+vlc_mediainfo_LDADD = ../lib/libvlc.la
+vlc_mediainfo_LDFLAGS = -static
+vlc_mediainfo_DEPENDENCIES = $(vlc_DEPENDENCIES)
+
+if HAVE_WIN32
+vlc_mediainfo_LDADD += vlc_win32_rc.$(OBJEXT)
+vlc_mediainfo_LDFLAGS += -Wc,-static
+vlc_mediainfo_DEPENDENCIES += vlc_win32_rc.$(OBJEXT)
+endif
