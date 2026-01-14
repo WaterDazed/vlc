@@ -94,17 +94,9 @@ function parse()
         local path, title, description, artist, arturl
 
         while true do
-            -- The new HTML code layout has fewer and longer lines; always
-            -- use the long line workaround until we get more visibility.
-            local line = new_layout and read_long_line() or vlc.readline()
+            -- YouTube's HTML code uses very long lines - see #24957.
+            local line = read_long_line()
             if not line then break end
-
-            -- The next line is the major configuration line that we need.
-            -- It is very long so we need this workaround (see #24957).
-            if string.match( line, '^ *<div id="player%-api">' ) then
-                line = read_long_line()
-                if not line then break end
-            end
 
             if not title then
                 local meta = string.match( line, '<meta property="og:title"( .-)>' )
@@ -162,13 +154,6 @@ function parse()
                 if artist then
                     -- FIXME: do this properly (see #24958)
                     artist = string.gsub( artist, "\\u0026", "&" )
-                end
-            end
-
-            if not new_layout then
-                if string.match( line, '<script nonce="' ) then
-                    vlc.msg.dbg( "Detected new YouTube HTML code layout" )
-                    new_layout = true
                 end
             end
 
