@@ -47,7 +47,7 @@ function read_long_line()
         if not line then return nil end
         eol = string.find( line, "\n", pos + 1 )
         pos = len
-    until eol or len >= 1024 * 1024 -- No EOF detection, loop until limit
+    until eol or len >= 2 * 1024 * 1024 -- No EOF detection, loop until limit
     return vlc.read( eol or len )
 end
 
