@@ -53,21 +53,83 @@ end
 
 -- Probe function.
 function probe()
-    return ( ( vlc.access == "http" or vlc.access == "https" ) and (
-            ((
-               string.match( vlc.path, "^www%.youtube%.com/" )
+    if not ( vlc.access == "http" or vlc.access == "https" ) then
+        return false
+    end
+    if string.match( vlc.path, "^consent%.youtube%.com/" ) then
+        -- We only need to redirect
+        return true
+    end
+    if not (   string.match( vlc.path, "^www%.youtube%.com/" )
             or string.match( vlc.path, "^music%.youtube%.com/" )
             or string.match( vlc.path, "^gaming%.youtube%.com/" ) -- out of use
-             ) and (
+           ) then
+        return false
+    end
+    if (       string.match( vlc.path, "/v/" ) -- video in swf player
+            or string.match( vlc.path, "/embed/" ) -- embedded player iframe
+       ) then -- We only need to redirect those
+        return true
+    end
+    if not (
                string.match( vlc.path, "/watch%?" ) -- the html page
             or string.match( vlc.path, "/live$" ) -- user live stream html page
             or string.match( vlc.path, "/live[?/]" ) -- live stream html page
             or string.match( vlc.path, "/shorts/" ) -- YouTube Shorts HTML page
-            or string.match( vlc.path, "/v/" ) -- video in swf player
-            or string.match( vlc.path, "/embed/" ) -- embedded player iframe
-             )) or
-               string.match( vlc.path, "^consent%.youtube%.com/" )
-         ) )
+           ) then
+        return false
+    end
+
+    -- Probe whether the video is a live stream,
+    -- we only support those anymore
+    local pos = 1
+    local eof = false
+    -- As of 2026, YouTube video pages weigh between 1 and 1.5 MB,
+    -- and the stream parameters are found within the first 700 kB.
+    local exp = 128
+    while ( not eof ) and exp <= 8 * 1024 do
+        local len = ( 384 + exp ) * 1024
+        exp = exp * 2
+        local buf = vlc.peek( len )
+        if not buf then return false end
+
+        -- Check for stream parameters line by line
+        repeat
+            local eol = string.find( buf, "\n", pos )
+            if not eol then
+                local b, e = string.find( buf, ".*", pos )
+                if e == len then
+                    -- There's still more data to read
+                    break
+                end
+                -- Otherwise parse last line until EOF
+                eol = e
+                eof = true
+            end
+
+            local line = string.sub( buf, pos, eol )
+            if string.match( line, "ytInitialPlayerResponse ?= ?{" ) then
+                if string.match( line, '"hlsManifestUrl":"[^"].-"' ) then
+                    vlc.msg.dbg( "YouTube live stream detected" )
+                    return true
+                else
+                    vlc.msg.err( "Due to increasingly adverse technical measures deployed by YouTube, YouTube video playback support in VLC 3.0 has been permanently discontinued - only live stream playback is supported anymore. We are working on an alternative solution, and we recommend separate tools such as `yt-dlp` or `streamlink` in the meantime. Please do not submit any bug report about this." )
+                    return false
+                end
+            end
+
+            pos = eol + 1
+        until eof
+    end
+
+    -- https://www.youtube.com/@username/live URLs point to that account's
+    -- currently active live stream, if any. Finding no current live
+    -- stream or stream parameters at all on that page is not an error.
+    if not ( string.match( vlc.path, "^[^/]+/[^/]+/live$" )
+            or string.match( vlc.path, "^[^/]+/[^/]+/live[?/]" ) ) then
+        vlc.msg.err( "Couldn't find YouTube stream parameters, please check for updates to this script" )
+    end
+    return false
 end
 
 -- Parse function.
@@ -167,9 +229,6 @@ function parse()
                     if hlsvp then
                         hlsvp = string.gsub( hlsvp, "\\/", "/" )
                         path = hlsvp
-                    else
-                        vlc.msg.err( "Due to increasingly adverse technical measures deployed by YouTube, YouTube video playback support in VLC 3.0 has been permanently discontinued - only live stream playback is supported anymore. We are working on an alternative solution, and we recommend separate tools such as `yt-dlp` or `streamlink` in the meantime. Please do not submit any bug report about this." )
-                        return { }
                     end
                 end
             end
