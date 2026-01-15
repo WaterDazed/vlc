@@ -74,7 +74,7 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
 
 + (NSString *)defaultProfileString
 {
-    return @";;;0;1.000000;1.000000;1.000000;1.000000;0.050000;16;2.000000;OTA=;4;4;16711680;20;15;120;Z3JhZGllbnQ=;1;0;16711680;6;80;VkxD;-1;;-1;255;2;3;3;0;-180.000000";
+    return @";;;0;1.000000;1.000000;1.000000;1.000000;0.050000;16;2.000000;OTA=;4;4;16711680;20;15;120;Z3JhZGllbnQ=;1;0;16711680;6;80;VkxD;-1;;-1;255;2;3;3;0;-180.000000;0;0;0;0";
 }
 
 - (id)init
@@ -150,7 +150,6 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
 
     if (b_filter_changed)
         var_SetString(vout, "video-splitter", [tempString UTF8String]);
-    vout_Release(vout);
 
     /* try to set filter values on-the-fly and store them appropriately */
     // index 3 is deprecated
@@ -196,6 +195,16 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
         hueValue.f_float -= 180;
     }
     [VLCVideoFilterHelper setVideoFilterProperty: "hue" forFilter: "adjust" withValue: hueValue];
+
+    if ([items count] >= 38 && vout) { // version >=4 of profile string
+        var_SetInteger(vout, "crop-top", [[items objectAtIndex:34] intValue]);
+        var_SetInteger(vout, "crop-bottom", [[items objectAtIndex:35] intValue]);
+        var_SetInteger(vout, "crop-left", [[items objectAtIndex:36] intValue]);
+        var_SetInteger(vout, "crop-right", [[items objectAtIndex:37] intValue]);
+    }
+
+    if (vout)
+        vout_Release(vout);
 }
 
 - (void)windowDidLoad
@@ -497,6 +506,10 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
     if (!vout)
         return;
     BOOL b_state;
+    int cropLeft = 0;
+    int cropTop = 0;
+    int cropRight = 0;
+    int cropBottom = 0;
 
     /* do we have any filter enabled? if yes, show it. */
     char * psz_vfilters;
@@ -564,6 +577,11 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
         [_wallCheckbox setState: NSOffState];
     }
 
+    cropLeft = var_GetInteger(vout, "crop-left");
+    cropTop = var_GetInteger(vout, "crop-top");
+    cropRight = var_GetInteger(vout, "crop-right");
+    cropBottom = var_GetInteger(vout, "crop-bottom");
+
     vout_Release(vout);
 
     /* fetch and show the various values */
@@ -589,10 +607,10 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
     [self setWidgetValue: _grainSlider forOption: "grain-variance" enabled: [_grainCheckbox state]];
     [_grainLabel setEnabled: [_grainCheckbox state]];
 
-    [self setCropLeftValue: 0];
-    [self setCropTopValue: 0];
-    [self setCropRightValue: 0];
-    [self setCropBottomValue: 0];
+    [self setCropLeftValue: cropLeft];
+    [self setCropTopValue: cropTop];
+    [self setCropRightValue: cropRight];
+    [self setCropBottomValue: cropBottom];
     [_cropSyncTopBottomCheckbox setState: NSOffState];
     [_cropSyncLeftRightCheckbox setState: NSOffState];
 
@@ -670,7 +688,7 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
     vout_thread_t *vout = [playerController mainVideoOutputThread];
     if (!vout)
         return nil;
-    NSString *string = [NSString stringWithFormat:@"%@;%@;%@;%lli;%f;%f;%f;%f;%f;%lli;%f;%@;%lli;%lli;%lli;%lli;%lli;%lli;%@;%lli;%lli;%lli;%lli;%lli;%@;%lli;%@;%lli;%lli;%lli;%lli;%lli;%lli;%f",
+    NSString *string = [NSString stringWithFormat:@"%@;%@;%@;%lli;%f;%f;%f;%f;%f;%lli;%f;%@;%lli;%lli;%lli;%lli;%lli;%lli;%@;%lli;%lli;%lli;%lli;%lli;%@;%lli;%@;%lli;%lli;%lli;%lli;%lli;%lli;%f;%lli;%lli;%lli;%lli",
                      B64EncAndFree(var_InheritString(vout, "video-filter")),
                      B64EncAndFree(var_InheritString(vout, "sub-source")),
                      B64EncAndFree(var_InheritString(vout, "video-splitter")),
@@ -706,7 +724,12 @@ NSString *VLCVideoEffectsProfileNamesKey = @"VideoEffectProfileNames";
                      // version 2 of profile string:
                      0LL /* "brightness-threshold" */, // index: 32
                      // version 3 of profile string: (vlc-3.0.0)
-                     var_InheritFloat(vout, "hue") // index: 33
+                     var_InheritFloat(vout, "hue"), // index: 33
+                     // version 4 of profile string:
+                     var_GetInteger(vout, "crop-top"), // index: 34
+                     var_GetInteger(vout, "crop-bottom"), // index: 35
+                     var_GetInteger(vout, "crop-left"), // index: 36
+                     var_GetInteger(vout, "crop-right") // index: 37
             ];
     vout_Release(vout);
     return string;
