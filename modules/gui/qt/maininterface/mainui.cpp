@@ -471,4 +471,22 @@ void MainUI::registerQMLTypes()
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);
     }
+
+    if (m_lottieModule && m_lottieModule->p_module && m_lottieModule->registerQmlModuleAndTypes)
+    {
+        m_lottieModule->registerQmlModuleAndTypes();
+    }
+    else
+    {
+        // Fallback
+
+        const char* uri = "VLC.Lottie";
+        const int versionMajor = 1;
+        const int versionMinor = 0;
+
+        // @uri VLC.Lottie
+        qmlRegisterModule(uri, versionMajor, versionMinor);
+        qmlRegisterType<LottieFallbackItem>(uri, versionMajor, versionMinor, "LottieAnimation");
+        qmlProtectModule(uri, versionMajor);
+    }
 }
