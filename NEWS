@@ -1,3 +1,10 @@
+Changes between 3.0.23 and 3.0.24:
+----------------------------------
+
+Lua:
+ * Remove from the youtube script most of its long broken functionality;
+   only live streams are supported anymore
+
 Changes between 3.0.22 and 3.0.23:
 ----------------------------------
 
