@@ -1588,6 +1588,42 @@ gui_LTLIBRARIES += libqt_gtktheme_plugin.la
 endif
 endif
 
+if HAVE_QT_RLOTTIE
+libqt_plugin_la_CPPFLAGS += -DHAVE_RLOTTIE
+
+RLOTTIE_MODULE_NODIST_SOURCES = \
+	maininterface/rlottie_module.moc.cpp
+
+RLOTTIE_DYNAMIC_MODULE_NODIST_SOURCES = $(RLOTTIE_MODULE_NODIST_SOURCES) \
+	maininterface/lottie_module.moc.cpp
+
+RLOTTIE_MODULE_SOURCES = \
+	maininterface/rlottie_module.cpp \
+	maininterface/rlottie_module.hpp \
+	util/lzav.h
+
+RLOTTIE_DYNAMIC_MODULE_SOURCES = $(RLOTTIE_MODULE_SOURCES) \
+	maininterface/lottie_module.hpp
+
+if QT_STATIC
+libqt_plugin_la_CXXFLAGS += $(RLOTTIE_CFLAGS)
+libqt_plugin_la_LIBADD += $(RLOTTIE_LIBS)
+nodist_libqt_plugin_la_SOURCES += $(RLOTTIE_MODULE_NODIST_SOURCES)
+libqt_plugin_la_SOURCES += $(RLOTTIE_MODULE_SOURCES)
+endif
+
+if !QT_STATIC
+libqt_rlottie_plugin_la_CXXFLAGS = $(AM_CXXFLAGS) $(RLOTTIE_CFLAGS) $(QT_CFLAGS)
+libqt_rlottie_plugin_la_LIBADD = $(RLOTTIE_LIBS) $(QT_LIBS)
+libqt_rlottie_plugin_la_SOURCES = $(RLOTTIE_DYNAMIC_MODULE_SOURCES)
+nodist_libqt_rlottie_plugin_la_SOURCES = $(RLOTTIE_DYNAMIC_MODULE_NODIST_SOURCES)
+if ENABLE_QT
+gui_LTLIBRARIES += libqt_rlottie_plugin.la
+endif
+endif
+
+endif
+
 if ENABLE_QT
 gui_LTLIBRARIES += libqt_plugin.la
 BUILT_SOURCES += $(nodist_libqt_plugin_la_SOURCES)
