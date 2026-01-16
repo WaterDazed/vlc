@@ -176,6 +176,7 @@ libqt_plugin_la_SOURCES = \
 	maininterface/video_window_handler.cpp \
 	maininterface/video_window_handler.hpp \
 	maininterface/windoweffects_module.hpp \
+	maininterface/lottie_module.hpp \
 	medialibrary/medialib.cpp \
 	medialibrary/medialib.hpp \
 	medialibrary/mlmediastore.cpp \
@@ -432,6 +433,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	maininterface/mainui.moc.cpp \
 	maininterface/videosurface.moc.cpp \
 	maininterface/video_window_handler.moc.cpp \
+	maininterface/lottie_module.moc.cpp \
 	medialibrary/medialib.moc.cpp \
 	medialibrary/mlmediastore.moc.cpp \
 	medialibrary/mlalbummodel.moc.cpp \
