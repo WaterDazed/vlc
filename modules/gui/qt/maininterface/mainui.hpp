@@ -38,6 +38,9 @@ private:
 
     QQmlComponent* m_component = nullptr;
     QQuickItem* m_rootItem = nullptr;
+
+    class LottieModule *m_lottieModule = nullptr;
+    bool m_alreadyTriedLottieModule = false;
 };
 
 #endif // MAINUI_HPP

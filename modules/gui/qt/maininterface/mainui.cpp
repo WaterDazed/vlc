@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "maininterface/lottie_module.hpp"
+
 #include "medialibrary/medialib.hpp"
 #include "medialibrary/mlqmltypes.hpp"
 #include "medialibrary/mlcustomcover.hpp"
@@ -81,6 +83,8 @@
 
 #include <QScreen>
 
+#include <vlc_modules.h>
+
 using  namespace vlc::playlist;
 
 MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  QObject *parent)
@@ -92,6 +96,29 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
     assert(m_intf);
     assert(m_mainCtx);
     assert(m_interfaceWindow);
+
+    if (!m_lottieModule && !m_alreadyTriedLottieModule)
+    {
+        m_lottieModule = vlc_object_create<LottieModule>(m_intf);
+        if (m_lottieModule)
+        {
+            if (!m_lottieModule->p_module)
+            {
+                m_lottieModule->p_module = module_need(m_lottieModule, "qtlottie", nullptr, false);
+                if (m_lottieModule->p_module)
+                {
+                    msg_Dbg(m_intf, "Successfully instantiated qt lottie module.");
+                }
+                else
+                {
+                    vlc_object_delete(m_lottieModule);
+                    m_lottieModule = nullptr;
+                    m_alreadyTriedLottieModule = true;
+                    msg_Warn(m_intf, "Could not instantiate qt lottie module, lottie will not be functional!");
+                }
+            }
+        }
+    }
 
     registerQMLTypes();
 
@@ -136,6 +163,27 @@ bool MainUI::setup(QQmlEngine* engine)
         new EffectsImageProvider(engine);
     engine->addImageProvider(QStringLiteral("svgcolor"), new SVGColorImageImageProvider());
     engine->addImageProvider(QStringLiteral("vlcaccess"), new VLCAccessImageProvider());
+
+    if (m_lottieModule && m_lottieModule->p_module)
+    {
+        if (m_lottieModule->newImageProvider)
+            engine->addImageProvider(QStringLiteral("lottie"), m_lottieModule->newImageProvider());
+
+        // We are not sure if this class is alive when the engine is destroyed.
+        // Image providers should outlive the engine. It also provides a type,
+        // which is another reason for it to outlive the engine. Since there is
+        // no guarantee the engine to outlive this class, we do the clean up
+        // as such:
+        connect(engine, &QObject::destroyed, [lottieModule = m_lottieModule]() {
+            module_unneed(lottieModule, lottieModule->p_module);
+            vlc_object_delete(lottieModule);
+        });
+
+        // This slot will not be executed if this class is no more:
+        connect(engine, &QObject::destroyed, this, [this]() {
+            m_lottieModule = nullptr;
+        });
+    }
 
     m_component  = new QQmlComponent(engine, QStringLiteral("qrc:/qt/qml/VLC/MainInterface/MainInterface.qml"), QQmlComponent::PreferSynchronous, engine);
     if (m_component->isLoading())
