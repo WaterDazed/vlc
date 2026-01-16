@@ -4011,6 +4011,7 @@ have_qt66="no"
 have_qt_zstd="no"
 have_fxc="no"
 have_qt_xcb="no"
+have_qt_rlottie="no"
 AS_IF([test "${enable_qt}" != "no"], [
   have_qt="yes"
   dnl use any qmake that is available, including from contrib tools
@@ -4300,6 +4301,30 @@ AS_IF([test "${enable_qt}" != "no"], [
       PKG_CHECK_MODULES([GTK3], [gtk+-3.0 >= 3.20], [
         have_qt_gtk="yes"
       ], [:])
+
+      dnl rlottie
+      check_rlottie="no"
+      AS_IF([test "${have_qt_gui_private}" = "yes"], [
+        AS_IF([test "${have_qt66}" = "yes"], [
+          check_rlottie="yes"
+        ], [
+          AS_IF([test "${have_qt_quick_private}" = "yes"], [
+            check_rlottie="yes"
+          ], [
+            AC_MSG_WARN([Qt rlottie module requires Qt Quick private headers if Qt version is less than 6.6.])
+          ])
+        ])
+
+        AS_IF([test "${check_rlottie}" = "yes"], [
+          PKG_CHECK_MODULES([RLOTTIE], [rlottie >= 0.2], [
+            have_qt_rlottie="yes"
+          ], [
+            AC_MSG_WARN([${RLOTTIE_PKG_ERRORS}])
+          ])
+        ])        
+      ], [
+        AC_MSG_WARN([Qt rlottie module requires Qt Gui private headers.])
+      ])
     ], [
       AC_MSG_RESULT([no])
       have_qt="no"
@@ -4345,6 +4370,7 @@ AM_CONDITIONAL([HAVE_QT65], [test "${have_qt65}" = "yes"])
 AM_CONDITIONAL([HAVE_QT66], [test "${have_qt66}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_ZSTD], [test "${have_qt_zstd}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_XCB], [test "${have_qt_xcb}" = "yes"])
+AM_CONDITIONAL([HAVE_QT_RLOTTIE], [test "${have_qt_rlottie}" = "yes"])
 
 dnl
 dnl detect kde4-config patch (used for kde solids).
