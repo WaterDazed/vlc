@@ -4000,6 +4000,7 @@ AC_ARG_ENABLE([qt],
     enable_qt="no"
   ])
 ])
+qt_static="no"
 have_qt_gtk="no"
 have_qt_qtest="no"
 have_qt_quick_test="no"
@@ -4256,6 +4257,17 @@ AS_IF([test "${enable_qt}" != "no"], [
         AC_SUBST([FXC_PATH])
       ])
 
+      AC_MSG_CHECKING([if Qt is static])
+      case $QT_CFLAGS in
+        *-DSTATIC_QT\ *)
+            AC_MSG_RESULT([yes])
+            qt_static="yes"
+            ;;
+        *)
+            AC_MSG_RESULT([no])
+            ;;
+      esac
+
       AC_MSG_CHECKING([for Qt GUI private])
       case $QT_CFLAGS in
         *-DQT_GUI_PRIVATE\ *)
@@ -4304,6 +4316,7 @@ AS_IF([test "${enable_qt}" != "no"], [
 ])
 AC_SUBST([QT_INDIRECT_LIBS])
 AM_CONDITIONAL([ENABLE_QT], [test "$enable_qt" != "no"])
+AM_CONDITIONAL([QT_STATIC], [test "${qt_static}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_GTK], [test "${have_qt_gtk}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_QTEST], [test "${have_qt_qtest}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_QUICK_TEST], [test "${have_qt_quick_test}" = "yes"])
