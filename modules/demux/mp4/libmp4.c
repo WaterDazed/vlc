@@ -5212,8 +5212,7 @@ static bool get_token( const char **ppsz_path, char **ppsz_token, int *pi_number
     return true;
 }
 
-static void MP4_BoxGet_Path( const MP4_Box_t **pp_result, const MP4_Box_t *p_box,
-                             const char *psz_path)
+static const MP4_Box_t * MP4_BoxGet_Path( const MP4_Box_t *p_box, const char *psz_path)
 {
     assert( psz_path && psz_path[0] );
 
@@ -5278,7 +5277,7 @@ static void MP4_BoxGet_Path( const MP4_Box_t **pp_result, const MP4_Box_t *p_box
         FREENULL( psz_token );
     }
 
-    *pp_result = p_box;
+    return p_box;
 }
 
 static void MP4_BoxGet_Internal( const MP4_Box_t **pp_result, const MP4_Box_t *p_box,
@@ -5302,7 +5301,7 @@ static void MP4_BoxGet_Internal( const MP4_Box_t **pp_result, const MP4_Box_t *p
         return;
     }
 
-    MP4_BoxGet_Path( pp_result, p_box, psz_path );
+    *pp_result = MP4_BoxGet_Path( p_box, psz_path );
 
     free( psz_path );
 }
@@ -5330,11 +5329,7 @@ MP4_Box_t *MP4_BoxGetVa( const MP4_Box_t *p_box, const char *psz_fmt, ... )
 
 MP4_Box_t *MP4_BoxGet( const MP4_Box_t *p_box, const char *psz_fmt )
 {
-    const MP4_Box_t *p_result;
-
-    MP4_BoxGet_Path( &p_result, p_box, psz_fmt );
-
-    return( (MP4_Box_t *) p_result );
+    return (MP4_Box_t *) MP4_BoxGet_Path( p_box, psz_fmt );
 }
 
 /*****************************************************************************
@@ -5376,7 +5371,7 @@ unsigned MP4_BoxCount( const MP4_Box_t *p_box, const char *psz_fmt )
     unsigned i_count;
     const MP4_Box_t *p_result, *p_next;
 
-    MP4_BoxGet_Path( &p_result, p_box, psz_fmt );
+    p_result = MP4_BoxGet_Path( p_box, psz_fmt );
     if( !p_result )
     {
         return( 0 );
