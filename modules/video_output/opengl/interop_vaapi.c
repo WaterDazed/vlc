@@ -520,6 +520,12 @@ Open(struct vlc_gl_interop *interop)
     if (eglexts == NULL || !vlc_gl_StrHasToken(eglexts, "EGL_EXT_image_dma_buf_import"))
         goto error;
 
+    /* EGL_KHR_get_all_proc_addresses is required to load EGL extension
+     * functions through vlc_gl_GetProcAddress. Without this extension,
+     * the function pointers may be invalid. */
+    if (!vlc_gl_StrHasToken(eglexts, "EGL_KHR_get_all_proc_addresses"))
+        goto error;
+
     priv->egl.createImageKHR =
         vlc_gl_GetProcAddress(interop->gl, "eglCreateImageKHR");
     if (priv->egl.createImageKHR == NULL)
