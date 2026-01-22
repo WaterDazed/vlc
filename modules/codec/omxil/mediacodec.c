@@ -560,6 +560,50 @@ mc_to_vlc_color_transfer(enum mc_media_format_color_transfer_t mc_transfer)
     }
 }
 
+static void
+vlc_to_mc_hdr_static_info(const video_format_t *fmt, uint8_t *hdr)
+{
+    hdr[0] = 0; /* Type 0: SMPTE ST 2086 + CTA 861.3 */
+    /* Primaries: R, G, B, W as 16-bit little-endian x,y pairs */
+    SetWLE(&hdr[1],  fmt->mastering.primaries[4]); /* Rx */
+    SetWLE(&hdr[3],  fmt->mastering.primaries[5]); /* Ry */
+    SetWLE(&hdr[5],  fmt->mastering.primaries[0]); /* Gx */
+    SetWLE(&hdr[7],  fmt->mastering.primaries[1]); /* Gy */
+    SetWLE(&hdr[9],  fmt->mastering.primaries[2]); /* Bx */
+    SetWLE(&hdr[11], fmt->mastering.primaries[3]); /* By */
+    SetWLE(&hdr[13], fmt->mastering.white_point[0]); /* Wx */
+    SetWLE(&hdr[15], fmt->mastering.white_point[1]); /* Wy */
+    /* Luminance: max in 1 cd/m² units, min in 0.0001 cd/m² units */
+    SetWLE(&hdr[17], fmt->mastering.max_luminance / 10000);
+    SetWLE(&hdr[19], fmt->mastering.min_luminance);
+    /* Content light levels */
+    SetWLE(&hdr[21], fmt->lighting.MaxCLL);
+    SetWLE(&hdr[23], fmt->lighting.MaxFALL);
+}
+
+static void
+mc_to_vlc_hdr_static_info(const uint8_t *hdr, video_format_t *fmt)
+{
+    if (hdr[0] != 0) /* Only Type 0: SMPTE ST 2086 + CTA 861.3 supported */
+        return;
+
+    /* Primaries: R, G, B, W as 16-bit little-endian x,y pairs */
+    fmt->mastering.primaries[4] = GetWLE(&hdr[1]); /* Rx */
+    fmt->mastering.primaries[5] = GetWLE(&hdr[3]); /* Ry */
+    fmt->mastering.primaries[0] = GetWLE(&hdr[5]); /* Gx */
+    fmt->mastering.primaries[1] = GetWLE(&hdr[7]); /* Gy */
+    fmt->mastering.primaries[2] = GetWLE(&hdr[9]); /* Bx */
+    fmt->mastering.primaries[3] = GetWLE(&hdr[11]); /* By */
+    fmt->mastering.white_point[0] = GetWLE(&hdr[13]); /* Wx */
+    fmt->mastering.white_point[1] = GetWLE(&hdr[15]); /* Wy */
+    /* Luminance: max in 1 cd/m² units, min in 0.0001 cd/m² units */
+    fmt->mastering.max_luminance = GetWLE(&hdr[17]) * 10000;
+    fmt->mastering.min_luminance = GetWLE(&hdr[19]);
+    /* Content light levels */
+    fmt->lighting.MaxCLL  = GetWLE(&hdr[21]);
+    fmt->lighting.MaxFALL = GetWLE(&hdr[23]);
+}
+
 /*****************************************************************************
  * StartMediaCodec: Create the mediacodec instance
  *****************************************************************************/
@@ -580,6 +624,11 @@ static int StartMediaCodec(decoder_t *p_dec)
         args.video.color.standard = vlc_to_mc_color_standard(p_dec->fmt_out.video.primaries);
         args.video.color.transfer = vlc_to_mc_color_transfer(p_dec->fmt_out.video.transfer);
 
+        args.video.color.has_hdr_static_info =
+            p_dec->fmt_out.video.mastering.max_luminance != 0;
+        if (args.video.color.has_hdr_static_info)
+            vlc_to_mc_hdr_static_info(&p_dec->fmt_out.video,
+                                      args.video.color.hdr_static_info);
 
         args.video.b_tunneled_playback = args.video.p_surface ?
                 var_InheritBool(p_dec, CFG_PREFIX "tunneled-playback") : false;
@@ -1600,6 +1649,11 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
         if (p_dec->fmt_out.video.color_range == COLOR_RANGE_UNDEF)
             p_dec->fmt_out.video.color_range =
                 mc_to_vlc_color_range(p_out->conf.video.color.range);
+
+        if (p_dec->fmt_out.video.mastering.max_luminance == 0
+            && p_out->conf.video.color.has_hdr_static_info)
+            mc_to_vlc_hdr_static_info(p_out->conf.video.color.hdr_static_info,
+                                      &p_dec->fmt_out.video);
 
         int i_width  = p_out->conf.video.crop_right + 1
                      - p_out->conf.video.crop_left;

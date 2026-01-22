@@ -80,6 +80,8 @@ struct mc_video_color_info
     enum mc_media_format_color_range_t range;
     enum mc_media_format_color_standard_t standard;
     enum mc_media_format_color_transfer_t transfer;
+    bool has_hdr_static_info;
+    uint8_t hdr_static_info[25];
 };
 
 struct mc_api_out
