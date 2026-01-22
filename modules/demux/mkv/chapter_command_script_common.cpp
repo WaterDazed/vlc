@@ -21,6 +21,7 @@ bool matroska_script_codec_common_c::Enter()
         if ( (*index).GetSize() )
         {
             vlc_debug( l, "Matroska Script enter command" );
+            get_interpreter().doBeforeChapterInterpretation();
             f_result |= get_interpreter().Interpret( (*index).GetBuffer(), (*index).GetSize() );
         }
         ++index;
@@ -38,6 +39,7 @@ bool matroska_script_codec_common_c::Leave()
         {
             vlc_debug( l, "Matroska Script leave command" );
             f_result |= get_interpreter().Interpret( (*index).GetBuffer(), (*index).GetSize() );
+            get_interpreter().doAfterChapterInterpretation();
         }
         ++index;
     }

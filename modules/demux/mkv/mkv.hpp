@@ -114,8 +114,9 @@ enum
 
 enum chapter_codec_id
 {
-    MATROSKA_CHAPTER_CODEC_NATIVE  = 0,
-    MATROSKA_CHAPTER_CODEC_DVD     = 1,
+    MATROSKA_CHAPTER_CODEC_NATIVE       = 0,
+    MATROSKA_CHAPTER_CODEC_DVD          = 1,
+    MATROSKA_CHAPTER_CODEC_MATROSKA_JS  = 2,
 };
 
 #define MKVD_TIMECODESCALE 1000000
@@ -242,6 +243,10 @@ class mkv_track_t
         /* Matroska 4 new elements used by Opus */
         vlc_tick_t i_seek_preroll;
         vlc_tick_t i_codec_delay;
+};
+
+enum NavivationKey {
+    LEFT, RIGHT, UP, DOWN, OK, MENU, POPUP
 };
 
 } // namespace

@@ -219,11 +219,13 @@ void event_thread_t::HandleMousePressed( unsigned x, unsigned y )
 
     vlc_mutex_locker demux_lock ( &p_sys->lock_demuxer );
 
-    auto interpretor = p_sys->GetDVDInterpretor();
-    if (!interpretor)
-        return;
+    auto dvd_interpretor = p_sys->GetDVDInterpretor();
+    if (dvd_interpretor)
+        dvd_interpretor->HandleMousePressed( x, y );
 
-    interpretor->HandleMousePressed( x, y );
+    auto mjs_interpretor = p_sys->GetMatroskaJSInterpreter();
+    if (mjs_interpretor)
+        mjs_interpretor->HandleMousePressed( x, y );
 }
 
 void event_thread_t::SetHighlight( vlc_spu_highlight_t & spu_hl )

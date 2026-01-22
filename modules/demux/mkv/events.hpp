@@ -27,6 +27,7 @@
 #include <vlc_common.h>
 #include <vlc_threads.h>
 #include <vlc_mouse.h>
+#include "mkv.hpp"
 
 #include <list>
 #include <memory>
@@ -34,8 +35,8 @@
 struct vlc_spu_highlight_t;
 
 namespace mkv {
-
 struct p_block;
+
 
 class event_thread_t
 {
@@ -83,6 +84,7 @@ private:
 
         EventInfo( block_t * block )
             : type( ButtonDataEvent )
+            , nav{ NavivationKey::MENU } // dummy
             , button_data( block, block_Release )
         {
         }

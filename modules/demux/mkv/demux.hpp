@@ -29,11 +29,13 @@
 #include "chapter_command.hpp"
 #include "chapter_command_dvd.hpp"
 #include "chapter_command_script.hpp"
-#include "events.hpp"
+#include "chapter_command_matroska_js.hpp"
 
 #include <memory>
 
 #include <vlc_threads.h>
+#include <vlc_dialog.h>
+#include <mutex>
 
 namespace mkv {
 
@@ -99,12 +101,17 @@ public:
                                            chapter_cmd_match match,
                                            virtual_segment_c * & p_vsegment_found ) override;
     void JumpTo( virtual_segment_c & vsegment, virtual_chapter_c & vchapter ) override;
-    virtual_segment_c *GetCurrentVSegment() override
+    virtual_segment_c *GetCurrentVSegment() const override
     {
         return p_current_vsegment;
     }
-    virtual_chapter_c *FindVChapter( chapter_uid i_find_uid, virtual_segment_c * & p_vsegment_found ) override;
+    virtual_chapter_c *FindVChapter( chapter_uid i_find_uid, virtual_segment_c * & p_vsegment_found ) const override;
     void SetHighlight( vlc_spu_highlight_t & ) override;
+
+    void AddChoices( const choices & ) override;
+    void ClearChoices() override;
+    void HandleMouseClicked( unsigned x, unsigned y ) override;
+    std::optional<choice_uid> GetChoice( const choice_group & ) const override;
 
     void PreloadFamily( const matroska_segment_c & of_segment );
     bool PreloadLinked();
@@ -137,16 +144,56 @@ public:
         return ms_interpreter.get();
     }
 
+    matroska_js_interpreter_c *GetMatroskaJSInterpreter()
+    {
+        std::call_once(matroskajs_init_once, initMatroskaJSInterpreter, this);
+        return matroska_js_interpreter.get();
+    }
+
+
     uint8_t        palette[4][4];
     vlc_mutex_t    lock_demuxer;
 
     /* event */
     event_thread_t ev;
 
+    event_thread_t GetEventManager() override
+    {
+        return this->ev;
+    }
 private:
+
+    static void initMatroskaJSInterpreter(void *opaque)
+    {
+        demux_sys_t *p_sys = static_cast<demux_sys_t *>(opaque);
+        demux_t &demuxer = p_sys->demuxer;
+
+        uint8_t user_permission = vlc_dialog_wait_question(
+            VLC_OBJECT(&demuxer),
+            VLC_DIALOG_QUESTION_NORMAL,
+            _("No"),            // Cancel ( "No", returns 0)
+            _("Yes, proceed"),  // Action1 ("Yes", returns 1)
+            NULL,            // TODO: Always button
+            _("MatroskaJS Interpreter"),
+            _("Do you want to load the Matroska chapter interpreter for this chapter?")
+        );
+
+        if (user_permission) {
+            try {
+                p_sys->matroska_js_interpreter =
+                    std::make_unique<matroska_js_interpreter_c> (
+                        vlc_object_logger( &demuxer ), *p_sys
+                    );
+            } catch ( const std::bad_alloc & ) {
+            }
+        }
+    }
+
     virtual_segment_c                *p_current_vsegment = nullptr;
     std::unique_ptr<dvd_command_interpretor_c> dvd_interpretor; // protected by lock_demuxer
     std::unique_ptr<matroska_script_interpretor_c> ms_interpreter;
+    std::unique_ptr<matroska_js_interpreter_c> matroska_js_interpreter;
+    std::once_flag matroskajs_init_once;
 };
 
 } // namespace

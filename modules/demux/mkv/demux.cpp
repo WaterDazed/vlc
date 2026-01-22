@@ -355,7 +355,7 @@ virtual_chapter_c *demux_sys_t::BrowseCodecPrivate( chapter_codec_id codec_id,
     return p_result;
 }
 
-virtual_chapter_c *demux_sys_t::FindVChapter( chapter_uid i_find_uid, virtual_segment_c * & p_vsegment_found )
+virtual_chapter_c *demux_sys_t::FindVChapter( chapter_uid i_find_uid, virtual_segment_c * & p_vsegment_found ) const
 {
     virtual_chapter_c *p_result = NULL;
     for (size_t i=0; i<used_vsegments.size(); i++)
@@ -374,5 +374,26 @@ void demux_sys_t::SetHighlight( vlc_spu_highlight_t & spu_hl )
 {
     ev.SetHighlight( spu_hl );
 }
+
+void demux_sys_t::AddChoices( const choices & choices )
+{
+    p_current_vsegment->AddChoices( choices );
+}
+
+void demux_sys_t::ClearChoices()
+{
+    p_current_vsegment->ClearChoices();
+}
+
+void demux_sys_t::HandleMouseClicked(unsigned x, unsigned y)
+{
+    p_current_vsegment->HandleMouseClick(x, y);
+}
+
+std::optional<chapter_codec_vm::choice_uid> demux_sys_t::GetChoice( const choice_group & group ) const
+{
+    return p_current_vsegment->GetChoice( group );
+}
+
 
 } // namespace

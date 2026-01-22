@@ -22,7 +22,9 @@ public:
 
     virtual ~matroska_script_interpreter_common_c() = default;
 
-    // DVD command IDs
+    virtual void doBeforeChapterInterpretation(){};
+    virtual void doAfterChapterInterpretation(){};
+
     virtual bool Interpret( const binary * p_command, size_t i_size ) = 0;
 
 protected:

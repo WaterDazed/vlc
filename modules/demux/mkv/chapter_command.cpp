@@ -65,4 +65,16 @@ void chapter_codec_cmds_c::AddCommand( const KaxChapterProcessCommand & command 
     }
 }
 
+void chapter_codec_vm::choices::SetSelected(const chapter_codec_vm::choice_uid &uid, const choice_group &group)
+{
+    selected[group] = uid;
+}
+
+std::optional<chapter_codec_vm::choice_uid> chapter_codec_vm::choices::GetSelected(const choice_group &group) const
+{
+    if (selected.find(group) == selected.end())
+        return std::nullopt;
+    return selected.at(group);
+}
+
 } // namespace
