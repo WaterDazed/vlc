@@ -266,6 +266,17 @@ void vout_SetSpuHighlight( vout_thread_t *p_vout, const vlc_spu_highlight_t * );
  * Vout owner callbacks for events from the vout (e.g. window close)
  */
 struct vlc_vout_callbacks {
+    void (*on_window_close)(vout_thread_t *vout, void *opaque);
 };
+
+/**
+ * Report that the window was closed.
+ *
+ * This is called when the window reports a close event.
+ * It will invoke the on_window_close callback if set.
+ *
+ * \param vout the vout thread
+ */
+void vout_SendWindowClose(vout_thread_t *vout);
 
 #endif // LIBVLC_VOUT_INTERNAL_H

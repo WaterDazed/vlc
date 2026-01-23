@@ -1858,6 +1858,17 @@ void vout_ChangeSpuRate(vout_thread_t *vout, size_t channel_id, float rate)
     spu_SetClockRate(sys->spu, channel_id, rate);
 }
 
+void vout_SendWindowClose(vout_thread_t *vout)
+{
+    vout_thread_sys_t *sys = VOUT_THREAD_TO_SYS(vout);
+
+    vlc_mutex_lock(&sys->owner.lock);
+    if (sys->owner.window_enabled
+     && sys->owner.cbs != NULL && sys->owner.cbs->on_window_close != NULL)
+        sys->owner.cbs->on_window_close(vout, sys->owner.opaque);
+    vlc_mutex_unlock(&sys->owner.lock);
+}
+
 static int vout_Start(vout_thread_sys_t *vout, vlc_video_context *vctx, const vout_configuration_t *cfg)
 {
     vout_thread_sys_t *sys = vout;
