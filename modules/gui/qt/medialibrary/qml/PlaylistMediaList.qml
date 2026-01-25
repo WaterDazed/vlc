@@ -88,7 +88,7 @@ MainViewLoader {
     }
 
     Component.onCompleted: {
-        root.Keys.deletePressed.connect(root.deleteSelectedPlaylists)
+        root.Keys.deletePressed.connect(root, root.deleteSelectedPlaylists)
     }
 
     //---------------------------------------------------------------------------------------------
@@ -128,8 +128,8 @@ MainViewLoader {
         }
 
         Component.onCompleted: {
-            playlistModel.transactionPendingChanged.connect(playlistModel.onBusynessChanged)
-            playlistModel.loadingChanged.connect(playlistModel.onBusynessChanged)
+            playlistModel.transactionPendingChanged.connect(playlistModel, playlistModel.onBusynessChanged)
+            playlistModel.loadingChanged.connect(playlistModel, playlistModel.onBusynessChanged)
             playlistModel.onBusynessChanged()
         }
     }
@@ -277,7 +277,7 @@ MainViewLoader {
         }
 
         Component.onCompleted: {
-            contextMenu.requestDeleteSelectedPlaylists.connect(root.deleteSelectedPlaylists)
+            contextMenu.requestDeleteSelectedPlaylists.connect(root, root.deleteSelectedPlaylists)
         }
     }
 

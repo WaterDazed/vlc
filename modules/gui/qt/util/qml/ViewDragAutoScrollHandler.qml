@@ -107,7 +107,7 @@ QtObject {
 
         Component.onCompleted: {
             // prevent direction to bounce
-            _timer.triggered.connect(directionChangedHandler)
+            _timer.triggered.connect(animation, directionChangedHandler)
         }
 
         onDirectionChanged: {

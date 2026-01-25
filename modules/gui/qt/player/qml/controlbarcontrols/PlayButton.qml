@@ -141,7 +141,7 @@ T.Control {
         repeat: false
 
         Component.onCompleted: {
-            triggered.connect(_pressAndHoldAction)
+            triggered.connect(root, _pressAndHoldAction)
         }
     }
 

@@ -137,7 +137,7 @@ MainViewLoader {
             }
 
             Component.onCompleted: {
-                seeAllButtonClicked.connect(root.seeAllButtonClicked)
+                seeAllButtonClicked.connect(root, root.seeAllButtonClicked)
             }
         }
     }

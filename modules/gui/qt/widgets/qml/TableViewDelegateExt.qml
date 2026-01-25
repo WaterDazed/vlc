@@ -111,7 +111,7 @@ T.Control {
     ListView.delayRemove: dragHandler.active
 
     Component.onCompleted: {
-        Keys.menuPressed.connect(contextButton.clicked)
+        Keys.menuPressed.connect(contextButton, contextButton.clicked)
     }
 
     // Childs
@@ -155,6 +155,8 @@ T.Control {
         }
 
         TapHandler {
+            id: tapHandler
+
             acceptedDevices: PointerDevice.AllDevices & ~(PointerDevice.TouchScreen)
 
             acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -182,7 +184,7 @@ T.Control {
             }
 
             Component.onCompleted: {
-                canceled.connect(initialAction)
+                canceled.connect(tapHandler, initialAction)
             }
 
             function initialAction() {

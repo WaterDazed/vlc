@@ -670,6 +670,8 @@ ListView {
     }
 
     TapHandler {
+        id: tapHandler
+
         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
         grabPermissions: PointerHandler.TakeOverForbidden
@@ -685,7 +687,7 @@ ListView {
         }
 
         Component.onCompleted: {
-            canceled.connect(initialAction)
+            canceled.connect(tapHandler, initialAction)
         }
 
         function initialAction() {

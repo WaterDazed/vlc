@@ -124,8 +124,8 @@ FocusScope {
     // Events
 
     Component.onCompleted: {
-        visibleChanged.connect(_handleFocus)
-        activeFocusChanged.connect(_handleFocus)
+        visibleChanged.connect(controlLayout, controlLayout._handleFocus)
+        activeFocusChanged.connect(controlLayout, controlLayout._handleFocus)
 
         _componentCompleted = true
     }
@@ -161,9 +161,9 @@ FocusScope {
             availableHeight: rowLayout.height
 
             Component.onCompleted: {
-                requestLockUnlockAutoHide.connect(controlLayout.requestLockUnlockAutoHide)
-                menuOpened.connect(controlLayout.menuOpened)
-                controlLayout.forceUnlock.connect(repeater.forceUnlock)
+                requestLockUnlockAutoHide.connect(controlLayout, controlLayout.requestLockUnlockAutoHide)
+                menuOpened.connect(controlLayout, controlLayout.menuOpened)
+                controlLayout.forceUnlock.connect(repeater, repeater.forceUnlock)
             }
         }
 

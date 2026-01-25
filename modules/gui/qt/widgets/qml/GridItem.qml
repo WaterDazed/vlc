@@ -203,6 +203,8 @@ T.ItemDelegate {
         }
 
         TapHandler {
+            id: tapHandler
+
             acceptedDevices: PointerDevice.AllDevices & ~(PointerDevice.TouchScreen)
 
             acceptedButtons: Qt.RightButton | Qt.LeftButton
@@ -228,7 +230,7 @@ T.ItemDelegate {
             }
 
             Component.onCompleted: {
-                canceled.connect(initialAction)
+                canceled.connect(tapHandler, initialAction)
             }
 
             function initialAction() {
@@ -303,8 +305,8 @@ T.ItemDelegate {
             }
 
             Component.onCompleted: {
-                root.GridView.reused.connect(picture.reinitialize)
-                root.GridView.pooled.connect(picture.releaseResources)
+                root.GridView.reused.connect(picture, picture.reinitialize)
+                root.GridView.pooled.connect(picture, picture.releaseResources)
             }
 
             DefaultShadow {
