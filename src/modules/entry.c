@@ -218,11 +218,25 @@ static int vlc_plugin_desc_cb(void *ctx, void *tgt, int propid, ...)
 
             /* Inheritance. Ugly!! */
             submodule->pp_shortcuts = xmalloc (sizeof ( *submodule->pp_shortcuts ));
-            submodule->pp_shortcuts[0] = super->pp_shortcuts[0];
+
+            /* set a different name and shortcut than the super module if we do have an argument */
+            const char *shortcut = va_arg (ap, const char *);
+
+            if (shortcut != NULL)
+            {
+                submodule->pp_shortcuts[0] = shortcut;
+                submodule->psz_longname = shortcut;
+            }
+            else
+            {
+                submodule->pp_shortcuts[0] = super->pp_shortcuts[0];
+                submodule->psz_longname = super->psz_longname;
+            }
+
             submodule->i_shortcuts = 1; /* object name */
 
-            submodule->psz_shortname = super->psz_shortname;
             submodule->psz_longname = super->psz_longname;
+            submodule->psz_shortname = super->psz_shortname;
             submodule->psz_capability = super->psz_capability;
             break;
         }

@@ -370,7 +370,7 @@ vlc_module_begin ()
 
 #ifdef ENABLE_SOUT
     /* encoder */
-    add_submodule()
+    add_named_submodule( "schroedinger_encoder" )
     set_section( N_("Encoding") , NULL )
     set_description( N_("Dirac video encoder using libschroedinger") )
     set_capability( "video encoder", 110 )

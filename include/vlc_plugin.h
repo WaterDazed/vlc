@@ -328,7 +328,7 @@ int CDECL_SYMBOL VLC_SYMBOL(vlc_entry)(vlc_set_cb vlc_set, void *opaque) \
 { \
     module_t *module; \
     struct vlc_param *config = NULL; \
-    if (vlc_plugin_set (VLC_MODULE_CREATE, &module)) \
+    if (vlc_plugin_set (VLC_MODULE_CREATE, &module, NULL)) \
         goto error; \
     if (vlc_module_set (VLC_MODULE_NAME, (MODULE_STRING))) \
         goto error;
@@ -343,7 +343,11 @@ VLC_MODULE_NAME_HIDDEN_SYMBOL \
 VLC_METADATA_EXPORTS
 
 #define add_submodule( ) \
-    if (vlc_plugin_set (VLC_MODULE_CREATE, &module)) \
+    if (vlc_plugin_set (VLC_MODULE_CREATE, &module, NULL)) \
+        goto error;
+
+#define add_named_submodule( name ) \
+    if (vlc_plugin_set (VLC_MODULE_CREATE, &module, name)) \
         goto error;
 
 #define add_shortcut( ... ) \
