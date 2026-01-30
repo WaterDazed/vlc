@@ -4847,7 +4847,8 @@ static int ProbeFragments( demux_t *p_demux, bool b_force, bool *pb_fragmented )
                     if( GetMoofTrackDuration( p_sys->p_moov, p_moof, p_sys->track[track_num].i_track_ID, &i_duration ) )
                         pi_track_times[track_num] += i_duration;
 
-                    p_sys->p_fragsindex->pi_pos[fragment++] = p_moof->i_pos;
+                    if (track_num == 0)
+                        p_sys->p_fragsindex->pi_pos[fragment++] = p_moof->i_pos;
                 }
             }
 
