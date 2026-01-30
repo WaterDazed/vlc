@@ -4851,7 +4851,8 @@ static int ProbeFragments( demux_t *p_demux, bool b_force, bool *pb_fragmented )
                         p_sys->p_fragsindex->pi_pos[fragment++] = p_moof->i_pos;
                 }
 
-                stime_t i_movietime = MP4_rescale( pi_track_times[track_num], p_sys->track[track_num].i_timescale, p_sys->i_timescale );
+                assert(fragment == i_moof);
+                stime_t i_movietime = p_sys->p_fragsindex->p_times[(fragment - 1) * p_sys->i_tracks + track_num];
                 if( p_sys->p_fragsindex->i_last_time < i_movietime )
                     p_sys->p_fragsindex->i_last_time = i_movietime;
             }
