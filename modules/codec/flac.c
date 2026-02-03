@@ -153,6 +153,9 @@ static void CloseEncoder ( encoder_t * );
 static int DecodeBlock( decoder_t *, block_t * );
 static void Flush( decoder_t * );
 
+static int ApplyWFXMask( uint32_t i_wfxmask, audio_format_t *fmt,
+                         uint8_t *pi_channels_reorder );
+
 /*****************************************************************************
  * Module descriptor
  *****************************************************************************/
@@ -313,6 +316,44 @@ DecoderReadCallback( const FLAC__StreamDecoder *decoder, FLAC__byte buffer[],
     return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 }
 
+static int ApplyWFXMask( uint32_t i_wfxmask, audio_format_t *fmt,
+                         uint8_t *pi_channels_reorder )
+{
+    const unsigned i_wfxchannels = stdc_count_ones( i_wfxmask );
+    if( i_wfxchannels == 0 || i_wfxchannels > AOUT_CHAN_MAX )
+        return VLC_EGENERIC;
+
+    /* Create the vlc bitmap from wfx channels */
+    uint32_t i_vlcmask = 0;
+    for( uint32_t i_chan = 1; i_chan && i_chan <= i_wfxmask; i_chan <<= 1 )
+    {
+        if( (i_chan & i_wfxmask) == 0 )
+            continue;
+        for( size_t j=0; j<MAPPED_WFX_CHANNELS; j++ )
+        {
+            if( wfx_remapping[j][0] == i_chan )
+                i_vlcmask |= wfx_remapping[j][1];
+        }
+    }
+    /* Check if we have the 1 to 1 mapping */
+    if( stdc_count_ones(i_vlcmask) != i_wfxchannels )
+        return VLC_EGENERIC;
+
+    /* Compute the remapping */
+    uint8_t neworder[AOUT_CHAN_MAX] = {0};
+    aout_CheckChannelReorder( wfx_chans_order, NULL,
+                              i_vlcmask, neworder );
+
+    /* /!\ Invert our source/dest reordering,
+         * as Interleave() here works source indexes */
+    for( unsigned j=0; j<i_wfxchannels; j++ )
+        pi_channels_reorder[neworder[j]] = j;
+    fmt->i_physical_channels = i_vlcmask;
+    fmt->i_channels = i_wfxchannels;
+
+    return VLC_SUCCESS;
+}
+
 /*****************************************************************************
  * DecoderMetadataCallback: called by libflac to when it encounters metadata
  *****************************************************************************/
@@ -354,40 +395,11 @@ static void DecoderMetadataCallback( const FLAC__StreamDecoder *decoder,
                     free( value );
                     if(endptr == value)
                         return;
-                    const unsigned i_wfxchannels = stdc_count_ones( i_wfxmask );
-                    if( i_wfxchannels > 0 && i_wfxchannels <= AOUT_CHAN_MAX )
+                    if( ApplyWFXMask( i_wfxmask, &p_dec->fmt_out.audio,
+                                      p_sys->rgi_channels_reorder ) != VLC_SUCCESS )
                     {
-                        /* Create the vlc bitmap from wfx channels */
-                        uint32_t i_vlcmask = 0;
-                        for( uint32_t i_chan = 1; i_chan && i_chan <= i_wfxmask; i_chan <<= 1 )
-                        {
-                            if( (i_chan & i_wfxmask) == 0 )
-                                continue;
-                            for( size_t j=0; j<MAPPED_WFX_CHANNELS; j++ )
-                            {
-                                if( wfx_remapping[j][0] == i_chan )
-                                    i_vlcmask |= wfx_remapping[j][1];
-                            }
-                        }
-                        /* Check if we have the 1 to 1 mapping */
-                        if( stdc_count_ones(i_vlcmask) != i_wfxchannels )
-                        {
-                            msg_Warn( p_dec, "Unsupported channel mask %x", i_wfxmask );
-                            return;
-                        }
-
-                        /* Compute the remapping */
-                        uint8_t neworder[AOUT_CHAN_MAX] = {0};
-                        aout_CheckChannelReorder( wfx_chans_order, NULL,
-                                                  i_vlcmask, neworder );
-
-                        /* /!\ Invert our source/dest reordering,
-                         * as Interleave() here works source indexes */
-                        for( unsigned j=0; j<i_wfxchannels; j++ )
-                            p_sys->rgi_channels_reorder[neworder[j]] = j;
-
-                        p_dec->fmt_out.audio.i_physical_channels = i_vlcmask;
-                        p_dec->fmt_out.audio.i_channels = i_wfxchannels;
+                        msg_Warn( p_dec, "Unsupported channel mask %x", i_wfxmask );
+                        return;
                     }
 
                     break;
