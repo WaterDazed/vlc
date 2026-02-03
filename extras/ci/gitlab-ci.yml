@@ -121,26 +121,26 @@ variables:
         fi
         extras/package/win32/build.sh -a $HOST_ARCH $EXTRA_BUILD_FLAGS $LIBVLC_EXTRA_BUILD_FLAGS $UWP_EXTRA_BUILD_FLAGS
 
-win32:
+.win32:
     extends: .win-common
     image:
         name: $VLC_WIN32_IMAGE
     variables: *variables-win32
 
-win64:
+.win64:
     extends: .win-common
     image:
         name: $VLC_WIN64_IMAGE
     variables: *variables-win64
 
-win64-arm-llvm:
+.win64-arm-llvm:
     extends: .win-common
     image:
         name: $VLC_WIN_LLVM_UCRT_IMAGE
     variables:
         <<: *variables-win64-arm
 
-uwp32-libvlc-llvm:
+.uwp32-libvlc-llvm:
     extends: .win-common
     image:
         name: $VLC_UWP_LLVM_IMAGE
@@ -164,19 +164,19 @@ uwp32-libvlc-llvm:
         paths:
             - nightlies/*
 
-nightly-win32:
+.nightly-win32:
     extends: .nightly-win-common
     image:
         name: $VLC_WIN32_IMAGE
     variables: *variables-win32
 
-nightly-win64:
+.nightly-win64:
     extends: .nightly-win-common
     image:
         name: $VLC_WIN64_IMAGE
     variables: *variables-win64
 
-nightly-win64-arm-llvm:
+.nightly-win64-arm-llvm:
     extends: .nightly-win-common
     image:
         name: $VLC_WIN_LLVM_UCRT_IMAGE
@@ -220,7 +220,7 @@ nightly-win64-arm-llvm:
         - $CI_PROJECT_DIR/contrib/tarballs
         - $CI_PROJECT_DIR/extras/tools/*.tar.*
 
-release-debian:
+.release-debian:
     extends: .docker-template
     only:
       - tags
@@ -259,19 +259,19 @@ release-debian:
         - $CI_PROJECT_DIR/vlc-*.tar.xz
     variables: *variables-debian
 
-release-win32:
+.release-win32:
     extends: .release-win-common
     image:
         name: $VLC_WIN32_IMAGE
     variables: *variables-win32
 
-release-win64:
+.release-win64:
     extends: .release-win-common
     image:
         name: $VLC_WIN64_IMAGE
     variables: *variables-win64
 
-release-win64-arm:
+.release-win64-arm:
     extends: .release-win-common
     image:
         name: $VLC_WIN_LLVM_UCRT_IMAGE
@@ -280,7 +280,7 @@ release-win64-arm:
 #
 # Debian
 #
-debian:
+.debian:
     extends: .docker-template
     image:
         name: $VLC_DEBIAN_IMAGE
@@ -319,7 +319,7 @@ debian:
         fi
     variables: *variables-debian
 
-debian-qt6:
+.debian-qt6:
     extends: .docker-template
     image:
         name: $VLC_DEBIAN_QT6_IMAGE
@@ -338,8 +338,8 @@ debian-qt6:
         make -j$NCPU -k
     variables: *variables-debian
 
-nightly-debian:
-    extends: debian
+.nightly-debian:
+    extends: .debian
     only:
         - schedules
     except:
@@ -362,10 +362,10 @@ nightly-debian:
     allow_failure: true
     variables: *variables-snap
 
-snap:
+.snap:
     extends: .snap-common
 
-nightly-snap:
+.nightly-snap:
     extends: .snap-common
     only:
         - schedules
@@ -381,7 +381,6 @@ nightly-snap:
     artifacts:
         paths:
            - nightlies/*
-
 #
 # macOS
 #
@@ -405,13 +404,13 @@ nightly-snap:
         mkdir build && cd build
         ../extras/package/macosx/build.sh $EXTRA_BUILD_FLAGS -a $HOST_ARCH -k $VLC_SDK_PATH $NIGHTLY_EXTRA_BUILD_FLAGS
 
-macos-x86_64:
+.macos-x86_64:
     extends: .macos-common
     tags:
         - old-macmini
     variables: *variables-macos-x86_64
 
-macos-arm64:
+.macos-arm64:
     extends: .macos-common
     tags:
         - monterey
@@ -430,13 +429,13 @@ macos-arm64:
         paths:
             - nightlies/*
 
-nightly-macos-x86_64:
+.nightly-macos-x86_64:
     extends: .nightly-macos-common
     tags:
         - old-macmini
     variables: *variables-macos-x86_64
 
-nightly-macos-arm64:
+.nightly-macos-arm64:
     extends: .nightly-macos-common
     tags:
         - monterey
@@ -458,21 +457,21 @@ nightly-macos-arm64:
             /bin/sh ./libvlcjni/buildsystem/compile-libvlc.sh --no-jni -a $ANDROID_ARCH --package-contribs
         fi
 
-android-arm:
+.android-arm:
     extends: .android-common
     variables: *variables-android-arm
 
-android-arm64:
+.android-arm64:
     extends: .android-common
     image:
         name: $VLC_ANDROID4_IMAGE
     variables: *variables-android-arm64
 
-android-x86:
+.android-x86:
     extends: .android-common
     variables: *variables-android-x86
 
-android-x86_64:
+.android-x86_64:
     extends: .android-common
     image:
         name: $VLC_ANDROID4_IMAGE
@@ -481,7 +480,7 @@ android-x86_64:
 #
 # VLC Documentation
 #
-pages:
+.pages:
     extends: .docker-template
     image:
         name: $VLC_DEBIAN_IMAGE
