@@ -195,6 +195,17 @@ static void Interleave( int32_t *p_out, const int32_t * const *pp_in,
 }
 
 /*****************************************************************************
+ * DecoderOutputFormatChanged: check if audio format has changed
+ *****************************************************************************/
+static bool DecoderOutputFormatChanged(unsigned i_channels, unsigned i_rate,
+                                       unsigned i_streaminfo_rate,
+                                       const audio_format_t *fmt)
+{
+    return fmt->i_channels != i_channels ||
+           fmt->i_rate != ((i_rate > 0 ) ? i_rate : i_streaminfo_rate);
+}
+
+/*****************************************************************************
  * DecoderSetOutputFormat: helper function to convert and check frame format
  *****************************************************************************/
 static int DecoderSetOutputFormat( unsigned i_channels, unsigned i_rate,
@@ -227,7 +238,14 @@ DecoderWriteCallback( const FLAC__StreamDecoder *decoder,
     decoder_t *p_dec = (decoder_t *)client_data;
     decoder_sys_t *p_sys = p_dec->p_sys;
 
-    if( DecoderSetOutputFormat( frame->header.channels,
+    const bool b_changed =
+        DecoderOutputFormatChanged( frame->header.channels,
+                                    frame->header.sample_rate,
+                                    p_sys->b_stream_info ? p_sys->stream_info.sample_rate : 0,
+                                    &p_dec->fmt_out.audio );
+
+    if( b_changed &&
+        DecoderSetOutputFormat( frame->header.channels,
                                 p_sys->b_stream_info ? p_sys->stream_info.sample_rate
                                                      : frame->header.sample_rate,
                                 &p_dec->fmt_out.audio,
@@ -242,7 +260,7 @@ DecoderWriteCallback( const FLAC__StreamDecoder *decoder,
             date_Init( &p_sys->end_date, p_dec->fmt_out.audio.i_rate, 1 );
     }
 
-    if( decoder_UpdateAudioFormat( p_dec ) )
+    if( b_changed && decoder_UpdateAudioFormat( p_dec ) )
         return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 
     if( date_Get( &p_sys->end_date ) == VLC_TICK_INVALID )
@@ -309,13 +327,8 @@ static void DecoderMetadataCallback( const FLAC__StreamDecoder *decoder,
     switch(metadata->type)
     {
         case FLAC__METADATA_TYPE_STREAMINFO:
-            /* Setup the format */
-            DecoderSetOutputFormat( metadata->data.stream_info.channels,
-                                    metadata->data.stream_info.sample_rate,
-                                    &p_dec->fmt_out.audio, p_sys->rgi_channels_reorder );
-
-            msg_Dbg( p_dec, "channels:%d samplerate:%d bitspersamples:%"PRIu32,
-                     p_dec->fmt_out.audio.i_channels, p_dec->fmt_out.audio.i_rate,
+            msg_Dbg( p_dec, "channels:%"PRIu32" samplerate:%"PRIu32" bitspersamples:%"PRIu32,
+                     metadata->data.stream_info.channels, metadata->data.stream_info.sample_rate,
                      metadata->data.stream_info.bits_per_sample );
 
             p_sys->b_stream_info = true;
