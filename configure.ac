@@ -65,6 +65,7 @@ AC_ARG_VAR([DESKTOP_FILE_VALIDATE], [Validator for desktop entry files])
 AC_CHECK_PROGS([DESKTOP_FILE_VALIDATE], [${DESKTOP_FILE_VALIDATE} desktop-file-validate], :)
 AC_ARG_VAR([BUILDCC], [Build system C11 or C99 compiler command])
 AC_CHECK_PROGS([BUILDCC], [c17-gcc c17 c11-gcc c11 c99-gcc c99], [false])
+AC_CHECK_TOOL(OBJCOPY, objcopy, :)
 AS_IF([test "$BUILDCC" = "false"], [
   AC_MSG_ERROR([Cannot find native C99 compiler: please define BUILDCC.])
 ])
@@ -308,7 +309,6 @@ int foo() { return my_array[0]; }
     AX_APPEND_COMPILE_FLAGS([-static-libgcc], [CXXFLAGS], [-Werror])
     AC_LANG_POP(C++)
     AC_CHECK_TOOL(WINDRES, windres, :)
-    AC_CHECK_TOOL(OBJCOPY, objcopy, :)
     AC_PREPROC_IFELSE([AC_LANG_PROGRAM(
       [[#ifdef _WIN32_WINNT
        # error _WIN32_WINNT already defined
@@ -5094,6 +5094,7 @@ AC_SUBST([RCC])
 AC_SUBST([UIC])
 AC_SUBST([QSB])
 AC_SUBST([WINDRES])
+AC_SUBST([OBJCOPY])
 AC_SUBST([LIBEXT])
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([MACOSX_DEPLOYMENT_TARGET])
