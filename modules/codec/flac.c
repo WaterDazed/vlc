@@ -210,6 +210,8 @@ static int DecoderSetOutputFormat( unsigned i_channels, unsigned i_rate,
     memcpy( pi_channels_reorder, ppi_reorder[i_channels], i_channels );
     fmt->i_bitspersample = 32;
 
+    aout_FormatPrepare( fmt );
+
     return VLC_SUCCESS;
 }
 
