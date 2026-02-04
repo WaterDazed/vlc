@@ -54,6 +54,8 @@
 #   define USE_NEW_FLAC_API
 #endif
 
+static_assert(FLAC__MAX_CHANNELS <= AOUT_CHAN_MAX, "FLAC__MAX_CHANNELS overflows AOUT_CHAN_MAX");
+
 /*****************************************************************************
  * decoder_sys_t : FLAC decoder descriptor
  *****************************************************************************/
