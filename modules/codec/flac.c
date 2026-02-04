@@ -279,7 +279,8 @@ DecoderWriteCallback( const FLAC__StreamDecoder *decoder,
 
     Interleave( (int32_t *)p_sys->p_aout_buffer->p_buffer, buffer,
                  p_sys->rgi_channels_reorder,
-                 frame->header.channels, frame->header.blocksize,
+                 stdc_count_ones(p_dec->fmt_out.audio.i_physical_channels),
+                 frame->header.blocksize,
                  frame->header.bits_per_sample );
 
     /* Date management (already done by packetizer) */
@@ -322,7 +323,7 @@ static int ApplyWFXMask( uint32_t i_wfxmask, audio_format_t *fmt,
                          uint8_t *pi_channels_reorder )
 {
     const unsigned i_wfxchannels = stdc_count_ones( i_wfxmask );
-    if( i_wfxchannels == 0 || i_wfxchannels > AOUT_CHAN_MAX )
+    if( i_wfxchannels == 0 || i_wfxchannels > fmt->i_channels )
         return VLC_EGENERIC;
 
     /* Create the vlc bitmap from wfx channels */
@@ -351,7 +352,6 @@ static int ApplyWFXMask( uint32_t i_wfxmask, audio_format_t *fmt,
     for( unsigned j=0; j<i_wfxchannels; j++ )
         pi_channels_reorder[neworder[j]] = j;
     fmt->i_physical_channels = i_vlcmask;
-    fmt->i_channels = i_wfxchannels;
 
     return VLC_SUCCESS;
 }
