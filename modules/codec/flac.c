@@ -198,16 +198,14 @@ static void Interleave( int32_t *p_out, const int32_t * const *pp_in,
  * DecoderSetOutputFormat: helper function to convert and check frame format
  *****************************************************************************/
 static int DecoderSetOutputFormat( unsigned i_channels, unsigned i_rate,
-                                   unsigned i_streaminfo_rate,
                                    audio_format_t *fmt,
                                    uint8_t *pi_channels_reorder )
 {
-    if( i_channels == 0 || i_channels > FLAC__MAX_CHANNELS ||
-        (i_rate == 0 && i_streaminfo_rate == 0) )
+    if( i_channels == 0 || i_channels > FLAC__MAX_CHANNELS || i_rate == 0 )
         return VLC_EGENERIC;
 
     fmt->i_channels = i_channels;
-    fmt->i_rate = (i_rate > 0 ) ? i_rate : i_streaminfo_rate;
+    fmt->i_rate = i_rate;
     fmt->i_physical_channels = pi_channels_maps[i_channels];
     memcpy( pi_channels_reorder, ppi_reorder[i_channels], i_channels );
     fmt->i_bitspersample = 32;
@@ -228,8 +226,8 @@ DecoderWriteCallback( const FLAC__StreamDecoder *decoder,
     decoder_sys_t *p_sys = p_dec->p_sys;
 
     if( DecoderSetOutputFormat( frame->header.channels,
-                                frame->header.sample_rate,
-                                p_sys->b_stream_info ? p_sys->stream_info.sample_rate : 0,
+                                p_sys->b_stream_info ? p_sys->stream_info.sample_rate
+                                                     : frame->header.sample_rate,
                                 &p_dec->fmt_out.audio,
                                 p_sys->rgi_channels_reorder ) )
         return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
@@ -311,7 +309,6 @@ static void DecoderMetadataCallback( const FLAC__StreamDecoder *decoder,
         case FLAC__METADATA_TYPE_STREAMINFO:
             /* Setup the format */
             DecoderSetOutputFormat( metadata->data.stream_info.channels,
-                                    metadata->data.stream_info.sample_rate,
                                     metadata->data.stream_info.sample_rate,
                                     &p_dec->fmt_out.audio, p_sys->rgi_channels_reorder );
 
