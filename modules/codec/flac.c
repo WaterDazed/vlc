@@ -199,19 +199,18 @@ static void Interleave( int32_t *p_out, const int32_t * const *pp_in,
  *****************************************************************************/
 static int DecoderSetOutputFormat( unsigned i_channels, unsigned i_rate,
                                    unsigned i_streaminfo_rate,
-                                   unsigned i_bitspersample,
                                    audio_format_t *fmt,
                                    uint8_t *pi_channels_reorder )
 {
     if( i_channels == 0 || i_channels > FLAC__MAX_CHANNELS ||
-        i_bitspersample == 0 || (i_rate == 0 && i_streaminfo_rate == 0) )
+        (i_rate == 0 && i_streaminfo_rate == 0) )
         return VLC_EGENERIC;
 
     fmt->i_channels = i_channels;
     fmt->i_rate = (i_rate > 0 ) ? i_rate : i_streaminfo_rate;
     fmt->i_physical_channels = pi_channels_maps[i_channels];
     memcpy( pi_channels_reorder, ppi_reorder[i_channels], i_channels );
-    fmt->i_bitspersample = i_bitspersample;
+    fmt->i_bitspersample = 32;
 
     return VLC_SUCCESS;
 }
@@ -231,7 +230,6 @@ DecoderWriteCallback( const FLAC__StreamDecoder *decoder,
     if( DecoderSetOutputFormat( frame->header.channels,
                                 frame->header.sample_rate,
                                 p_sys->b_stream_info ? p_sys->stream_info.sample_rate : 0,
-                                frame->header.bits_per_sample,
                                 &p_dec->fmt_out.audio,
                                 p_sys->rgi_channels_reorder ) )
         return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
@@ -315,12 +313,11 @@ static void DecoderMetadataCallback( const FLAC__StreamDecoder *decoder,
             DecoderSetOutputFormat( metadata->data.stream_info.channels,
                                     metadata->data.stream_info.sample_rate,
                                     metadata->data.stream_info.sample_rate,
-                                    metadata->data.stream_info.bits_per_sample,
                                     &p_dec->fmt_out.audio, p_sys->rgi_channels_reorder );
 
-            msg_Dbg( p_dec, "channels:%d samplerate:%d bitspersamples:%d",
+            msg_Dbg( p_dec, "channels:%d samplerate:%d bitspersamples:%"PRIu32,
                      p_dec->fmt_out.audio.i_channels, p_dec->fmt_out.audio.i_rate,
-                     p_dec->fmt_out.audio.i_bitspersample );
+                     metadata->data.stream_info.bits_per_sample );
 
             p_sys->b_stream_info = true;
             p_sys->stream_info = metadata->data.stream_info;
