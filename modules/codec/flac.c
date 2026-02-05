@@ -332,7 +332,7 @@ static void DecoderMetadataCallback( const FLAC__StreamDecoder *decoder,
                         &metadata->data.vorbis_comment.comments[i];
                 /* Check for custom WAVEFORMATEX channel ordering */
                 if( comment->length > 34 &&
-                    !strncmp( "WAVEFORMATEXTENSIBLE_CHANNEL_MASK=", (char *) comment->entry, 34 ) )
+                    !strncasecmp( "WAVEFORMATEXTENSIBLE_CHANNEL_MASK=", (char *) comment->entry, 34 ) )
                 {
                     char *value = strndup( (char *)&comment->entry[34], comment->length - 34 );
                     if( !value )
