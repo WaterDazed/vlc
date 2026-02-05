@@ -74,6 +74,7 @@ typedef struct
     FLAC__StreamDecoder *p_flac;
     FLAC__StreamMetadata_StreamInfo stream_info;
 
+    uint32_t i_wfxmask;
     uint8_t rgi_channels_reorder[AOUT_CHAN_MAX];
     bool b_stream_info;
 } decoder_sys_t;
@@ -213,8 +214,10 @@ static bool DecoderOutputFormatChanged(unsigned i_channels, unsigned i_rate,
 /*****************************************************************************
  * DecoderSetOutputFormat: helper function to convert and check frame format
  *****************************************************************************/
-static int DecoderSetOutputFormat( unsigned i_channels, unsigned i_rate,
+static int DecoderSetOutputFormat( decoder_t *p_dec,
+                                   unsigned i_channels, unsigned i_rate,
                                    audio_format_t *fmt,
+                                   uint32_t i_wfxmask,
                                    uint8_t *pi_channels_reorder )
 {
     if( i_channels == 0 || i_channels > FLAC__MAX_CHANNELS || i_rate == 0 )
@@ -222,9 +225,19 @@ static int DecoderSetOutputFormat( unsigned i_channels, unsigned i_rate,
 
     fmt->i_channels = i_channels;
     fmt->i_rate = i_rate;
-    fmt->i_physical_channels = pi_channels_maps[i_channels];
-    memcpy( pi_channels_reorder, ppi_reorder[i_channels], i_channels );
-    fmt->i_bitspersample = 32;
+    if( i_wfxmask )
+    {
+        if( ApplyWFXMask( i_wfxmask, fmt, pi_channels_reorder ) )
+        {
+            msg_Warn( p_dec, "Unsupported channel mask %x", i_wfxmask );
+            return VLC_EGENERIC;
+        }
+    }
+    else
+    {
+        fmt->i_physical_channels = pi_channels_maps[i_channels];
+        memcpy( pi_channels_reorder, ppi_reorder[i_channels], i_channels );
+    }
 
     aout_FormatPrepare( fmt );
 
@@ -250,10 +263,11 @@ DecoderWriteCallback( const FLAC__StreamDecoder *decoder,
                                     &p_dec->fmt_out.audio );
 
     if( b_changed &&
-        DecoderSetOutputFormat( frame->header.channels,
+        DecoderSetOutputFormat( p_dec, frame->header.channels,
                                 p_sys->b_stream_info ? p_sys->stream_info.sample_rate
                                                      : frame->header.sample_rate,
                                 &p_dec->fmt_out.audio,
+                                p_sys->i_wfxmask,
                                 p_sys->rgi_channels_reorder ) )
         return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 
@@ -397,13 +411,7 @@ static void DecoderMetadataCallback( const FLAC__StreamDecoder *decoder,
                     free( value );
                     if(endptr == value)
                         return;
-                    if( ApplyWFXMask( i_wfxmask, &p_dec->fmt_out.audio,
-                                      p_sys->rgi_channels_reorder ) != VLC_SUCCESS )
-                    {
-                        msg_Warn( p_dec, "Unsupported channel mask %x", i_wfxmask );
-                        return;
-                    }
-
+                    p_sys->i_wfxmask = i_wfxmask;
                     break;
                 }
             }
@@ -467,6 +475,7 @@ static int OpenDecoder( vlc_object_t *p_this )
 
     /* Misc init */
     p_sys->b_stream_info = false;
+    p_sys->i_wfxmask = 0;
     memset(p_sys->rgi_channels_reorder, 0, AOUT_CHAN_MAX);
     p_sys->p_block = NULL;
 
