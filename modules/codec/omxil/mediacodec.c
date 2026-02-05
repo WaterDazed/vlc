@@ -122,6 +122,7 @@ typedef struct decoder_sys_t
 
     int             i_decode_flags;
 
+    vlc_tick_t      max_ts;
     enum es_format_category_e cat;
     union
     {
@@ -900,10 +901,8 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
     p_sys->api.i_codec = p_dec->fmt_in->i_codec;
     p_sys->api.i_cat = p_dec->fmt_in->i_cat;
     p_sys->api.psz_mime = mime;
-    p_sys->video.i_mpeg_dar_num = 0;
-    p_sys->video.i_mpeg_dar_den = 0;
-    p_sys->video.surfacetexture = NULL;
     p_sys->b_decoder_dead = false;
+    p_sys->max_ts = VLC_TICK_0;
 
     if (pf_init(&p_sys->api) != 0)
     {
@@ -940,6 +939,10 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
 
     if (p_dec->fmt_in->i_cat == VIDEO_ES)
     {
+        p_sys->video.i_mpeg_dar_num = 0;
+        p_sys->video.i_mpeg_dar_den = 0;
+        p_sys->video.surfacetexture = NULL;
+
         switch (p_dec->fmt_in->i_codec)
         {
         case VLC_CODEC_H264:
@@ -1183,6 +1186,16 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
             p_pic->date = p_out->buf.i_ts;
         else
             p_pic->date = forced_ts;
+
+        if (p_pic->date > p_sys->max_ts)
+        {
+            msg_Warn(p_dec, "Dropping picture with invalid ts"
+                     "(pic_ts=%"PRId64" vs last_input_ts=%"PRId64")",
+                     p_pic->date, p_sys->max_ts);
+            picture_Release(p_pic);
+            return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
+        }
+
         p_pic->b_progressive = true;
 
         if (p_sys->api.b_direct_rendering)
@@ -1609,6 +1622,8 @@ static int QueueBlockLocked(decoder_t *p_dec, block_t *p_in_block,
                 }
                 p_buf = p_block->p_buffer;
                 i_size = p_block->i_buffer;
+                if (i_ts > p_sys->max_ts)
+                    p_sys->max_ts = i_ts;
             }
 
             if (p_sys->api.queue_in(&p_sys->api, i_index, p_buf, i_size,
