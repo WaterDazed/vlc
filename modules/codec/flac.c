@@ -334,8 +334,14 @@ static void DecoderMetadataCallback( const FLAC__StreamDecoder *decoder,
                 if( comment->length > 34 &&
                     !strncmp( "WAVEFORMATEXTENSIBLE_CHANNEL_MASK=", (char *) comment->entry, 34 ) )
                 {
-                    char *endptr = (char *) &comment->entry[34] + comment->length;
-                    const uint32_t i_wfxmask = strtoul( (char *) &comment->entry[34], &endptr, 16 );
+                    char *value = strndup( (char *)&comment->entry[34], comment->length - 34 );
+                    if( !value )
+                        return;
+                    char *endptr = NULL;
+                    const uint32_t i_wfxmask = strtoul( value, &endptr, 16 );
+                    free( value );
+                    if(endptr == value)
+                        return;
                     const unsigned i_wfxchannels = stdc_count_ones( i_wfxmask );
                     if( i_wfxchannels > 0 && i_wfxchannels <= AOUT_CHAN_MAX )
                     {
