@@ -237,17 +237,19 @@ public:
                 };
 
                 const QString uri = item->uri;
-                m_mediaLib->runOnMLThread<Ctx>(q,
-                    //ML thread
-                    [uri](vlc_medialibrary_t* ml, Ctx& ctx){
+                auto res =
+                m_mediaLib->run<Ctx>(
+                    [uri](vlc_medialibrary_t* ml) -> Ctx {
+                        Ctx ctx;
                         // Medialibrary requires folders uri to be terminated with '/'
                         const QString mlURI = uri + "/";
 
-                        auto ret = vlc_ml_is_indexed( ml, qtu( mlURI ), &ctx.isIndexed );
+                        int ret = vlc_ml_is_indexed( ml, qtu( mlURI ), &ctx.isIndexed );
                         ctx.succeed = (ret == VLC_SUCCESS);
-                    },
-                    //UI thread
-                    [this, uri](quint64, Ctx& ctx){
+                        return ctx;
+                    });
+                m_mediaLib->resultToUI<Ctx>(q, res,
+                    [this, uri](Ctx ctx){
                         if (!ctx.succeed)
                             return;
 
@@ -386,14 +388,16 @@ public:
                     bool succeed;
                     bool isIndexed;
                 };
-                m_mediaLib->runOnMLThread<Ctx>(q,
-                    //ML thread
-                    [uri](vlc_medialibrary_t* ml, Ctx& ctx){
-                        auto ret = vlc_ml_is_indexed( ml, uri.constData(), &ctx.isIndexed );
+                auto res =
+                m_mediaLib->run<Ctx>(
+                    [uri](vlc_medialibrary_t* ml) -> Ctx {
+                        Ctx ctx;
+                        int ret = vlc_ml_is_indexed( ml, uri.constData(), &ctx.isIndexed );
                         ctx.succeed = (ret == VLC_SUCCESS);
-                    },
-                    //ML thread
-                    [this](quint64,Ctx& ctx){
+                        return ctx;
+                    });
+                m_mediaLib->resultToUI<Ctx>(q, res,
+                    [this](Ctx ctx){
                         Q_Q(NetworkMediaModel);
                         if (!ctx.succeed)
                             return;

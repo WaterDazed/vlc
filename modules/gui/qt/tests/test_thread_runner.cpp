@@ -203,7 +203,6 @@ private slots:
         ThreadRunner* runner = getRunner();
 
         std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
-        QMutex mutex;
 
         Barrier barrierPre(3);
 
@@ -213,7 +212,7 @@ private slots:
         runner->runOnThread<Ctx>(
             dummy.get(),
             //T1
-            [&mutex, &barrierPre, &ret1](Ctx&) {
+            [&barrierPre, &ret1](Ctx&) {
                 if (!barrierPre.wait(TASK_TIMEOUT))
                 {
                     ret1 = FAILED;
@@ -796,6 +795,207 @@ private slots:
             "queue"
             );
         CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRun()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        QFuture<Ctx> res = runner->run<Ctx>([&taskRet]() -> Ctx {
+            taskRet = SUCCESS;
+            return Ctx{1};
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRunVoid()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        QFuture<void> res = runner->run<void>([&taskRet]() {
+            taskRet = SUCCESS;
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRunResult()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        QFuture<Ctx> res = runner->run<Ctx>([]() -> Ctx {
+            return Ctx{1};
+        });
+        runner->resultToUI<Ctx>(dummy.get(), res, [&taskRet](Ctx ctx){
+            taskRet = ctx.id == 1 ? SUCCESS : FAILED;
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRunVoidResult()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        int i = 0;
+
+        QFuture<void> res = runner->run<void>([&i]() {
+            i = 1;
+        });
+        runner->resultToUI(dummy.get(), res, [&taskRet, &i](){
+            taskRet = i == 1 ? SUCCESS : FAILED;
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testNestedFutureRunResult()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        QFuture<Ctx> res = runner->run<Ctx>([]() -> Ctx {
+            return Ctx{1};
+        });
+        res = res.then([](Ctx res) -> Ctx {
+            res.id = 2;
+            return res;
+        });
+        runner->resultToUI<Ctx>(dummy.get(), res, [&taskRet](Ctx ctx){
+            taskRet = ctx.id == 2 ? SUCCESS : FAILED;
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRunFailed()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        QFuture<void> res = runner->run<void>([]() {
+            throw QException();
+        }).onFailed([&taskRet]() {
+            taskRet = SUCCESS; // successfully failed
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRunResultFailed()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        QFuture<Ctx> res = runner->run<Ctx>([]() -> Ctx {
+            throw QException();
+        }).onFailed([&taskRet]() -> Ctx {
+            taskRet = SUCCESS; // successfully failed
+            return Ctx{-1}; // we need to return something
+        });
+        runner->resultToUI<Ctx>(dummy.get(), res, [&taskRet](Ctx){
+            // called even is the future failed
+            if (taskRet == PENDING)
+                taskRet = FAILED;
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRunResultLifecyle()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        QFuture<std::unique_ptr<Ctx>> res = runner->run<std::unique_ptr<Ctx>>([]() -> std::unique_ptr<Ctx> {
+            auto res = std::make_unique<Ctx>();
+            res->id = 1;
+            return res;
+        });
+        runner->resultToUI<std::unique_ptr<Ctx>>(dummy.get(), res, [&taskRet](std::unique_ptr<Ctx> ctx){
+            taskRet = (ctx->id == 1) ? SUCCESS : FAILED;
+            // the unique pointer ceases to exist after this function ends
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+    }
+
+    void testFutureRunResultLifecyle2()
+    {
+        TaskStatus taskRet = PENDING;
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        std::unique_ptr<int> unique_res = std::make_unique<int>();
+        struct TmpCtx {
+            int * newInt;
+        };
+
+        QFuture<TmpCtx> res = runner->run<TmpCtx>([]() -> TmpCtx {
+            TmpCtx res;
+            res.newInt = new int(1);
+            return res;
+        });
+        runner->resultToUI<TmpCtx>(dummy.get(), res, [&taskRet, &unique_res](TmpCtx ctx){
+            unique_res.reset(ctx.newInt);
+            taskRet = *unique_res == 1 ? SUCCESS : FAILED;
+        });
+        CHECK_TASK_COMPLETE(taskRet);
+        QCOMPARE(*unique_res, 1);
+    }
+
+    void testFutureTargetDeletedDuringTask()
+    {
+        ThreadRunner* runner = getRunner();
+
+        std::unique_ptr<Dummy> dummy = std::make_unique<Dummy>();
+
+        Barrier barrierPre(2);
+        Barrier barrierPost(2);
+
+        TaskStatus ret = PENDING;
+
+        QFuture<Ctx> res = runner->run<Ctx>(
+            [&barrierPre, &barrierPost, &ret]() -> Ctx {
+                if (!barrierPre.wait(TASK_TIMEOUT))
+                {
+                    ret = FAILED;
+                    return Ctx{1};
+                }
+
+                //dummy is destroyed here in the other thread
+
+                if (!barrierPost.wait(TASK_TIMEOUT))
+                {
+                    ret = FAILED;
+                    return Ctx{2};
+                }
+                return Ctx{3};
+            });
+        runner->resultToUI<Ctx>(dummy.get(), res, [&ret](Ctx){
+            //this should not be executed
+            ret = FAILED;
+        });
+
+        {
+            //wait for the task to be started
+            QVERIFY(barrierPre.wait(TASK_TIMEOUT));
+            dummy.reset();
+            QVERIFY(barrierPost.wait(TASK_TIMEOUT));
+        }
+        CHECK_TASK_TIMEOUT(ret);
     }
 
 private:

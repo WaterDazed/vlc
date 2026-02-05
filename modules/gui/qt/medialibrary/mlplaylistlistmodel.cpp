@@ -94,18 +94,21 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
 
     setTransactionPending(true);
 
-    m_mediaLib->runOnMLThread<Ctx>(this,
-    //ML thread
-    [name](vlc_medialibrary_t* ml, Ctx& ctx)
+    auto res =
+    m_mediaLib->run<Ctx>(
+    [name](vlc_medialibrary_t* ml) -> Ctx
     {
+        Ctx ctx;
         vlc_ml_playlist_t * playlist = vlc_ml_playlist_create(ml, qtu(name));
         if (playlist)
         {
             ctx.createdPlaylistId = MLItemId(playlist->i_id, VLC_ML_PARENT_UNKNOWN);
             vlc_ml_playlist_release(playlist);
         }
-    },
-    [this, initialItems](quint64, const Ctx& ctx) {
+        return ctx;
+    });
+    m_mediaLib->resultToUI<Ctx>(this, res,
+    [this, initialItems](const Ctx ctx) {
         endTransaction(); // this is intentionally called here and not after `append()`
 
         if (ctx.createdPlaylistId.id)
@@ -124,8 +127,8 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
     if (unlikely(!setTransactionPending(true)))
         return;
 
-    m_mediaLib->runOnMLThread(this,
-    //ML thread
+    auto res =
+    m_mediaLib->run<void>(
     [playlistId, ids](vlc_medialibrary_t* ml) {
         std::vector<MLItemId> mlItemIdVector;
         mlItemIdVector.reserve(ids.size());
@@ -166,8 +169,8 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
                 vlc_ml_media_release(ml_media);
             }
         }
-    },
-    //UI thread
+    });
+    m_mediaLib->resultToUI(this, res,
     [this]() {
         endTransaction();
     });
@@ -194,14 +197,14 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
         itemList.push_back(itemId);
     }
 
-    m_mediaLib->runOnMLThread(this,
-    //ML thread
+    auto res =
+    m_mediaLib->run<void>(
     [itemList](vlc_medialibrary_t* ml)
     {
         for (auto itemId : itemList)
             vlc_ml_playlist_delete(ml, itemId.id);
-    },
-    //UI thread
+    });
+    m_mediaLib->resultToUI(this, res,
     [this](){
         endTransaction();
     });
@@ -235,7 +238,7 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
 
     int64_t id = playlist->getId().id;
 
-    m_mediaLib->runOnMLThread(this,
+    m_mediaLib->run<void>(
     // ML thread
     [id, result](vlc_medialibrary_t * ml)
     {

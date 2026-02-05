@@ -25,6 +25,7 @@
 #include <QMap>
 #include <QThreadPool>
 #include <QMutex>
+#include <QtConcurrent/QtConcurrent>
 
 class RunOnThreadBaseRunner;
 
@@ -51,6 +52,23 @@ public:
                           std::function<void (Ctx&)> mlFun,
                           std::function<void (quint64 taskId, Ctx&)> uiFun,
                           const char* queue = nullptr);
+
+    template<typename Res>
+    QFuture<Res> run(std::function<Res ()> poolCb);
+
+    template<typename Res>
+    void resultToUI(const QObject*, QFuture<Res> result, std::function< void(Res ctx)> uiCB);
+
+    void resultToUI(const QObject* obj, QFuture<void> future, std::function< void(void)> uiFun)
+    {
+        auto dataWatcher = std::make_shared<QFutureWatcher<void>>();
+        dataWatcher->setFuture(future);
+
+        connect(dataWatcher.get(), &QFutureWatcher<void>::finished, obj, [uiFun, dataWatcher] {
+            uiFun();
+        }, Qt::SingleShotConnection);
+    }
+
 
 private slots:
     void runOnThreadDone(RunOnThreadBaseRunner* runner, quint64 target, const QObject* object, int status);
@@ -168,6 +186,26 @@ quint64 ThreadRunner::runOnThread(const QObject* obj,
     m_objectTasks.insert(obj, taskId);
     start(runnable, queue);
     return taskId;
+}
+
+template<typename Res>
+QFuture<Res> ThreadRunner::run(std::function<Res ()> poolCb)
+{
+    return QtConcurrent::run(&m_threadPool, [poolCb]() -> Res {
+        return poolCb();
+    });
+}
+
+template<typename Res>
+void ThreadRunner::resultToUI(const QObject* obj, QFuture<Res> future, std::function< void(Res ctx)> uiFun)
+{
+    auto dataWatcher = std::make_shared<QFutureWatcher<Res>>();
+    dataWatcher->setFuture(future);
+
+    connect(dataWatcher.get(), &QFutureWatcher<Res>::finished, obj, [uiFun, dataWatcher] {
+        Res ctx = dataWatcher->future().takeResult();
+        uiFun(std::move(ctx));
+    }, Qt::SingleShotConnection);
 }
 
 #endif // MLTHREADPOOL_HPP

@@ -101,7 +101,7 @@ QHash<int, QByteArray> MLFoldersBaseModel::roleNames() const
 void MLFoldersBaseModel::reload(const int row)
 {
     const QString mrl = m_mrls.at(row).mrl;
-    m_mediaLib->runOnMLThread(this, [mrl](vlc_medialibrary_t *ml)
+    m_mediaLib->run<void>([mrl](vlc_medialibrary_t *ml)
     {
         vlc_ml_reload_folder( ml, qtu(mrl) );
     });
@@ -137,9 +137,10 @@ void MLFoldersBaseModel::updateImpl(vlc_ml_folder_list_t* (*folderListFunc)( vlc
         std::vector<MLFoldersBaseModel::EntryPoint> r;
     };
 
-    m_mediaLib->runOnMLThread<Ctx>(this,
-    //ML thread
-    [folderListFunc](vlc_medialibrary_t* ml,  Ctx& ctx){
+    auto res =
+    m_mediaLib->run<Ctx>(
+    [folderListFunc](vlc_medialibrary_t* ml) -> Ctx {
+        Ctx ctx;
         vlc_ml_folder_list_t* entrypoints = folderListFunc( ml, nullptr );
         if ( entrypoints != nullptr )
         {
@@ -147,9 +148,10 @@ void MLFoldersBaseModel::updateImpl(vlc_ml_folder_list_t* (*folderListFunc)( vlc
                 ctx.r.emplace_back( entrypoints->p_items[i] );
             vlc_ml_release( entrypoints );
         }
-    },
-    //UI thread
-    [this](quint64, Ctx& ctx)
+        return ctx;
+    });
+    m_mediaLib->resultToUI<Ctx>(this, res,
+    [this](Ctx ctx)
     {
         beginResetModel();
         m_mrls = std::move(ctx.r);

@@ -36,7 +36,7 @@ void MLMediaModel::setMediaIsFavorite(const QModelIndex &index, bool isFavorite)
     assert(media != nullptr);
 
     // on ML thread
-    m_mediaLib->runOnMLThread(this, [id = media->getId().id, isFavorite](vlc_medialibrary_t *ml)
+    m_mediaLib->run<void>([id = media->getId().id, isFavorite](vlc_medialibrary_t *ml)
     {
         vlc_ml_media_set_favorite(ml, id, isFavorite);
     });
@@ -99,7 +99,7 @@ void MLMediaModel::deleteFileFromSource(const QModelIndex &index)
     QUrl parentUrl = getParentURL(index);
     QString parentUrlString = parentUrl.toString();
 
-    m_mediaLib->runOnMLThread(this,
+    m_mediaLib->run<void>(
                               [parentUrlString](vlc_medialibrary_t *ml)
                               {
                                   vlc_ml_reload_folder(ml, qtu(parentUrlString));
@@ -231,7 +231,7 @@ void MLMediaModel::generateThumbnail(const MLVideo *video) const
     assert(video != nullptr);
 
     // on ML thread
-    m_mediaLib->runOnMLThread(this, [id = video->getId().id](vlc_medialibrary_t *ml)
+    m_mediaLib->run<void>([id = video->getId().id](vlc_medialibrary_t *ml)
     {
         vlc_ml_media_generate_thumbnail(ml, id, VLC_ML_THUMBNAIL_SMALL, 512, 320, .15);
     });

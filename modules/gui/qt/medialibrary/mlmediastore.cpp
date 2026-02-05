@@ -53,16 +53,18 @@ void MLMediaStore::insert(const QString &mrl)
 
     m_files.insert(mrl);
 
-    m_ml->runOnMLThread<Ctx>(this,
-    //ML thread
-    [mrl](vlc_medialibrary_t *ml, Ctx &ctx)
+    auto res =
+    m_ml->run<Ctx>(
+    [mrl](vlc_medialibrary_t *ml) -> Ctx
     {
+        Ctx ctx;
         ml_unique_ptr<vlc_ml_media_t> media {vlc_ml_get_media_by_mrl(ml, qtu(mrl))};
         if (media)
             ctx.media = MLMedia(media.get());
-    },
-    //UI thread
-    [this, mrl](quint64, Ctx &ctx)
+        return ctx;
+    });
+    m_ml->resultToUI<Ctx>(this, res,
+    [this, mrl](Ctx ctx)
     {
         if (!ctx.media.valid())
             return; // failed to get media, TODO: notify??
