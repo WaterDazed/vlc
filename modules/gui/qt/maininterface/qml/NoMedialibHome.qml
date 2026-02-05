@@ -135,6 +135,8 @@ FocusScope {
 
                 focus: true
 
+                AccessibleCompat.id: "openFile"
+
                 text: qsTr("Open File")
 
                 // NOTE: Use the same width for the buttons (give more width if necessary) to have bilateral symmetry:

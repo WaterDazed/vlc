@@ -108,31 +108,36 @@ FocusScope {
             name: "home",
             url: MainCtx.mediaLibraryAvailable ?
                  "qrc:///qt/qml/VLC/MediaLibrary/HomeDisplay.qml" :
-                 "qrc:///qt/qml/VLC/MainInterface/NoMedialibHome.qml"
+                 "qrc:///qt/qml/VLC/MainInterface/NoMedialibHome.qml",
+            accessibleId: "homeNavBar"
         }, {
             listed: MainCtx.mediaLibraryAvailable,
             displayText: qsTr("Video"),
             icon: VLCIcons.topbar_video,
             name: "video",
-            url: "qrc:///qt/qml/VLC/MediaLibrary/VideoDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/VideoDisplay.qml",
+            accessibleId: "videoNavBar"
         }, {
             listed: MainCtx.mediaLibraryAvailable,
             displayText: qsTr("Music"),
             icon: VLCIcons.topbar_music,
             name: "music",
-            url: "qrc:///qt/qml/VLC/MediaLibrary/MusicDisplay.qml"
+            url: "qrc:///qt/qml/VLC/MediaLibrary/MusicDisplay.qml",
+            accessibleId: "musicNavBar"
         }, {
             listed: true,
             displayText: qsTr("Browse"),
             icon: VLCIcons.topbar_network,
             name: "network",
-            url: "qrc:///qt/qml/VLC/Network/BrowseDisplay.qml"
+            url: "qrc:///qt/qml/VLC/Network/BrowseDisplay.qml",
+            accessibleId: "browseNavBar"
         }, {
             listed: true,
             displayText: qsTr("Discover"),
             icon: VLCIcons.topbar_discover,
             name: "discover",
-            url: "qrc:///qt/qml/VLC/Network/DiscoverDisplay.qml"
+            url: "qrc:///qt/qml/VLC/Network/DiscoverDisplay.qml",
+            accessibleId: "discoverNavBar"
         }, {
             listed: false,
             name: "mlsettings",
@@ -151,6 +156,7 @@ FocusScope {
                            displayText: e.displayText,
                            icon: e.icon,
                            name: e.name,
+                           accessibleId: e.accessibleId
                        })
             })
         }
