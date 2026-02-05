@@ -72,7 +72,7 @@ typedef void (*dec_on_flush_cb)(struct decoder_sys_t *);
 typedef int (*dec_process_output_cb)(decoder_t *, mc_api_out *, picture_t **,
                                      block_t **);
 
-struct android_picture_ctx
+struct legacy_picture_ctx
 {
     picture_context_t s;
     atomic_uint refs;
@@ -128,7 +128,7 @@ typedef struct decoder_sys_t
         struct
         {
             vlc_video_context *ctx;
-            struct android_picture_ctx apic_ctxs[MAX_PIC];
+            struct legacy_picture_ctx apic_ctxs[MAX_PIC];
             void *p_surface;
             unsigned i_angle;
             unsigned i_input_offset_x, i_input_offset_y;
@@ -140,6 +140,9 @@ typedef struct decoder_sys_t
             timestamp_fifo_t *timestamp_fifo;
             int i_mpeg_dar_num, i_mpeg_dar_den;
             struct vlc_asurfacetexture *surfacetexture;
+            bool use_air;
+            vlc_cond_t air_cond;
+            unsigned air_waiting_count;
         } video;
         struct {
             date_t i_end_date;
@@ -441,6 +444,166 @@ static int ParseExtra(decoder_t *p_dec)
         return VLC_SUCCESS;
 }
 
+static enum mc_media_format_color_range_t
+vlc_to_mc_color_range(video_color_range_t vlc_range)
+{
+    switch (vlc_range)
+    {
+        case COLOR_RANGE_FULL:
+            return MC_COLOR_RANGE_FULL;
+        case COLOR_RANGE_LIMITED:
+            return MC_COLOR_RANGE_LIMITED;
+        default:
+            return MC_COLOR_RANGE_UNSPECIFIED;
+    }
+}
+
+static video_color_range_t
+mc_to_vlc_color_range(enum mc_media_format_color_range_t mc_range)
+{
+    switch (mc_range)
+    {
+        case MC_COLOR_RANGE_FULL:
+            return COLOR_RANGE_FULL;
+        case MC_COLOR_RANGE_LIMITED:
+            return COLOR_RANGE_LIMITED;
+        default:
+            return COLOR_RANGE_UNDEF;
+    }
+}
+
+static enum mc_media_format_color_standard_t
+vlc_to_mc_color_standard(video_color_primaries_t vlc_primaries)
+{
+    switch (vlc_primaries)
+    {
+        case COLOR_PRIMARIES_BT601_525:
+            return MC_COLOR_STANDARD_BT601_NTSC;
+        case COLOR_PRIMARIES_BT601_625:
+            return MC_COLOR_STANDARD_BT601_PAL;
+        case COLOR_PRIMARIES_BT709:
+            return MC_COLOR_STANDARD_BT709;
+        case COLOR_PRIMARIES_BT2020:
+            return MC_COLOR_STANDARD_BT2020;
+        default:
+            return MC_COLOR_STANDARD_UNSPECIFIED;
+    }
+}
+
+static video_color_primaries_t
+mc_to_vlc_primaries(enum mc_media_format_color_standard_t mc_standard)
+{
+    switch (mc_standard)
+    {
+        case MC_COLOR_STANDARD_BT709:
+            return COLOR_PRIMARIES_BT709;
+        case MC_COLOR_STANDARD_BT601_PAL:
+        case MC_COLOR_STANDARD_BT601_NTSC:
+            return COLOR_PRIMARIES_BT601_525;
+        case MC_COLOR_STANDARD_BT2020:
+            return COLOR_PRIMARIES_BT2020;
+        default:
+            return COLOR_PRIMARIES_UNDEF;
+    }
+}
+
+static video_color_space_t
+mc_to_vlc_color_space(enum mc_media_format_color_standard_t mc_standard)
+{
+    switch (mc_standard)
+    {
+        case MC_COLOR_STANDARD_BT709:
+            return COLOR_SPACE_BT709;
+        case MC_COLOR_STANDARD_BT601_PAL:
+        case MC_COLOR_STANDARD_BT601_NTSC:
+            return COLOR_SPACE_BT601;
+        case MC_COLOR_STANDARD_BT2020:
+            return COLOR_SPACE_BT2020;
+        default:
+            return COLOR_SPACE_UNDEF;
+    }
+}
+
+static enum mc_media_format_color_transfer_t
+vlc_to_mc_color_transfer(video_transfer_func_t vlc_transfer)
+{
+    switch (vlc_transfer)
+    {
+        case TRANSFER_FUNC_LINEAR:
+            return MC_COLOR_TRANSFER_LINEAR;
+        case TRANSFER_FUNC_SMPTE_ST2084:
+            return MC_COLOR_TRANSFER_ST2084;
+        case TRANSFER_FUNC_HLG:
+            return MC_COLOR_TRANSFER_HLG;
+        case TRANSFER_FUNC_BT709:
+            return MC_COLOR_TRANSFER_SDR_VIDEO;
+        default:
+            return MC_COLOR_TRANSFER_UNSPECIFIED;
+    }
+}
+
+static video_transfer_func_t
+mc_to_vlc_color_transfer(enum mc_media_format_color_transfer_t mc_transfer)
+{
+    switch (mc_transfer)
+    {
+        case MC_COLOR_TRANSFER_LINEAR:
+            return TRANSFER_FUNC_LINEAR;
+        case MC_COLOR_TRANSFER_SDR_VIDEO:
+            return TRANSFER_FUNC_BT709;
+        case MC_COLOR_TRANSFER_ST2084:
+            return TRANSFER_FUNC_SMPTE_ST2084;
+        case MC_COLOR_TRANSFER_HLG:
+            return TRANSFER_FUNC_HLG;
+        default:
+            return TRANSFER_FUNC_UNDEF;
+    }
+}
+
+static void
+vlc_to_mc_hdr_static_info(const video_format_t *fmt, uint8_t *hdr)
+{
+    hdr[0] = 0; /* Type 0: SMPTE ST 2086 + CTA 861.3 */
+    /* Primaries: R, G, B, W as 16-bit little-endian x,y pairs */
+    SetWLE(&hdr[1],  fmt->mastering.primaries[4]); /* Rx */
+    SetWLE(&hdr[3],  fmt->mastering.primaries[5]); /* Ry */
+    SetWLE(&hdr[5],  fmt->mastering.primaries[0]); /* Gx */
+    SetWLE(&hdr[7],  fmt->mastering.primaries[1]); /* Gy */
+    SetWLE(&hdr[9],  fmt->mastering.primaries[2]); /* Bx */
+    SetWLE(&hdr[11], fmt->mastering.primaries[3]); /* By */
+    SetWLE(&hdr[13], fmt->mastering.white_point[0]); /* Wx */
+    SetWLE(&hdr[15], fmt->mastering.white_point[1]); /* Wy */
+    /* Luminance: max in 1 cd/m² units, min in 0.0001 cd/m² units */
+    SetWLE(&hdr[17], fmt->mastering.max_luminance / 10000);
+    SetWLE(&hdr[19], fmt->mastering.min_luminance);
+    /* Content light levels */
+    SetWLE(&hdr[21], fmt->lighting.MaxCLL);
+    SetWLE(&hdr[23], fmt->lighting.MaxFALL);
+}
+
+static void
+mc_to_vlc_hdr_static_info(const uint8_t *hdr, video_format_t *fmt)
+{
+    if (hdr[0] != 0) /* Only Type 0: SMPTE ST 2086 + CTA 861.3 supported */
+        return;
+
+    /* Primaries: R, G, B, W as 16-bit little-endian x,y pairs */
+    fmt->mastering.primaries[4] = GetWLE(&hdr[1]); /* Rx */
+    fmt->mastering.primaries[5] = GetWLE(&hdr[3]); /* Ry */
+    fmt->mastering.primaries[0] = GetWLE(&hdr[5]); /* Gx */
+    fmt->mastering.primaries[1] = GetWLE(&hdr[7]); /* Gy */
+    fmt->mastering.primaries[2] = GetWLE(&hdr[9]); /* Bx */
+    fmt->mastering.primaries[3] = GetWLE(&hdr[11]); /* By */
+    fmt->mastering.white_point[0] = GetWLE(&hdr[13]); /* Wx */
+    fmt->mastering.white_point[1] = GetWLE(&hdr[15]); /* Wy */
+    /* Luminance: max in 1 cd/m² units, min in 0.0001 cd/m² units */
+    fmt->mastering.max_luminance = GetWLE(&hdr[17]) * 10000;
+    fmt->mastering.min_luminance = GetWLE(&hdr[19]);
+    /* Content light levels */
+    fmt->lighting.MaxCLL  = GetWLE(&hdr[21]);
+    fmt->lighting.MaxFALL = GetWLE(&hdr[23]);
+}
+
 /*****************************************************************************
  * StartMediaCodec: Create the mediacodec instance
  *****************************************************************************/
@@ -457,56 +620,15 @@ static int StartMediaCodec(decoder_t *p_dec)
 
         args.video.p_surface = p_sys->video.p_surface;
 
-        switch (p_dec->fmt_out.video.color_range)
-        {
-            case COLOR_RANGE_FULL:
-                args.video.color_range = MC_COLOR_RANGE_FULL;
-                break;
-            case COLOR_RANGE_LIMITED:
-                args.video.color_range = MC_COLOR_RANGE_LIMITED;
-                break;
-            default:
-                args.video.color_range = MC_COLOR_RANGE_UNSPECIFIED;
-                break;
-        }
+        args.video.color.range = vlc_to_mc_color_range(p_dec->fmt_out.video.color_range);
+        args.video.color.standard = vlc_to_mc_color_standard(p_dec->fmt_out.video.primaries);
+        args.video.color.transfer = vlc_to_mc_color_transfer(p_dec->fmt_out.video.transfer);
 
-        switch (p_dec->fmt_out.video.primaries)
-        {
-            case COLOR_PRIMARIES_BT601_525:
-                args.video.color_standard = MC_COLOR_STANDARD_BT601_NTSC;
-                break;
-            case COLOR_PRIMARIES_BT601_625:
-                args.video.color_standard = MC_COLOR_STANDARD_BT601_PAL;
-                break;
-            case COLOR_PRIMARIES_BT709:
-                args.video.color_standard = MC_COLOR_STANDARD_BT709;
-                break;
-            case COLOR_PRIMARIES_BT2020:
-                args.video.color_standard = MC_COLOR_STANDARD_BT2020;
-                break;
-            default:
-                args.video.color_standard = MC_COLOR_STANDARD_UNSPECIFIED;
-                break;
-        }
-
-        switch (p_dec->fmt_out.video.transfer)
-        {
-            case TRANSFER_FUNC_LINEAR:
-                args.video.color_transfer = MC_COLOR_TRANSFER_LINEAR;
-                break;
-            case TRANSFER_FUNC_SMPTE_ST2084:
-                args.video.color_transfer = MC_COLOR_TRANSFER_ST2084;
-                break;
-            case TRANSFER_FUNC_HLG:
-                args.video.color_transfer = MC_COLOR_TRANSFER_HLG;
-                break;
-            case TRANSFER_FUNC_BT709:
-                args.video.color_transfer = MC_COLOR_TRANSFER_SDR_VIDEO;
-                break;
-            default:
-                args.video.color_transfer = MC_COLOR_TRANSFER_UNSPECIFIED;
-                break;
-        }
+        args.video.color.has_hdr_static_info =
+            p_dec->fmt_out.video.mastering.max_luminance != 0;
+        if (args.video.color.has_hdr_static_info)
+            vlc_to_mc_hdr_static_info(&p_dec->fmt_out.video,
+                                      args.video.color.hdr_static_info);
 
         args.video.b_tunneled_playback = args.video.p_surface ?
                 var_InheritBool(p_dec, CFG_PREFIX "tunneled-playback") : false;
@@ -544,7 +666,7 @@ static void StopMediaCodec(decoder_sys_t *p_sys)
     p_sys->api.stop(&p_sys->api);
 }
 
-static bool AndroidPictureContextRelease(struct android_picture_ctx *apctx,
+static bool AndroidPictureContextRelease(struct legacy_picture_ctx *apctx,
                                          bool render)
 {
     int index = atomic_exchange(&apctx->index, -1);
@@ -562,8 +684,8 @@ static bool AndroidPictureContextRelease(struct android_picture_ctx *apctx,
 
 static bool PictureContextRenderPic(struct picture_context_t *ctx)
 {
-    struct android_picture_ctx *apctx =
-        container_of(ctx, struct android_picture_ctx, s);
+    struct legacy_picture_ctx *apctx =
+        container_of(ctx, struct legacy_picture_ctx, s);
 
     return AndroidPictureContextRelease(apctx, true);
 }
@@ -571,8 +693,8 @@ static bool PictureContextRenderPic(struct picture_context_t *ctx)
 static bool PictureContextRenderPicTs(struct picture_context_t *ctx,
                                       vlc_tick_t ts)
 {
-    struct android_picture_ctx *apctx =
-        container_of(ctx, struct android_picture_ctx, s);
+    struct legacy_picture_ctx *apctx =
+        container_of(ctx, struct legacy_picture_ctx, s);
 
     int index = atomic_exchange(&apctx->index, -1);
     if (index >= 0)
@@ -597,19 +719,19 @@ PictureContextGetTexture(picture_context_t *context)
     return p_sys->video.surfacetexture;
 }
 
-static void PictureContextDestroy(struct picture_context_t *ctx)
+static void LegacyPictureContextDestroy(struct picture_context_t *ctx)
 {
-    struct android_picture_ctx *apctx =
-        container_of(ctx, struct android_picture_ctx, s);
+    struct legacy_picture_ctx *apctx =
+        container_of(ctx, struct legacy_picture_ctx, s);
 
     if (atomic_fetch_sub_explicit(&apctx->refs, 1, memory_order_acq_rel) == 1)
         AndroidPictureContextRelease(apctx, false);
 }
 
-static struct picture_context_t *PictureContextCopy(struct picture_context_t *ctx)
+static struct picture_context_t *LegacyPictureContextCopy(struct picture_context_t *ctx)
 {
-    struct android_picture_ctx *apctx =
-        container_of(ctx, struct android_picture_ctx, s);
+    struct legacy_picture_ctx *apctx =
+        container_of(ctx, struct legacy_picture_ctx, s);
 
     atomic_fetch_add_explicit(&apctx->refs, 1, memory_order_relaxed);
     vlc_video_context_Hold(ctx->vctx);
@@ -617,10 +739,12 @@ static struct picture_context_t *PictureContextCopy(struct picture_context_t *ct
 }
 
 static void AbortDecoderLocked(decoder_sys_t *p_dec);
-static void CleanFromVideoContext(void *priv)
+static void CleanFromLegacyVideoContext(void *priv)
 {
     android_video_context_t *avctx = priv;
     decoder_sys_t *p_sys = avctx->dec_opaque;
+
+    assert(!p_sys->video.use_air);
 
     vlc_mutex_lock(&p_sys->lock);
     /* Unblock output thread waiting in dequeue_out */
@@ -636,13 +760,13 @@ static void CleanFromVideoContext(void *priv)
 
 static void ReleaseAllPictureContexts(decoder_sys_t *p_sys)
 {
-    /* No picture context if no direct rendering. */
-    if (p_sys->video.ctx == NULL)
+    /* No picture context if no direct rendering or using air. */
+    if (p_sys->video.ctx == NULL || p_sys->video.use_air)
         return;
 
     for (size_t i = 0; i < ARRAY_SIZE(p_sys->video.apic_ctxs); ++i)
     {
-        struct android_picture_ctx *apctx = &p_sys->video.apic_ctxs[i];
+        struct legacy_picture_ctx *apctx = &p_sys->video.apic_ctxs[i];
 
         /* Don't decrement apctx->refs, the picture_context should stay valid
          * even if the underlying buffer is released since it might still be
@@ -651,7 +775,7 @@ static void ReleaseAllPictureContexts(decoder_sys_t *p_sys)
     }
 }
 
-static struct android_picture_ctx *
+static struct legacy_picture_ctx *
 GetPictureContext(decoder_t *p_dec, unsigned index)
 {
     decoder_sys_t *p_sys = p_dec->p_sys;
@@ -661,7 +785,7 @@ GetPictureContext(decoder_t *p_dec, unsigned index)
     {
         for (size_t i = 0; i < ARRAY_SIZE(p_sys->video.apic_ctxs); ++i)
         {
-            struct android_picture_ctx *apctx = &p_sys->video.apic_ctxs[i];
+            struct legacy_picture_ctx *apctx = &p_sys->video.apic_ctxs[i];
             /* Find an available picture context (ie. refs == 0) */
             unsigned expected_refs = 0;
             if (atomic_compare_exchange_strong(&apctx->refs, &expected_refs, 1))
@@ -674,7 +798,7 @@ GetPictureContext(decoder_t *p_dec, unsigned index)
 
                 /* Unlikely: Restore the ref count and try a next one, since
                  * this picture context is being released. Cf.
-                 * PictureContextDestroy(), this function first decrement the
+                 * LegacyPictureContextDestroy(), this function first decrement the
                  * ref count before releasing the index.  */
                 atomic_store(&apctx->refs, 0);
             }
@@ -687,6 +811,292 @@ GetPictureContext(decoder_t *p_dec, unsigned index)
         vlc_tick_sleep(VOUT_OUTMEM_SLEEP);
         slept = true;
     }
+}
+
+static picture_t*
+NewPicture(decoder_t *p_dec, vlc_tick_t ts)
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+
+    /* If the oldest input block had no PTS, the timestamp of
+     * the frame returned by MediaCodec might be wrong so we
+     * overwrite it with the corresponding dts. Call FifoGet
+     * first in order to avoid a gap if buffers are released
+     * due to an invalid format or a preroll */
+    int64_t forced_ts = timestamp_FifoGet(p_sys->video.timestamp_fifo);
+
+    picture_t *p_pic = decoder_NewPicture(p_dec);
+    if (p_pic == NULL)
+        return NULL;
+
+    if (forced_ts == VLC_TICK_INVALID)
+        p_pic->date = ts;
+    else
+        p_pic->date = forced_ts;
+    p_pic->b_progressive = true;
+    return p_pic;
+}
+
+static void CleanFromVideoContext(void *priv)
+{
+    android_video_context_t *avctx = priv;
+    assert(avctx->dec_opaque == NULL);
+    assert(avctx->air != NULL);
+    avctx->air_api->AImageReader.delete(avctx->air);
+}
+
+static void
+android_picture_ctx_destroy(picture_context_t *context)
+{
+    struct android_picture_ctx *apctx = container_of(context, struct android_picture_ctx, s);
+
+    if (!vlc_atomic_rc_dec(&apctx->rc))
+        return;
+
+    android_video_context_t *avctx =
+        vlc_video_context_GetPrivate(apctx->s.vctx, VLC_VIDEO_CONTEXT_AWINDOW);
+
+    if (apctx->fence_fd >= 0)
+        close(apctx->fence_fd);
+
+    avctx->air_api->AImage.deleteAsync(apctx->image, apctx->read_fence_fd);
+
+    free(apctx);
+}
+
+static picture_context_t *
+android_picture_ctx_copy(picture_context_t *src)
+{
+    struct android_picture_ctx *src_ctx = container_of(src, struct android_picture_ctx, s);
+    vlc_atomic_rc_inc(&src_ctx->rc);
+    return &src_ctx->s;
+}
+
+static int
+QueueAImagePicture(decoder_t *p_dec, android_video_context_t *avctx,
+                   AImage *image, int fence_fd)
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+
+    /* same value than p_out->buf.i_ts (propagated from MediaCodec input to
+     * output to AImageReader */
+    int64_t timestamp;
+    int32_t status = avctx->air_api->AImage.getTimestamp(image, &timestamp);
+
+    vlc_tick_t date = status == 0 ? VLC_TICK_FROM_NS(timestamp) : 0;
+
+    picture_t *p_pic = NewPicture(p_dec, date);
+    if (p_pic == NULL)
+        goto error;
+
+    if (p_pic->date == VLC_TICK_INVALID)
+    {
+        msg_Warn(p_dec, "invalid ts from AImageReader");
+        goto error;
+    }
+
+    struct android_picture_ctx *apctx = malloc(sizeof(*apctx));
+    if (apctx == NULL)
+        goto error;
+
+    apctx->image = image;
+    apctx->fence_fd = fence_fd;
+    apctx->read_fence_fd = -1;
+    apctx->sc = NULL;
+    vlc_atomic_rc_init(&apctx->rc);
+
+    apctx->s = (picture_context_t) {
+        android_picture_ctx_destroy, android_picture_ctx_copy, p_sys->video.ctx,
+    };
+    p_pic->context = &apctx->s;
+    vlc_video_context_Hold(apctx->s.vctx);
+    decoder_QueueVideo(p_dec, p_pic);
+
+    return VLC_SUCCESS;
+
+error:
+    if (p_pic != NULL)
+        picture_Release(p_pic);
+    if (fence_fd > 0)
+        close(fence_fd);
+    avctx->air_api->AImage.deleteAsync(image, -1);
+    return VLC_EGENERIC;
+}
+
+static void
+AImageReader_OnImageAvailable(void *context, AImageReader *reader)
+{
+    decoder_t *p_dec = context;
+    decoder_sys_t *p_sys = p_dec->p_sys;
+    assert(p_sys->video.use_air);
+    android_video_context_t *avctx =
+        vlc_video_context_GetPrivate(p_sys->video.ctx, VLC_VIDEO_CONTEXT_AWINDOW);
+    assert(avctx->air != NULL);
+    assert(reader == avctx->air); (void) reader;
+
+    AImage *image = NULL;
+    int fence_fd = -1;
+    int32_t status =
+        avctx->air_api->AImageReader.acquireNextImageAsync(avctx->air, &image,
+                                                           &fence_fd);
+    if (status != 0)
+    {
+        msg_Warn(p_dec, "AImageReader_acquireNextImageAsync failed: %d",
+                    status);
+        return;
+    }
+    vlc_mutex_lock(&p_sys->lock);
+    assert(p_sys->video.air_waiting_count > 0);
+    p_sys->video.air_waiting_count--;
+    vlc_cond_signal(&p_sys->video.air_cond);
+    QueueAImagePicture(p_dec, avctx, image, fence_fd);
+    vlc_mutex_unlock(&p_sys->lock);
+}
+
+static int
+CreateSurfaceFromAImageReader(decoder_t *p_dec, vlc_decoder_device *dec_dev,
+                              AWindowHandler *awh, bool need_gpu)
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+    struct aimage_reader_api *air_api = AWindowHandler_getAImageReaderApi(awh);
+    struct asurface_control_api *asc_api = AWindowHandler_getASurfaceControlApi(awh);
+    if (air_api == NULL || asc_api == NULL)
+        return VLC_EGENERIC;
+
+    int32_t width = 1, height = 1; /* Ignored by MediaCodec */
+    int32_t format = AIMAGE_FORMAT_PRIVATE;
+    uint64_t usage = 0;
+    int32_t max_images = 32;
+
+    if (need_gpu)
+        usage |= AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+
+    AImageReader *reader;
+    int32_t status = air_api->AImageReader.newWithUsage(width, height, format,
+                                                        usage, max_images,
+                                                        &reader);
+
+    if (status != 0)
+    {
+        msg_Warn(p_dec, "AImageReader_newWithUsage failed: %d", status);
+        return VLC_EGENERIC;
+    }
+
+    ANativeWindow *window;
+    status = air_api->AImageReader.getWindow(reader, &window);
+
+    if (status != 0)
+    {
+        air_api->AImageReader.delete(reader);
+        msg_Warn(p_dec, "AImageReader_getWindow failed: %d", status);
+        return VLC_EGENERIC;
+    }
+
+    struct AImageReader_ImageListener listener = {
+        .context = p_dec,
+        .onImageAvailable = AImageReader_OnImageAvailable,
+    };
+
+    air_api->AImageReader.setImageListener(reader, &listener);
+
+    static const struct vlc_video_context_operations ops =
+    {
+        .destroy = CleanFromVideoContext,
+    };
+    p_sys->video.ctx =
+        vlc_video_context_Create(dec_dev, VLC_VIDEO_CONTEXT_AWINDOW,
+                                 sizeof(android_video_context_t), &ops);
+
+    if (!p_sys->video.ctx)
+    {
+        air_api->AImageReader.delete(reader);
+        return VLC_EGENERIC;
+    }
+
+    android_video_context_t *avctx =
+        vlc_video_context_GetPrivate(p_sys->video.ctx, VLC_VIDEO_CONTEXT_AWINDOW);
+    avctx->dec_opaque = NULL;
+    avctx->air_api = air_api;
+    avctx->asc_api = asc_api;
+    avctx->air = reader;
+    avctx->render = NULL;
+    avctx->render_ts = NULL;
+    avctx->get_texture = NULL;
+    avctx->texture = NULL;
+    p_sys->video.p_surface = window;
+    p_sys->video.use_air = true;
+    p_sys->video.air_waiting_count = 0;
+    assert(window != NULL);
+    return VLC_SUCCESS;
+}
+
+static int
+CreateSurface(decoder_t *p_dec, vlc_decoder_device *dec_dev,
+              AWindowHandler *awh, bool use_surfacetexture)
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+
+    static const struct vlc_video_context_operations ops =
+    {
+        .destroy = CleanFromLegacyVideoContext,
+    };
+    p_sys->video.ctx =
+        vlc_video_context_Create(dec_dev, VLC_VIDEO_CONTEXT_AWINDOW,
+                                 sizeof(android_video_context_t), &ops);
+
+    if (!p_sys->video.ctx)
+        return VLC_EGENERIC;
+
+    android_video_context_t *avctx =
+        vlc_video_context_GetPrivate(p_sys->video.ctx, VLC_VIDEO_CONTEXT_AWINDOW);
+
+    if (!use_surfacetexture)
+    {
+        p_sys->video.p_surface = AWindowHandler_getANativeWindow(awh, AWindow_Video);
+        assert (p_sys->video.p_surface);
+        if (!p_sys->video.p_surface)
+        {
+            msg_Err(p_dec, "Could not find a valid ANativeWindow");
+            goto error;
+        }
+        goto end;
+    }
+
+    p_sys->video.surfacetexture = vlc_asurfacetexture_New(awh, false);
+    assert(p_sys->video.surfacetexture);
+    if (p_sys->video.surfacetexture == NULL)
+        goto error;
+
+    p_sys->video.p_surface = p_sys->video.surfacetexture->window;
+    assert(p_sys->video.p_surface);
+
+end:
+    avctx->dec_opaque = p_dec->p_sys;
+    avctx->air_api = NULL;
+    avctx->air = NULL;
+    avctx->render = PictureContextRenderPic;
+    avctx->render_ts = p_sys->api.release_out_ts ? PictureContextRenderPicTs : NULL;
+    avctx->get_texture = p_sys->video.surfacetexture ? PictureContextGetTexture : NULL;
+    avctx->texture = NULL;
+
+    for (size_t i = 0; i < ARRAY_SIZE(p_sys->video.apic_ctxs); ++i)
+    {
+        struct legacy_picture_ctx *apctx = &p_sys->video.apic_ctxs[i];
+
+        apctx->s = (picture_context_t) {
+            LegacyPictureContextDestroy, LegacyPictureContextCopy,
+            p_sys->video.ctx,
+        };
+        atomic_init(&apctx->index, -1);
+        atomic_init(&apctx->refs, 0);
+    }
+
+    return VLC_SUCCESS;
+
+error:
+    vlc_video_context_Release(p_sys->video.ctx);
+    p_sys->video.ctx = NULL;
+    return VLC_EGENERIC;
 }
 
 static int
@@ -707,75 +1117,30 @@ CreateVideoContext(decoder_t *p_dec)
     /* Force OpenGL interop (via AWindow_SurfaceTexture) if there is a
      * projection or an orientation to handle, if the Surface owner is not able
      * to modify its layout. */
-
     p_sys->video.surfacetexture = NULL;
     int awh_caps = AWindowHandler_getCapabilities(awh);
     bool can_set_video_layout = awh_caps & AWH_CAPS_SET_VIDEO_LAYOUT;
     bool can_use_surfacetexture = awh_caps & AWH_CAPS_SURFACE_VIEW;
 
-    bool use_surfacetexture = can_use_surfacetexture
-     && (p_dec->fmt_out.video.projection_mode != PROJECTION_MODE_RECTANGULAR
-      || (!p_sys->api.b_support_rotation && p_dec->fmt_out.video.orientation != ORIENT_NORMAL)
-      || !can_set_video_layout);
+    bool need_gpu_transform =
+        p_dec->fmt_out.video.projection_mode != PROJECTION_MODE_RECTANGULAR
+        || (!p_sys->api.b_support_rotation && p_dec->fmt_out.video.orientation != ORIENT_NORMAL)
+        || !can_set_video_layout;
 
-    if (!use_surfacetexture)
+    bool use_surfacetexture = need_gpu_transform && can_use_surfacetexture;
+
+    int ret = CreateSurfaceFromAImageReader(p_dec, dec_dev, awh,
+                                            need_gpu_transform);
+    if (ret == VLC_SUCCESS)
     {
-        p_sys->video.p_surface = AWindowHandler_getANativeWindow(awh, AWindow_Video);
-        assert (p_sys->video.p_surface);
-        if (!p_sys->video.p_surface)
-        {
-            msg_Err(p_dec, "Could not find a valid ANativeWindow");
-            goto error;
-        }
+        vlc_decoder_device_Release(dec_dev);
+        return VLC_SUCCESS;
     }
 
-    if (use_surfacetexture || p_sys->video.p_surface == NULL)
-    {
-        p_sys->video.surfacetexture = vlc_asurfacetexture_New(awh, false);
-        assert(p_sys->video.surfacetexture);
-        if (p_sys->video.surfacetexture == NULL)
-            goto error;
-        p_sys->video.p_surface = p_sys->video.surfacetexture->window;
-        assert(p_sys->video.p_surface);
-    }
-
-    static const struct vlc_video_context_operations ops =
-    {
-        .destroy = CleanFromVideoContext,
-    };
-    p_sys->video.ctx =
-        vlc_video_context_Create(dec_dev, VLC_VIDEO_CONTEXT_AWINDOW,
-                                 sizeof(android_video_context_t), &ops);
+    ret = CreateSurface(p_dec, dec_dev, awh, use_surfacetexture);
     vlc_decoder_device_Release(dec_dev);
 
-    if (!p_sys->video.ctx)
-        return VLC_EGENERIC;
-
-    android_video_context_t *avctx =
-        vlc_video_context_GetPrivate(p_sys->video.ctx, VLC_VIDEO_CONTEXT_AWINDOW);
-    avctx->dec_opaque = p_dec->p_sys;
-    avctx->render = PictureContextRenderPic;
-    avctx->render_ts = p_sys->api.release_out_ts ? PictureContextRenderPicTs : NULL;
-    avctx->get_texture = p_sys->video.surfacetexture ? PictureContextGetTexture : NULL;
-    avctx->texture = NULL;
-
-    for (size_t i = 0; i < ARRAY_SIZE(p_sys->video.apic_ctxs); ++i)
-    {
-        struct android_picture_ctx *apctx = &p_sys->video.apic_ctxs[i];
-
-        apctx->s = (picture_context_t) {
-            PictureContextDestroy, PictureContextCopy,
-            p_sys->video.ctx,
-        };
-        atomic_init(&apctx->index, -1);
-        atomic_init(&apctx->refs, 0);
-    }
-
-    return VLC_SUCCESS;
-
-error:
-    vlc_decoder_device_Release(dec_dev);
-    return VLC_EGENERIC;
+    return ret;
 }
 
 static void CleanInputVideo(decoder_t *p_dec)
@@ -940,6 +1305,10 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
 
     if (p_dec->fmt_in->i_cat == VIDEO_ES)
     {
+        vlc_cond_init(&p_sys->video.air_cond);
+        p_sys->video.use_air = false;
+        p_sys->video.air_waiting_count = 0;
+
         switch (p_dec->fmt_in->i_codec)
         {
         case VLC_CODEC_H264:
@@ -1085,6 +1454,8 @@ static void AbortDecoderLocked(decoder_sys_t *p_sys)
     {
         p_sys->b_aborted = true;
         vlc_cond_broadcast(&p_sys->cond);
+        if (p_sys->cat == VIDEO_ES && p_sys->video.use_air)
+            vlc_cond_signal(&p_sys->video.air_cond);
     }
 }
 
@@ -1095,11 +1466,18 @@ static void CleanDecoder(decoder_sys_t *p_sys)
     CSDFree(p_sys);
     p_sys->api.clean(&p_sys->api);
 
-    if (p_sys->video.surfacetexture)
-        vlc_asurfacetexture_Delete(p_sys->video.surfacetexture);
+    switch (p_sys->cat)
+    {
+        case VIDEO_ES:
+            if (p_sys->video.surfacetexture)
+                vlc_asurfacetexture_Delete(p_sys->video.surfacetexture);
 
-    if (p_sys->video.timestamp_fifo)
-        timestamp_FifoRelease(p_sys->video.timestamp_fifo);
+            if (p_sys->video.timestamp_fifo)
+                timestamp_FifoRelease(p_sys->video.timestamp_fifo);
+            break;
+        default:
+            break;
+    }
 
     free(p_sys);
 }
@@ -1116,15 +1494,22 @@ static void CloseDecoder(vlc_object_t *p_this)
     p_sys->b_decoder_dead = true;
     vlc_mutex_unlock(&p_sys->lock);
 
-    if (p_sys->video.ctx)
+    if (p_sys->cat == VIDEO_ES && p_sys->video.ctx)
     {
-        /* If we have a video context, we're using Surface with inflight
-         * pictures, which might already have been queued, and flushing
-         * them would make them invalid, breaking mechanism like waiting
-         * on OnFrameAvailableListener.*/
+        if (!p_sys->video.use_air)
+        {
+            vlc_video_context_Release(p_sys->video.ctx);
+            /* If we have a video context, we're using Surface with inflight
+            * pictures, which might already have been queued, and flushing
+            * them would make them invalid, breaking mechanism like waiting
+            * on OnFrameAvailableListener.*/
+            CleanInputVideo(p_dec);
+            return;
+        }
+        android_video_context_t *avctx =
+            vlc_video_context_GetPrivate(p_sys->video.ctx, VLC_VIDEO_CONTEXT_AWINDOW);
+        avctx->air_api->AImageReader.setImageListener(avctx->air, NULL);
         vlc_video_context_Release(p_sys->video.ctx);
-        CleanInputVideo(p_dec);
-        return;
     }
 
     vlc_mutex_lock(&p_sys->lock);
@@ -1149,51 +1534,64 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
 
     if (p_out->type == MC_OUT_TYPE_BUF)
     {
-        picture_t *p_pic = NULL;
-
-        /* If the oldest input block had no PTS, the timestamp of
-         * the frame returned by MediaCodec might be wrong so we
-         * overwrite it with the corresponding dts. Call FifoGet
-         * first in order to avoid a gap if buffers are released
-         * due to an invalid format or a preroll */
-        int64_t forced_ts = timestamp_FifoGet(p_sys->video.timestamp_fifo);
-
         if (!p_sys->b_has_format) {
             msg_Warn(p_dec, "Buffers returned before output format is set, dropping frame");
+            timestamp_FifoGet(p_sys->video.timestamp_fifo); /* Remove timestamp */
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
         }
 
         if (p_out->buf.i_ts <= p_sys->i_preroll_end)
+        {
+            timestamp_FifoGet(p_sys->video.timestamp_fifo); /* Remove timestamp */
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
+        }
 
         if (!p_sys->api.b_direct_rendering && p_out->buf.p_ptr == NULL)
         {
             /* This can happen when receiving an EOS buffer */
             msg_Warn(p_dec, "Invalid buffer, dropping frame");
+            timestamp_FifoGet(p_sys->video.timestamp_fifo); /* Remove timestamp */
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
         }
-
-        p_pic = decoder_NewPicture(p_dec);
-        if (!p_pic) {
-            msg_Warn(p_dec, "NewPicture failed");
-            return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
-        }
-
-        if (forced_ts == VLC_TICK_INVALID)
-            p_pic->date = p_out->buf.i_ts;
-        else
-            p_pic->date = forced_ts;
-        p_pic->b_progressive = true;
 
         if (p_sys->api.b_direct_rendering)
         {
-            struct android_picture_ctx *apctx =
-                GetPictureContext(p_dec,p_out->buf.i_index);
-            assert(apctx);
-            assert(apctx->s.vctx);
-            vlc_video_context_Hold(apctx->s.vctx);
-            p_pic->context = &apctx->s;
+            if (p_sys->video.use_air)
+            {
+                /* We need to wait for AImageReader. Otherwise, we might
+                 * overwrite a picture (even when using acquireNextImageAsync) */
+                while (p_sys->video.air_waiting_count != 0 && !p_sys->b_aborted)
+                    vlc_cond_wait(&p_sys->video.air_cond, &p_sys->lock);
+                p_sys->video.air_waiting_count++;
+
+                p_sys->api.release_out(&p_sys->api, p_out->buf.i_index,
+                                       !p_sys->b_aborted);
+                /* picture will be wrapped from AImageReader callback */
+                assert(*pp_out_pic  == NULL);
+            }
+            else
+            {
+                picture_t *p_pic = NewPicture(p_dec, p_out->buf.i_ts);
+                if (!p_pic) {
+                    msg_Warn(p_dec, "NewPicture failed");
+                    return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
+                }
+
+                struct legacy_picture_ctx *apctx =
+                    GetPictureContext(p_dec,p_out->buf.i_index);
+                assert(apctx);
+                assert(apctx->s.vctx);
+                vlc_video_context_Hold(apctx->s.vctx);
+                p_pic->context = &apctx->s;
+                *pp_out_pic = p_pic;
+            }
         } else {
+            picture_t *p_pic = NewPicture(p_dec, p_out->buf.i_ts);
+            if (!p_pic) {
+                msg_Warn(p_dec, "NewPicture failed");
+                return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
+            }
+
             unsigned int chroma_div;
             GetVlcChromaSizes(p_dec->fmt_out.i_codec,
                               p_dec->fmt_out.video.i_width,
@@ -1208,9 +1606,8 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
                 picture_Release(p_pic);
                 return -1;
             }
+            *pp_out_pic = p_pic;
         }
-        assert(!(*pp_out_pic));
-        *pp_out_pic = p_pic;
         return 1;
     } else {
         assert(p_out->type == MC_OUT_TYPE_CONF);
@@ -1235,6 +1632,28 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
                 p_out->conf.video.stride, p_out->conf.video.slice_height,
                 p_out->conf.video.crop_left, p_out->conf.video.crop_top,
                 p_out->conf.video.crop_right, p_out->conf.video.crop_bottom);
+
+        /* Only use MediaCodec output as fallback when container/input is unspecified */
+        if (p_dec->fmt_out.video.primaries == COLOR_PRIMARIES_UNDEF)
+            p_dec->fmt_out.video.primaries =
+                mc_to_vlc_primaries(p_out->conf.video.color.standard);
+
+        if (p_dec->fmt_out.video.space == COLOR_SPACE_UNDEF)
+            p_dec->fmt_out.video.space =
+                 mc_to_vlc_color_space(p_out->conf.video.color.standard);
+
+        if (p_dec->fmt_out.video.transfer == TRANSFER_FUNC_UNDEF)
+            p_dec->fmt_out.video.transfer =
+                mc_to_vlc_color_transfer(p_out->conf.video.color.transfer);
+
+        if (p_dec->fmt_out.video.color_range == COLOR_RANGE_UNDEF)
+            p_dec->fmt_out.video.color_range =
+                mc_to_vlc_color_range(p_out->conf.video.color.range);
+
+        if (p_dec->fmt_out.video.mastering.max_luminance == 0
+            && p_out->conf.video.color.has_hdr_static_info)
+            mc_to_vlc_hdr_static_info(p_out->conf.video.color.hdr_static_info,
+                                      &p_dec->fmt_out.video);
 
         int i_width  = p_out->conf.video.crop_right + 1
                      - p_out->conf.video.crop_left;

@@ -103,9 +103,14 @@ static int ConfigureDecoder(mc_api *api, union mc_api_args *p_args)
         AMediaFormat_setInt32(p_sys->p_format, "height", p_args->video.i_height);
         AMediaFormat_setInt32(p_sys->p_format, "rotation-degrees", p_args->video.i_angle);
 
-        AMediaFormat_setInt32(p_sys->p_format, "color-range", p_args->video.color_range);
-        AMediaFormat_setInt32(p_sys->p_format, "color-standard", p_args->video.color_standard);
-        AMediaFormat_setInt32(p_sys->p_format, "color-transfer", p_args->video.color_transfer);
+        AMediaFormat_setInt32(p_sys->p_format, "color-range", p_args->video.color.range);
+        AMediaFormat_setInt32(p_sys->p_format, "color-standard", p_args->video.color.standard);
+        AMediaFormat_setInt32(p_sys->p_format, "color-transfer", p_args->video.color.transfer);
+
+        if (p_args->video.color.has_hdr_static_info)
+            AMediaFormat_setBuffer(p_sys->p_format, "hdr-static-info",
+                                   p_args->video.color.hdr_static_info,
+                                   sizeof(p_args->video.color.hdr_static_info));
 
         if (p_args->video.p_surface)
         {
@@ -341,6 +346,22 @@ static int GetOutput(mc_api *api, int i_index, mc_api_out *p_out)
             p_out->conf.video.crop_top      = GetFormatInteger(format, "crop-top");
             p_out->conf.video.crop_right    = GetFormatInteger(format, "crop-right");
             p_out->conf.video.crop_bottom   = GetFormatInteger(format, "crop-bottom");
+
+            /* Extract color info from output format (API 28+) */
+            p_out->conf.video.color.range = GetFormatInteger(format, "color-range");
+            p_out->conf.video.color.standard = GetFormatInteger(format, "color-standard");
+            p_out->conf.video.color.transfer = GetFormatInteger(format, "color-transfer");
+
+            /* Extract HDR static info if present */
+            p_out->conf.video.color.has_hdr_static_info = false;
+            void *hdr_data = NULL;
+            size_t hdr_size = 0;
+            if (AMediaFormat_getBuffer(format, "hdr-static-info", &hdr_data, &hdr_size)
+                && hdr_size <= sizeof(p_out->conf.video.color.hdr_static_info))
+            {
+                memcpy(p_out->conf.video.color.hdr_static_info, hdr_data, hdr_size);
+                p_out->conf.video.color.has_hdr_static_info = true;
+            }
         }
         else
         {

@@ -366,8 +366,8 @@ struct video_format_t
         /* similar to SMPTE ST 2086 mastering display color volume */
         uint16_t primaries[3*2]; /* G,B,R / x,y */
         uint16_t white_point[2]; /* x,y */
-        uint32_t max_luminance;
-        uint32_t min_luminance;
+        uint32_t max_luminance; /* 0.0001 cd/m² units */
+        uint32_t min_luminance; /* 0.0001 cd/m² units */
     } mastering;
     struct {
         /* similar to CTA-861.3 content light level */
