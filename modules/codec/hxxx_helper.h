@@ -121,6 +121,9 @@ int hxxx_helper_get_current_sar(const struct hxxx_helper *hh, int *p_num, int *p
 int hxxx_helper_get_current_profile_level(const struct hxxx_helper *hh,
                                           uint8_t *p_profile, uint8_t *p_level);
 
+int hxxx_helper_get_current_frame_rate(const struct hxxx_helper *hh,
+                                       unsigned *num, unsigned *den);
+
 int
 hxxx_helper_get_chroma_chroma(const struct hxxx_helper *hh, uint8_t *pi_chroma_format,
                               uint8_t *pi_depth_luma, uint8_t *pi_depth_chroma);

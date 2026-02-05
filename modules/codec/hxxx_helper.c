@@ -880,6 +880,28 @@ hxxx_helper_get_current_profile_level(const struct hxxx_helper *hh,
 }
 
 int
+hxxx_helper_get_current_frame_rate(const struct hxxx_helper *hh,
+                                   unsigned *num, unsigned *den)
+{
+    if (hh->i_codec == VLC_CODEC_H264)
+    {
+        const struct hxxx_helper_nal *hsps = h264_helper_get_current_sps(hh);
+        if (hsps && hsps->h264_sps &&
+            h264_get_frame_rate(hsps->h264_sps, num, den))
+            return VLC_SUCCESS;
+    }
+    else if (hh->i_codec == VLC_CODEC_HEVC)
+    {
+        const struct hxxx_helper_nal *hsps = &hh->hevc.sps_list[hh->hevc.i_current_sps];
+        const struct hxxx_helper_nal *hvps = &hh->hevc.vps_list[hh->hevc.i_current_vps];
+        if (hsps && hsps->hevc_sps && hvps && hvps->hevc_vps &&
+            hevc_get_frame_rate(hsps->hevc_sps, hvps->hevc_vps, num, den))
+            return VLC_SUCCESS;
+    }
+    return VLC_EGENERIC;
+}
+
+int
 hxxx_helper_get_chroma_chroma(const struct hxxx_helper *hh, uint8_t *pi_chroma_format,
                               uint8_t *pi_depth_luma, uint8_t *pi_depth_chroma)
 {

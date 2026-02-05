@@ -36,7 +36,6 @@
 #include <vlc_plugin.h>
 #include <vlc_codec.h>
 #include <vlc_block_helper.h>
-#include <vlc_timestamp_helper.h>
 #include <vlc_threads.h>
 #include <vlc_bits.h>
 
@@ -137,9 +136,10 @@ typedef struct decoder_sys_t
             unsigned int i_stride, i_slice_height;
             int i_pixel_format;
             struct hxxx_helper hh;
-            timestamp_fifo_t *timestamp_fifo;
             int i_mpeg_dar_num, i_mpeg_dar_den;
             struct vlc_asurfacetexture *surfacetexture;
+            date_t pts;
+            bool pts_warned;
         } video;
         struct {
             date_t i_end_date;
@@ -256,10 +256,24 @@ static int CSDDup(decoder_sys_t *p_sys, const void *p_buf, size_t i_buf)
 
 static void HXXXInitSize(decoder_t *p_dec, bool *p_size_changed)
 {
+    decoder_sys_t *p_sys = p_dec->p_sys;
+    struct hxxx_helper *hh = &p_sys->video.hh;
+
+    unsigned frame_rate, frame_rate_base;
+    int ret = hxxx_helper_get_current_frame_rate(hh, &frame_rate, &frame_rate_base);
+    if (ret == VLC_SUCCESS)
+    {
+        frame_rate_base *= 2;
+        p_dec->fmt_out.video.i_frame_rate = frame_rate;
+        p_dec->fmt_out.video.i_frame_rate_base = frame_rate_base;
+
+        date_Change(&p_sys->video.pts, frame_rate, frame_rate_base);
+    }
+    else
+        msg_Warn(p_dec, "could not parse video frame_rate");
+
     if (p_size_changed)
     {
-        decoder_sys_t *p_sys = p_dec->p_sys;
-        struct hxxx_helper *hh = &p_sys->video.hh;
         unsigned i_ox, i_oy, i_w, i_h, i_vw, i_vh;
         if(hxxx_helper_get_current_picture_size(hh, &i_ox, &i_oy, &i_w, &i_h, &i_vw, &i_vh)
            == VLC_SUCCESS)
@@ -952,10 +966,6 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
         p_sys->pf_on_flush = Video_OnFlush;
         p_sys->pf_process_output = Video_ProcessOutput;
 
-        p_sys->video.timestamp_fifo = timestamp_FifoNew(32);
-        if (!p_sys->video.timestamp_fifo)
-            goto bailout;
-
         if (var_InheritBool(p_dec, CFG_PREFIX "dr"))
         {
             /* Direct rendering: Request a valid OPAQUE Vout in order to get
@@ -1011,6 +1021,8 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
             p_dec->fmt_out.video.i_height = p_dec->fmt_in->video.i_height;
         }
         p_sys->cat = VIDEO_ES;
+        date_Init(&p_sys->video.pts, 1, 0);
+        p_sys->video.pts_warned = false;
     }
     else
     {
@@ -1098,9 +1110,6 @@ static void CleanDecoder(decoder_sys_t *p_sys)
     if (p_sys->video.surfacetexture)
         vlc_asurfacetexture_Delete(p_sys->video.surfacetexture);
 
-    if (p_sys->video.timestamp_fifo)
-        timestamp_FifoRelease(p_sys->video.timestamp_fifo);
-
     free(p_sys);
 }
 
@@ -1151,13 +1160,6 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
     {
         picture_t *p_pic = NULL;
 
-        /* If the oldest input block had no PTS, the timestamp of
-         * the frame returned by MediaCodec might be wrong so we
-         * overwrite it with the corresponding dts. Call FifoGet
-         * first in order to avoid a gap if buffers are released
-         * due to an invalid format or a preroll */
-        int64_t forced_ts = timestamp_FifoGet(p_sys->video.timestamp_fifo);
-
         if (!p_sys->b_has_format) {
             msg_Warn(p_dec, "Buffers returned before output format is set, dropping frame");
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
@@ -1179,10 +1181,7 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
             return p_sys->api.release_out(&p_sys->api, p_out->buf.i_index, false);
         }
 
-        if (forced_ts == VLC_TICK_INVALID)
-            p_pic->date = p_out->buf.i_ts;
-        else
-            p_pic->date = forced_ts;
+        p_pic->date = p_out->buf.i_ts;
         p_pic->b_progressive = true;
 
         if (p_sys->api.b_direct_rendering)
@@ -1602,11 +1601,7 @@ static int QueueBlockLocked(decoder_t *p_dec, block_t *p_in_block,
             {
                 b_config = (p_block->i_flags & BLOCK_FLAG_CSD);
                 if (!b_config)
-                {
                     i_ts = p_block->i_pts;
-                    if (!i_ts && p_block->i_dts)
-                        i_ts = p_block->i_dts;
-                }
                 p_buf = p_block->p_buffer;
                 i_size = p_block->i_buffer;
             }
@@ -1783,9 +1778,37 @@ static int Video_OnNewBlock(decoder_t *p_dec, block_t **pp_block)
     decoder_sys_t *p_sys = p_dec->p_sys;
     block_t *p_block = *pp_block;
 
-    timestamp_FifoPut(p_sys->video.timestamp_fifo,
-                      p_block->i_pts ? VLC_TICK_INVALID : p_block->i_dts);
+    if (p_block->i_pts != VLC_TICK_INVALID)
+        return 1;
 
+    /* PTS fallback: calculate it from first_dts + frame_rate */
+    if (p_sys->video.pts.i_divider_den == 0)
+    {
+        p_block->i_pts = p_block->i_dts;
+        goto nopts;
+    }
+
+    p_block->i_pts = date_Get(&p_sys->video.pts);
+
+    if (p_block->i_pts == VLC_TICK_INVALID)
+    {
+        date_Set(&p_sys->video.pts, p_block->i_dts);
+        p_block->i_pts = p_block->i_dts;
+    }
+
+    if (p_block->i_pts == VLC_TICK_INVALID)
+        goto nopts;
+
+    date_Increment(&p_sys->video.pts, 1);
+
+    return 1;
+
+nopts:
+    if (!p_sys->video.pts_warned)
+    {
+        msg_Warn(p_dec, "no valid PTS, video timing might be bogus");
+        p_sys->video.pts_warned = true;
+    }
     return 1;
 }
 
@@ -1885,7 +1908,7 @@ static int VideoVC1_OnNewBlock(decoder_t *p_dec, block_t **pp_block)
 
 static void Video_OnFlush(decoder_sys_t *p_sys)
 {
-    timestamp_FifoEmpty(p_sys->video.timestamp_fifo);
+    date_Set(&p_sys->video.pts, VLC_TICK_INVALID);
     /* Invalidate all pictures that are currently in flight
      * since flushing make all previous indices returned by
      * MediaCodec invalid. */
