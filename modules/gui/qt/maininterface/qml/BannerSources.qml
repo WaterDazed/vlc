@@ -193,6 +193,7 @@ T.ToolBar {
                                     selected: History.match(History.viewPath, ["mc", model.name])
                                     onClicked: root.itemClicked(model.index)
                                     height: globalMenuGroup.height
+                                    AccessibleCompat.id: model.accessibleId
                                 }
                             }
                         }
