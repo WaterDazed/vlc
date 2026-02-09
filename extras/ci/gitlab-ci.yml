@@ -337,8 +337,6 @@ nightly-debian:
     extends: .base-template
     image:
         name: $VLC_DEBIAN_IMAGE
-    rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
     script: |
         export NCPU=$(getconf _NPROCESSORS_ONLN)
         export CI_PROJECT_DIR=$(pwd)
@@ -742,10 +740,6 @@ nightly-test_ui_debian:
     extends: .base-template
     stage: test
     image: $VLC_DEBIAN_IMAGE
-    rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
-          changes:
-            - modules/gui/qt/**
     script: |
         mkdir vlc_build
 
