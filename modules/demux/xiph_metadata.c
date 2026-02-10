@@ -26,6 +26,7 @@
 #endif
 
 #include <assert.h>
+#include <ctype.h>
 
 #include <vlc_common.h>
 #include <vlc_arrays.h>
@@ -475,8 +476,7 @@ static void MatchComment( struct hander_priv_s *ctx, char *psz_key, char *psz_va
         seekpoint_t *p_seekpoint = NULL;
 
         for( int i = 0; psz_key[i]; i++ )
-            if( psz_key[i] >= 'a' && psz_key[i] <= 'z' )
-                psz_key[i] -= 'a' - 'A';
+            psz_key[i] = toupper(psz_key[i]);
 
         if( strstr( psz_key, "NAME" ) &&
                 sscanf( psz_key, "CHAPTER%uNAME", &i_chapt ) == 1 )
@@ -509,8 +509,7 @@ static void MatchComment( struct hander_priv_s *ctx, char *psz_key, char *psz_va
         /* generic (PERFORMER/LICENSE/ORGANIZATION/LOCATION/CONTACT/ISRC,
              * undocumented tags and replay gain ) */
         for( int i = 0; psz_key[i]; i++ )
-            if( psz_key[i] >= 'a' && psz_key[i] <= 'z' )
-                psz_key[i] -= 'a' - 'A';
+            psz_key[i] = toupper(psz_key[i]);
         fprintf(stderr,"EXTRA COMMENT %s\n", psz_key);
         vlc_meta_SetExtra( ctx->p_meta, psz_key, psz_value );
     }
