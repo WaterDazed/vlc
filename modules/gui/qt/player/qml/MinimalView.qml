@@ -26,7 +26,16 @@ import VLC.Menus
 
 FocusScope {
     id: root
+    // FIX: Force focus so keys work on WSL/Windows
+    Component.onCompleted: {
+        if (visible)
+            root.forceActiveFocus()
+    }
 
+    onVisibleChanged: {
+        if (visible)
+            root.forceActiveFocus()
+    }
     property bool _showCSD: MainCtx.clientSideDecoration
                             && (MainCtx.intfMainWindow.visibility !== Window.FullScreen)
                             && (!MainCtx.hasEmbededVideo || _csdOnVideo)
@@ -165,9 +174,4 @@ FocusScope {
         }
     }
 
-    Keys.onPressed: (event) => {
-        if (event.accepted)
-            return
-        MainCtx.sendHotkey(event.key, event.modifiers);
-    }
 }
