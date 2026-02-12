@@ -1063,7 +1063,7 @@ void TimeLabel::setDisplayPosition( float pos, int64_t t, int length )
         if ( displayMode == DisplaySpeedAdjusted )
         {
             /* Add space for speed indicator: " (@ X.XxX)" */
-            QString speedSample = " (@ 9.9X)";
+            const QString speedSample = " (@ 9.9X)";
             minsize += QSize( fontMetrics().size( 0, speedSample, 0, 0 ).width(), 0 );
         }
         else if ( displayMode != DisplayElapsed )
