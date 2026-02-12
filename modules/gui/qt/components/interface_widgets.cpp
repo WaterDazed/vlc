@@ -928,8 +928,26 @@ TimeLabel::TimeLabel( intf_thread_t *_p_intf, TimeLabel::Display _displayType  )
     , displayType( _displayType )
 {
     b_remainingTime = false;
+    f_playbackRate = 1.0f;
+    displayMode = DisplayElapsed;
+
     if( _displayType != TimeLabel::Elapsed )
-        b_remainingTime = getSettings()->value( "MainWindow/ShowRemainingTime", false ).toBool();
+    {
+        /* Load saved mode with backward compatibility */
+        int savedMode = getSettings()->value( "MainWindow/TimeDisplayMode", -1 ).toInt();
+        if( savedMode >= 0 && savedMode <= 2 )
+        {
+            displayMode = static_cast<TimeDisplayMode>( savedMode );
+        }
+        else
+        {
+            /* Backward compatibility: check old boolean setting */
+            b_remainingTime = getSettings()->value( "MainWindow/ShowRemainingTime", false ).toBool();
+            displayMode = b_remainingTime ? DisplayRemaining : DisplayElapsed;
+        }
+        b_remainingTime = ( displayMode == DisplayRemaining || displayMode == DisplaySpeedAdjusted );
+    }
+
     switch( _displayType ) {
         case TimeLabel::Elapsed:
             setText( " --:-- " );
@@ -939,13 +957,13 @@ TimeLabel::TimeLabel( intf_thread_t *_p_intf, TimeLabel::Display _displayType  )
             setText( " --:-- " );
             setToolTip( qtr("Total/Remaining time")
                         + QString("\n-")
-                        + qtr("Click to toggle between total and remaining time")
+                        + qtr("Click to toggle between total, remaining, and speed-adjusted time")
                       );
             break;
         case TimeLabel::Both:
             setText( " --:--/--:-- " );
             setToolTip( QString( "- " )
-                + qtr( "Click to toggle between elapsed and remaining time" )
+                + qtr( "Click to cycle: elapsed -> remaining -> speed-adjusted remaining" )
                 + QString( "\n- " )
                 + qtr( "Double click to jump to a chosen time position" ) );
             break;
@@ -964,19 +982,10 @@ TimeLabel::TimeLabel( intf_thread_t *_p_intf, TimeLabel::Display _displayType  )
     CONNECT( THEMIM->getIM(), remainingTimeChanged( bool ),
               this, setRemainingTime( bool ) );
 
+    CONNECT( THEMIM->getIM(), rateChanged( float ),
+              this, setPlaybackRate( float ) );
 
-    auto updateStyle = [this]() {
-        setStyleSheet( "TimeLabel {  padding-left: 4px; padding-right: 4px; }" );
-    };
-
-    updateStyle();
-
-//same as Qt::AA_UseStyleSheetPropagationInWidgetStyles
-#if !HAS_QT57
-    connect(qApp, &QApplication::paletteChanged, this, [this, updateStyle](){
-        updateStyle();
-    });
-#endif
+    updateTimeStyle();
 }
 
 void TimeLabel::setRemainingTime( bool remainingTime )
@@ -984,6 +993,14 @@ void TimeLabel::setRemainingTime( bool remainingTime )
     if( displayType != TimeLabel::Elapsed )
     {
         b_remainingTime = remainingTime;
+        /* Backward compatibility: map bool to display mode */
+        /* Note: external signals only know about remaining/elapsed, not speed-adjusted */
+        if( remainingTime && displayMode == DisplayElapsed )
+            displayMode = DisplayRemaining;
+        else if( !remainingTime && displayMode == DisplayRemaining )
+            displayMode = DisplayElapsed;
+        /* If in SpeedAdjusted mode, don't change it from external signals */
+        updateTimeStyle();
         refresh();
     }
 }
@@ -1006,11 +1023,30 @@ void TimeLabel::setDisplayPosition( float pos, int64_t t, int length )
         return;
     }
 
-    int time = t / 1000000;
+    int i_time = t / 1000000;
+    int i_displayTime = i_time;
+    QString prefix = "";
+
+    /* Calculate time based on display mode */
+    if( displayMode == DisplaySpeedAdjusted && length )
+    {
+        /* Speed-adjusted remaining: (length - time) / playback_rate */
+        int i_remaining = qMax( 0, length - i_time );
+        if( f_playbackRate > 0.0f )
+            i_displayTime = static_cast<int>( i_remaining / f_playbackRate );
+        else
+            i_displayTime = i_remaining;
+        prefix = "";  /* Speed will be shown as suffix instead */
+    }
+    else if( displayMode == DisplayRemaining && length )
+    {
+        i_displayTime = qMax( 0, length - i_time );
+        prefix = "-";
+    }
+    /* else DisplayElapsed: i_displayTime = i_time, no prefix */
 
     secstotimestr( psz_length, length );
-    secstotimestr( psz_time, ( b_remainingTime && length ) ? length - time
-                                                           : time );
+    secstotimestr( psz_time, i_displayTime );
 
     // compute the minimum size that will be required for the psz_length
     // and use it to enforce a minimal size to avoid "dancing" widgets
@@ -1024,8 +1060,14 @@ void TimeLabel::setDisplayPosition( float pos, int64_t t, int length )
                 );
         minsize += QSize( margins.left() + margins.right() + 8, 0 ); /* +padding */
 
-        if ( b_remainingTime )
-            minsize += QSize( fontMetrics().size( 0, "-", 0, 0 ).width(), 0 );
+        if ( displayMode == DisplaySpeedAdjusted )
+        {
+            /* Add space for speed indicator: " (@ X.XxX)" */
+            QString speedSample = " (@ 9.9X)";
+            minsize += QSize( fontMetrics().size( 0, speedSample, 0, 0 ).width(), 0 );
+        }
+        else if ( displayMode != DisplayElapsed )
+            minsize += QSize( fontMetrics().size( 0, prefix, 0, 0 ).width(), 0 );
     }
 
     switch( displayType )
@@ -1035,10 +1077,18 @@ void TimeLabel::setDisplayPosition( float pos, int64_t t, int length )
             setText( QString( psz_time ) );
             break;
         case TimeLabel::Remaining:
-            if( b_remainingTime )
+            if( displayMode != DisplayElapsed )
             {
                 setMinimumSize( minsize );
-                setText( QString("-") + QString( psz_time ) );
+                if( displayMode == DisplaySpeedAdjusted )
+                {
+                    QString speedStr = QString::number( f_playbackRate, 'f', 1 );
+                    setText( QString( psz_time ) + " (@ " + speedStr + "X)" );
+                }
+                else
+                {
+                    setText( prefix + QString( psz_time ) );
+                }
             }
             else
             {
@@ -1048,13 +1098,24 @@ void TimeLabel::setDisplayPosition( float pos, int64_t t, int length )
             break;
         case TimeLabel::Both:
         default:
-            QString timestr = QString( "%1%2/%3" )
-            .arg( QString( (b_remainingTime && length) ? "-" : "" ) )
-            .arg( QString( psz_time ) )
-            .arg( QString( ( !length && time ) ? "--:--" : psz_length ) );
-
+        {
+            QString timestr;
+            if( displayMode == DisplaySpeedAdjusted && length )
+            {
+                QString speedStr = QString::number( f_playbackRate, 'f', 1 );
+                timestr = QString( psz_time ) + " (@ " + speedStr + "X)/%1";
+                timestr = timestr.arg( QString( ( !length && i_time ) ? "--:--" : psz_length ) );
+            }
+            else
+            {
+                timestr = QString( "%1%2/%3" )
+                .arg( ( displayMode != DisplayElapsed && length ) ? prefix : QString("") )
+                .arg( QString( psz_time ) )
+                .arg( QString( ( !length && i_time ) ? "--:--" : psz_length ) );
+            }
             setText( timestr );
             break;
+        }
     }
     cachedLength = length;
     cachedTime = t;
@@ -1068,8 +1129,49 @@ void TimeLabel::setDisplayPosition( float pos )
 
 void TimeLabel::toggleTimeDisplay()
 {
-    b_remainingTime = !b_remainingTime;
-    getSettings()->setValue( "MainWindow/ShowRemainingTime", b_remainingTime );
+    /* Cycle through modes: Elapsed -> Remaining -> SpeedAdjusted -> Elapsed
+     * Skip SpeedAdjusted when playback rate is 1x (same as Remaining) */
+    switch( displayMode )
+    {
+        case DisplayElapsed:
+            displayMode = DisplayRemaining;
+            break;
+        case DisplayRemaining:
+            /* Only offer speed-adjusted mode if rate differs from 1x */
+            if( f_playbackRate > 1.01f || f_playbackRate < 0.99f )
+                displayMode = DisplaySpeedAdjusted;
+            else
+                displayMode = DisplayElapsed;
+            break;
+        case DisplaySpeedAdjusted:
+        default:
+            displayMode = DisplayElapsed;
+            break;
+    }
+
+    b_remainingTime = ( displayMode == DisplayRemaining || displayMode == DisplaySpeedAdjusted );
+    getSettings()->setValue( "MainWindow/TimeDisplayMode", static_cast<int>( displayMode ) );
+    updateTimeStyle();
     emit broadcastRemainingTime( b_remainingTime );
+}
+
+void TimeLabel::setPlaybackRate( float rate )
+{
+    f_playbackRate = rate;
+    /* If rate returns to 1x while in speed-adjusted mode, switch to remaining */
+    if( displayMode == DisplaySpeedAdjusted &&
+        rate <= 1.01f && rate >= 0.99f )
+    {
+        displayMode = DisplayRemaining;
+        getSettings()->setValue( "MainWindow/TimeDisplayMode", static_cast<int>( displayMode ) );
+    }
+    /* Refresh display to show updated time */
+    if( displayMode == DisplaySpeedAdjusted || displayMode == DisplayRemaining )
+        refresh();
+}
+
+void TimeLabel::updateTimeStyle()
+{
+    setStyleSheet( "TimeLabel { padding-left: 4px; padding-right: 4px; }" );
 }
 
