@@ -644,6 +644,7 @@ shouldInheritContentsScale:(CGFloat)newScale
     @public
     vout_display_place_t place;
     filter_t *converter;
+    CIContext *cropContext;
 }
     @property (nonatomic, readonly, weak) VLCView *window;
     @property (nonatomic, readonly) vout_display_t *vd;
@@ -828,6 +829,59 @@ static void RenderPicture(vout_display_t *vd, picture_t *pic, vlc_tick_t date) {
     if (pixelBuffer == NULL) {
         msg_Err(vd, "No pixelBuffer ref attached to pic!");
         return;
+    }
+
+    /* Apply user crop via CIImage when the visible region is smaller
+     * than the full pixel buffer.  This produces a new pixel buffer
+     * containing only the cropped area. */
+    const video_format_t *src = vd->source;
+    const unsigned x_off = src->i_x_offset;
+    const unsigned y_off = src->i_y_offset;
+    const unsigned vis_w = src->i_visible_width;
+    const unsigned vis_h = src->i_visible_height;
+    const size_t buf_w = CVPixelBufferGetWidth(pixelBuffer);
+    const size_t buf_h = CVPixelBufferGetHeight(pixelBuffer);
+
+    if (vis_w > 0 && vis_h > 0
+        && (vis_w != buf_w || vis_h != buf_h
+            || x_off != 0  || y_off != 0))
+    {
+        if (!sys->cropContext)
+            sys->cropContext =
+                [CIContext contextWithOptions:
+                    @{ kCIContextUseSoftwareRenderer: @NO }];
+
+        /* CVPixelBuffer uses top-left origin; CIImage uses bottom-left.
+         * Flip y for the crop rectangle. */
+        CGRect cropRect = CGRectMake(
+            x_off,
+            (CGFloat)buf_h - (CGFloat)y_off - (CGFloat)vis_h,
+            vis_w,
+            vis_h);
+        CIImage *ciImage =
+            [[CIImage imageWithCVPixelBuffer:pixelBuffer] imageByCroppingToRect:cropRect];
+        /* Translate the cropped image to the origin so the new buffer
+         * has dimensions vis_w x vis_h. */
+        ciImage = [ciImage imageByApplyingTransform:
+            CGAffineTransformMakeTranslation(-cropRect.origin.x,
+                                              -cropRect.origin.y)];
+
+        NSDictionary *attrs = @{
+            (__bridge NSString *)kCVPixelBufferWidthKey:  @(vis_w),
+            (__bridge NSString *)kCVPixelBufferHeightKey: @(vis_h),
+            (__bridge NSString *)kCVPixelBufferIOSurfacePropertiesKey: @{}
+        };
+        CVPixelBufferRef croppedBuffer = NULL;
+        CVReturn cvRet = CVPixelBufferCreate(
+            kCFAllocatorDefault, vis_w, vis_h,
+            CVPixelBufferGetPixelFormatType(pixelBuffer),
+            (__bridge CFDictionaryRef)attrs, &croppedBuffer);
+
+        if (cvRet == kCVReturnSuccess && croppedBuffer) {
+            [sys->cropContext render:ciImage toCVPixelBuffer:croppedBuffer];
+            CVPixelBufferRelease(pixelBuffer);
+            pixelBuffer = croppedBuffer;
+        }
     }
 
     if (vd->fmt->orientation != ORIENT_NORMAL) {
