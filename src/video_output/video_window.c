@@ -139,6 +139,9 @@ static void processMousePause(vlc_window_t *window, const vlc_mouse_t *video_mou
 {
     vout_display_window_t *state = window->owner.sys;
 
+    if (window->mouse_pause_type == MOUSE_PAUSE_NONE)
+        return;
+
     if (!vlc_mouse_HasReleased(&state->mouse.video, video_mouse, MOUSE_BUTTON_LEFT))
         return;
 
