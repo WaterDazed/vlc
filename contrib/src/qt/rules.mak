@@ -69,6 +69,12 @@ QTBASE_CONFIG += -DFEATURE_framework=OFF
 ifdef HAVE_CROSS_COMPILE
 # This is necessary to make use of qmake
 QTBASE_CONFIG += -DQT_QMAKE_DEVICE_OPTIONS:STRING=CROSS_COMPILE=$(HOST)-
+
+ifdef HAVE_EMSCRIPTEN
+# Thread feature is not detected automatically by default with Emscripten.
+# VLC needs it, so we manually enable it here:
+QTBASE_CONFIG += -DFEATURE_thread=ON
+endif
 endif
 
 ifdef HAVE_WIN32
