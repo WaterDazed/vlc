@@ -360,6 +360,7 @@ void vout_CreateVars( vout_thread_t *p_vout )
     mouse_pause_mode_val.i_int = MOUSE_PAUSE_ON_RELEASE;
     var_Change( p_vout, "mouse-pause-mode", VLC_VAR_ADDCHOICE, mouse_pause_mode_val, _("Pause on release"));
 
+    var_Set( p_vout, "mouse-pause-mode", mouse_pause_mode_val);
     var_AddCallback( p_vout, "mouse-pause-mode", ChangeMousePauseModeCallback, NULL );
 
 
