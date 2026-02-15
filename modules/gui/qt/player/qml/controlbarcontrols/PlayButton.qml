@@ -141,7 +141,7 @@ T.Control {
         repeat: false
 
         Component.onCompleted: {
-            triggered.connect(root, _pressAndHoldAction)
+            triggered.connect(keyHoldTimer, root._pressAndHoldAction)
         }
     }
 
