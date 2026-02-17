@@ -268,16 +268,16 @@ QtObject {
     // durations. Values are aligned on Kirigami
 
     //should be used for animation that benefits from a longer animation than duration_long
-    readonly property int duration_veryLong: 400
+    readonly property int duration_veryLong: 400 * MainCtx.animationScale
 
     //should be used for longer animation (opening/closing panes & dialogs)
-    readonly property int duration_long: 200
+    readonly property int duration_long: 200 * MainCtx.animationScale
 
     //should be used for short animations (hovering, accuenting UI event)
-    readonly property int duration_short: 100
+    readonly property int duration_short: 100 * MainCtx.animationScale
 
     //should be used for near instant animations
-    readonly property int duration_veryShort: 50
+    readonly property int duration_veryShort: 50 * MainCtx.animationScale
 
     /* human time reaction, how much time before the user should be informed that something
      * is going on, or before something should be automatically automated,
@@ -296,7 +296,7 @@ QtObject {
     readonly property int delayToolTipAppear: 700
 
     //timing for the progressbar/scanbar bouncing animation, explicitly very long
-    readonly property int durationSliderBouncing: 2000
+    readonly property int durationSliderBouncing: 2000 * MainCtx.animationScale
 
     //default arts
     readonly property url noArtAlbum: "qrc:///placeholder/noart_album.svg";
