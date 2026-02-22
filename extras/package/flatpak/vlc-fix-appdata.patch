@@ -1,0 +1,48 @@
+diff --git a/configure.ac b/configure.ac
+index e3d5fc6279..b6705e805d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -9,6 +9,9 @@ VERSION_REVISION=23
+ VERSION_EXTRA=0
+ VERSION_DEV=
+
++GIT_HASH=$(git rev-parse HEAD)
++AC_SUBST([GIT_HASH])
++
+ PKGDIR="vlc"
+ AC_SUBST(PKGDIR)
+
+diff --git a/share/Makefile.am b/share/Makefile.am
+index 7afbfa5dd6..067f7f71a6 100644
+--- a/share/Makefile.am
++++ b/share/Makefile.am
+@@ -23,6 +23,8 @@ vlc.desktop: vlc.desktop.in $(top_builddir)/config.status
+ 	$(AM_V_at)mv -f tmp-$@ $@
+ 
+ org.videolan.vlc.appdata.xml: org.videolan.vlc.appdata.xml.in
++	sed -i \
++		-e "s,\@PUBLISHED_DATE\@,$$(date '+%Y-%m-%d'),g" $<
+ 	$(AM_V_GEN)$(MSGFMT) --xml --template $< -d $(top_srcdir)/po -o $@ || cp $< $@
+ 
+ iconsdatadir = $(datadir)/icons/hicolor
+diff --git a/share/org.videolan.vlc.appdata.xml.in.in b/share/org.videolan.vlc.appdata.xml.in.in
+index 0a66303c92..dd513ffc70 100644
+--- a/share/org.videolan.vlc.appdata.xml.in.in
++++ b/share/org.videolan.vlc.appdata.xml.in.in
+@@ -18,7 +18,7 @@
+     <url type="bugtracker">https://trac.videolan.org/vlc/</url>
+     <url type="donation">https://www.videolan.org/contribute.html</url>
+     <releases>
+-        <release version="@VERSION@" />
++        <release version="@VERSION@" date="@PUBLISHED_DATE@" />
+     </releases>
+     <provides>
+         <library>libvlc.so.5</library>
+@@ -39,4 +39,7 @@
+         </screenshot>
+     </screenshots>
+     <content_rating type="oars-1.1" />
++    <custom>
++        <value key="flathub::manifest">https://code.videolan.org/videolan/vlc/-/blob/@GIT_HASH@/extras/package/flatpak/org.videolan.VLC.yaml</value>
++    </custom>
+ </component>
