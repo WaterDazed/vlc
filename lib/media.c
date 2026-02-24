@@ -523,7 +523,6 @@ bool libvlc_media_get_stats(libvlc_media_t *p_md,
     return true;
 }
 
-// Get duration of media object (in ms)
 libvlc_time_t
 libvlc_media_get_duration( libvlc_media_t * p_md )
 {
@@ -532,11 +531,11 @@ libvlc_media_get_duration( libvlc_media_t * p_md )
     if( !p_md->p_input_item )
     {
         libvlc_printerr( "No input item" );
-        return -1;
+        return LIBVLC_TIME_INVALID;
     }
 
     if (!input_item_IsPreparsed( p_md->p_input_item ))
-        return -1;
+        return LIBVLC_TIME_INVALID;
 
     return libvlc_time_from_vlc_tick(input_item_GetDuration( p_md->p_input_item ));
 }

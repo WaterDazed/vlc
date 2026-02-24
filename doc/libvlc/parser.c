@@ -71,13 +71,15 @@ on_media_parsed(void *opaque, libvlc_parser_task *task,
     const char *type_str = type_to_string(libvlc_media_get_type(media));
 
     char *mrl = libvlc_media_get_mrl(media);
+    libvlc_time_t duration = libvlc_media_get_duration(media);
+    int64_t duration_ms = libvlc_time_to_milliseconds(duration);
     printf("Parsed '%s'\n"
            "\tstatus: %s\n"
            "\ttype: %s\n"
            "\tduration: %"PRId64"\n",
            mrl != NULL ? mrl : "<nil>", status_str,
            type_str,
-           libvlc_media_get_duration(media));
+           duration_ms);
     free(mrl);
 
     /* Signal the main thread that one request was processed */

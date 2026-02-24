@@ -75,8 +75,6 @@ extern "C" {
 /** This structure is opaque. It represents a libvlc instance */
 typedef struct libvlc_instance_t libvlc_instance_t;
 
-typedef int64_t libvlc_time_t;
-
 /** \defgroup libvlc_error LibVLC error handling
  * @{
  */
@@ -446,35 +444,6 @@ libvlc_module_description_t *libvlc_audio_filter_list_get( libvlc_instance_t *p_
  */
 LIBVLC_API
 libvlc_module_description_t *libvlc_video_filter_list_get( libvlc_instance_t *p_instance );
-
-/** @} */
-
-/** \defgroup libvlc_clock LibVLC time
- * These functions provide access to the LibVLC time/clock.
- * @{
- */
-
-/**
- * Return the current time as defined by LibVLC. The unit is the microsecond.
- * Time increases monotonically (regardless of time zone changes and RTC
- * adjustments).
- * The origin is arbitrary but consistent across the whole system
- * (e.g. the system uptime, the time since the system was booted).
- * \note On systems that support it, the POSIX monotonic clock is used.
- */
-LIBVLC_API
-int64_t libvlc_clock(void);
-
-/**
- * Return the delay (in microseconds) until a certain timestamp.
- * \param pts timestamp
- * \return negative if timestamp is in the past,
- * positive if it is in the future
- */
-static inline int64_t libvlc_delay(int64_t pts)
-{
-    return pts - libvlc_clock();
-}
 
 /** @} */
 

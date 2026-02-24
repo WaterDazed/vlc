@@ -27,6 +27,7 @@
 #ifndef VLC_LIBVLC_MEDIA_PLAYER_H
 #define VLC_LIBVLC_MEDIA_PLAYER_H 1
 
+#include <vlc/libvlc_time.h>
 /* Definitions of enum properties for video */
 #include "libvlc_video.h"
 
@@ -45,6 +46,7 @@ typedef enum libvlc_track_type_t libvlc_track_type_t;
 typedef struct libvlc_renderer_item_t libvlc_renderer_item_t;
 typedef enum libvlc_state_t libvlc_state_t;
 typedef struct libvlc_picture_list_t libvlc_picture_list_t;
+typedef struct libvlc_time_t libvlc_time_t;
 
 /** \defgroup libvlc_media_player LibVLC media player
  * \ingroup libvlc
@@ -67,7 +69,7 @@ enum
 
 typedef struct libvlc_title_description_t
 {
-    int64_t i_duration; /**< duration in milliseconds */
+    libvlc_time_t i_duration; /**< duration */
     char *psz_name; /**< title name */
     unsigned i_flags; /**< info if item was recognized as a menu, interactive or plain content by the demuxer */
 } libvlc_title_description_t;
@@ -77,8 +79,8 @@ typedef struct libvlc_title_description_t
  */
 typedef struct libvlc_chapter_description_t
 {
-    int64_t i_time_offset; /**< time-offset of the chapter in milliseconds */
-    int64_t i_duration; /**< duration of the chapter in milliseconds, 0 if unknown */
+    libvlc_time_t i_time_offset; /**< time-offset of the chapter */
+    libvlc_time_t i_duration; /**< duration of the chapter, LIBVLC_TIME_ZERO if unknown */
     char *psz_name; /**< chapter name */
 } libvlc_chapter_description_t;
 
@@ -322,7 +324,7 @@ struct libvlc_media_player_cbs
      * available since \ref LIBVLC_MEDIA_PLAYER_CBS_VER_0
      *
      * \param opaque opaque pointer set by libvlc_media_player_new()
-     * \param time a valid time or 0
+     * \param time a valid time or LIBVLC_TIME_INVALID
      * \param pos a valid position
      */
     void (*on_position_changed)( void *opaque, libvlc_time_t time, double pos );
@@ -337,7 +339,7 @@ struct libvlc_media_player_cbs
      * A started and playing media doesn't have necessarily a valid length.
      *
      * \param opaque opaque pointer set by libvlc_media_player_new()
-     * \param length a valid length or 0
+     * \param length a valid length or LIBVLC_TIME_INVALID
      */
     void (*on_length_changed)( void *opaque, libvlc_time_t length );
 
@@ -366,9 +368,9 @@ struct libvlc_media_player_cbs
      *
      * \param opaque opaque pointer set by libvlc_media_player_new()
      * \param type type of tracks being unselected or selected
-     * \param unselected_id valid track id or NULL (when nothing is unselected)
-     * \param selected_id valid track id or NULL (when nothing is selected),
-     * call libvlc_media_player_get_track_from_id() to get the track description.
+     * \param unselected_id valid track id
+     * \param selected_id valid track id, call
+     * libvlc_media_player_get_track_from_id() to get the track description.
      */
     void (*on_track_selection_changed)( void *opaque, libvlc_track_type_t type,
                                         const char *unselected_id,
@@ -1738,29 +1740,29 @@ void libvlc_audio_set_format( libvlc_media_player_t *mp, const char *format,
 /** \bug This might go away ... to be replaced by a broader system */
 
 /**
- * Get the current movie length (in ms).
+ * Get the current movie length
  *
  * \param p_mi the Media Player
- * \return the movie length (in ms), or -1 if there is no media.
+ * \return the movie length, or LIBVLC_TIME_INVALID if there is no media.
  */
 LIBVLC_API libvlc_time_t libvlc_media_player_get_length( libvlc_media_player_t *p_mi );
 
 /**
- * Get the current movie time (in ms).
+ * Get the current movie time.
  *
  * \param p_mi the Media Player
- * \return the movie time (in ms), or -1 if there is no media.
+ * \return the movie time, or LIBVLC_TIME_INVALID if there is no media.
  */
 LIBVLC_API libvlc_time_t libvlc_media_player_get_time( libvlc_media_player_t *p_mi );
 
 /**
- * Set the movie time (in ms).
+ * Set the movie time.
  *
  * This has no effect if no media is being played.
  * Not all formats and protocols support this.
  *
  * \param p_mi the Media Player
- * \param i_time the movie time (in ms).
+ * \param i_time the movie time.
  * \param b_fast prefer fast seeking or precise seeking
  * \return 0 on success, -1 on error
  */
@@ -1768,14 +1770,14 @@ LIBVLC_API int libvlc_media_player_set_time( libvlc_media_player_t *p_mi,
                                              libvlc_time_t i_time, bool b_fast );
 
 /**
- * Jump the movie time (in ms).
+ * Jump the movie time.
  *
  * This will trigger a precise and relative seek (from the current time).
  * This has no effect if no media is being played.
  * Not all formats and protocols support this.
  *
  * \param p_mi the Media Player
- * \param i_time the movie time (in ms).
+ * \param i_time the movie time.
  * \return 0 on success, -1 on error
  * \version LibVLC 4.0.0 and later.
  */
@@ -1810,8 +1812,8 @@ LIBVLC_API int libvlc_media_player_set_position( libvlc_media_player_t *p_mi,
  * The B time must be higher than the A time.
  *
  * \param p_mi the Media Player
- * \param a_time start time for the loop (in ms)
- * \param b_time end time for the loop (in ms)
+ * \param a_time start time for the loop
+ * \param b_time end time for the loop
  * \return 0 on success, -1 on error
  * \version LibVLC 4.0.0 and later.
  */
@@ -1856,9 +1858,9 @@ libvlc_media_player_reset_abloop( libvlc_media_player_t *p_mi );
  * @see vlc_player_cbs.on_atobloop_changed
  *
  * \param p_mi the Media Player
- * \param a_time A time (in ms) or -1 (if the media doesn't have valid times)
+ * \param a_time A libVLC time or LIBVLC_TIME_INVALID (if the media doesn't have valid times)
  * \param a_pos A position
- * \param b_time B time (in ms) or -1 (if the media doesn't have valid times)
+ * \param b_time B libVLC time or LIBVLC_TIME_INVALID (if the media doesn't have valid times)
  * \param b_pos B position
  * \return A to B loop status
  * \version LibVLC 4.0.0 and later.
@@ -2584,10 +2586,10 @@ LIBVLC_API void libvlc_video_set_video_stereo_mode( libvlc_media_player_t *p_mi,
  * displayed later, negative values earlier.
  *
  * \param p_mi media player
- * \return time (in microseconds) the display of subtitles is being delayed
- * \version LibVLC 2.0.0 or later
+ * \return time (in libvlc_time_t) the display of subtitles is being delayed
+ * \version LibVLC 4.0.0 or later
  */
-LIBVLC_API int64_t libvlc_video_get_spu_delay( libvlc_media_player_t *p_mi );
+LIBVLC_API libvlc_time_t libvlc_video_get_spu_delay( libvlc_media_player_t *p_mi );
 
 /**
  * Get the current subtitle text scale
@@ -2627,11 +2629,11 @@ LIBVLC_API void libvlc_video_set_spu_text_scale( libvlc_media_player_t *p_mi, fl
  * The subtitle delay will be reset to zero each time the media changes.
  *
  * \param p_mi media player
- * \param i_delay time (in microseconds) the display of subtitles should be delayed
+ * \param i_delay time (in libvlc_time_t) the display of subtitles should be delayed
  * \return 0 on success, -1 on error
- * \version LibVLC 2.0.0 or later
+ * \version LibVLC 4.0.0 or later
  */
-LIBVLC_API int libvlc_video_set_spu_delay( libvlc_media_player_t *p_mi, int64_t i_delay );
+LIBVLC_API int libvlc_video_set_spu_delay( libvlc_media_player_t *p_mi, libvlc_time_t i_delay );
 
 /**
  * Get the full description of available titles
@@ -3284,20 +3286,20 @@ LIBVLC_API int libvlc_audio_set_mixmode( libvlc_media_player_t *p_mi,
  * Get current audio delay.
  *
  * \param p_mi media player
- * \return the audio delay (microseconds)
- * \version LibVLC 1.1.1 or later
+ * \return the audio delay (libvlc_time_t)
+ * \version LibVLC 4.0.0 or later
  */
-LIBVLC_API int64_t libvlc_audio_get_delay( libvlc_media_player_t *p_mi );
+LIBVLC_API libvlc_time_t libvlc_audio_get_delay( libvlc_media_player_t *p_mi );
 
 /**
  * Set current audio delay. The audio delay will be reset to zero each time the media changes.
  *
  * \param p_mi media player
- * \param i_delay the audio delay (microseconds)
+ * \param i_delay the audio delay (libvlc_time_t)
  * \return 0 on success, -1 on error
- * \version LibVLC 1.1.1 or later
+ * \version LibVLC 4.0.0 or later
  */
-LIBVLC_API int libvlc_audio_set_delay( libvlc_media_player_t *p_mi, int64_t i_delay );
+LIBVLC_API int libvlc_audio_set_delay( libvlc_media_player_t *p_mi, libvlc_time_t i_delay );
 
 /**
  * Get the number of equalizer presets.
@@ -3542,19 +3544,19 @@ typedef struct libvlc_media_player_time_point_t
     double position;
     /** Rate of the player */
     double rate;
-    /** Valid time, in us >= 0 or -1 */
-    int64_t ts_us;
-    /** Valid length, in us >= 1 or 0 */
-    int64_t length_us;
+    /** Valid time, in libvlc_time_t or LIBVLC_TIME_INVALID */
+    libvlc_time_t ts;
+    /** Valid length, in libvlc_time_t or LIBVLC_TIME_INVALID */
+    libvlc_time_t length;
     /**
-     * System date, in us, of this record (always valid).
+     * System date, in libvlc_time_t, of this record (always valid).
      * Based on libvlc_clock(). This date can be in the future or in the past.
-     * The special value of INT64_MAX mean that the clock was paused when this
+     * The special value of LIBVLC_TIME_MAX mean that the clock was paused when this
      * point was updated. In that case,
      * libvlc_media_player_time_point_interpolate() will return the current
      * ts/pos of this point (there is nothing to interpolate).
      * */
-    int64_t system_date_us;
+    libvlc_time_t system_date;
 } libvlc_media_player_time_point_t;
 
 /**
@@ -3614,11 +3616,11 @@ struct libvlc_media_player_watch_time_cbs {
      * \warning It is forbidden to call any Media Player functions from here.
      *
      * \param opaque opaque pointer set by libvlc_media_player_watch_time()
-     * \param system_date_us system date, in us, of this event, only valid (>
-     * 0) when paused. It can be used to interpolate the last updated point to
+     * \param system_date system date, in libvlc_time_t, of this event, only valid
+     * when paused, else LIBVLC_TIME_INVALID. It can be used to interpolate the last updated point to
      * this date in order to get the last paused ts/position.
      */
-    void (*on_paused)(void *opaque, int64_t system_date_us);
+    void (*on_paused)(void *opaque, libvlc_time_t system_date);
 
     /**
      * Callback prototype that notify when the player is seeking or finished
@@ -3630,7 +3632,8 @@ struct libvlc_media_player_watch_time_cbs {
      * \warning It is forbidden to call any Media Player functions from here.
      *
      * \param opaque opaque pointer set by libvlc_media_player_watch_time()
-     * \param value point of the seek request or NULL when seeking is finished.
+     * \param value point of the seek request or NULL when seeking is finished
+     * value.system_date = LIBVLC_TIME_MAX in that case
      */
     void (*on_seek)(void *opaque,
                     const libvlc_media_player_time_point_t *value);
@@ -3644,8 +3647,8 @@ struct libvlc_media_player_watch_time_cbs {
  * in-between) will fail.
  *
  * \param p_mi the media player
- * \param min_period_us corresponds to the minimum period, in us, between each
- * updates, use it to avoid flood from too many source updates, set it to 0 to
+ * \param min_period corresponds to the minimum period, in libvlc_time_t, between each
+ * updates, use it to avoid flood from too many source updates, set it to LIBVLC_TIME_ZERO to
  * receive all updates.
  * \param cbs callback to listen to events (can't be NULL)
  * \param cbs_opaque opaque pointer used by the callbacks
@@ -3654,7 +3657,7 @@ struct libvlc_media_player_watch_time_cbs {
  */
 LIBVLC_API int
 libvlc_media_player_watch_time(libvlc_media_player_t *p_mi,
-                               int64_t min_period_us,
+                               libvlc_time_t min_period,
                                const struct libvlc_media_player_watch_time_cbs *cbs,
                                void *cbs_opaque);
 
@@ -3672,8 +3675,8 @@ libvlc_media_player_unwatch_time(libvlc_media_player_t *p_mi);
 
  * \param point time update obtained via the
  * libvlc_media_player_watch_time_on_update() callback
- * \param system_now_us current system date, in us, returned by libvlc_clock()
- * \param out_ts_us pointer where to set the interpolated ts, in us
+ * \param system_now current system date, in libvlc_time_t, returned by libvlc_clock()
+ * \param out_ts pointer where to set the interpolated ts, in libvlc_time_t
  * \param out_pos pointer where to set the interpolated position
  * \return 0 in case of success, -1 if the interpolated ts is negative (could
  * happen during the buffering step)
@@ -3681,8 +3684,8 @@ libvlc_media_player_unwatch_time(libvlc_media_player_t *p_mi);
  */
 LIBVLC_API int
 libvlc_media_player_time_point_interpolate(const libvlc_media_player_time_point_t *point,
-                                           int64_t system_now_us,
-                                           int64_t *out_ts_us, double *out_pos);
+                                           libvlc_time_t system_now,
+                                           libvlc_time_t *out_ts, double *out_pos);
 
 /**
  * Get the date of the next interval
@@ -3696,20 +3699,20 @@ libvlc_media_player_time_point_interpolate(const libvlc_media_player_time_point_
  *
  * \param point time update obtained via the
  * libvlc_media_player_watch_time_on_update()
- * \param system_now_us same system date used by
+ * \param system_now same system date used by
  * libvlc_media_player_time_point_interpolate()
- * \param interpolated_ts_us ts returned by
+ * \param interpolated_ts ts returned by
  * libvlc_media_player_time_point_interpolate()
- * \param next_interval_us next interval, in us
- * \return the absolute system date, in us,  of the next interval,
+ * \param next_interval next interval, in libvlc_time_t
+ * \return the absolute system date, in libvlc_time_t,  of the next interval,
  * use libvlc_delay() to get a relative delay.
  * \version LibVLC 4.0.0 or later
  */
-LIBVLC_API int64_t
+LIBVLC_API libvlc_time_t
 libvlc_media_player_time_point_get_next_date(const libvlc_media_player_time_point_t *point,
-                                             int64_t system_now_us,
-                                             int64_t interpolated_ts_us,
-                                             int64_t next_interval_us);
+                                             libvlc_time_t system_now,
+                                             libvlc_time_t interpolated_ts,
+                                             libvlc_time_t next_interval);
 
 /** @} libvlc_media_player_watch_time */
 

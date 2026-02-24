@@ -398,7 +398,7 @@ libvlc_parser_t *libvlc_parser_new(libvlc_instance_t *inst,
 {
     assert(inst != NULL);
     assert(cfg != NULL);
-    libvlc_time_t timeout;
+    int64_t timeout;
 
     /* No different versions to handle for now */
     assert(cfg->version <= LIBVLC_PARSER_CFG_VER_LATEST);
@@ -417,7 +417,7 @@ libvlc_parser_t *libvlc_parser_new(libvlc_instance_t *inst,
                  VLC_PREPARSER_TYPE_THUMBNAIL,
         .max_parser_threads = cfg->max_parser_threads,
         .max_thumbnailer_threads = cfg->max_thumbnailer_threads,
-        .timeout = vlc_tick_from_libvlc_time(timeout),
+        .timeout = VLC_TICK_FROM_MS(timeout),
         .external_process = false,
     };
     parser->preparser =

@@ -14,7 +14,8 @@ libvlc_sources = [
     'media_list_player.c',
     'media_discoverer.c',
     'parser.c',
-    'picture.c'
+    'picture.c',
+    'time.c',
 ]
 
 libvlc_cargs = []

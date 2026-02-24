@@ -23,6 +23,7 @@
 
 #include <vlc/libvlc.h>
 #include <vlc/libvlc_picture.h>
+#include <vlc/libvlc_time.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -37,6 +38,7 @@ extern "C" {
  */
 typedef struct libvlc_parser_t libvlc_parser_t;
 
+typedef struct libvlc_time_t libvlc_time_t;
 typedef struct libvlc_media_t libvlc_media_t;
 typedef struct libvlc_picture_list_t libvlc_picture_list_t;
 typedef struct libvlc_picture_t libvlc_picture_t;
@@ -341,7 +343,7 @@ struct libvlc_parser_cfg
     /**
      * Timeout of the parser in ms, 0 for no limits.
      */
-    libvlc_time_t timeout;
+    int64_t timeout;
 };
 
 /**

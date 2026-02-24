@@ -29,6 +29,7 @@ extern "C" {
 
 typedef struct libvlc_picture_t libvlc_picture_t;
 typedef struct libvlc_picture_list_t libvlc_picture_list_t;
+typedef struct libvlc_time_t libvlc_time_t;
 
 typedef enum libvlc_picture_type_t
 {
@@ -118,8 +119,9 @@ LIBVLC_API unsigned int
 libvlc_picture_get_height( const libvlc_picture_t* pic );
 
 /**
- * Returns the time at which this picture was generated, in milliseconds
+ * Returns the time at which this picture was generated
  * \param pic A picture object
+ * \return a valid LibVLC time or LIBVLC_TIME_INVALID
  */
 LIBVLC_API libvlc_time_t
 libvlc_picture_get_time( const libvlc_picture_t* pic );

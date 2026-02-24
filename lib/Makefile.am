@@ -9,6 +9,7 @@ CLEANFILES = $(BUILT_SOURCES) $(pkgconfig_DATA)
 
 pkginclude_HEADERS = \
 	../include/vlc/libvlc.h \
+	../include/vlc/libvlc_time.h \
 	../include/vlc/libvlc_dialog.h \
 	../include/vlc/libvlc_media.h \
 	../include/vlc/libvlc_media_discoverer.h \
@@ -33,6 +34,7 @@ libvlc_la_SOURCES = \
 	picture_internal.h \
 	renderer_discoverer_internal.h \
 	core.c \
+	time.c \
 	dialog.c \
 	renderer_discoverer.c \
 	error.c \

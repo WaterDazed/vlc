@@ -28,11 +28,14 @@
 #include <vlc/libvlc_dialog.h>
 #include <vlc/libvlc_picture.h>
 #include <vlc/libvlc_media.h>
+#include <vlc/libvlc_time.h>
 
 #include <vlc_atomic.h>
 #include <vlc_common.h>
 #include <vlc_arrays.h>
 #include <vlc_threads.h>
+
+#include <stdckdint.h>
 
 /* Note well: this header is included from LibVLC core.
  * Therefore, static inline functions MUST NOT call LibVLC functions here
@@ -119,14 +122,39 @@ struct libvlc_instance_t
 void libvlc_threads_init (void);
 void libvlc_threads_deinit (void);
 
+/**
+ * Convert vlc_tick_t to libvlc_time_t
+ *
+ * \param tick vlc_tick_t value
+ * \return libvlc_time_t with default timescale, or LIBVLC_TIME_INVALID on invalid timestamp
+ */
 static inline libvlc_time_t libvlc_time_from_vlc_tick(vlc_tick_t time)
 {
-    return MS_FROM_VLC_TICK(time + VLC_TICK_FROM_US(500));
+    if (time == VLC_TICK_INVALID)
+        return LIBVLC_TIME_INVALID;
+
+    if (time == VLC_TICK_MAX)
+        return LIBVLC_TIME_MAX;
+
+    return (libvlc_time_t){time, LIBVLC_TIME_DEFAULT_TIMESCALE};
 }
 
+/**
+ * Convert libvlc_time_t to vlc_tick_t
+ *
+ * \param time libvlc_time_t value
+ * \return vlc_tick_t, or VLC_TICK_INVALID on error/overflow
+ */
 static inline vlc_tick_t vlc_tick_from_libvlc_time(libvlc_time_t time)
 {
-    return VLC_TICK_FROM_MS(time);
+    if (time.value == INT64_MAX)
+        return VLC_TICK_MAX;
+
+    vlc_tick_t vlc_ticks = libvlc_time_to_microseconds(time);
+    if (vlc_ticks == INT64_MIN)
+        return VLC_TICK_INVALID;
+
+    return vlc_ticks;
 }
 
 #endif

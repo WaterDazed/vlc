@@ -184,13 +184,13 @@ player_time_on_update(void *opaque,
 }
 
 static void
-player_time_on_paused(void *opaque, int64_t system_date_us)
+player_time_on_paused(void *opaque, libvlc_time_t system_date)
 {
     struct context *ctx = opaque;
 
     fprintf(stderr, "player_time_on_paused\n");
     pthread_mutex_lock(&ctx->mainloop_lock);
-    ctx->paused_date = system_date_us;
+    ctx->paused_date = libvlc_time_to_microseconds(system_date);
     pthread_mutex_unlock(&ctx->mainloop_lock);
 
     char buf = 'u';
@@ -267,7 +267,7 @@ context_init(struct context *ctx, libvlc_instance_t *libvlc)
         .on_seek = player_time_on_seek,
     };
 
-    ret = libvlc_media_player_watch_time(ctx->mp, 500000ULL,
+    ret = libvlc_media_player_watch_time(ctx->mp, libvlc_time_from_microseconds(500000ULL),
                                          &time_cbs, ctx);
     if (ret != 0)
         goto error_mp;
@@ -443,16 +443,30 @@ mainloop_handle_command(struct context *ctx, const char *command, size_t len)
             vol_jump = 10; /* 10% jump */
         }
 
+        libvlc_time_t seek_time;
+
         switch (c)
         {
             case 'D':
-                libvlc_media_player_jump_time(ctx->mp, -seek_jump);
+                seek_time = libvlc_time_from_milliseconds(-seek_jump);
+                if (!LIBVLC_TIME_IS_VALID(seek_time))
+                {
+                    fprintf(stderr, "Invalid seek time\n");
+                    return -1;
+                }
+                libvlc_media_player_jump_time(ctx->mp, seek_time);
                 break;
             case 'A':
                 increase_volume(ctx, vol_jump);
                 break;
             case 'C':
-                libvlc_media_player_jump_time(ctx->mp, seek_jump);
+                seek_time = libvlc_time_from_milliseconds(seek_jump);
+                if (!LIBVLC_TIME_IS_VALID(seek_time))
+                {
+                    fprintf(stderr, "Invalid seek time\n");
+                    return -1;
+                }
+                libvlc_media_player_jump_time(ctx->mp, seek_time);
                 break;
             case 'B':
                 increase_volume(ctx, -vol_jump);
@@ -480,38 +494,38 @@ mainloop_display_ui(struct context *ctx)
     bool run_timer;
     pthread_mutex_lock(&ctx->mainloop_lock);
 
-    int64_t ts_us;
+    libvlc_time_t ts;
     double pos;
     if (!ctx->time_seeking)
     {
         int64_t date = ctx->paused_date > 0 ? ctx->paused_date
-                                            : libvlc_clock();
+                                            : libvlc_time_to_microseconds(libvlc_clock());
         int ret =
-            libvlc_media_player_time_point_interpolate(&ctx->time_point, date,
-                                                       &ts_us, &pos);
+            libvlc_media_player_time_point_interpolate(&ctx->time_point, libvlc_time_from_microseconds(date),
+                                                       &ts, &pos);
         if (ret != 0)
         {
             pthread_mutex_unlock(&ctx->mainloop_lock);
             return false;
         }
 
-        run_timer = ctx->paused_date == 0 && ctx->time_point.system_date_us != INT64_MAX;
+        run_timer = ctx->paused_date == 0 && ctx->time_point.system_date.value != INT64_MAX;
     }
     else
     {
-        ts_us = ctx->time_point.ts_us;
+        ts = ctx->time_point.ts;
         pos = ctx->time_point.position;
         run_timer = false;
     }
     float volume = ctx->volume * 100;
     pos *= 100;
-    int64_t length_us = ctx->time_point.length_us;
+    int64_t length_us = libvlc_time_to_microseconds(ctx->time_point.length);
     pthread_mutex_unlock(&ctx->mainloop_lock);
 
-    unsigned time_100ms = ((unsigned)(ts_us / 1000.0) % 1000) / 100;
+    unsigned time_100ms = ((unsigned)(libvlc_time_to_microseconds(ts) / 1000.0) % 1000) / 100;
 
     char buffer_time[256];
-    size_t len = format_time_us(ts_us, buffer_time, sizeof(buffer_time));
+    size_t len = format_time_us(libvlc_time_to_microseconds(ts), buffer_time, sizeof(buffer_time));
     if (len > 0)
     {
         char buffer_length[256];

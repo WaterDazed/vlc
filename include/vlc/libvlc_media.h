@@ -46,6 +46,8 @@ extern "C" {
 
 typedef struct libvlc_media_t libvlc_media_t;
 
+typedef struct libvlc_time_t libvlc_time_t;
+
 /** Meta data types */
 typedef enum libvlc_meta_t {
     libvlc_meta_Title,
@@ -546,14 +548,14 @@ LIBVLC_API VLC_FORWARD_DECLARE_OBJECT(libvlc_media_list_t *)
 libvlc_media_subitems( libvlc_media_t *p_md );
 
 /**
- * Get duration (in ms) of media descriptor object item.
+ * Get duration of media descriptor object item.
  *
  * Note, you need to call libvlc_media_parse_request() or play the media
  * at least once before calling this function.
  * Not doing this will result in an undefined result.
  *
  * \param p_md media descriptor object
- * \return duration of media item or -1 on error
+ * \return duration of media item or LIBVLC_TIME_INVALID on error
  */
 LIBVLC_API libvlc_time_t
    libvlc_media_get_duration( libvlc_media_t *p_md );

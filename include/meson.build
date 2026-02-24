@@ -12,6 +12,7 @@ install_headers(
     'vlc/libvlc_parser.h',
     'vlc/libvlc_picture.h',
     'vlc/libvlc_renderer_discoverer.h',
+    'vlc/libvlc_time.h',
     'vlc/libvlc_version.h',
     'vlc/libvlc_video.h',
     subdir: vlc_pkg_suffix)

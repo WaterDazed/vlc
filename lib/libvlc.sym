@@ -34,7 +34,6 @@ libvlc_audio_set_format_callbacks
 libvlc_audio_set_callbacks
 libvlc_audio_set_volume_callback
 libvlc_chapter_descriptions_release
-libvlc_clock
 libvlc_dialog_dismiss
 libvlc_dialog_get_context
 libvlc_dialog_post_action
@@ -231,6 +230,16 @@ libvlc_retain
 libvlc_set_fullscreen
 libvlc_set_user_agent
 libvlc_set_app_id
+libvlc_time_make
+libvlc_time_make_with_seconds
+libvlc_time_from_seconds
+libvlc_time_from_milliseconds
+libvlc_time_from_microseconds
+libvlc_time_to_seconds
+libvlc_time_to_milliseconds
+libvlc_time_to_microseconds
+libvlc_time_convert_scale
+libvlc_clock
 libvlc_title_descriptions_release
 libvlc_toggle_fullscreen
 libvlc_video_get_adjust_float
