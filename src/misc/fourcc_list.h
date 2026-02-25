@@ -930,6 +930,8 @@ static const staticentry_t p_list_video[] = {
         A("NV16"),
     B(VLC_CODEC_NV61, "Biplanar 4:2:2 Y/VU"),
         A("NV61"),
+    B(VLC_CODEC_P216, "Biplanar 4:2:2 Y/UV 16-bit LE"),
+        A("P216"),
     B(VLC_CODEC_NV24, "Biplanar 4:4:4 Y/UV"),
         A("NV24"),
     B(VLC_CODEC_NV42, "Biplanar 4:4:4 Y/VU"),

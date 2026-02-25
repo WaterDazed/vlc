@@ -299,6 +299,8 @@
 #define VLC_CODEC_P012            VLC_FOURCC('P','0','1','2')
 /* 2 planes Y/UV 4:2:0 16-bit, little endian */
 #define VLC_CODEC_P016            VLC_FOURCC('P','0','1','6')
+/* 2 planes Y/UV 4:2:2 16-bit, little endian */
+#define VLC_CODEC_P216            VLC_FOURCC('P','2','1','6')
 
 /* Packed YUV */
 

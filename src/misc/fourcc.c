@@ -300,6 +300,7 @@ static const vlc_chroma_description_t p_list_chroma_description[] = {
     { VLC_CODEC_I422,                  PLANAR_8(YUV422, 3, 2, 1) },
     { VLC_CODEC_NV16,                  SEMIPLANAR(YUV422, 2, 1, 8) },
     { VLC_CODEC_NV61,                  SEMIPLANAR(YUV422, 2, 1, 8) },
+    { VLC_CODEC_P216,                  SEMIPLANAR(YUV422, 2, 1, 16) },
     { VLC_CODEC_I440,                  PLANAR_8(YUV440, 3, 1, 2) },
     { VLC_CODEC_I444,                  PLANAR_8(YUV444, 3, 1, 1) },
     { VLC_CODEC_NV24,                  SEMIPLANAR(YUV444, 1, 1, 8) },
