@@ -423,6 +423,9 @@ static const vlc_chroma_description_t p_list_chroma_description[] = {
     { VLC_CODEC_NVDEC_OPAQUE_10B,      GPU_FMT(YUV420, 10) },
     { VLC_CODEC_NVDEC_OPAQUE,          GPU_FMT(YUV420, 8) },
 
+    { VLC_CODEC_NVDEC_OPAQUE_422,      GPU_FMT(YUV422, 8) },
+    { VLC_CODEC_NVDEC_OPAQUE_422_16B,  GPU_FMT(YUV422, 16) },
+
     { VLC_CODEC_NVDEC_OPAQUE_444,      GPU_FMT(YUV444, 8) },
     { VLC_CODEC_NVDEC_OPAQUE_444_16B,  GPU_FMT(YUV444, 16) },
 
