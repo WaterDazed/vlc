@@ -518,11 +518,28 @@ NSString * const VLCLibraryAudioDataSourceDisplayedCollectionChangedNotification
 - (void)resetLayoutsForOperation:(void(^)(void))operation
 {
     VLCLibraryCollectionViewFlowLayout * const collectionViewFlowLayout = (VLCLibraryCollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
-    if (collectionViewFlowLayout) {
+    id<VLCMediaLibraryItemProtocol> preservedSelectedItem = nil;
+    if (collectionViewFlowLayout && collectionViewFlowLayout.selectedIndexPath) {
+        NSIndexPath * const selectedIndexPath = collectionViewFlowLayout.selectedIndexPath;
+        if (selectedIndexPath.item < self.displayedCollection.count) {
+            preservedSelectedItem = self.displayedCollection[selectedIndexPath.item];
+        }
         [collectionViewFlowLayout resetLayout];
     }
 
     operation();
+
+    if (preservedSelectedItem && collectionViewFlowLayout) {
+        const NSUInteger newIndex = [self findSelectedItemNewIndex:preservedSelectedItem];
+        if (newIndex != NSNotFound && newIndex < self.displayedCollection.count) {
+            id<VLCMediaLibraryItemProtocol> itemAtNewIndex = self.displayedCollection[newIndex];
+            if (itemAtNewIndex.libraryID == preservedSelectedItem.libraryID) {
+                NSIndexPath * const newIndexPath = [NSIndexPath indexPathForItem:newIndex inSection:0];
+                [collectionViewFlowLayout expandDetailSectionAtIndex:newIndexPath];
+            }
+        }
+    }
+
     [self setupExistingSortForTableView:self.songsTableView];
 }
 
@@ -572,30 +589,32 @@ NSString * const VLCLibraryAudioDataSourceDisplayedCollectionChangedNotification
 
 - (void)reloadDataForMediaLibraryItem:(const id<VLCMediaLibraryItemProtocol>)item
 {
-    [self resetLayoutsForOperation:^{
-        const NSUInteger index = [self indexForMediaLibraryItemWithId:item.libraryID];
-        if (index == NSNotFound) {
-            return;
-        }
+    const NSUInteger index = [self indexForMediaLibraryItemWithId:item.libraryID];
+    if (index == NSNotFound || index >= self.displayedCollection.count) {
+        return;
+    }
 
-        NSMutableArray * const mutableCollectionCopy = [self.displayedCollection mutableCopy];
-        [mutableCollectionCopy replaceObjectAtIndex:index withObject:item];
-        self.displayedCollection = [mutableCollectionCopy copy];
+    NSMutableArray * const mutableCollectionCopy = [self.displayedCollection mutableCopy];
+    [mutableCollectionCopy replaceObjectAtIndex:index withObject:item];
+    self.displayedCollection = [mutableCollectionCopy copy];
 
-        NSIndexPath * const indexPath = [NSIndexPath indexPathForItem:index inSection:0];
-        NSIndexSet * const rowIndexSet = [NSIndexSet indexSetWithIndex:index];
+    NSIndexPath * const indexPath = [NSIndexPath indexPathForItem:index inSection:0];
+    NSIndexSet * const rowIndexSet = [NSIndexSet indexSetWithIndex:index];
 
-        const NSRange songsTableColumnRange = NSMakeRange(0, self->_songsTableView.numberOfColumns);
-        NSIndexSet * const songsTableColumnIndexSet = [NSIndexSet indexSetWithIndexesInRange:songsTableColumnRange];
+    const NSRange songsTableColumnRange = NSMakeRange(0, self->_songsTableView.numberOfColumns);
+    NSIndexSet * const songsTableColumnIndexSet = [NSIndexSet indexSetWithIndexesInRange:songsTableColumnRange];
 
+    if (index < [self.collectionView numberOfItemsInSection:0]) {
         [self.collectionView reloadItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
+    }
+    if (index < self->_songsTableView.numberOfRows) {
         [self.songsTableView reloadDataForRowIndexes:rowIndexSet columnIndexes:songsTableColumnIndexSet];
+    }
 
-        // Don't update gridModeListSelectionCollectionView, let its VLCLibraryAudioGroupDataSource do it.
-        // Also don't update collectionSelectionTableView, as this will only show artists/genres/albums
-
-        [self.carouselView reloadData];
-    }];
+    // Don't update gridModeListSelectionCollectionView, let its VLCLibraryAudioGroupDataSource do it.
+    // Also don't update collectionSelectionTableView, as this will only show artists/genres/albums
+    [self.carouselView reloadData];
+    [self setupExistingSortForTableView:self.songsTableView];
 }
 
 - (void)deleteDataForMediaLibraryItem:(const id<VLCMediaLibraryItemProtocol>)item
