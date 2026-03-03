@@ -428,7 +428,7 @@ decoder_on_window_request_pause(vlc_input_decoder_t *decoder, void *userdata)
         return;
 
     struct vlc_input_event event = {
-        .type = INPUT_EVENT_MOUSE_LEFT
+        .type = INPUT_EVENT_TOGGLE_PAUSE
     };
 
     input_SendEvent(p_sys->p_input, &event);

@@ -156,13 +156,13 @@ typedef enum input_event_type_e
     /* The demux is not able to navigate */
     INPUT_EVENT_NAV_FAILED,
 
-    /* Mouse event */
-    INPUT_EVENT_MOUSE_LEFT,
-
     /* frame-next status */
     INPUT_EVENT_FRAME_NEXT_STATUS,
     /* frame-previous status */
     INPUT_EVENT_FRAME_PREVIOUS_STATUS,
+
+    /* Toggle pause input event */
+    INPUT_EVENT_TOGGLE_PAUSE
 } input_event_type_e;
 
 #define VLC_INPUT_CAPABILITIES_SEEKABLE (1<<0)
