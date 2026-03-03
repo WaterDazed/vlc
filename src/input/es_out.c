@@ -453,6 +453,26 @@ decoder_on_thumbnail_ready(vlc_input_decoder_t *decoder, picture_t *pic, void *u
     input_SendEvent(p_sys->p_input, &event);
 }
 
+
+static void
+decoder_on_window_request_pause(vlc_input_decoder_t *decoder, void *userdata)
+{
+    (void) decoder;
+
+    es_out_id_t *id = userdata;
+    struct vlc_input_es_out *out = id->out;
+    es_out_sys_t *p_sys = PRIV(&out->out);
+
+    if (!p_sys->p_input)
+        return;
+
+    struct vlc_input_event event = {
+        .type = INPUT_EVENT_MOUSE_LEFT
+    };
+
+    input_SendEvent(p_sys->p_input, &event);
+}
+
 static void
 decoder_on_new_video_stats(vlc_input_decoder_t *decoder, unsigned decoded, unsigned lost,
                            unsigned displayed, unsigned late, void *userdata)
@@ -619,6 +639,7 @@ static const struct vlc_input_decoder_callbacks decoder_cbs = {
     .frame_next_need_data = decoder_frame_next_need_data,
     .frame_previous_status = decoder_frame_previous_status,
     .frame_previous_seek = decoder_frame_previous_seek,
+    .on_window_request_pause = decoder_on_window_request_pause,
     .get_attachments = decoder_get_attachments,
 };
 
