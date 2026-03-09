@@ -1859,7 +1859,9 @@ static int vout_Start(vout_thread_sys_t *vout, vlc_video_context *vctx, const vo
 
     vlc_mutex_lock(&sys->window_lock);
     vout_display_window_SetMouseHandler(sys->display_cfg.window,
-                                        cfg->mouse_event, cfg->mouse_opaque);
+                                        cfg->mouse_event, cfg->event_opaque);
+
+    vout_display_window_SetRequestPauseHandler(sys->display_cfg.window, cfg->mouse_event_request_pause);
     vlc_mutex_unlock(&sys->window_lock);
 
     sys->private_pool = NULL;
@@ -1981,6 +1983,7 @@ error:
     }
     vlc_mutex_lock(&sys->window_lock);
     vout_display_window_SetMouseHandler(sys->display_cfg.window, NULL, NULL);
+    vout_display_window_SetRequestPauseHandler(sys->display_cfg.window, NULL);
     vlc_mutex_unlock(&sys->window_lock);
     return VLC_EGENERIC;
 }
@@ -2069,6 +2072,7 @@ static void vout_ReleaseDisplay(vout_thread_sys_t *vout)
 
     vlc_mutex_lock(&sys->window_lock);
     vout_display_window_SetMouseHandler(sys->display_cfg.window, NULL, NULL);
+    vout_display_window_SetRequestPauseHandler(sys->display_cfg.window, NULL);
     vlc_mutex_unlock(&sys->window_lock);
 
     if (sys->spu)

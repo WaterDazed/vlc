@@ -50,7 +50,8 @@ typedef struct {
     const char           *str_id;
     const video_format_t *fmt;
     vlc_mouse_event      mouse_event;
-    void                 *mouse_opaque;
+    void (*mouse_event_request_pause)(void* user_data);
+    void                 *event_opaque;
 } vout_configuration_t;
 
 /**

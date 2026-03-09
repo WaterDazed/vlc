@@ -65,6 +65,7 @@ typedef struct vout_display_window
         vlc_mouse_t video;
         vlc_tick_t last_left_press;
         vlc_mouse_event event;
+        void (*mouse_ev_req_pause)(void* user_data);
         void *opaque;
     } mouse;
 } vout_display_window_t;
@@ -275,6 +276,13 @@ void vout_display_window_SetMouseHandler(vlc_window_t *window,
     vlc_mutex_unlock(&state->lock);
 }
 
+void vout_display_window_SetRequestPauseHandler(vlc_window_t *window, void (*cb)(void*))
+{
+    vout_display_window_t *state = window->owner.sys;
+    state->mouse.mouse_ev_req_pause = cb;
+}
+
+
 static
 void vout_display_SizeWindow(unsigned *restrict width,
                              unsigned *restrict height,
@@ -400,6 +408,7 @@ vlc_window_t *vout_display_window_New(vout_thread_t *vout)
     vlc_mouse_Init(&state->mouse.video);
     state->mouse.last_left_press = VLC_TICK_MIN;
     state->mouse.event = NULL;
+    state->mouse.mouse_ev_req_pause = NULL;
     state->vout = vout;
 
     char *modlist = var_InheritString(vout, "window");
