@@ -157,8 +157,6 @@ struct es_out_id_t
 
     vlc_mouse_event mouse_event_cb;
     void* mouse_event_userdata;
-    vlc_mouse_t oldmouse;
-    bool mouse_being_dragged;
 };
 
 typedef struct
@@ -331,43 +329,6 @@ default_val:
 #define foreach_es_then_es_slaves( pos ) \
     for( int fetes_i=0; fetes_i<2; fetes_i++ ) \
         vlc_list_foreach( pos, (!fetes_i ? &p_sys->es : &p_sys->es_slaves), node )
-
-static void MouseEventCb(const vlc_mouse_t *newmouse, void *userdata)
-{
-    es_out_id_t *id = userdata;
-    struct vlc_input_es_out *out = id->out;
-    es_out_sys_t *p_sys = PRIV(&out->out);
-
-    if(!p_sys->p_input)
-        return;
-
-    if(!newmouse)
-    {
-        vlc_mouse_Init(&id->oldmouse);
-        id->mouse_being_dragged = false;
-        return;
-    }
-
-    const es_format_t *fmt = id->fmt_out.i_cat != UNKNOWN_ES ? &id->fmt_out : &id->fmt;
-
-    if (fmt->video.projection_mode != PROJECTION_MODE_RECTANGULAR) {
-        if (vlc_mouse_HasDragged( &id->oldmouse, newmouse )) {
-            id->mouse_being_dragged = true;
-        }
-    };
-
-    if (vlc_mouse_HasReleased(&id->oldmouse, newmouse, MOUSE_BUTTON_LEFT)) {
-        if (!id->mouse_being_dragged) {
-            input_SendEvent(p_sys->p_input, &(struct vlc_input_event) {
-                .type = INPUT_EVENT_MOUSE_LEFT
-            });
-        }
-
-        id->mouse_being_dragged = false;
-    }
-
-    id->oldmouse = *newmouse;
-}
 
 static void
 decoder_on_vout_started(vlc_input_decoder_t *decoder, vout_thread_t *vout,
@@ -2432,10 +2393,8 @@ static es_out_id_t *EsOutAddLocked(es_out_sys_t *p_sys,
     es->master = false;
     vlc_vector_init(&es->sub_es_vec);
     es->p_master = p_master;
-    vlc_mouse_Init(&es->oldmouse);
-    es->mouse_event_cb = MouseEventCb;
-    es->mouse_event_userdata = es;
-    es->mouse_being_dragged = false;
+    es->mouse_event_cb = NULL;
+    es->mouse_event_userdata = NULL;
     es->i_pts_level = VLC_TICK_INVALID;
     es->delay = VLC_TICK_MAX;
 
@@ -3887,8 +3846,6 @@ static int EsOutVaControlLocked(es_out_sys_t *p_sys, input_source_t *source,
 
         if ( !p_es->mouse_event_cb )
         {
-            /* fallback to player event */
-            p_es->mouse_event_cb = MouseEventCb;
             p_es->mouse_event_userdata = p_es;
         }
 

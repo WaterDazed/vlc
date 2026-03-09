@@ -25,7 +25,6 @@
 
 #include <vlc_demux.h>
 #include <vlc_input.h>
-#include <vlc_mouse.h>
 #include "input_interface.h"
 #include "../misc/interrupt.h"
 #include "./source.h"
@@ -295,12 +294,6 @@ struct vlc_input_event_attachments
 {
     input_attachment_t *const* array;
     size_t count;
-};
-
-struct vlc_input_event_mouse
-{
-    vlc_mouse_t oldmouse;
-    vlc_mouse_t newmouse;
 };
 
 struct vlc_input_event
