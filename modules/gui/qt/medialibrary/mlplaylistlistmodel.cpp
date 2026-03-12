@@ -27,7 +27,7 @@
 #include "qt.hpp"
 #include "util/vlctick.hpp"
 #include "dialogs/dialogs_provider.hpp"
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 
 // MediaLibrary includes
 #include "mlhelper.hpp"

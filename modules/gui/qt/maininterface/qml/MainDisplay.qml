@@ -22,7 +22,7 @@ import QtQuick.Layouts
 import VLC.Style
 import VLC.MainInterface
 import VLC.Widgets as Widgets
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Player
 
 import VLC.Util
@@ -201,7 +201,7 @@ FocusScope {
 
             model: g_mainDisplay.tabModel
 
-            playlistPane: playlistLoader.active ? playlistLoader.item
+            playqueuePane: playlistLoader.active ? playlistLoader.item
                                                 : (playlistWindowLoader.item?.playlistView ?? null)
 
             onItemClicked: (index) => {
@@ -448,7 +448,7 @@ FocusScope {
                     }
                 }
 
-                sourceComponent: PlaylistPane {
+                sourceComponent: PlayQueuePane {
                     id: playlist
 
                     implicitWidth: Math.round(VLCStyle.isScreenSmall

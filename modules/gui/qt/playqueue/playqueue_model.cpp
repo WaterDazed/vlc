@@ -20,22 +20,22 @@
 # include "config.h"
 #endif
 
-#include "playlist_model.hpp"
-#include "playlist_model_p.hpp"
+#include "playqueue_model.hpp"
+#include "playqueue_model_p.hpp"
 #include <algorithm>
 #include <cassert>
 #include "util/shared_input_item.hpp"
-#include "playlist_controller.hpp"
+#include "playqueue_controller.hpp"
 
 namespace vlc {
 namespace playlist {
 
 namespace {
 
-static QVector<PlaylistItem> toVec(vlc_playlist_item_t *const items[],
+static QVector<PlayQueueItem> toVec(vlc_playlist_item_t *const items[],
                                    size_t len)
 {
-    QVector<PlaylistItem> vec;
+    QVector<PlayQueueItem> vec;
     for (size_t i = 0; i < len; ++i)
         vec.push_back(items[i]);
     return vec;
@@ -60,8 +60,8 @@ on_playlist_items_reset(vlc_playlist_t *playlist,
                         vlc_playlist_item_t *const items[],
                         size_t len, void *userdata)
 {
-    PlaylistListModelPrivate *that = static_cast<PlaylistListModelPrivate *>(userdata);
-    QVector<PlaylistItem> newContent = toVec(items, len);
+    PlayQueueListModelPrivate *that = static_cast<PlayQueueListModelPrivate *>(userdata);
+    QVector<PlayQueueItem> newContent = toVec(items, len);
     that->callAsync([=]() {
         if (that->m_playlist != playlist)
             return;
@@ -74,8 +74,8 @@ on_playlist_items_added(vlc_playlist_t *playlist, size_t index,
                         vlc_playlist_item_t *const items[], size_t len,
                         void *userdata)
 {
-    PlaylistListModelPrivate *that = static_cast<PlaylistListModelPrivate *>(userdata);
-    QVector<PlaylistItem> added = toVec(items, len);
+    PlayQueueListModelPrivate *that = static_cast<PlayQueueListModelPrivate *>(userdata);
+    QVector<PlayQueueItem> added = toVec(items, len);
     that->callAsync([=]() {
         if (that->m_playlist != playlist)
             return;
@@ -87,7 +87,7 @@ static void
 on_playlist_items_moved(vlc_playlist_t *playlist, size_t index, size_t count,
                         size_t target, void *userdata)
 {
-    PlaylistListModelPrivate *that = static_cast<PlaylistListModelPrivate *>(userdata);
+    PlayQueueListModelPrivate *that = static_cast<PlayQueueListModelPrivate *>(userdata);
     that->callAsync([=]() {
         if (that->m_playlist != playlist)
             return;
@@ -99,7 +99,7 @@ static void
 on_playlist_items_removed(vlc_playlist_t *playlist, size_t index, size_t count,
                           void *userdata)
 {
-    PlaylistListModelPrivate *that = static_cast<PlaylistListModelPrivate *>(userdata);
+    PlayQueueListModelPrivate *that = static_cast<PlayQueueListModelPrivate *>(userdata);
     that->callAsync([=](){
         if (that->m_playlist != playlist)
             return;
@@ -112,8 +112,8 @@ on_playlist_items_updated(vlc_playlist_t *playlist, size_t index,
                           vlc_playlist_item_t *const items[], size_t len,
                           void *userdata)
 {
-    PlaylistListModelPrivate *that = static_cast<PlaylistListModelPrivate *>(userdata);
-    QVector<PlaylistItem> updated = toVec(items, len);
+    PlayQueueListModelPrivate *that = static_cast<PlayQueueListModelPrivate *>(userdata);
+    QVector<PlayQueueItem> updated = toVec(items, len);
     that->callAsync([=](){
         if (that->m_playlist != playlist)
             return;
@@ -128,16 +128,16 @@ static void
 on_playlist_current_item_changed(vlc_playlist_t *playlist, ssize_t index,
                                  void *userdata)
 {
-    PlaylistListModelPrivate *that = static_cast<PlaylistListModelPrivate *>(userdata);
+    PlayQueueListModelPrivate *that = static_cast<PlayQueueListModelPrivate *>(userdata);
     that->callAsync([=](){
         if (that->m_playlist != playlist)
             return;
         ssize_t oldCurrent = that->m_current;
         that->m_current = index;
         if (oldCurrent != -1)
-            that->notifyItemsChanged(oldCurrent, 1, {PlaylistListModel::IsCurrentRole});
+            that->notifyItemsChanged(oldCurrent, 1, {PlayQueueListModel::IsCurrentRole});
         if (index != -1)
-            that->notifyItemsChanged(index, 1, {PlaylistListModel::IsCurrentRole});
+            that->notifyItemsChanged(index, 1, {PlayQueueListModel::IsCurrentRole});
         emit that->q_func()->currentIndexChanged(index);
     });
 }
@@ -157,12 +157,12 @@ static const struct vlc_playlist_callbacks playlist_callbacks = []{
 
 // private API
 
-PlaylistListModelPrivate::PlaylistListModelPrivate(PlaylistListModel* playlistListModel)
-    : q_ptr(playlistListModel)
+PlayQueueListModelPrivate::PlayQueueListModelPrivate(PlayQueueListModel* playqueueListModel)
+    : q_ptr(playqueueListModel)
 {
 }
 
-PlaylistListModelPrivate::~PlaylistListModelPrivate()
+PlayQueueListModelPrivate::~PlayQueueListModelPrivate()
 {
     if (m_playlist && m_listener)
     {
@@ -171,9 +171,9 @@ PlaylistListModelPrivate::~PlaylistListModelPrivate()
     }
 }
 
-void PlaylistListModelPrivate::onItemsReset(const QVector<PlaylistItem>&& newContent)
+void PlayQueueListModelPrivate::onItemsReset(const QVector<PlayQueueItem>&& newContent)
 {
-    Q_Q(PlaylistListModel);
+    Q_Q(PlayQueueListModel);
     q->beginResetModel();
     m_items = newContent;
     q->endResetModel();
@@ -190,9 +190,9 @@ void PlaylistListModelPrivate::onItemsReset(const QVector<PlaylistItem>&& newCon
     emit q->countChanged(m_items.size());
 }
 
-void PlaylistListModelPrivate::onItemsAdded(const QVector<PlaylistItem>&& added, size_t index)
+void PlayQueueListModelPrivate::onItemsAdded(const QVector<PlayQueueItem>&& added, size_t index)
 {
-    Q_Q(PlaylistListModel);
+    Q_Q(PlayQueueListModel);
     int count = added.size();
     q->beginInsertRows({}, index, index + count - 1);
     m_items.insert(index, count, nullptr);
@@ -207,9 +207,9 @@ void PlaylistListModelPrivate::onItemsAdded(const QVector<PlaylistItem>&& added,
     emit q->countChanged(m_items.size());
 }
 
-void PlaylistListModelPrivate::onItemsMoved(size_t index, size_t count, size_t target)
+void PlayQueueListModelPrivate::onItemsMoved(size_t index, size_t count, size_t target)
 {
-    Q_Q(PlaylistListModel);
+    Q_Q(PlayQueueListModel);
     size_t qtTarget = target;
     if (qtTarget > index)
         /* Qt interprets the target index as the index of the insertion _before_
@@ -229,9 +229,9 @@ void PlaylistListModelPrivate::onItemsMoved(size_t index, size_t count, size_t t
     q->endMoveRows();
 }
 
-void PlaylistListModelPrivate::onItemsRemoved(size_t index, size_t count)
+void PlayQueueListModelPrivate::onItemsRemoved(size_t index, size_t count)
 {
-    Q_Q(PlaylistListModel);
+    Q_Q(PlayQueueListModel);
 
     for(size_t i = index; i <= index + count - 1; ++i)
     {
@@ -255,9 +255,9 @@ void PlaylistListModelPrivate::onItemsRemoved(size_t index, size_t count)
 
 
 void
-PlaylistListModelPrivate::notifyItemsChanged(int idx, int count, const QVector<int> &roles)
+PlayQueueListModelPrivate::notifyItemsChanged(int idx, int count, const QVector<int> &roles)
 {
-    Q_Q(PlaylistListModel);
+    Q_Q(PlayQueueListModel);
     QModelIndex first = q->index(idx, 0);
     QModelIndex last = q->index(idx + count - 1);
     emit q->dataChanged(first, last, roles);
@@ -265,25 +265,25 @@ PlaylistListModelPrivate::notifyItemsChanged(int idx, int count, const QVector<i
 
 // public API
 
-PlaylistListModel::PlaylistListModel(QObject *parent)
+PlayQueueListModel::PlayQueueListModel(QObject *parent)
     : QAbstractListModel(parent)
-    , d_ptr(new PlaylistListModelPrivate(this))
+    , d_ptr(new PlayQueueListModelPrivate(this))
 {
 }
 
-PlaylistListModel::PlaylistListModel(vlc_playlist_t *raw_playlist, QObject *parent)
+PlayQueueListModel::PlayQueueListModel(vlc_playlist_t *raw_playlist, QObject *parent)
     : QAbstractListModel(parent)
-    , d_ptr(new PlaylistListModelPrivate(this))
+    , d_ptr(new PlayQueueListModelPrivate(this))
 {
-    setPlaylist(Playlist(raw_playlist));
+    setPlayQueue(PlayQueue(raw_playlist));
 }
 
-PlaylistListModel::~PlaylistListModel()
+PlayQueueListModel::~PlayQueueListModel()
 {
 }
 
 QHash<int, QByteArray>
-PlaylistListModel::roleNames() const
+PlayQueueListModel::roleNames() const
 {
     return {
         { PreparsedRole, "preparsed" },
@@ -298,32 +298,32 @@ PlaylistListModel::roleNames() const
 }
 
 int
-PlaylistListModel::rowCount(const QModelIndex &parent) const
+PlayQueueListModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-    Q_D(const PlaylistListModel);
+    Q_D(const PlayQueueListModel);
     if (! d->m_playlist)
         return 0;
     return d->m_items.size();
 }
 
 VLCDuration
-PlaylistListModel::getDuration() const
+PlayQueueListModel::getDuration() const
 {
-    Q_D(const PlaylistListModel);
+    Q_D(const PlayQueueListModel);
     return d->m_duration;
 }
 
-PlaylistItem
-PlaylistListModel::itemAt(int index) const
+PlayQueueItem
+PlayQueueListModel::itemAt(int index) const
 {
-    Q_D(const PlaylistListModel);
+    Q_D(const PlayQueueListModel);
     return d->m_items[index];
 }
 
-void PlaylistListModel::removeItems(const QVector<int>& indexes)
+void PlayQueueListModel::removeItems(const QVector<int>& indexes)
 {
-    Q_D(PlaylistListModel);
+    Q_D(PlayQueueListModel);
     if (!d->m_playlist)
         return;
     if (indexes.size() == 0)
@@ -364,10 +364,10 @@ getMovePostTarget(const QVector<int> &sortedIndexesToMove, int preTarget)
 }
 
 void
-PlaylistListModel::moveItems(const QVector<int> &sortedIndexes, int target,
+PlayQueueListModel::moveItems(const QVector<int> &sortedIndexes, int target,
                              bool isPreTarget)
 {
-    Q_D(PlaylistListModel);
+    Q_D(PlayQueueListModel);
     if (!d->m_playlist)
         return;
     if (sortedIndexes.size() == 0)
@@ -393,28 +393,28 @@ PlaylistListModel::moveItems(const QVector<int> &sortedIndexes, int target,
 }
 
 void
-PlaylistListModel::moveItemsPre(const QVector<int> &sortedIndexes, int preTarget)
+PlayQueueListModel::moveItemsPre(const QVector<int> &sortedIndexes, int preTarget)
 {
     return moveItems(sortedIndexes, preTarget, true);
 }
 
 void
-PlaylistListModel::moveItemsPost(const QVector<int> &sortedIndexes,
+PlayQueueListModel::moveItemsPost(const QVector<int> &sortedIndexes,
                                  int postTarget)
 {
     return moveItems(sortedIndexes, postTarget, false);
 }
 
-int PlaylistListModel::getCurrentIndex() const
+int PlayQueueListModel::getCurrentIndex() const
 {
-    Q_D(const PlaylistListModel);
+    Q_D(const PlayQueueListModel);
     return d->m_current;
 }
 
 /* Q_INVOKABLE */
-QVariantList PlaylistListModel::getItemsForIndexes(const QVector<int> & indexes) const
+QVariantList PlayQueueListModel::getItemsForIndexes(const QVector<int> & indexes) const
 {
-    Q_D(const PlaylistListModel);
+    Q_D(const PlayQueueListModel);
 
     QVariantList items;
 
@@ -439,17 +439,17 @@ QVariantList PlaylistListModel::getItemsForIndexes(const QVector<int> & indexes)
     return items;
 }
 
-Playlist PlaylistListModel::getPlaylist() const
+PlayQueue PlayQueueListModel::getPlayQueue() const
 {
-    Q_D(const PlaylistListModel);
+    Q_D(const PlayQueueListModel);
     if (!d->m_playlist)
         return {};
-    return Playlist(d->m_playlist);
+    return PlayQueue(d->m_playlist);
 }
 
-void PlaylistListModel::setPlaylist(vlc_playlist_t* playlist)
+void PlayQueueListModel::setPlayQueue(vlc_playlist_t* playlist)
 {
-    Q_D(PlaylistListModel);
+    Q_D(PlayQueueListModel);
     if (d->m_playlist && d->m_listener)
     {
         vlc_playlist_locker locker(d->m_playlist);
@@ -463,18 +463,18 @@ void PlaylistListModel::setPlaylist(vlc_playlist_t* playlist)
         d->m_playlist = playlist;
         d->m_listener = vlc_playlist_AddListener(d->m_playlist, &playlist_callbacks, d, true);
     }
-    emit playlistChanged( Playlist(d->m_playlist) );
+    emit playqueueChanged( PlayQueue(d->m_playlist) );
 }
 
-void PlaylistListModel::setPlaylist(const Playlist& playlist)
+void PlayQueueListModel::setPlayQueue(const PlayQueue& playlist)
 {
-    setPlaylist(playlist.m_playlist);
+    setPlayQueue(playlist.m_playlist);
 }
 
 QVariant
-PlaylistListModel::data(const QModelIndex &index, int role) const
+PlayQueueListModel::data(const QModelIndex &index, int role) const
 {
-    Q_D(const PlaylistListModel);
+    Q_D(const PlayQueueListModel);
     if (!d->m_playlist)
         return {};
 
@@ -498,7 +498,7 @@ PlaylistListModel::data(const QModelIndex &index, int role) const
         return d->m_items[row].getArtwork();
     case UrlRole:
         return d->m_items[row].getUrl();
-    case PlaylistListModel::PreparsedRole:
+    case PlayQueueListModel::PreparsedRole:
         return d->m_items[row].preparsed();
     default:
         return {};

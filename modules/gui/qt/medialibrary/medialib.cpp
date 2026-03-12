@@ -18,7 +18,7 @@
 
 #include "medialib.hpp"
 #include "mlhelper.hpp"
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 #include "util/shared_input_item.hpp"
 
 #include <utility>

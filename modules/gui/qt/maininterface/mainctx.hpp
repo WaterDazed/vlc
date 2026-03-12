@@ -33,7 +33,7 @@
 
 Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
-Q_MOC_INCLUDE( "playlist/playlist_controller.hpp" )
+Q_MOC_INCLUDE( "playqueue/playqueue_controller.hpp" )
 Q_MOC_INCLUDE( "maininterface/mainctx_submodels.hpp" )
 Q_MOC_INCLUDE( "maininterface/videosurface.hpp" )
 Q_MOC_INCLUDE( "medialibrary/medialib.hpp" )

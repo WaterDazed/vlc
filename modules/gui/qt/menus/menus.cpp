@@ -40,7 +40,7 @@
 #include "maininterface/mainctx.hpp"                     /* View modifications */
 #include "dialogs/dialogs_provider.hpp"                   /* Dialogs display */
 #include "player/player_controller.hpp"                      /* Input Management */
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 #include "dialogs/extensions/extensions_manager.hpp"                 /* Extensions menu */
 #include "dialogs/extended/extended_panels.hpp"
 #include "dialogs/systray/systray.hpp"

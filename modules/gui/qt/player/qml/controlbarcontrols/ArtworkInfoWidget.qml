@@ -25,7 +25,7 @@ import QtQuick.Layouts
 import VLC.MainInterface
 import VLC.Widgets as Widgets
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Player
 import VLC.Util
 
@@ -112,7 +112,7 @@ AbstractButton {
         }
 
         onRequestInputItems: (indexes, data, resolve, reject) => {
-            resolve([MainPlaylistController.currentItem])
+            resolve([MainPlayQueueController.currentItem])
         }
 
         indexes: [0]

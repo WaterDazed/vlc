@@ -24,7 +24,7 @@ import VLC.MainInterface
 import VLC.Util
 import VLC.Widgets as Widgets
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Network
 
 FocusScope {
@@ -87,7 +87,7 @@ FocusScope {
                     if (urlListDisplay.status == Loader.Ready)
                         urlListDisplay.item.model.addAndPlay(text)
                     else
-                        MainPlaylistController.append([text], true)
+                        MainPlayQueueController.append([text], true)
                 }
 
                 Keys.priority: Keys.AfterItem

@@ -25,7 +25,7 @@ import QtQml.Models
 import VLC.MainInterface
 import VLC.Style
 import VLC.Widgets as Widgets
-import VLC.Playlist as Playlist
+import VLC.PlayQueue as Playlist
 import VLC.Util
 
 Item {

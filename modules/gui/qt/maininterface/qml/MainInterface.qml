@@ -31,7 +31,7 @@ import VLC.MainInterface
 import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Util
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Player
 import VLC.Dialogs
 // import VLC.MediaLibrary
@@ -59,7 +59,7 @@ Item {
 
     function setInitialView() {
         //set the initial view
-        if (!MainPlaylistController.empty)
+        if (!MainPlayQueueController.empty)
             MainCtx.requestShowPlayerView()
         else
             MainCtx.requestShowMainView()
@@ -143,14 +143,14 @@ Item {
             id: playlistWindowLoader
             asynchronous: true
             active: !MainCtx.playlistDocked
-            source: "qrc:///qt/qml/VLC/Playlist/PlaylistDetachedWindow.qml"
+            source: "qrc:///qt/qml/VLC/PlayQueue/PlayQueueDetachedWindow.qml"
         }
 
         Connections {
-            target: MainPlaylistController
+            target: MainPlayQueueController
 
             function onInitializedChanged() {
-                console.assert(MainPlaylistController.initialized)
+                console.assert(MainPlayQueueController.initialized)
                 if (root._interfaceReady && !root._playlistReady) {
                     root._playlistReady = true
                     setInitialView()
@@ -178,7 +178,7 @@ Item {
                     return
 
                 if (MainCtx.hasEmbededVideo && MainCtx.canShowVideoPIP === false)
-                    MainPlaylistController.stop()
+                    MainPlayQueueController.stop()
 
                 if (History.previousEmpty) {
                     History.update(["mc", "home"])
@@ -220,7 +220,7 @@ Item {
 
         Component.onCompleted: {
             root._interfaceReady = true
-            if (!root._playlistReady && MainPlaylistController.initialized) {
+            if (!root._playlistReady && MainPlayQueueController.initialized) {
                 root._playlistReady = true
                 setInitialView()
             }
@@ -272,7 +272,7 @@ Item {
                         }
                     }
 
-                    MainPlaylistController.append(urls, true)
+                    MainPlayQueueController.append(urls, true)
                     drop.accept()
                 }
             }

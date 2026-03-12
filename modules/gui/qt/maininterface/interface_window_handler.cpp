@@ -19,7 +19,7 @@
 #include "mainctx.hpp"
 #include "compositor.hpp"
 #include <player/player_controller.hpp>
-#include <playlist/playlist_controller.hpp>
+#include <playqueue/playqueue_controller.hpp>
 #include "util/keyhelper.hpp"
 #include "dialogs/systray/systray.hpp"
 #include "widgets/native/qvlcframe.hpp"

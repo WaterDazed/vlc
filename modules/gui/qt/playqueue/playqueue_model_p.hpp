@@ -1,5 +1,5 @@
-﻿/*****************************************************************************
- * playlist_model_p.hpp
+/*****************************************************************************
+ * playqueue_model_p.hpp
  *****************************************************************************
  * Copyright (C) 2018 VLC authors and VideoLAN
  *
@@ -17,30 +17,30 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
-#ifndef PLAYLIST_MODEL_P_HPP
-#define PLAYLIST_MODEL_P_HPP
+#ifndef PLAYQUEUE_MODEL_P_HPP
+#define PLAYQUEUE_MODEL_P_HPP
 
-#include "playlist_model.hpp"
+#include "playqueue_model.hpp"
 
 namespace vlc {
 namespace playlist {
 
-class PlaylistListModelPrivate
+class PlayQueueListModelPrivate
 {
-    Q_DISABLE_COPY(PlaylistListModelPrivate)
+    Q_DISABLE_COPY(PlayQueueListModelPrivate)
 public:
-    Q_DECLARE_PUBLIC(PlaylistListModel)
-    PlaylistListModel* const q_ptr;
+    Q_DECLARE_PUBLIC(PlayQueueListModel)
+    PlayQueueListModel* const q_ptr;
 
 public:
-    PlaylistListModelPrivate(PlaylistListModel* playlistList);
-    ~PlaylistListModelPrivate();
+    PlayQueueListModelPrivate(PlayQueueListModel* playlistList);
+    ~PlayQueueListModelPrivate();
 
     ///call function @a fun on object thread
     template <typename Fun>
     inline void callAsync(Fun&& fun)
     {
-        Q_Q(PlaylistListModel);
+        Q_Q(PlayQueueListModel);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
         // NOTE: Starting with Qt 6.7.0, lambda expression here without a return value
         //       causes compilation issues with some compilers.
@@ -51,8 +51,8 @@ public:
 #endif
     }
 
-    void onItemsReset(const QVector<PlaylistItem>&& items);
-    void onItemsAdded(const QVector<PlaylistItem>&& added, size_t index);
+    void onItemsReset(const QVector<PlayQueueItem>&& items);
+    void onItemsAdded(const QVector<PlayQueueItem>&& added, size_t index);
     void onItemsMoved(size_t index, size_t count, size_t target);
     void onItemsRemoved(size_t index, size_t count);
 
@@ -63,7 +63,7 @@ public:
     vlc_playlist_listener_id *m_listener = nullptr;
 
     /* access only from the UI thread */
-    QVector<PlaylistItem> m_items;
+    QVector<PlayQueueItem> m_items;
     ssize_t m_current = -1;
 
     VLCDuration m_duration = VLCDuration{};
@@ -73,4 +73,4 @@ public:
 } //namespace vlc
 
 
-#endif // PLAYLIST_MODEL_P_HPP
+#endif // PLAYQUEUE_MODEL_P_HPP

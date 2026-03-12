@@ -16,15 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-#ifndef VLC_QT_PLAYLIST_NEW_MODEL_HPP_
-#define VLC_QT_PLAYLIST_NEW_MODEL_HPP_
+#ifndef VLC_QT_PLAYQUEUE_MODEL_HPP_
+#define VLC_QT_PLAYQUEUE_MODEL_HPP_
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include "playlist_common.hpp"
-#include "playlist_item.hpp"
+#include "playqueue_common.hpp"
+#include "playqueue_item.hpp"
 #include "util/vlctick.hpp"
 
 #include <QAbstractListModel>
@@ -32,11 +32,11 @@
 namespace vlc {
 namespace playlist {
 
-class PlaylistListModelPrivate;
-class PlaylistListModel : public QAbstractListModel
+class PlayQueueListModelPrivate;
+class PlayQueueListModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(Playlist playlist READ getPlaylist WRITE setPlaylist NOTIFY playlistChanged FINAL)
+    Q_PROPERTY(PlayQueue playqueue READ getPlayQueue WRITE setPlayQueue NOTIFY playqueueChanged FINAL)
     Q_PROPERTY(int currentIndex READ getCurrentIndex NOTIFY currentIndexChanged FINAL)
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged FINAL)
     Q_PROPERTY(VLCDuration duration READ getDuration NOTIFY countChanged FINAL)
@@ -54,9 +54,9 @@ public:
         PreparsedRole
     };
 
-    PlaylistListModel(QObject *parent = nullptr);
-    PlaylistListModel(vlc_playlist_t *playlist, QObject *parent = nullptr);
-    ~PlaylistListModel();
+    PlayQueueListModel(QObject *parent = nullptr);
+    PlayQueueListModel(vlc_playlist_t *playlist, QObject *parent = nullptr);
+    ~PlayQueueListModel();
 
     QHash<int, QByteArray> roleNames() const override;
     int rowCount(const QModelIndex &parent = {}) const override;
@@ -65,7 +65,7 @@ public:
                   int role = Qt::DisplayRole) const override;
 
     /* provided for convenience */
-    Q_INVOKABLE PlaylistItem itemAt(int index) const;
+    Q_INVOKABLE PlayQueueItem itemAt(int index) const;
 
     Q_INVOKABLE virtual void removeItems(const QVector<int> &indexes);
     Q_INVOKABLE virtual void moveItemsPre(const QVector<int> &indexes, int preTarget);
@@ -76,21 +76,21 @@ public:
     Q_INVOKABLE QVariantList getItemsForIndexes(const QVector<int> & indexes) const;
 
 public slots:
-    Playlist getPlaylist() const;
-    void setPlaylist(const Playlist& playlist);
-    void setPlaylist(vlc_playlist_t* playlist);
+    PlayQueue getPlayQueue() const;
+    void setPlayQueue(const PlayQueue& playlist);
+    void setPlayQueue(vlc_playlist_t* playlist);
 
 signals:
-    void playlistChanged(const Playlist&);
+    void playqueueChanged(const PlayQueue&);
     void currentIndexChanged( int );
     void countChanged(int);
 
 private:
-    Q_DECLARE_PRIVATE(PlaylistListModel)
+    Q_DECLARE_PRIVATE(PlayQueueListModel)
 
     void moveItems(const QVector<int> &indexes, int target, bool isPreTarget);
 
-    QScopedPointer<PlaylistListModelPrivate> d_ptr;
+    QScopedPointer<PlayQueueListModelPrivate> d_ptr;
 
 };
 

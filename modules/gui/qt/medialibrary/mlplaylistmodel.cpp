@@ -30,8 +30,8 @@
 #include "mlhelper.hpp"
 #include "mlplaylistmedia.hpp"
 
-#include "playlist/playlist_controller.hpp"
-#include "playlist/media.hpp"
+#include "playqueue/playqueue_controller.hpp"
+#include "playqueue/playqueue_media.hpp"
 
 //=================================================================================================
 // MLPlaylistModel

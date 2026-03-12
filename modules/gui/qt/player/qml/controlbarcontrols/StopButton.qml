@@ -21,13 +21,13 @@ import QtQuick
 import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Player
-import VLC.Playlist
+import VLC.PlayQueue
 
 
 Widgets.IconToolButton {
     id: stopBtn
     enabled: Player.isStarted
     text: VLCIcons.stop
-    onClicked: MainPlaylistController.stop()
+    onClicked: MainPlayQueueController.stop()
     description: qsTr("Stop")
 }

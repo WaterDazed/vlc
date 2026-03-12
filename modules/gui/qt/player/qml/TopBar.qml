@@ -474,7 +474,7 @@ FocusScope{
             id: playlistButton
 
             anchors.verticalCenter: parent.verticalCenter
-            objectName: ControlListModel.PLAYLIST_BUTTON
+            objectName: ControlListModel.PLAYQUEUE_BUTTON
             font.pixelSize: VLCStyle.icon_banner
             text: VLCIcons.playqueue
             description: qsTr("Playlist")

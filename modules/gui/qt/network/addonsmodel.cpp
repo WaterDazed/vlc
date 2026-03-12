@@ -22,8 +22,8 @@
 
 #include "medialibrary/mlhelper.hpp"
 
-#include "playlist/media.hpp"
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_media.hpp"
+#include "playqueue/playqueue_controller.hpp"
 
 #include <memory>
 #include <QPixmap>

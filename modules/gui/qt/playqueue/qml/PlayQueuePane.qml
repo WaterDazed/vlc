@@ -25,14 +25,14 @@ import QtQml.Models
 import VLC.MainInterface
 import VLC.Widgets as Widgets
 import VLC.Util
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Style
 
 T.Pane {
     id: root
 
-    property var model: PlaylistListModel {
-        playlist: MainPlaylistController.playlist
+    property var model: PlayQueueListModel {
+        playqueue: MainPlayQueueController.playqueue
     }
     readonly property ListSelectionModel selectionModel: listView?.selectionModel ?? null
 
@@ -91,14 +91,14 @@ T.Pane {
         }
     }
 
-    PlaylistContextMenu {
+    PlayQueueContextMenu {
         id: contextMenu
         model: root.model
         selectionModel: root.selectionModel
-        controler: MainPlaylistController
+        controler: MainPlayQueueController
         ctx: MainCtx
 
-        onJumpToCurrentPlaying: listView.positionViewAtIndex( MainPlaylistController.currentIndex, ItemView.Center)
+        onJumpToCurrentPlaying: listView.positionViewAtIndex( MainPlayQueueController.currentIndex, ItemView.Center)
     }
 
     background: Widgets.AcrylicBackground {
@@ -244,7 +244,7 @@ T.Pane {
                                 console.warn("can't convert items to input items");
                                 return
                             }
-                            MainPlaylistController.insert(index, inputItems, false)
+                            MainPlayQueueController.insert(index, inputItems, false)
                         }).then(() => { listView.forceActiveFocus(); })
                 // NOTE: Dropping an external item (i.e. filesystem) into the queue.
                 } else if (drop.hasUrls) {
@@ -253,7 +253,7 @@ T.Pane {
                     for (let url in drop.urls)
                         urlList.push(drop.urls[url]);
 
-                    MainPlaylistController.insert(index, urlList, false);
+                    MainPlayQueueController.insert(index, urlList, false);
 
                     // NOTE This is required otherwise backend may handle the drop as well yielding double addition.
                     drop.accept(Qt.IgnoreAction);
@@ -283,13 +283,13 @@ T.Pane {
 
             Component.onCompleted: {
                 // WARNING: Tracking the current item and not the current index is intentional here.
-                MainPlaylistController.currentItemChanged.connect(listView, () => {
+                MainPlayQueueController.currentItemChanged.connect(listView, () => {
                     // FIXME: Qt does not provide the `contentY` with `positionViewAtIndex()` for us
                     //        to animate. For that reason, we capture the new `contentY`, adjust
                     //        `contentY` to it is old value then enable the animation and set `contentY`
                     //        to its new value.
                     const oldContentY = listView.contentY
-                    listView.positionViewAtIndex(MainPlaylistController.currentIndex, ListView.Contain)
+                    listView.positionViewAtIndex(MainPlayQueueController.currentIndex, ListView.Contain)
                     const newContentY = listView.contentY
                     if (Math.abs(oldContentY - newContentY) >= Number.EPSILON) {
                         contentYBehavior.enabled = false
@@ -315,7 +315,7 @@ T.Pane {
                 }
             }
 
-            delegate: PlaylistDelegate {
+            delegate: PlayQueueDelegate {
                 id: delegate
 
                 width: listView.contentWidth
@@ -346,7 +346,7 @@ T.Pane {
                 if (index < 0)
                     return
 
-                MainPlaylistController.goTo(index, true)
+                MainPlayQueueController.goTo(index, true)
             }
 
             Column {
@@ -409,7 +409,7 @@ T.Pane {
             }
         }
 
-        PlaylistToolbar {
+        PlayQueueToolbar {
             id: toolbar
 
             Layout.preferredHeight: VLCStyle.heightBar_normal

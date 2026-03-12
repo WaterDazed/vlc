@@ -46,7 +46,7 @@
 
 #include "widgets/native/interface_widgets.hpp"     // bgWidget, videoWidget
 
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 #include "player/player_controller.hpp"
 
 #include "dialogs/dialogs_provider.hpp"

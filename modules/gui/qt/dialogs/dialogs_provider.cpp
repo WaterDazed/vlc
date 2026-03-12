@@ -33,7 +33,7 @@
 #include "qt.hpp"
 #include "dialogs_provider.hpp"
 #include "player/player_controller.hpp" /* Load Subtitles */
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 #include "menus/menus.hpp"
 #include "util/qt_dirs.hpp"
 #include "util/vlchotkeyconverter.hpp"
@@ -334,15 +334,15 @@ void DialogsProvider::mediaInfoDialog( const SharedInputItem& inputItem )
     mid->showTab( MediaInfoDialog::META_PANEL );
 }
 
-void DialogsProvider::mediaInfoDialog( const PlaylistItem& pItem )
+void DialogsProvider::mediaInfoDialog( const PlayQueueItem& pItem )
 {
     input_item_t *p_input = nullptr;
 
-    vlc_playlist_item_t * const playlistItem = pItem.raw();
+    vlc_playlist_item_t * const playqueueItem = pItem.raw();
 
-    if( playlistItem )
+    if( playqueueItem )
     {
-        p_input = vlc_playlist_item_GetMedia(playlistItem);
+        p_input = vlc_playlist_item_GetMedia(playqueueItem);
     }
 
     if( p_input )

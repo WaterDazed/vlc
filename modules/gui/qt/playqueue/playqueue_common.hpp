@@ -15,8 +15,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
-#ifndef PLAYLIST_COMMON_HPP
-#define PLAYLIST_COMMON_HPP
+#ifndef PLAYQUEUE_COMMON_HPP
+#define PLAYQUEUE_COMMON_HPP
 
 #include <QObject>
 
@@ -24,17 +24,17 @@ extern "C" {
     typedef struct vlc_playlist vlc_playlist_t;
 }
 
-class Playlist
+class PlayQueue
 {
 public:
-    Playlist() = default;
-    explicit Playlist(vlc_playlist_t * const playlist)
+    PlayQueue() = default;
+    explicit PlayQueue(vlc_playlist_t * const playlist)
         : m_playlist(playlist)
     { };
 
     vlc_playlist_t * m_playlist = nullptr;
 };
 
-Q_DECLARE_METATYPE(Playlist)
+Q_DECLARE_METATYPE(PlayQueue)
 
-#endif // PLAYLIST_COMMON_HPP
+#endif // PLAYQUEUE_COMMON_HPP

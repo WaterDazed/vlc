@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-#ifndef VLC_QT_PLAYLIST_NEW_HPP_
-#define VLC_QT_PLAYLIST_NEW_HPP_
+#ifndef VLC_QT_PLAYQUEUE_NEW_HPP_
+#define VLC_QT_PLAYQUEUE_NEW_HPP_
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -29,9 +29,9 @@
 #include <QVector>
 #include <QVariantList>
 
-#include "media.hpp"
-#include "playlist_common.hpp"
-#include "playlist_item.hpp"
+#include "playqueue_media.hpp"
+#include "playqueue_common.hpp"
+#include "playqueue_item.hpp"
 
 namespace vlc {
 namespace playlist {
@@ -92,9 +92,9 @@ public:
     Q_PROPERTY(bool initialized READ isInitialized NOTIFY initializedChanged FINAL)
     Q_PROPERTY(QVariantList sortKeyTitleList READ getSortKeyTitleList CONSTANT FINAL)
 
-    Q_PROPERTY(Playlist playlist READ getPlaylist CONSTANT FINAL)
+    Q_PROPERTY(PlayQueue playqueue READ getPlayQueue CONSTANT FINAL)
 
-    Q_PROPERTY(PlaylistItem currentItem READ getCurrentItem NOTIFY currentItemChanged FINAL)
+    Q_PROPERTY(PlayQueueItem currentItem READ getCurrentItem NOTIFY currentItemChanged FINAL)
 
     Q_PROPERTY(bool hasNext READ hasNext NOTIFY hasNextChanged FINAL)
     Q_PROPERTY(bool hasPrev READ hasPrev NOTIFY hasPrevChanged FINAL)
@@ -129,8 +129,8 @@ public:
 
     void append(const QVector<Media> &, bool startPlaying = false);
     void insert(size_t index, const QVector<Media> &, bool startPlaying = false);
-    void move(const QVector<PlaylistItem> &, size_t target, ssize_t indexHint);
-    void remove(const QVector<PlaylistItem> &, ssize_t indexHint);
+    void move(const QVector<PlayQueueItem> &, size_t target, ssize_t indexHint);
+    void remove(const QVector<PlayQueueItem> &, ssize_t indexHint);
 
     Q_INVOKABLE void shuffle();
     void sort(const QVector<vlc_playlist_sort_criterion> &);
@@ -139,7 +139,7 @@ public:
     Q_INVOKABLE void sort(SortKey key);
     Q_INVOKABLE void sort(void);
 
-    Q_INVOKABLE void explore(const PlaylistItem& pItem);
+    Q_INVOKABLE void explore(const PlayQueueItem& pItem);
 
     int serialize(const QString& fileName);
 
@@ -163,7 +163,7 @@ public:
     bool isInitialized() const;
 
 public slots:
-    PlaylistItem getCurrentItem() const;
+    PlayQueueItem getCurrentItem() const;
 
     void setRandom( bool );
     void setMediaStopAction(MediaStopAction );
@@ -173,7 +173,7 @@ public slots:
     void switchSortOrder();
 
     QVariantList getSortKeyTitleList() const;
-    Playlist getPlaylist() const;
+    PlayQueue getPlayQueue() const;
     void resetSortKey();
 
 signals:
@@ -191,11 +191,11 @@ signals:
     void sortOrderChanged();
 
     void currentIndexChanged(ssize_t index);
-    void itemsReset(QVector<PlaylistItem>);
-    void itemsAdded(size_t index, const QVector<PlaylistItem>&);
+    void itemsReset(QVector<PlayQueueItem>);
+    void itemsAdded(size_t index, const QVector<PlayQueueItem>&);
     void itemsMoved(size_t index, size_t count, size_t target);
     void itemsRemoved(size_t index, size_t count);
-    void itemsUpdated(size_t index, const QVector<PlaylistItem>&);
+    void itemsUpdated(size_t index, const QVector<PlayQueueItem>&);
 
     void initializedChanged();
 

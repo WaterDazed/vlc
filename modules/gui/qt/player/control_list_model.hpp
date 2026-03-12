@@ -45,7 +45,7 @@ public:
         FASTER_BUTTON,
         FULLSCREEN_BUTTON,
         EXTENDED_BUTTON,
-        PLAYLIST_BUTTON,
+        PLAYQUEUE_BUTTON,
         SNAPSHOT_BUTTON,
         RECORD_BUTTON,
         ATOB_BUTTON,

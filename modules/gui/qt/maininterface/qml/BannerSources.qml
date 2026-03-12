@@ -26,7 +26,7 @@ import QtQuick.Window
 
 import VLC.MainInterface
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Widgets as Widgets
 import VLC.Menus as Menus
 import VLC.Util
@@ -42,7 +42,7 @@ T.ToolBar {
 
     // For now, used for d&d functionality
     // Not strictly necessary to set
-    property PlaylistPane playlistPane: null
+    property PlayQueuePane playqueuePane: null
 
     property bool _showCSD: MainCtx.clientSideDecoration && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
 
@@ -429,10 +429,10 @@ T.ToolBar {
                                 }
 
                                 onEntered: (drag) => {
-                                    if (root.playlistPane) {
-                                        console.assert(root.playlistPane.isDropAcceptableFunc)
-                                        console.assert(root.playlistPane.model)
-                                        if (root.playlistPane.isDropAcceptableFunc(drag, root.playlistPane.model.count)) {
+                                    if (root.playqueuePane) {
+                                        console.assert(root.playqueuePane.isDropAcceptableFunc)
+                                        console.assert(root.playqueuePane.model)
+                                        if (root.playqueuePane.isDropAcceptableFunc(drag, root.playqueuePane.model.count)) {
                                             drag.accept()
                                         } else {
                                             drag.accepted = false
@@ -443,9 +443,9 @@ T.ToolBar {
                                 }
 
                                 onDropped: (drop) => {
-                                    if (root.playlistPane) {
-                                        console.assert(root.playlistPane.acceptDropFunc)
-                                        root.playlistPane.acceptDropFunc(root.playlistPane.model.count, drop)
+                                    if (root.playqueuePane) {
+                                        console.assert(root.playqueuePane.acceptDropFunc)
+                                        root.playqueuePane.acceptDropFunc(root.playqueuePane.model.count, drop)
                                     }
                                 }
 

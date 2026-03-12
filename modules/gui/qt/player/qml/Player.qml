@@ -24,7 +24,7 @@ import QtQuick.Window
 import VLC.MainInterface
 import VLC.Style
 import VLC.Widgets as Widgets
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Player
 import VLC.PlayerControls
 import VLC.Dialogs
@@ -113,7 +113,7 @@ FocusScope {
 
     function _onNavigationCancel() {
         if (MainCtx.hasEmbededVideo && !MainCtx.canShowVideoPIP) {
-            MainPlaylistController.stop()
+            MainPlayQueueController.stop()
         }
 
         History.previous()
@@ -670,7 +670,7 @@ FocusScope {
 
         onBackRequested: {
             if (MainCtx.hasEmbededVideo && !MainCtx.canShowVideoPIP) {
-               MainPlaylistController.stop()
+               MainPlayQueueController.stop()
             }
             MainCtx.requestShowMainView()
         }
@@ -726,7 +726,7 @@ FocusScope {
             value: playlistVisibility.isPlaylistVisible ? "visible" : "hidden"
         }
 
-        component: PlaylistPane {
+        component: PlayQueuePane {
             id: playlistView
 
             width: Helpers.clamp(rootPlayer.width / resizeHandle.widthFactor
