@@ -34,5 +34,5 @@ Widgets.IconToolButton {
     }
     checked: MainCtx.playqueueVisible
 
-    description: qsTr("Playqueue")
+    description: qsTr("Play Queue")
 }

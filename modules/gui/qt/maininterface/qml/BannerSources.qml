@@ -411,7 +411,7 @@ T.ToolBar {
 
                             font.pixelSize: VLCStyle.icon_banner
                             text: VLCIcons.playqueue
-                            description: qsTr("Playqueue")
+                            description: qsTr("Play Queue")
                             width: VLCStyle.bannerButton_width
                             height: VLCStyle.bannerButton_height
                             highlighted: MainCtx.playqueueVisible

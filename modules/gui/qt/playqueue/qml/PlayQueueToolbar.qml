@@ -140,7 +140,7 @@ RowLayout {
 
             font.pixelSize: VLCStyle.icon_playqueue
             enabled: !MainPlayQueueController.empty
-            description: qsTr("Clear playqueue")
+            description: qsTr("Clear play queue")
             text: VLCIcons.playqueue_clear
             onClicked: MainPlayQueueController.clear()
         }

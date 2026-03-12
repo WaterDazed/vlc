@@ -34,7 +34,7 @@ Window {
     width: 350
     minimumWidth: playqueueView.minimumWidth
 
-    title: qsTr("Playqueue")
+    title: qsTr("Play Queue")
     color: theme.bg.primary
 
     onVisibleChanged: {

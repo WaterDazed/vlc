@@ -477,7 +477,7 @@ FocusScope{
             objectName: ControlListModel.PLAYQUEUE_BUTTON
             font.pixelSize: VLCStyle.icon_banner
             text: VLCIcons.playqueue
-            description: qsTr("Playqueue")
+            description: qsTr("Play Queue")
             focus: root.showToolbar
 
             width: VLCStyle.bannerButton_width

@@ -914,7 +914,7 @@ bool MainCtx::pasteFromClipboard()
         bool ok = false;
         const QString ret = QInputDialog::getMultiLineText(nullptr,
                                                            qtr("Paste from clipboard"),
-                                                           qtr("Do you want to enqueue the following URLs into the playqueue?"),
+                                                           qtr("Do you want to enqueue the following URLs into the play queue?"),
                                                            placeholder,
                                                            &ok);
         if (!ok)
