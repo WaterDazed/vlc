@@ -141,24 +141,24 @@ FocusScope {
         }
     }
 
-    PlayerPlaylistVisibilityFSM {
-        id: playlistVisibility
+    PlayerPlayQueueVisibilityFSM {
+        id: playqueueVisibility
 
-        onIsPlaylistVisibleChanged: lockUnlockAutoHide(isPlaylistVisible)
+        onIsPlayQueueVisibleChanged: lockUnlockAutoHide(isPlayQueueVisible)
     }
 
     Connections {
         target: MainCtx
 
-        //playlist
-        function onPlaylistDockedChanged() {
-            playlistVisibility.updatePlaylistDocked()
+        //playqueue
+        function onPlayqueueDockedChanged() {
+            playqueueVisibility.updatePlayQueueDocked()
         }
-        function onPlaylistVisibleChanged() {
-            playlistVisibility.updatePlaylistVisible()
+        function onPlayqueueVisibleChanged() {
+            playqueueVisibility.updatePlayQueueVisible()
         }
         function onHasEmbededVideoChanged() {
-            playlistVisibility.updateVideoEmbed()
+            playqueueVisibility.updateVideoEmbed()
             playerToolbarVisibilityFSM.updateVideoEmbed()
         }
         function onAskShow() {
@@ -624,8 +624,8 @@ FocusScope {
         topMargin: VLCStyle.applicationVerticalMargin
         sideMargin: VLCStyle.applicationHorizontalMargin
 
-        textWidth: playlistVisibility.isPlaylistVisible
-                 ? rootPlayer.width - playlistpopup.width
+        textWidth: playqueueVisibility.isPlayQueueVisible
+                 ? rootPlayer.width - playqueuepopup.width
                  : rootPlayer.width
 
         // NOTE: With pinned controls, the top controls are hidden when switching to
@@ -643,12 +643,12 @@ FocusScope {
 
         showCSD: MainCtx.clientSideDecoration && (MainCtx.intfMainWindow.visibility !== Window.FullScreen)
         showToolbar: MainCtx.hasToolbarMenu && (MainCtx.intfMainWindow.visibility !== Window.FullScreen)
-        playlistVisible: playlistVisibility.isPlaylistVisible
+        playqueueVisible: playqueueVisibility.isPlayQueueVisible
 
         Navigation.parentItem: rootPlayer
         Navigation.downItem: {
-            if (playlistVisibility.isPlaylistVisible)
-                return playlistpopup
+            if (playqueueVisibility.isPlayQueueVisible)
+                return playqueuepopup
             if (MainCtx.hasEmbededVideo)
                 return playerSpecializationLoader
             if (Player.isInteractive)
@@ -662,7 +662,7 @@ FocusScope {
             value: (playerToolbarVisibilityFSM.isVisible || rootPlayer._controlsUnderVideo) ? "visible" : "hidden"
         }
 
-        onTogglePlaylistVisibility: playlistVisibility.togglePlaylistVisibility()
+        onTogglePlayQueueVisibility: playqueueVisibility.togglePlayQueueVisibility()
 
         onRequestLockUnlockAutoHide: (lock) => {
             rootPlayer.lockUnlockAutoHide(lock)
@@ -704,7 +704,7 @@ FocusScope {
     }
 
     Widgets.DrawerExt {
-        id: playlistpopup
+        id: playqueuepopup
 
         anchors {
             // NOTE: When the controls are pinned we display the playqueue under the topBar.
@@ -722,17 +722,17 @@ FocusScope {
 
         //initial state value is "", using a binding avoid animation on startup
         Binding on state {
-            when: playlistVisibility.started
-            value: playlistVisibility.isPlaylistVisible ? "visible" : "hidden"
+            when: playqueueVisibility.started
+            value: playqueueVisibility.isPlayQueueVisible ? "visible" : "hidden"
         }
 
         component: PlayQueuePane {
-            id: playlistView
+            id: playqueueView
 
             width: Helpers.clamp(rootPlayer.width / resizeHandle.widthFactor
-                                 , playlistView.minimumWidth
-                                 , (rootPlayer.width + playlistView.rightPadding) / 2)
-            height: playlistpopup.height
+                                 , playqueueView.minimumWidth
+                                 , (rootPlayer.width + playqueueView.rightPadding) / 2)
+            height: playqueuepopup.height
 
             useAcrylic: false
             focus: true
@@ -755,11 +755,11 @@ FocusScope {
             Navigation.parentItem: rootPlayer
             Navigation.upItem: topBar
             Navigation.downItem: Player.isInteractive ? toggleControlBarButton : controlBar
-            Navigation.leftAction: closePlaylist
-            Navigation.cancelAction: closePlaylist
+            Navigation.leftAction: closePlayQueue
+            Navigation.cancelAction: closePlayQueue
 
-            function closePlaylist() {
-                playlistVisibility.togglePlaylistVisibility()
+            function closePlayQueue() {
+                playqueueVisibility.togglePlayQueueVisibility()
                 if (audioControls.visible)
                     audioControls.forceActiveFocus()
                 else
@@ -772,7 +772,7 @@ FocusScope {
 
                 property bool _inhibitMainCtxUpdate: false
 
-                parent: playlistView
+                parent: playqueueView
 
                 anchors {
                     top: parent.top
@@ -781,29 +781,29 @@ FocusScope {
                 }
 
                 atRight: false
-                targetWidth: playlistpopup.width
+                targetWidth: playqueuepopup.width
                 sourceWidth: rootPlayer.width
 
                 onWidthFactorChanged: {
                     if (!_inhibitMainCtxUpdate)
-                        MainCtx.playerPlaylistWidthFactor = widthFactor
+                        MainCtx.playerPlayQueueWidthFactor = widthFactor
                 }
 
                 Component.onCompleted:  _updateFromMainCtx()
 
                 function _updateFromMainCtx() {
-                    if (widthFactor == MainCtx.playerPlaylistWidthFactor)
+                    if (widthFactor == MainCtx.playerPlayQueueWidthFactor)
                         return
 
                     _inhibitMainCtxUpdate = true
-                    widthFactor = MainCtx.playerPlaylistWidthFactor
+                    widthFactor = MainCtx.playerPlayQueueWidthFactor
                     _inhibitMainCtxUpdate = false
                 }
 
                 Connections {
                     target: MainCtx
 
-                    function onPlaylistWidthFactorChanged() {
+                    function onPlayqueueWidthFactorChanged() {
                         resizeHandle._updateFromMainCtx()
                     }
                 }
@@ -886,7 +886,7 @@ FocusScope {
         iconTxt: controlBar.state === "hidden" ? VLCIcons.expand_inverted : VLCIcons.expand
 
         Navigation.parentItem: rootPlayer
-        Navigation.upItem: playlistVisibility.isPlaylistVisible ? playlistpopup : (MainCtx.hasEmbededVideo ? playerSpecializationLoader : topBar)
+        Navigation.upItem: playqueueVisibility.isPlayQueueVisible ? playqueuepopup : (MainCtx.hasEmbededVideo ? playerSpecializationLoader : topBar)
         Navigation.downItem: controlBar
 
         onClicked:{
@@ -926,9 +926,9 @@ FocusScope {
                       ? ControlBar.TimeTextPosition.LeftRightSlider
                       : ControlBar.TimeTextPosition.AboveSlider
 
-        // hide right text so that it won't overlap with playlist
+        // hide right text so that it won't overlap with playqueue
         showRemainingTime: (textPosition !== ControlBar.TimeTextPosition.AboveSlider)
-                           || !playlistVisibility.isPlaylistVisible
+                           || !playqueueVisibility.isPlayQueueVisible
 
         onStateChanged: {
             if (state === "visible")
@@ -937,8 +937,8 @@ FocusScope {
 
         Navigation.parentItem: rootPlayer
         Navigation.upItem: {
-            if (playlistVisibility.isPlaylistVisible)
-                return playlistpopup
+            if (playqueueVisibility.isPlayQueueVisible)
+                return playqueuepopup
             if (Player.isInteractive)
                 return toggleControlBarButton
             if (!MainCtx.hasEmbededVideo)

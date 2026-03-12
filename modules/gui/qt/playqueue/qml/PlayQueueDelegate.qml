@@ -161,8 +161,8 @@ T.Control {
         Item {
             id: artworkItem
 
-            Layout.preferredHeight: VLCStyle.icon_playlistArt
-            Layout.preferredWidth: VLCStyle.icon_playlistArt
+            Layout.preferredHeight: VLCStyle.icon_playqueueArt
+            Layout.preferredWidth: VLCStyle.icon_playqueueArt
             Layout.alignment: Qt.AlignVCenter
 
             Accessible.role: Accessible.Graphic

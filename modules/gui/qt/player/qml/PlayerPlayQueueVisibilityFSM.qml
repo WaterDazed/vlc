@@ -21,7 +21,7 @@ import VLC.MainInterface
 import VLC.Util
 
 /**
- * playlist visibility state machine
+ * playqueue visibility state machine
  *
  * @startuml
  * state Floating {
@@ -44,22 +44,22 @@ FSM {
  
     //incoming signals
 
-    //user clicked on the playlist button
-    signal togglePlaylistVisibility()
-    //playlist visibility update externally
-    signal updatePlaylistVisible()
-    signal updatePlaylistDocked()
+    //user clicked on the playqueue button
+    signal togglePlayQueueVisibility()
+    //playqueue visibility update externally
+    signal updatePlayQueueVisible()
+    signal updatePlayQueueDocked()
     signal updateVideoEmbed()
 
     //exposed internal states
-    property alias isPlaylistVisible: fsmVisible.active
+    property alias isPlayQueueVisible: fsmVisible.active
  
-    initialState: MainCtx.playlistDocked ? fsmDocked : fsmFloating
+    initialState: MainCtx.playqueueDocked ? fsmDocked : fsmFloating
     
     signalMap: ({
-        togglePlaylistVisibility: fsm.togglePlaylistVisibility,
-        updatePlaylistVisible: fsm.updatePlaylistVisible,
-        updatePlaylistDocked: fsm.updatePlaylistDocked,
+        togglePlayQueueVisibility: fsm.togglePlayQueueVisibility,
+        updatePlayQueueVisible: fsm.updatePlayQueueVisible,
+        updatePlayQueueDocked: fsm.updatePlayQueueDocked,
         updateVideoEmbed: fsm.updateVideoEmbed,
     })
  
@@ -67,11 +67,11 @@ FSM {
         id: fsmFloating
  
         transitions: ({
-            togglePlaylistVisibility: {
-                action: () => { MainCtx.playlistVisible = !MainCtx.playlistVisible }
+            togglePlayQueueVisibility: {
+                action: () => { MainCtx.playqueueVisible = !MainCtx.playqueueVisible }
             },
-            updatePlaylistDocked: {
-                guard: () => MainCtx.playlistDocked,
+            updatePlayQueueDocked: {
+                guard: () => MainCtx.playqueueDocked,
                 target: fsmDocked
             }
         })
@@ -80,12 +80,12 @@ FSM {
     FSMState {
         id: fsmDocked
  
-        initialState: (MainCtx.hasEmbededVideo || !MainCtx.playlistVisible )
+        initialState: (MainCtx.hasEmbededVideo || !MainCtx.playqueueVisible )
                       ? fsmHidden : fsmVisible
  
         transitions: ({
-            updatePlaylistDocked: {
-                guard: () => !MainCtx.playlistDocked,
+            updatePlayQueueDocked: {
+                guard: () => !MainCtx.playqueueDocked,
                 target: fsmFloating
             },
         })
@@ -94,7 +94,7 @@ FSM {
             id: fsmVisible
 
             function enter() {
-                MainCtx.playlistVisible = true
+                MainCtx.playqueueVisible = true
             }
  
             transitions: ({
@@ -102,11 +102,11 @@ FSM {
                     guard: () => MainCtx.hasEmbededVideo,
                     target: fsmHidden
                 },
-                updatePlaylistVisible: {
-                    guard: () => !MainCtx.playlistVisible,
+                updatePlayQueueVisible: {
+                    guard: () => !MainCtx.playqueueVisible,
                     target: fsmFollowVisible
                 },
-                togglePlaylistVisibility: {
+                togglePlayQueueVisibility: {
                     target: fsmFollowVisible
                 },
             })
@@ -121,7 +121,7 @@ FSM {
                 id: fsmFollowVisible
 
                 function enter() {
-                    MainCtx.playlistVisible = false
+                    MainCtx.playqueueVisible = false
                 }
 
                 transitions: ({
@@ -129,11 +129,11 @@ FSM {
                         guard: () => MainCtx.hasEmbededVideo,
                         target: fsmEmbed
                     },
-                    updatePlaylistVisible: {
-                        guard: () => MainCtx.playlistVisible,
+                    updatePlayQueueVisible: {
+                        guard: () => MainCtx.playqueueVisible,
                         target: fsmVisible
                     },
-                    togglePlaylistVisibility: {
+                    togglePlayQueueVisibility: {
                         target: fsmVisible
                     },
                 })
@@ -144,17 +144,17 @@ FSM {
 
                 transitions: ({
                     updateVideoEmbed: [{ //guards tested in order{
-                        guard: () => !MainCtx.hasEmbededVideo && !MainCtx.playlistVisible,
+                        guard: () => !MainCtx.hasEmbededVideo && !MainCtx.playqueueVisible,
                         target: fsmFollowVisible
                     }, {
-                        guard: () => !MainCtx.hasEmbededVideo && MainCtx.playlistVisible,
+                        guard: () => !MainCtx.hasEmbededVideo && MainCtx.playqueueVisible,
                         target: fsmVisible
                     }],
-                    togglePlaylistVisibility: {
+                    togglePlayQueueVisibility: {
                         target: fsmVisible
                     },
-                    updatePlaylistVisible: {
-                        guard: () => MainCtx.playlistVisible,
+                    updatePlayQueueVisible: {
+                        guard: () => MainCtx.playqueueVisible,
                         target: fsmVisible
                     },
                 })

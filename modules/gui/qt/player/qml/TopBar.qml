@@ -64,11 +64,11 @@ FocusScope{
 
     property alias resumeVisible: resumeDialog.visible
 
-    property alias playlistVisible: playlistButton.checked
+    property alias playqueueVisible: playqueueButton.checked
 
     // Signals
 
-    signal togglePlaylistVisibility()
+    signal togglePlayQueueVisibility()
     signal requestLockUnlockAutoHide(bool lock)
     signal backRequested()
 
@@ -131,7 +131,7 @@ FocusScope{
             //place everything on one line
             //csdDecorations.implicitHeight gets overwritten when the height is set,
             //VLCStyle.icon_normal is its initial value
-            const lineHeight = Math.max(logoOrResume.implicitHeight, playlistGroup.implicitHeight, VLCStyle.icon_normal)
+            const lineHeight = Math.max(logoOrResume.implicitHeight, playqueueGroup.implicitHeight, VLCStyle.icon_normal)
 
             centerTitleText.y = 0
             centerTitleText.height = lineHeight
@@ -140,16 +140,16 @@ FocusScope{
 
             logoOrResume.height =  lineHeight
 
-            playlistGroup.height = lineHeight
-            playlistGroup.anchors.topMargin = 0
-            playlistGroup.extraRightMargin = Qt.binding(function() { return width - csdDecorations.x })
+            playqueueGroup.height = lineHeight
+            playqueueGroup.anchors.topMargin = 0
+            playqueueGroup.extraRightMargin = Qt.binding(function() { return width - csdDecorations.x })
 
 
             implicitHeight = lineHeight
             offset += lineHeight
 
         } else {
-            playlistGroup.extraRightMargin = 0
+            playqueueGroup.extraRightMargin = 0
 
             let left = undefined
             let right = undefined
@@ -182,7 +182,7 @@ FocusScope{
             }
 
             if (_showTopBar)
-                right = playlistGroup
+                right = playqueueGroup
             else
                 right = undefined
 
@@ -305,7 +305,7 @@ FocusScope{
             //add aditional margin so it align with menubar text when visible (see MenuBar.qml)
             anchors.leftMargin: VLCStyle.margin_xsmall
 
-            maxWidth: ((root.showCSD && !root.pinControls) ? csdDecorations : playlistGroup).x
+            maxWidth: ((root.showCSD && !root.pinControls) ? csdDecorations : playqueueGroup).x
                 - VLCStyle.applicationHorizontalMargin
                 - VLCStyle.margin_large
 
@@ -330,7 +330,7 @@ FocusScope{
         id: centerTitleText
 
         readonly property int _leftLimit: logoOrResume.x + logoOrResume.width
-        readonly property int _rightLimit: playlistGroup.x
+        readonly property int _rightLimit: playqueueGroup.x
         readonly property int _availableWidth: _rightLimit - _leftLimit
         readonly property int _centerX: ((root.width - centerTitleText.implicitWidth) / 2)
         readonly property bool _alignHCenter: _centerX > _leftLimit
@@ -414,7 +414,7 @@ FocusScope{
     }
 
     Row {
-        id: playlistGroup
+        id: playqueueGroup
 
         property int extraRightMargin: 0
 
@@ -445,7 +445,7 @@ FocusScope{
 
             Navigation.parentItem: root
             Navigation.leftItem: backBtn
-            Navigation.rightItem: playlistButton
+            Navigation.rightItem: playqueueButton
 
             onClicked: contextMenu.popup(this.mapToGlobal(0, height))
 
@@ -471,7 +471,7 @@ FocusScope{
         }
 
         Widgets.IconToolButton {
-            id: playlistButton
+            id: playqueueButton
 
             anchors.verticalCenter: parent.verticalCenter
             objectName: ControlListModel.PLAYQUEUE_BUTTON
@@ -486,8 +486,8 @@ FocusScope{
             Navigation.parentItem: root
             Navigation.leftItem: menuSelector.visible ? menuSelector : backBtn
 
-            onClicked: togglePlaylistVisibility()
-            Accessible.onToggleAction:togglePlaylistVisibility()
+            onClicked: togglePlayQueueVisibility()
+            Accessible.onToggleAction:togglePlayQueueVisibility()
             onHoveredChanged: root.requestLockUnlockAutoHide(hovered)
         }
     }

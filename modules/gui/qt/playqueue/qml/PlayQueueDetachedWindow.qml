@@ -25,14 +25,14 @@ import VLC.Style
 
 
 Window {
-    visible: MainCtx.playlistVisible
+    visible: MainCtx.playqueueVisible
 
     transientParent: MainCtx.intfMainWindow
 
-    property alias playlistView: playlistView
+    property alias playqueueView: playqueueView
 
     width: 350
-    minimumWidth: playlistView.minimumWidth
+    minimumWidth: playqueueView.minimumWidth
 
     title: qsTr("Playqueue")
     color: theme.bg.primary
@@ -48,11 +48,11 @@ Window {
     }
 
     onClosing: {
-        MainCtx.playlistVisible = false
+        MainCtx.playqueueVisible = false
     }
 
     PlayQueuePane {
-        id: playlistView
+        id: playqueueView
 
         useAcrylic: false
         focus: true

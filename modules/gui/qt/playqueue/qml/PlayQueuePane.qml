@@ -150,13 +150,13 @@ T.Pane {
             spacing: VLCStyle.margin_large
 
             Widgets.IconLabel {
-                // playlist cover column
-                Layout.preferredWidth: VLCStyle.icon_playlistArt
+                // playqueue cover column
+                Layout.preferredWidth: VLCStyle.icon_playqueueArt
 
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: VLCIcons.album_cover
-                font.pixelSize: VLCStyle.icon_playlistHeader
+                font.pixelSize: VLCStyle.icon_playqueueHeader
 
                 color: theme.fg.secondary
 
@@ -188,7 +188,7 @@ T.Pane {
                 color: theme.fg.secondary
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VLCStyle.icon_playlistHeader
+                font.pixelSize: VLCStyle.icon_playqueueHeader
 
                 Accessible.role: Accessible.ColumnHeader
                 Accessible.name: qsTr("Duration")

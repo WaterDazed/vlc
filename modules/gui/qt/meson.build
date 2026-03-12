@@ -705,7 +705,7 @@ qml_modules += {
        'player/qml/PIPPlayer.qml',
        'player/qml/Player.qml',
        'player/qml/PlayerControlLayout.qml',
-       'player/qml/PlayerPlaylistVisibilityFSM.qml',
+       'player/qml/PlayerPlayQueueVisibilityFSM.qml',
        'player/qml/PlayerToolbarVisibilityFSM.qml',
        'player/qml/MinimalView.qml',
        'player/qml/ResumeDialog.qml',

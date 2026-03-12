@@ -310,14 +310,14 @@ MainCtx::~MainCtx()
     if ( !p_intf->preferencesResetPending)
     {
         settings->beginGroup("MainWindow");
-        settings->setValue( "pl-dock-status", b_playlistDocked );
+        settings->setValue( "pl-dock-status", b_playqueueDocked );
         settings->setValue( "ShowRemainingTime", m_showRemainingTime );
         settings->setValue( "interface-scale", QString::number( m_intfUserScaleFactor ) );
     
-        /* Save playlist state */
-        settings->setValue( "playlist-visible", m_playlistVisible );
-        settings->setValue( "playlist-width-factor", QString::number( m_playlistWidthFactor ) );
-        settings->setValue( "player-playlist-width-factor", QString::number( m_playerPlaylistWidthFactor ) );
+        /* Save playqueue state */
+        settings->setValue( "playqueue-visible", m_playqueueVisible );
+        settings->setValue( "playqueue-width-factor", QString::number( m_playqueueWidthFactor ) );
+        settings->setValue( "player-playqueue-width-factor", QString::number( m_playerPlayQueueWidthFactor ) );
     
         settings->setValue( "artist-albums-width-factor", QString::number( m_artistAlbumsWidthFactor ) );
     
@@ -458,13 +458,13 @@ void MainCtx::loadFromSettingsImpl(const bool callSignals)
             (this->*signal)(variable);
     };
 
-    loadFromSettings(b_playlistDocked, "MainWindow/pl-dock-status", true, &MainCtx::playlistDockedChanged);
+    loadFromSettings(b_playqueueDocked, "MainWindow/pl-dock-status", true, &MainCtx::playqueueDockedChanged);
 
-    loadFromSettings(m_playlistVisible, "MainWindow/playlist-visible", false, &MainCtx::playlistVisibleChanged);
+    loadFromSettings(m_playqueueVisible, "MainWindow/playqueue-visible", false, &MainCtx::playqueueVisibleChanged);
 
-    loadFromSettings(m_playlistWidthFactor, "MainWindow/playlist-width-factor", 4.0 , &MainCtx::playlistWidthFactorChanged);
+    loadFromSettings(m_playqueueWidthFactor, "MainWindow/playqueue-width-factor", 4.0 , &MainCtx::playqueueWidthFactorChanged);
 
-    loadFromSettings(m_playerPlaylistWidthFactor, "MainWindow/player-playlist-width-factor", 4.0 , &MainCtx::playerPlaylistFactorChanged);
+    loadFromSettings(m_playerPlayQueueWidthFactor, "MainWindow/player-playqueue-width-factor", 4.0 , &MainCtx::playerPlayQueueFactorChanged);
 
     loadFromSettings(m_artistAlbumsWidthFactor, "MainWindow/artist-albums-width-factor"
                      , 4.0 , &MainCtx::artistAlbumsWidthFactorChanged);
@@ -654,35 +654,35 @@ QString MainCtx::displayMRL(const QUrl &mrl) const
     return urlToDisplayString(mrl);
 }
 
-void MainCtx::setPlaylistDocked( bool docked )
+void MainCtx::setPlayQueueDocked( bool docked )
 {
-    b_playlistDocked = docked;
+    b_playqueueDocked = docked;
 
-    emit playlistDockedChanged(docked);
+    emit playqueueDockedChanged(docked);
 }
 
-void MainCtx::setPlaylistVisible( bool visible )
+void MainCtx::setPlayQueueVisible( bool visible )
 {
-    m_playlistVisible = visible;
+    m_playqueueVisible = visible;
 
-    emit playlistVisibleChanged(visible);
+    emit playqueueVisibleChanged(visible);
 }
 
-void MainCtx::setPlaylistWidthFactor( double factor )
+void MainCtx::setPlayQueueWidthFactor( double factor )
 {
     if (factor > 0.0)
     {
-        m_playlistWidthFactor = factor;
-        emit playlistWidthFactorChanged(factor);
+        m_playqueueWidthFactor = factor;
+        emit playqueueWidthFactorChanged(factor);
     }
 }
 
-void MainCtx::setPlayerPlaylistWidthFactor( double factor )
+void MainCtx::setPlayerPlayQueueWidthFactor( double factor )
 {
     if (factor > 0.0)
     {
-        m_playerPlaylistWidthFactor = factor;
-        emit playerPlaylistFactorChanged(factor);
+        m_playerPlayQueueWidthFactor = factor;
+        emit playerPlayQueueFactorChanged(factor);
     }
 }
 
@@ -914,7 +914,7 @@ bool MainCtx::pasteFromClipboard()
         bool ok = false;
         const QString ret = QInputDialog::getMultiLineText(nullptr,
                                                            qtr("Paste from clipboard"),
-                                                           qtr("Do you want to enqueue the following URLs into the playlist?"),
+                                                           qtr("Do you want to enqueue the following URLs into the playqueue?"),
                                                            placeholder,
                                                            &ok);
         if (!ok)
