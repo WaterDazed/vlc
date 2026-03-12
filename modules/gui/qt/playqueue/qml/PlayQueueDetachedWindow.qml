@@ -34,7 +34,7 @@ Window {
     width: 350
     minimumWidth: playlistView.minimumWidth
 
-    title: qsTr("Playlist")
+    title: qsTr("Playqueue")
     color: theme.bg.primary
 
     onVisibleChanged: {

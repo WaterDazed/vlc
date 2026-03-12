@@ -316,14 +316,14 @@ void VLCMenuBar::ViewMenu(qt_intf_t *p_intf, QMenu *menu, std::optional<bool> pl
 #ifndef __APPLE__
             ColorizedSvgIcon::colorizedIconForWidget( ":/menu/ic_playqueue.svg", menu ),
 #endif
-            qtr( "Play&list" ));
+            qtr( "Playqueue" ));
     action->setShortcut(QString( "Ctrl+L" ));
     action->setCheckable( true );
     connect( action, &QAction::triggered, mi, &MainCtx::setPlaylistVisible );
     action->setChecked( mi->isPlaylistVisible() );
 
-    /* Docked Playlist */
-    action = menu->addAction( qtr( "Docked Playlist" ) );
+    /* Docked Playqueue */
+    action = menu->addAction( qtr( "Docked Playqueue" ) );
     action->setCheckable( true );
     connect( action, &QAction::triggered, mi, &MainCtx::setPlaylistDocked );
     action->setChecked( mi->isPlaylistDocked() );
