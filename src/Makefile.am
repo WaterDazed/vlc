@@ -44,6 +44,7 @@ pluginsinclude_HEADERS.h = \
 	../include/vlc_cpu.h \
 	../include/vlc_clock.h \
 	../include/vlc_chroma_probe.h \
+	../include/vlc_clipboard.h \
 	../include/vlc_decoder.h \
 	../include/vlc_demux.h \
 	../include/vlc_dialog.h \
@@ -460,7 +461,7 @@ libvlccore_la_SOURCES += \
 if HAVE_WINSTORE
 libvlccore_la_SOURCES += posix/timer.c win32/dirs-uap.c
 else
-libvlccore_la_SOURCES += win32/timer.c win32/dirs.c win32/spawn.c
+libvlccore_la_SOURCES += win32/timer.c win32/dirs.c win32/spawn.c win32/clipboard.c
 libvlccore_la_LIBADD += -lwinmm -lole32 -luuid
 endif
 libvlccore_la_LIBADD += -lbcrypt

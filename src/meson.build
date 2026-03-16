@@ -364,6 +364,7 @@ elif host_system == 'windows'
             'win32/timer.c',
             'win32/dirs.c',
             'win32/spawn.c',
+            'win32/clipboard.c',
         ]
     endif
 elif host_system == 'os/2'
