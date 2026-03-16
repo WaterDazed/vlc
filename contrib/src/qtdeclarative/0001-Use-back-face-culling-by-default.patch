@@ -1,0 +1,139 @@
+From 2fb2248ff46058784e0755c1ca13583da1daa34b Mon Sep 17 00:00:00 2001
+From: Fatih Uzunoglu <fuzun54@outlook.com>
+Date: Mon, 16 Mar 2026 19:05:53 +0200
+Subject: [PATCH] Use back face culling by default
+
+VLC does not rotate items to reveal their back side,
+for that reason we can use back face culling by default.
+---
+ src/quick/items/qquickshadereffect.cpp        | 26 ++++++++++++++++---
+ src/quick/items/qquickshadereffect_p_p.h      |  6 +++--
+ .../scenegraph/coreapi/qsgbatchrenderer.cpp   | 16 +++++++++++-
+ 3 files changed, 41 insertions(+), 7 deletions(-)
+
+diff --git a/src/quick/items/qquickshadereffect.cpp b/src/quick/items/qquickshadereffect.cpp
+index c0d7692ed7..e8434a3b9d 100644
+--- a/src/quick/items/qquickshadereffect.cpp
++++ b/src/quick/items/qquickshadereffect.cpp
+@@ -662,7 +662,7 @@ void QQuickShaderEffect::setMesh(const QVariant &mesh)
+     \value ShaderEffect.BackFaceCulling     only the front side is visible
+     \value ShaderEffect.FrontFaceCulling    only the back side is visible
+ 
+-    The default is NoCulling.
++    The default is BackFaceCulling, when applicable.
+ */
+ 
+ QQuickShaderEffect::CullMode QQuickShaderEffect::cullMode() const
+@@ -838,7 +838,6 @@ constexpr int mappedIdToShaderType(const int mappedId)
+ QQuickShaderEffectPrivate::QQuickShaderEffectPrivate()
+     : m_meshResolution(1, 1)
+     , m_mesh(nullptr)
+-    , m_cullMode(QQuickShaderEffect::NoCulling)
+     , m_blending(true)
+     , m_supportsAtlasTextures(false)
+     , m_mgr(nullptr)
+@@ -1006,6 +1005,25 @@ void QQuickShaderEffectPrivate::handleGeometryChanged(const QRectF &, const QRec
+     m_dirty |= QSGShaderEffectNode::DirtyShaderGeometry;
+ }
+ 
++static QSGShaderEffectNode::CullMode defaultCullMode(QQuickWindow *window)
++{
++    // VLC does not rotate items to reveal their back side, for that reason we can use back face
++    // culling by default. Due to QTBUG-136611, this is only done when `QRhi::isYUpInFramebuffer()`
++    // reports false (any api other than OpenGL).
++#if QT_VERSION < QT_VERSION_CHECK(6, 8, 5)
++    assert(window);
++    const auto rhi = window->rhi();
++    if (!rhi || rhi->isYUpInFramebuffer())
++    {
++        return QSGShaderEffectNode::NoCulling;
++    }
++    else
++#endif
++    {
++        return QSGShaderEffectNode::BackFaceCulling;
++    }
++}
++
+ QSGNode *QQuickShaderEffectPrivate::handleUpdatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
+ {
+     Q_Q(QQuickShaderEffect);
+@@ -1040,7 +1058,7 @@ QSGNode *QQuickShaderEffectPrivate::handleUpdatePaintNode(QSGNode *oldNode, QQui
+ 
+     QSGShaderEffectNode::SyncData sd;
+     sd.dirty = m_dirty;
+-    sd.cullMode = QSGShaderEffectNode::CullMode(m_cullMode);
++    sd.cullMode = m_cullMode ? QSGShaderEffectNode::CullMode(*m_cullMode) : defaultCullMode(q->window());
+     sd.blending = m_blending;
+     sd.vertex.shader = &m_shaders[Vertex];
+     sd.vertex.dirtyConstants = &m_dirtyConstants[Vertex];
+@@ -1123,7 +1141,7 @@ bool QQuickShaderEffectPrivate::updateUniformValue(const QByteArray &name, const
+     // Sync material change
+     QSGShaderEffectNode::SyncData sd;
+     sd.dirty = QSGShaderEffectNode::DirtyShaderConstant;
+-    sd.cullMode = QSGShaderEffectNode::CullMode(m_cullMode);
++    sd.cullMode = m_cullMode ? QSGShaderEffectNode::CullMode(*m_cullMode) : defaultCullMode(q->window());
+     sd.blending = m_blending;
+     sd.vertex.shader = &m_shaders[Vertex];
+     sd.vertex.dirtyConstants = &dirtyConstants[Vertex];
+diff --git a/src/quick/items/qquickshadereffect_p_p.h b/src/quick/items/qquickshadereffect_p_p.h
+index e7224e50a9..e631da2f04 100644
+--- a/src/quick/items/qquickshadereffect_p_p.h
++++ b/src/quick/items/qquickshadereffect_p_p.h
+@@ -17,6 +17,8 @@
+ 
+ #include <private/qtquickglobal_p.h>
+ 
++#include <optional>
++
+ QT_REQUIRE_CONFIG(quick_shadereffect);
+ 
+ #include <private/qquickshadereffect_p.h>
+@@ -51,7 +53,7 @@ public:
+     QVariant mesh() const;
+     void setMesh(const QVariant &mesh);
+ 
+-    QQuickShaderEffect::CullMode cullMode() const { return m_cullMode; }
++    QQuickShaderEffect::CullMode cullMode() const { return m_cullMode ? *m_cullMode : QQuickShaderEffect::BackFaceCulling; }
+     void setCullMode(QQuickShaderEffect::CullMode face);
+ 
+     QString log() const;
+@@ -101,7 +103,7 @@ private:
+     QQuickShaderEffectMesh *m_mesh;
+     QMetaObject::Connection m_meshConnection;
+     QQuickGridMesh m_defaultMesh;
+-    QQuickShaderEffect::CullMode m_cullMode;
++    std::optional<QQuickShaderEffect::CullMode> m_cullMode;
+     bool m_blending;
+     bool m_supportsAtlasTextures;
+     mutable QSGGuiThreadShaderEffectManager *m_mgr;
+diff --git a/src/quick/scenegraph/coreapi/qsgbatchrenderer.cpp b/src/quick/scenegraph/coreapi/qsgbatchrenderer.cpp
+index 142d155c54..08bf4ec1f3 100644
+--- a/src/quick/scenegraph/coreapi/qsgbatchrenderer.cpp
++++ b/src/quick/scenegraph/coreapi/qsgbatchrenderer.cpp
+@@ -3873,7 +3873,21 @@ void Renderer::prepareRenderPass(RenderPassContext *ctx)
+     m_gstate.depthFunc = QRhiGraphicsPipeline::Less;
+     m_gstate.blending = false;
+ 
+-    m_gstate.cullMode = QRhiGraphicsPipeline::None;
++    // VLC does not rotate items to reveal their back side, for that reason we can use back face
++    // culling by default. Due to QTBUG-136611, this is only done when `QRhi::isYUpInFramebuffer()`
++    // reports false (any api other than OpenGL). Note that a material may override this behavior
++    // through `QSGMaterialShader::updateGraphicsPipelineState()`.
++#if QT_VERSION < QT_VERSION_CHECK(6, 8, 5)
++    assert(m_rhi);
++    if (m_rhi->isYUpInFramebuffer())
++    {
++        m_gstate.cullMode = QRhiGraphicsPipeline::None;
++    }
++    else
++#endif
++    {
++        m_gstate.cullMode = QRhiGraphicsPipeline::Back;
++    }
+     m_gstate.polygonMode = QRhiGraphicsPipeline::Fill;
+     m_gstate.colorWrite = QRhiGraphicsPipeline::R
+             | QRhiGraphicsPipeline::G
+-- 
+2.53.0
+
