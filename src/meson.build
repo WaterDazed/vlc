@@ -320,6 +320,7 @@ endif
 
 if host_system == 'darwin'
     libvlccore_sources += [
+        'darwin/clipboard.m',
         'darwin/dirs.m',
         'darwin/error.c',
         'darwin/netconf.m',

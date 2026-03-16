@@ -492,6 +492,7 @@ libvlccore_la_SOURCES += \
 	darwin/specific.c \
 	darwin/thread.c
 libvlccore_objc_la_SOURCES = \
+	darwin/clipboard.m \
 	darwin/dirs.m \
 	darwin/netconf.m
 noinst_LTLIBRARIES = libvlccore_objc.la
@@ -616,6 +617,9 @@ libvlccore_objc_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc
 libvlccore_objc_la_LDFLAGS = -static
 libvlccore_la_LIBADD += libvlccore_objc.la
 libvlccore_la_LDFLAGS +=  -Wl,-framework,Foundation -Xlinker -install_name -Xlinker @rpath/libvlccore.dylib
+if HAVE_OSX
+libvlccore_la_LDFLAGS += -Wl,-framework,AppKit
+endif
 endif
 
 # iOS and tvOS applications cannot install global shared libraries and
