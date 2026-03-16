@@ -65,7 +65,7 @@ int CompositorDirectComposition::windowEnable(const vlc_window_cfg_t *)
 
     commonWindowEnable();
 
-    const auto ret = m_rootVisual->AddVisual(m_videoVisual.Get(), FALSE, m_uiVisual);
+    const auto ret = m_rootVisual->AddVisual(m_videoVisual.Get(), FALSE, m_mainCtx->hintIntfIsBlank() ? NULL : m_uiVisual);
     m_dcompDevice->Commit();
 
     if (ret == S_OK)
@@ -210,10 +210,34 @@ void CompositorDirectComposition::setup()
     res = dcompTarget->SetRoot(m_rootVisual.Get());
     assert(res == S_OK);
 
-    res = m_rootVisual->AddVisual(m_uiVisual, FALSE, NULL);
-    assert(res == S_OK);
+    if (Q_UNLIKELY(!m_mainCtx->hintIntfIsBlank()))
+    {
+        res = m_rootVisual->AddVisual(m_uiVisual, FALSE, NULL);
+        assert(res == S_OK);
+    }
 
     m_dcompDevice->Commit();
+
+    assert(m_mainCtx);
+    connect(m_mainCtx, &MainCtx::hintIntfIsBlankChanged, this, [this](bool blank) {
+        if (Q_LIKELY(m_dcompDevice && m_rootVisual && m_uiVisual))
+        {
+            HRESULT ret;
+            if (blank)
+            {
+                msg_Dbg(m_intf, "CompositorDirectComposition: Removed the UI visual from the composition tree.");
+                ret = m_rootVisual->RemoveVisual(m_uiVisual);
+            }
+            else
+            {
+                msg_Dbg(m_intf, "CompositorDirectComposition: Added the UI visual to the composition tree.");
+                ret = m_rootVisual->AddVisual(m_uiVisual, FALSE, NULL);
+            }
+
+            assert(ret == S_OK);
+            m_dcompDevice->Commit();
+        }
+    });
 
     if (!m_mainCtx->hasAcrylicSurface())
     {
