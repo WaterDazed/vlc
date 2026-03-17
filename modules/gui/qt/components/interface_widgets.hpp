@@ -186,6 +186,13 @@ public:
         Both
     };
 
+    enum TimeDisplayMode
+    {
+        DisplayElapsed,
+        DisplayRemaining,
+        DisplaySpeedAdjusted
+    };
+
     TimeLabel( intf_thread_t *_p_intf, TimeLabel::Display _displayType = TimeLabel::Both );
 protected:
     void mousePressEvent( QMouseEvent *event ) Q_DECL_OVERRIDE
@@ -203,7 +210,9 @@ protected:
     }
 private:
     intf_thread_t *p_intf;
-    bool b_remainingTime;
+    bool b_remainingTime;  /* kept for backward compatibility with external signals */
+    TimeDisplayMode displayMode;
+    float f_playbackRate;
     float cachedPos;
     int64_t cachedTime;
     int cachedLength;
@@ -213,10 +222,12 @@ private:
     char psz_time[MSTRTIME_MAX_SIZE];
     void toggleTimeDisplay();
     void refresh();
+    void updateTimeStyle();
 private slots:
     void setRemainingTime( bool );
     void setDisplayPosition( float pos, int64_t time, int length );
     void setDisplayPosition( float pos );
+    void setPlaybackRate( float rate );
 signals:
     void broadcastRemainingTime( bool );
 };
