@@ -162,3 +162,31 @@ executable('vlc-window', 'vlc-window.c',
     c_args: common_args,
     install: false,
     win_subsystem: 'console')
+
+# checkasm assembly test suite
+checkasm_dep = dependency('checkasm',
+    fallback: ['checkasm', 'checkasm_dep'],
+    required: false)
+
+if checkasm_dep.found()
+    checkasm_test = executable('vlc-checkasm',
+        files(
+            'checkasm/checkasm.c',
+        ),
+        include_directories: [vlc_include_dirs,
+            include_directories('checkasm')],
+        dependencies: [checkasm_dep],
+        link_with: [libvlccore],
+        c_args: ['-DHAVE_CONFIG_H'],
+        build_by_default: false,
+        install: false)
+
+    test('checkasm', checkasm_test,
+        suite: ['checkasm'],
+        timeout: 120)
+
+    benchmark('checkasm', checkasm_test,
+        suite: ['checkasm'],
+        timeout: 3600,
+        args: ['--bench'])
+endif
