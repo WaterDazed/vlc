@@ -58,7 +58,7 @@ MainViewLoader {
 
     property bool reuseItems: true
 
-    property bool seeAllButtonVisible: model.maximumCount > model.count
+    property bool seeAllButtonVisible: model.maximumCount > count
 
     readonly property int currentIndex: currentItem?.currentIndex ?? -1
 
@@ -66,6 +66,10 @@ MainViewLoader {
 
     readonly property int contentLeftMargin: currentItem?.contentLeftMargin ?? 0
     readonly property int contentRightMargin: currentItem?.contentRightMargin ?? 0
+
+    property QtAbstractItemModel viewModel: root.model
+
+    readonly property int count: currentItem?.count ?? 0
 
     isSearchable: true
 
@@ -150,7 +154,7 @@ MainViewLoader {
 
             focus: true
 
-            model: root.model
+            model: root.viewModel
 
             selectionModel: root.selectionModel
 
@@ -276,7 +280,7 @@ MainViewLoader {
 
             focus: true
 
-            model: root.model
+            model: root.viewModel
 
             selectionModel: root.selectionModel
 

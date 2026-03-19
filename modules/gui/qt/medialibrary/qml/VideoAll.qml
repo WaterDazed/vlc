@@ -69,6 +69,10 @@ MainViewLoader {
     property var gridLabels: getLabel
     property var listLabels: getLabel
 
+    property QtAbstractItemModel viewModel: root.model
+
+    readonly property int count: currentItem?.count ?? 0
+
     // Aliases
 
     property alias dragItem: dragItem
@@ -144,7 +148,7 @@ MainViewLoader {
 
             // Settings
 
-            model: root.model
+            model: root.viewModel
 
             selectionModel: root.selectionModel
 
@@ -191,7 +195,7 @@ MainViewLoader {
 
             // Settings
 
-            model: root.model
+            model: root.viewModel
 
             selectionModel: root.selectionModel
 

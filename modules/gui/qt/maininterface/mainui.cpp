@@ -49,6 +49,7 @@
 #include "util/list_selection_model.hpp"
 #include "util/ui_notifier.hpp"
 #include "util/textureproviderobserver.hpp"
+#include "util/limiter_proxy_model.hpp"
 
 #include "dialogs/help/aboutmodel.hpp"
 #include "dialogs/dialogs_provider.hpp"
@@ -366,6 +367,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterType<ListSelectionModel>( uri, versionMajor, versionMinor, "ListSelectionModel" );
         qmlRegisterType<DoubleClickIgnoringItem>( uri, versionMajor, versionMinor, "DoubleClickIgnoringItem" );
         qmlRegisterType<TextureProviderObserver>( uri, versionMajor, versionMinor, "TextureProviderObserver" );
+        qmlRegisterType<LimiterProxyModel>( uri, versionMajor, versionMinor, "LimiterProxyModel" );
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);

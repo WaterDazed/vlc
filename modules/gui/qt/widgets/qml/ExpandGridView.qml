@@ -81,6 +81,7 @@ FocusScope {
     property bool isAnimating: animateRetractItem.running || animateExpandItem.running
 
     property int _count: 0
+    readonly property int count: _count // similar to `QQuickItemView`
 
     property bool _isInitialised: false
 
@@ -315,6 +316,12 @@ FocusScope {
 
         // NOTE: This is useful for SortFilterProxyModel(s).
         function onLayoutChanged() { _onModelCountChanged() }
+
+        Component.onCompleted: {
+            // The model may have changed before these connections
+            // are established, and after the view's initial call.
+            root._onModelCountChanged()
+        }
     }
 
     Connections {
@@ -441,7 +448,7 @@ FocusScope {
         // NOTE: Saving the focus reason for later.
         _currentFocusReason = reason;
 
-        if (!model || model.count === 0) {
+        if (!model || root.count === 0) {
             // NOTE: By default we want the focus on the flickable.
             flickable.forceActiveFocus(reason);
             return;
@@ -872,7 +879,7 @@ FocusScope {
 
             focus: (status === Loader.Ready) ? item.focus : false
 
-            y: root.topMargin + root.headerHeight + (root.rowHeight * (Math.ceil(model.count / nbItemPerRow))) +
+            y: root.topMargin + root.headerHeight + (root.rowHeight * (Math.ceil(root.count / nbItemPerRow))) +
                root._expandItemVerticalSpace
         }
 
