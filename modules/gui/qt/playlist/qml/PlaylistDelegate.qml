@@ -207,8 +207,8 @@ T.Control {
                 }
 
                 Component.onCompleted: {
-                    delegate.ListView.reused.connect(artwork.resetSource)
-                    delegate.ListView.pooled.connect(artwork.removeSource)
+                    delegate.ListView.reused.connect(artwork, artwork.resetSource)
+                    delegate.ListView.pooled.connect(artwork, artwork.removeSource)
                 }
 
                 Timer {
@@ -306,6 +306,8 @@ T.Control {
         anchors.fill: parent
 
         TapHandler {
+            id: tapHandler
+
             acceptedDevices: PointerDevice.AllDevices & ~(PointerDevice.TouchScreen)
 
             acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -332,7 +334,7 @@ T.Control {
             }
 
             Component.onCompleted: {
-                canceled.connect(initialAction)
+                canceled.connect(tapHandler, initialAction)
             }
 
             function initialAction() {

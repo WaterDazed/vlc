@@ -825,6 +825,8 @@ FocusScope {
         }
 
         TapHandler {
+            id: tapHandler
+
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
             grabPermissions: PointerHandler.TakeOverForbidden
@@ -840,7 +842,7 @@ FocusScope {
             }
 
             Component.onCompleted: {
-                canceled.connect(initialAction)
+                canceled.connect(tapHandler, initialAction)
             }
 
             function initialAction() {

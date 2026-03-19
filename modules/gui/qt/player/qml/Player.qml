@@ -218,10 +218,10 @@ FocusScope {
                     }
 
                     Component.onCompleted: {
-                        mouseMoved.connect(videoSurface.onMouseEvent)
-                        mousePressed.connect(videoSurface.onMouseEvent)
-                        mouseReleased.connect(videoSurface.onMouseEvent)
-                        mouseDblClicked.connect(videoSurface.onMouseEvent)
+                        mouseMoved.connect(videoSurface, videoSurface.onMouseEvent)
+                        mousePressed.connect(videoSurface, videoSurface.onMouseEvent)
+                        mouseReleased.connect(videoSurface, videoSurface.onMouseEvent)
+                        mouseDblClicked.connect(videoSurface, videoSurface.onMouseEvent)
                     }
 
                     Binding on cursorShape {

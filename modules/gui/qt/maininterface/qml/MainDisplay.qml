@@ -176,7 +176,7 @@ FocusScope {
 
         Component.onCompleted: {
             if (MainCtx.useXmasCone()) {
-                MainCtx.kc_pressed.connect(voronoiSnowLoader.toggleActive)
+                MainCtx.kc_pressed.connect(voronoiSnowLoader, voronoiSnowLoader.toggleActive)
             }
         }
     }

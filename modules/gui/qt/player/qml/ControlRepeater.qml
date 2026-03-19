@@ -107,13 +107,13 @@ Repeater {
             item.visible = Qt.binding(function() { return loader.visible })
 
             if (item.requestLockUnlockAutoHide)
-                item.requestLockUnlockAutoHide.connect(repeater.requestLockUnlockAutoHide)
+                item.requestLockUnlockAutoHide.connect(repeater, repeater.requestLockUnlockAutoHide)
 
             if (item.menuOpened)
-                item.menuOpened.connect(repeater.menuOpened)
+                item.menuOpened.connect(repeater, repeater.menuOpened)
 
             if (item.forceUnlock)
-                repeater.forceUnlock.connect(item.forceUnlock)
+                repeater.forceUnlock.connect(item, item.forceUnlock)
 
             //can't connect to enabledChanged in a Connections
             item.onEnabledChanged.connect(() => {

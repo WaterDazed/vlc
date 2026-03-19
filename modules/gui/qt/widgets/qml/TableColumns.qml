@@ -121,8 +121,8 @@ Item {
 
                 Component.onCompleted: {
                     console.assert(titleDel.delegate)
-                    titleDel.delegate.ListView.reused.connect(cover.reinitialize)
-                    titleDel.delegate.ListView.pooled.connect(cover.releaseResources)
+                    titleDel.delegate.ListView.reused.connect(cover, cover.reinitialize)
+                    titleDel.delegate.ListView.pooled.connect(cover, cover.releaseResources)
                 }
 
                 imageOverlay: Item {

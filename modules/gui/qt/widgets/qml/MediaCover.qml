@@ -186,7 +186,7 @@ Item {
             width: playIconSize
 
             Component.onCompleted: {
-                tapped.connect(root.playIconClicked)
+                tapped.connect(root, root.playIconClicked)
             }
         }
 

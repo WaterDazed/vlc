@@ -280,7 +280,7 @@ T.Pane {
             onMenuOpened: (menu) => root.applyMenu(menu)
 
             Component.onCompleted: {
-                root.forceUnlock.connect(playerControlLayout.forceUnlock)
+                root.forceUnlock.connect(playerControlLayout, playerControlLayout.forceUnlock)
             }
         }
     }

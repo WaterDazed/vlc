@@ -139,7 +139,7 @@ Loader {
         _updateView()
 
         // NOTE: This call is useful to avoid a binding loop on currentComponent.
-        currentComponentChanged.connect(_updateView)
+        currentComponentChanged.connect(root, root._updateView)
 
         isLoadingChanged() // in case boolean default value is `true`, currently it is not
     }
