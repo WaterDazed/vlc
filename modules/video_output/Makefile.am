@@ -261,8 +261,14 @@ libwgl_plugin_la_CFLAGS = $(AM_CFLAGS) $(OPENGL_COMMONCFLAGS)
 libglwin32_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(voutdir)'
 libwgl_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(voutdir)'
 
+libwgl_dcomp_plugin_la_SOURCES = video_output/win32/wgl_dcomp.cpp \
+    video_output/win32/dxgi_swapchain.cpp \
+    video_output/win32/dxgi_swapchain.h \
+    video_chroma/d3d11_fmt.h
+libwgl_dcomp_plugin_la_LIBADD = -lopengl32 -lgdi32 libvlc_opengl.la -ldxgi $(LIBCOM) -luuid libd3d11_common.la
+
 if HAVE_WIN32_DESKTOP
-vout_LTLIBRARIES += $(LTLIBglwin32) $(LTLIBwgl)
+vout_LTLIBRARIES += $(LTLIBglwin32) $(LTLIBwgl) libwgl_dcomp_plugin.la
 EXTRA_LTLIBRARIES += libglwin32_plugin.la libwgl_plugin.la
 endif
 
