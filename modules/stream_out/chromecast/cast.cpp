@@ -38,7 +38,7 @@
 #include <vlc_sout.h>
 #include <vlc_block.h>
 #include <vlc_modules.h>
-#include <vlc_httpd.h>
+#include <vlc_httpd_legacy.h>
 
 #include <cassert>
 

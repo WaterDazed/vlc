@@ -34,7 +34,7 @@
 #include <vlc_tls.h>
 #include <vlc_threads.h>
 #include <vlc_interrupt.h>
-#include <vlc_httpd.h>
+#include <vlc_httpd_legacy.h>
 #include <vlc_cxx_helpers.hpp>
 
 #include <atomic>

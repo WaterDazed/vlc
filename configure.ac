@@ -4758,6 +4758,10 @@ AS_IF([test "${enable_gnutls}" != "no"], [
   ])
 ])
 
+dnl
+dnl  microhttpd plugin
+dnl
+PKG_ENABLE_MODULES_VLC([MICROHTTPD], [], [libmicrohttpd2], [microhttpd plugin], [auto])
 
 dnl
 dnl Taglib plugin

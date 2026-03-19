@@ -36,6 +36,11 @@ endif
 EXTRA_LTLIBRARIES += libgnutls_plugin.la
 misc_LTLIBRARIES += $(LTLIBgnutls)
 
+libmicrohttpd_plugin_la_SOURCES = misc/microhttpd.c
+libmicrohttpd_plugin_la_CFLAGS = $(AM_CFLAGS) $(MICROHTTPD_CFLAGS)
+libmicrohttpd_plugin_la_LIBADD = $(MICROHTTPD_LIBS)
+misc_LTLIBRARIES += libmicrohttpd_plugin.la
+
 if HAVE_DARWIN
 libsecuretransport_plugin_la_SOURCES = misc/securetransport.c
 libsecuretransport_plugin_la_CFLAGS = $(AM_CFLAGS) $(SECURETRANSPORT_CFLAGS)

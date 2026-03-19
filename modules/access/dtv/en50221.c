@@ -48,7 +48,7 @@
 
 #undef ENABLE_HTTPD
 #ifdef ENABLE_HTTPD
-#   include <vlc_httpd.h>
+#   include <vlc_httpd_legacy.h>
 #endif
 
 #include "../../demux/dvb-text.h"

@@ -916,6 +916,10 @@ static const char* const ppsz_restore_playback_desc[] = {
 #define TIMEOUT_LONGTEXT N_( \
     "Default TCP connection timeout (in milliseconds)." )
 
+#define HTTP_TIMEOUT_TEXT N_( "HTTP server timeout" )
+#define HTTP_TIMEOUT_LONGTEXT N_( \
+    "Maximum inactivity timeout for a HTTP connection, in seconds" )
+
 #define HTTP_HOST_TEXT N_( "HTTP server address" )
 #define HOST_LONGTEXT N_( \
     "By default, the server will listen on any local IP address. " \
@@ -1935,6 +1939,7 @@ vlc_module_begin ()
         change_integer_range( 1, 65535 )
     add_integer( "https-port", 8443, HTTPS_PORT_TEXT, HTTPS_PORT_LONGTEXT )
         change_integer_range( 1, 65535 )
+    add_integer( "http-timeout", 10, HTTP_TIMEOUT_TEXT, HTTP_TIMEOUT_LONGTEXT )
     add_string( "rtsp-host", NULL, RTSP_HOST_TEXT, RTSP_HOST_LONGTEXT )
     add_integer( "rtsp-port", 554, RTSP_PORT_TEXT, RTSP_PORT_LONGTEXT )
         change_integer_range( 1, 65535 )

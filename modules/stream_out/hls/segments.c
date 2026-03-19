@@ -25,7 +25,7 @@
 
 #include <vlc_common.h>
 
-#include <vlc_httpd.h>
+#include <vlc_httpd_legacy.h>
 #include <vlc_list.h>
 #include <vlc_tick.h>
 

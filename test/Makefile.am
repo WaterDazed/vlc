@@ -65,6 +65,7 @@ check_PROGRAMS = \
 	test_src_misc_epg \
 	test_src_misc_keystore \
 	test_src_misc_image \
+	test_src_misc_httpd \
 	test_src_misc_viewpoint \
 	test_src_video_output \
 	test_src_video_output_opengl \
@@ -320,6 +321,9 @@ test_src_misc_chroma_probe_LDADD = $(LIBVLCCORE) $(LIBVLC)
 
 test_src_misc_image_SOURCES = src/misc/image.c
 test_src_misc_image_LDADD = $(LIBVLCCORE) $(LIBVLC)
+
+test_src_misc_httpd_SOURCES = src/misc/httpd.c
+test_src_misc_httpd_LDADD = $(LIBVLCCORE) $(LIBVLC)
 
 test_modules_lua_extension_SOURCES = modules/lua/extension.c
 test_modules_lua_extension_LDADD = $(LIBVLCCORE) $(LIBVLC)
