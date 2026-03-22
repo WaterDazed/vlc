@@ -4023,14 +4023,18 @@ AC_ARG_ENABLE([qt],
     enable_qt="no"
   ])
 ])
+qt_static="no"
 have_qt_gtk="no"
 have_qt_qtest="no"
 have_qt_quick_test="no"
 have_qt_gui_private="no"
+have_qt_quick_private="no"
 have_qt65="no"
+have_qt66="no"
 have_qt_zstd="no"
 have_fxc="no"
 have_qt_xcb="no"
+have_qt_rlottie="no"
 AS_IF([test "${enable_qt}" != "no"], [
   have_qt="yes"
   dnl use any qmake that is available, including from contrib tools
@@ -4084,6 +4088,10 @@ AS_IF([test "${enable_qt}" != "no"], [
 
   AS_IF([test "${QT_VERSION_MAJ:-0}" -gt "6" || (test "${QT_VERSION_MAJ:-0}" = "6" && test "${QT_VERSION_MIN:-0}" -ge "5")], [
     have_qt65="yes"
+  ], [])
+
+  AS_IF([test "${QT_VERSION_MAJ:-0}" -gt "6" || (test "${QT_VERSION_MAJ:-0}" = "6" && test "${QT_VERSION_MIN:-0}" -ge "6")], [
+    have_qt66="yes"
   ], [])
 
   QT_BIN_DIRECTORY="$(${QT_PATHS}         -query QT_HOST_BINS 2>/dev/null)"
@@ -4279,6 +4287,17 @@ AS_IF([test "${enable_qt}" != "no"], [
         AC_SUBST([FXC_PATH])
       ])
 
+      AC_MSG_CHECKING([if Qt is static])
+      case $QT_CFLAGS in
+        *-DSTATIC_QT\ *)
+            AC_MSG_RESULT([yes])
+            qt_static="yes"
+            ;;
+        *)
+            AC_MSG_RESULT([no])
+            ;;
+      esac
+
       AC_MSG_CHECKING([for Qt GUI private])
       case $QT_CFLAGS in
         *-DQT_GUI_PRIVATE\ *)
@@ -4290,10 +4309,45 @@ AS_IF([test "${enable_qt}" != "no"], [
             ;;
       esac
 
+      AC_MSG_CHECKING([for Qt Quick private])
+      case $QT_CFLAGS in
+        *-DQT_DECLARATIVE_PRIVATE\ *)
+            AC_MSG_RESULT([yes])
+            have_qt_quick_private="yes"
+            ;;
+        *)
+            AC_MSG_RESULT([no])
+            ;;
+      esac
+
       dnl gtk theme provider
       PKG_CHECK_MODULES([GTK3], [gtk+-3.0 >= 3.20], [
         have_qt_gtk="yes"
       ], [:])
+
+      dnl rlottie
+      check_rlottie="no"
+      AS_IF([test "${have_qt_gui_private}" = "yes"], [
+        AS_IF([test "${have_qt66}" = "yes"], [
+          check_rlottie="yes"
+        ], [
+          AS_IF([test "${have_qt_quick_private}" = "yes"], [
+            check_rlottie="yes"
+          ], [
+            AC_MSG_WARN([Qt rlottie module requires Qt Quick private headers if Qt version is less than 6.6.])
+          ])
+        ])
+
+        AS_IF([test "${check_rlottie}" = "yes"], [
+          PKG_CHECK_MODULES([RLOTTIE], [rlottie >= 0.2], [
+            have_qt_rlottie="yes"
+          ], [
+            AC_MSG_WARN([${RLOTTIE_PKG_ERRORS}])
+          ])
+        ])        
+      ], [
+        AC_MSG_WARN([Qt rlottie module requires Qt Gui private headers.])
+      ])
     ], [
       AC_MSG_RESULT([no])
       have_qt="no"
@@ -4325,15 +4379,19 @@ AS_IF([test "${enable_qt}" != "no"], [
 ])
 AC_SUBST([QT_INDIRECT_LIBS])
 AM_CONDITIONAL([ENABLE_QT], [test "$enable_qt" != "no"])
+AM_CONDITIONAL([QT_STATIC], [test "${qt_static}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_GTK], [test "${have_qt_gtk}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_QTEST], [test "${have_qt_qtest}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_QUICK_TEST], [test "${have_qt_quick_test}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_GUI_PRIVATE], [test "${have_qt_gui_private}" = "yes"])
+AM_CONDITIONAL([HAVE_QT_QUICK_PRIVATE], [test "${have_qt_quick_private}" = "yes"])
 AM_CONDITIONAL([HAVE_FXC], [test "${have_fxc}" = "yes"])
 AM_CONDITIONAL([HAVE_QT67], [test "${QT_VERSION_MAJ:-0}" -gt "6" || (test "${QT_VERSION_MAJ:-0}" = "6" && test "${QT_VERSION_MIN:-0}" -ge "7")])
 AM_CONDITIONAL([HAVE_QT65], [test "${have_qt65}" = "yes"])
+AM_CONDITIONAL([HAVE_QT66], [test "${have_qt66}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_ZSTD], [test "${have_qt_zstd}" = "yes"])
 AM_CONDITIONAL([HAVE_QT_XCB], [test "${have_qt_xcb}" = "yes"])
+AM_CONDITIONAL([HAVE_QT_RLOTTIE], [test "${have_qt_rlottie}" = "yes"])
 
 dnl
 dnl detect kde4-config patch (used for kde solids).

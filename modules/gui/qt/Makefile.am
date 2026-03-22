@@ -176,6 +176,7 @@ libqt_plugin_la_SOURCES = \
 	maininterface/video_window_handler.cpp \
 	maininterface/video_window_handler.hpp \
 	maininterface/windoweffects_module.hpp \
+	maininterface/lottie_module.hpp \
 	medialibrary/medialib.cpp \
 	medialibrary/medialib.hpp \
 	medialibrary/mlmediastore.cpp \
@@ -434,6 +435,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	maininterface/mainui.moc.cpp \
 	maininterface/videosurface.moc.cpp \
 	maininterface/video_window_handler.moc.cpp \
+	maininterface/lottie_module.moc.cpp \
 	medialibrary/medialib.moc.cpp \
 	medialibrary/mlmediastore.moc.cpp \
 	medialibrary/mlalbummodel.moc.cpp \
@@ -1317,7 +1319,8 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/RoundedRectangleShadow.qml \
 	widgets/qml/VoronoiSnow.qml \
 	widgets/qml/DualKawaseBlur.qml \
-	widgets/qml/CheckBoxExt.qml
+	widgets/qml/CheckBoxExt.qml \
+	widgets/qml/LottieAnimationImage.qml
 nodist_libqml_module_widgets_a_SOURCES = widgets_qmlassets.cpp
 $(libqml_module_widgets_a_QML:.qml=.cpp) : $(builddir)/widgets/res.qrc
 $(libqml_module_widgets_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/widgets/res.qrc
@@ -1593,6 +1596,42 @@ libqt_gtktheme_plugin_la_SOURCES = \
 if ENABLE_QT
 gui_LTLIBRARIES += libqt_gtktheme_plugin.la
 endif
+endif
+
+if HAVE_QT_RLOTTIE
+libqt_plugin_la_CPPFLAGS += -DHAVE_RLOTTIE
+
+RLOTTIE_MODULE_NODIST_SOURCES = \
+	maininterface/rlottie_module.moc.cpp
+
+RLOTTIE_DYNAMIC_MODULE_NODIST_SOURCES = $(RLOTTIE_MODULE_NODIST_SOURCES) \
+	maininterface/lottie_module.moc.cpp
+
+RLOTTIE_MODULE_SOURCES = \
+	maininterface/rlottie_module.cpp \
+	maininterface/rlottie_module.hpp \
+	util/lzav.h
+
+RLOTTIE_DYNAMIC_MODULE_SOURCES = $(RLOTTIE_MODULE_SOURCES) \
+	maininterface/lottie_module.hpp
+
+if QT_STATIC
+libqt_plugin_la_CXXFLAGS += $(RLOTTIE_CFLAGS)
+libqt_plugin_la_LIBADD += $(RLOTTIE_LIBS)
+nodist_libqt_plugin_la_SOURCES += $(RLOTTIE_MODULE_NODIST_SOURCES)
+libqt_plugin_la_SOURCES += $(RLOTTIE_MODULE_SOURCES)
+endif
+
+if !QT_STATIC
+libqt_rlottie_plugin_la_CXXFLAGS = $(AM_CXXFLAGS) $(RLOTTIE_CFLAGS) $(QT_CFLAGS)
+libqt_rlottie_plugin_la_LIBADD = $(RLOTTIE_LIBS) $(QT_LIBS)
+libqt_rlottie_plugin_la_SOURCES = $(RLOTTIE_DYNAMIC_MODULE_SOURCES)
+nodist_libqt_rlottie_plugin_la_SOURCES = $(RLOTTIE_DYNAMIC_MODULE_NODIST_SOURCES)
+if ENABLE_QT
+gui_LTLIBRARIES += libqt_rlottie_plugin.la
+endif
+endif
+
 endif
 
 if ENABLE_QT

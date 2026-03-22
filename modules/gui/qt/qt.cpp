@@ -95,6 +95,11 @@ extern "C" char **environ;
 #include "playlist/playlist_item.hpp"
 #include "dialogs/dialogs/dialogmodel.hpp"
 #include "medialibrary/mlqmltypes.hpp"
+#ifdef QT_STATIC
+#ifdef HAVE_RLOTTIE
+#include "maininterface/rlottie_module.hpp"
+#endif
+#endif
 
 #include <QVector>
 #include "playlist/playlist_item.hpp"
@@ -493,6 +498,15 @@ vlc_module_begin ()
         set_description( "Qt basic system theme" )
         set_callback( SystemPaletteThemeProviderOpen )
         add_shortcut("qt-themeprovider-systempalette")
+#ifdef QT_STATIC
+#ifdef HAVE_RLOTTIE
+    add_submodule ()
+        add_shortcut( "QtSubRlottie" )
+        set_description( "Provides lottie support through rlottie as a submodule." )
+        set_capability( "qtlottie", 10 )
+        set_callback( RlottieOpen )
+#endif
+#endif
 vlc_module_end ()
 
 /*****************************************/

@@ -17,6 +17,10 @@ QTPLUGIN += qwindowsvistastyle
 }
 }
 
+contains(QT_CONFIG, static) {
+DEFINES += STATIC_QT
+}
+
 linux {
 QTPLUGIN += qxcb-glx-integration qxcb-egl-integration qxcb qwayland-generic qwayland-egl qgtk3 qxdgdesktopportal xdg-shell
 }

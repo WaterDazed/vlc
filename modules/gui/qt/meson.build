@@ -82,6 +82,7 @@ moc_headers = files(
     'maininterface/mainui.hpp',
     'maininterface/videosurface.hpp',
     'maininterface/video_window_handler.hpp',
+    'maininterface/lottie_module.hpp',
     'medialibrary/medialib.hpp',
     'medialibrary/mlmediastore.hpp',
     'medialibrary/mlalbummodel.hpp',
@@ -301,6 +302,7 @@ qt_plugin_sources = files(
     'maininterface/video_window_handler.cpp',
     'maininterface/video_window_handler.hpp',
     'maininterface/windoweffects_module.hpp',
+    'maininterface/lottie_module.hpp',
     'medialibrary/medialib.cpp',
     'medialibrary/medialib.hpp',
     'medialibrary/mlmediastore.cpp',
@@ -910,6 +912,7 @@ qml_modules += {
         'widgets/qml/VoronoiSnow.qml',
         'widgets/qml/DualKawaseBlur.qml',
         'widgets/qml/CheckBoxExt.qml',
+        'widgets/qml/LottieAnimationImage.qml',
     ),
 }
 
@@ -992,8 +995,9 @@ if qt6_dep.found()
     # error Qt using shared libraries
     #endif
     '''
-
+    qt_static = false
     if cpp.compiles(qt_static_check, dependencies: qt6_dep, name: 'Qt6 compiled with static libraries')
+        qt_static = true
         qt_install_bin_directory = qt6_dep.get_variable(pkgconfig: 'bindir', configtool: '-query QT_INSTALL_BINS')
         qmake6 = find_program(qt_install_bin_directory + '/qmake6', required: true)
         if qmake6.found()
@@ -1082,12 +1086,16 @@ if qt6_dep.found()
     endif
 
     #check private headers
+    qt_quick_private = false
     if cpp.has_header('private/qquickitem_p.h', dependencies: qt6_dep) \
       and cpp.has_header('private/qquickwindow_p.h', dependencies: qt6_dep)
+        qt_quick_private = true
         qt_extra_flags += '-DQT_DECLARATIVE_PRIVATE'
     endif
 
+    qt_gui_private = false
     if cpp.has_header('qpa/qplatformnativeinterface.h', dependencies: qt6_dep)
+        qt_gui_private = true
         qt_extra_flags += '-DQT_GUI_PRIVATE'
     endif
 
@@ -1140,6 +1148,66 @@ if qt6_dep.found()
             }
         endif
     endif
+
+    # rlottie
+    if qt_gui_private
+        check_rlottie = false
+
+        qt66_dep = dependency('qt6',
+            version: '>=6.6',
+            modules: ['Gui', 'Quick'],
+            private_headers: true,
+            required: false
+        )
+        if qt66_dep.found()
+            check_rlottie = true
+        else
+            if qt_quick_private
+                check_rlottie = true
+            else
+                warning('Qt rlottie module requires Qt Quick private headers if Qt version is less than 6.6.')
+            endif
+        endif
+
+        if check_rlottie
+            rlottie_module_dep = dependency('rlottie',
+                                            version: '>=0.2',
+                                            required: false)
+
+            if rlottie_module_dep.found()
+                rlottie_module_moc_headers = files('maininterface/rlottie_module.hpp')
+
+                rlottie_dynamic_module_moc_headers = rlottie_module_moc_headers + files('maininterface/lottie_module.hpp')
+            
+                rlottie_module_files = files('maininterface/rlottie_module.cpp',
+                                             'maininterface/rlottie_module.hpp',
+                                             'util/lzav.h')
+
+                rlottie_dynamic_module_files = rlottie_module_files + files('maininterface/lottie_module.hpp')
+
+                if qt_static
+                    qt_extra_deps += rlottie_module_dep
+                    moc_headers += rlottie_module_moc_headers
+                    qt_plugin_sources += rlottie_module_files
+                else
+                    rlottie_pre_files = qt6.preprocess(moc_headers: rlottie_dynamic_module_moc_headers,
+                                                       moc_extra_arguments: qt_extra_flags,
+                                                       include_directories: qt_include_dir,
+                                                       dependencies: qt6_dep,
+                                                       rcc_extra_arguments: qt_rcc_extra_arguments)
+
+                    vlc_modules += {
+                        'name' : 'qt_rlottie',
+                        'sources' : [rlottie_pre_files, rlottie_dynamic_module_files],
+                        'dependencies' : [rlottie_module_dep, qt6_dep]
+                    }
+                endif
+            endif
+        endif
+    else
+        warning('Qt rlottie module requires Qt Gui private headers.')
+    endif
+
 
     if get_option('update-check').allowed() and gcrypt_dep.found()
         qt_extra_flags += '-DUPDATE_CHECK'
