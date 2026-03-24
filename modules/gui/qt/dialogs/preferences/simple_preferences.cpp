@@ -30,6 +30,7 @@
 #include "preferences_widgets.hpp"
 #include "dialogs/dialogs_provider.hpp"
 #include "maininterface/mainctx.hpp"
+#include "util/accessible_compat_attached.hpp"
 #include "util/color_scheme_model.hpp"
 #include "util/proxycolumnmodel.hpp"
 #include "medialibrary/mlrecentmediamodel.hpp"
@@ -231,7 +232,7 @@ SPrefsCatList::SPrefsCatList( qt_intf_t *_p_intf, QWidget *_parent ) :
     connect( mapper, &QSignalMapper::mappedInt, this, &SPrefsCatList::switchPanel );
     qreal dpr = devicePixelRatioF();
 
-    auto addCategory = [&]( QString label, QString ltooltip, QString icon, int numb) {
+    auto addCategory = [&]( QString label, QString ltooltip, QString icon, int numb, QString accessible_id) {
         QToolButton * button = new QToolButton( this );
         /* Scale icon to non native size outside of toolbutton to avoid widget size */
         /* computation using native size */
@@ -248,19 +249,20 @@ SPrefsCatList::SPrefsCatList( qt_intf_t *_p_intf, QWidget *_parent ) :
         button->setAutoRaise( true );
         button->setCheckable( true );
         button->setAutoExclusive( true );
+        AccessibleCompatAttached::setId(button, accessible_id);
         connect( button, &QToolButton::clicked, mapper, QOverload<>::of(&QSignalMapper::map) );
         mapper->setMapping( button, numb );
         layout->addWidget( button );
     };
 
-    addCategory( qfut(INTF_TITLE), qfut(INTF_TOOLTIP), ":/prefsmenu/spref_interface.png" , SPrefsInterface );
-    addCategory( qfut(AUDIO_TITLE), qfut(AUDIO_TOOLTIP), ":/prefsmenu/spref_audio.png", SPrefsAudio );
-    addCategory( qfut(VIDEO_TITLE), qfut(VIDEO_TOOLTIP), ":/prefsmenu/spref_video.png", SPrefsVideo );
-    addCategory( qfut(SUBPIC_TITLE), qfut(SUBPIC_TOOLTIP), ":/prefsmenu/spref_subtitles.png", SPrefsSubtitles );
-    addCategory( qfut(INPUT_TITLE), qfut(INPUT_TOOLTIP), ":/prefsmenu/spref_input.png", SPrefsInputAndCodecs );
-    addCategory( qfut(HOTKEYS_TITLE), qfut(HOTKEYS_TOOLTIP), ":/prefsmenu/spref_hotkeys.png", SPrefsHotkeys );
+    addCategory( qfut(INTF_TITLE), qfut(INTF_TOOLTIP), ":/prefsmenu/spref_interface.png" , SPrefsInterface, "interfaceCategory" );
+    addCategory( qfut(AUDIO_TITLE), qfut(AUDIO_TOOLTIP), ":/prefsmenu/spref_audio.png", SPrefsAudio, "audioCategory" );
+    addCategory( qfut(VIDEO_TITLE), qfut(VIDEO_TOOLTIP), ":/prefsmenu/spref_video.png", SPrefsVideo, "videoCategory" );
+    addCategory( qfut(SUBPIC_TITLE), qfut(SUBPIC_TOOLTIP), ":/prefsmenu/spref_subtitles.png", SPrefsSubtitles, "subtitlesCategory" );
+    addCategory( qfut(INPUT_TITLE), qfut(INPUT_TOOLTIP), ":/prefsmenu/spref_input.png", SPrefsInputAndCodecs, "inputCategory" );
+    addCategory( qfut(HOTKEYS_TITLE), qfut(HOTKEYS_TOOLTIP), ":/prefsmenu/spref_hotkeys.png", SPrefsHotkeys, "hotkeysCategory" );
     if ( vlc_ml_instance_get( p_intf ) != nullptr )
-        addCategory( qfut(ML_TITLE), qfut(ML_TOOLTIP), ":/prefsmenu/spref_medialibrary.png", SPrefsMediaLibrary );
+        addCategory( qfut(ML_TITLE), qfut(ML_TOOLTIP), ":/prefsmenu/spref_medialibrary.png", SPrefsMediaLibrary, "mlCategory" );
 
     qobject_cast<QToolButton*>(mapper->mapping(SPrefsInterface))->setChecked(true);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -1032,6 +1034,7 @@ SPrefsPanel::SPrefsPanel( qt_intf_t *_p_intf, QWidget *_parent,
 
             if ( vlc_ml_instance_get( p_intf ) != NULL )
             {
+                AccessibleCompatAttached::setId( ui.mlGroupBox, "ml-groupbox" );
                 auto foldersModel = new MLFoldersModel( this );
                 foldersModel->setCtx( p_intf->p_mi );
                 ui.entryPoints->setMLFoldersModel( foldersModel );
