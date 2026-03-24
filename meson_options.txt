@@ -784,6 +784,11 @@ option('nfs',
     value: 'auto',
     description: 'support nfs protocol via libnfs')
 
+option('enable_medialib_gen',
+    type: 'boolean',
+    value: false,
+    description: 'Medialibrary generation module option')
+
 # TODO: Missing v4l2
 # TODO: Missing rpi-omxil
 # TODO: Missing gst-decode
