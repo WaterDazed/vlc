@@ -114,6 +114,7 @@ void BasicMenuContainer::setVisible(bool visible)
 void SortMenu::popup(const QPoint &point, const bool popupAbovePoint, const QVariantList &model)
 {
     assert(m_ctx);
+    m_lastHandledSortIndex = -1;
     m_menu = std::make_unique<VLCMenu>(m_ctx->getIntf());
 
     connect( m_menu.get(), &QMenu::aboutToShow, this, [this]() {
@@ -161,6 +162,14 @@ void SortMenu::close()
 {
     if (m_menu)
         m_menu->close();
+}
+
+bool SortMenu::beginSortMenuSelection(int index)
+{
+    if (m_lastHandledSortIndex == index)
+        return false;
+    m_lastHandledSortIndex = index;
+    return true;
 }
 
 // Protected functions

@@ -110,6 +110,8 @@ public:
 
     Q_INVOKABLE void close();
 
+    Q_INVOKABLE bool beginSortMenuSelection(int index);
+
     bool isShown() const { return m_shown; };
 
 protected:
@@ -122,6 +124,7 @@ signals:
 private:
     std::unique_ptr<QMenu> m_menu;
     bool m_shown = false;
+    int m_lastHandledSortIndex = -1;
 };
 
 class SortMenuVideo : public SortMenu
