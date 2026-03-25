@@ -1569,8 +1569,21 @@ libqt_plugin_la_QML_MODULES_RES_QRC = $(libqt_plugin_la_QML_MODULES:%=$(builddir
 libqt_plugin_la_QML_MODULES_QMLDIR = $(libqt_plugin_la_QML_MODULES:%=$(builddir)/%/qmldir)
 libqt_plugin_la_QML_MODULES_QMLDIR_QRC = $(libqt_plugin_la_QML_MODULES:%=$(builddir)/%/qmldir.qrc)
 
-%_qmlassets.cpp: $(builddir)/%/qmldir.qrc $(builddir)/%/res.qrc $(libqt_plugin_la_ALL_QML)
+%_qmlassets.cpp: $(builddir)/%/qmldir.qrc $(builddir)/%/res.qrc
 	$(AM_V_GEN)$(RCC) $(RCC_EXTRA_PARAMS) --name $*_assets -o $@ $(builddir)/$*/qmldir.qrc $(builddir)/$*/res.qrc
+
+# Per-module QML file dependencies for qmlassets
+dialogs_qmlassets.cpp: $(libqml_module_dialogs_a_QML)
+maininterface_qmlassets.cpp: $(libqml_module_maininterface_a_QML)
+medialibrary_qmlassets.cpp: $(libqml_module_medialibrary_a_QML)
+menus_qmlassets.cpp: $(libqml_module_menus_a_QML)
+network_qmlassets.cpp: $(libqml_module_network_a_QML)
+player_qmlassets.cpp: $(libqml_module_player_a_QML) $(libqml_module_player_a_Singleton_QML)
+playercontrols_qmlassets.cpp: $(libqml_module_playercontrols_a_QML)
+playlist_qmlassets.cpp: $(libqml_module_playlist_a_QML)
+style_qmlassets.cpp: $(libqml_module_style_a_QML) $(libqml_module_style_a_Singleton_QML)
+util_qmlassets.cpp: $(libqml_module_util_a_QML) $(libqml_module_util_a_Singleton_QML)
+widgets_qmlassets.cpp: $(libqml_module_widgets_a_QML)
 
 nodist_libqt_plugin_la_SOURCES += $(libqt_plugin_la_QML_MODULES:%=%_qmlassets.cpp)
 
