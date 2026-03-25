@@ -974,7 +974,43 @@ libqt_plugin_la_RES += \
 	pixmaps/win7/play.svg
 endif
 
-#QML modules
+# QML modules
+#
+# To add a new QML module "foo", update the following places:
+#
+# 1. Define the module variables:
+#
+#      libqml_module_foo_a_Module = VLC.Foo
+#      libqml_module_foo_a_ModulePath = VLC/Foo
+#      libqml_module_foo_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
+#      libqml_module_foo_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
+#      libqml_module_foo_a_QML = foo/qml/Bar.qml ...
+#
+#    When exposing singletons, also provide those QML files to the
+#    Singleton_QML so that they are declared as singleton:
+#
+#      libqml_module_foo_a_Singleton_QML = foo/qml/SingletonBar.qml
+#
+# 2. Add cachegen rules:
+#
+#      $(libqml_module_foo_a_QML:.qml=.cpp) : $(builddir)/foo/res.qrc
+#      $(libqml_module_foo_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/foo/res.qrc
+#      nodist_libqml_module_foo_a_SOURCES = foo_qmlassets.cpp
+#
+# 3. Add "foo" to libqt_plugin_la_QML_MODULES
+#
+# 4. Add $(libqml_module_foo_a_QML) (and _Singleton_QML if any) to
+#    libqt_plugin_la_ALL_QML
+#
+# 5. In the "if HAVE_QMLCACHEGEN" section:
+#
+#      nodist_libqml_module_foo_a_SOURCES += foo_qmlcache_loader.cpp
+#      libqml_module_foo_a_SOURCES = $(libqml_module_foo_a_QML)
+#
+# 6. In the "else" (non-cachegen) section, add per-module dep:
+#
+#      foo_qmlassets.cpp: $(libqml_module_foo_a_QML) $(libqml_module_foo_a_Singleton_QML)
+#
 libqml_module_dialogs_a_Module = VLC.Dialogs
 libqml_module_dialogs_a_ModulePath = VLC/Dialogs
 libqml_module_dialogs_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
