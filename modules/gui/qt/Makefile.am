@@ -1464,15 +1464,26 @@ if ENABLE_VLM
 nodist_libqt_plugin_la_SOURCES += dialogs/vlm/vlm.moc.cpp
 endif
 
-# QRC generation depends on the list of files (defined here) but not the file contents
-%/res.qrc: Makefile
+# QRC/qmldir generation depends on the list of files (defined here) but
+# not the file contents. Use per-module stamp files so that changes to
+# one module's file list don't trigger rebuilds in other modules.
+if ENABLE_QT
+QML_MODULE_STAMPS = $(libqt_plugin_la_QML_MODULES:%=%/qml_modules.stamp)
+all-local: $(QML_MODULE_STAMPS) $(VLC_QT_CHECK_DEP)
+endif
+
+%/qml_modules.stamp: Makefile
+	$(AM_V_at)echo '$(libqml_module_$*_a_Module) $(libqml_module_$*_a_ModulePath) $(libqml_module_$*_a_QML) $(libqml_module_$*_a_Singleton_QML)' > $@.tmp; \
+	if cmp -s $@.tmp $@; then rm -f $@.tmp; else mv $@.tmp $@; fi
+
+%/res.qrc: %/qml_modules.stamp
 	$(AM_V_GEN)$(PYTHON3) $(srcdir)/scripts/genqrc.py \
 	-o $@ \
 	-s $(srcdir) \
 	--prefix qt/qml/$(libqml_module_$*_a_ModulePath) \
 	--sources $(libqml_module_$*_a_QML) $(libqml_module_$*_a_Singleton_QML)
 
-%/qmldir: Makefile
+%/qmldir: %/qml_modules.stamp
 	$(AM_V_GEN)$(PYTHON3) $(srcdir)/scripts/genqmldir.py \
 	-o $@ \
 	--prefix qt/qml \
@@ -1483,7 +1494,7 @@ endif
 %/qmldir.qrc: %/qmldir
 	$(AM_V_GEN)$(PYTHON3) $(srcdir)/scripts/genqrc.py -o $@ --prefix qt/qml/$(libqml_module_$*_a_ModulePath) --sources $<
 
-CLEANFILES += $(libqt_plugin_la_QML_MODULES:%=%/res.qrc) $(libqt_plugin_la_QML_MODULES:%=%/qmldir) $(libqt_plugin_la_QML_MODULES:%=%/qmldir.qrc) $(libqml_module_util_a_QML:%.qml=%.cpp)
+CLEANFILES += $(QML_MODULE_STAMPS) $(libqt_plugin_la_QML_MODULES:%=%/res.qrc) $(libqt_plugin_la_QML_MODULES:%=%/qmldir) $(libqt_plugin_la_QML_MODULES:%=%/qmldir.qrc) $(libqml_module_util_a_QML:%.qml=%.cpp)
 
 if HAVE_QMLCACHEGEN
 
@@ -1603,7 +1614,7 @@ if !HAVE_OS2
 if !HAVE_IOS_OR_TVOS
 if !HAVE_XROS
 pkglibexec_PROGRAMS = vlc-qt-check
-all-local: $(builddir)/../../vlc-qt-check
+VLC_QT_CHECK_DEP = $(builddir)/../../vlc-qt-check
 
 $(builddir)/../../vlc-qt-check: vlc-qt-check
 	$(AM_V_GEN)cd ../../ && $(LN_S) -f gui/qt/vlc-qt-check . && chmod +x vlc-qt-check
