@@ -241,6 +241,8 @@ T.Page {
                 }
 
                 model: MLRecentVideoModel {
+                    id: recentVideoModel
+
                     ml: MediaLib
 
                     sortCriteria: MainCtx.sort.criteria
@@ -249,6 +251,10 @@ T.Page {
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(continueWatchingRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+
+                    onEndResetModelRequested: {
+                        MainCtx.setTimeout(recentVideoModel.requestEndResetModel, VLCStyle.duration_debounceThreshold, [], recentVideoModel)
+                    }
                 }
 
                 header: Widgets.ViewHeader {
