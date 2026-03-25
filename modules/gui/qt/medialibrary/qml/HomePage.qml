@@ -135,7 +135,7 @@ T.Page {
 
             MainCtx.setTimeout(() => {
                 flickable._hasMedias = Qt.binding(() => { return continueWatchingRow.visible || favoritesRow.visible || newMediaRow.visible } )
-            }, 50, [], flickable)
+            }, VLCStyle.duration_debounceThreshold, [], flickable)
         }
 
         HoverHandler {
