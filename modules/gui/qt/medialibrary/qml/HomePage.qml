@@ -344,6 +344,8 @@ T.Page {
                 }
 
                 model: MLMediaModel {
+                    id: favoritesModel
+
                     favoriteOnly: true
 
                     ml: MediaLib
@@ -354,6 +356,10 @@ T.Page {
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(favoritesRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+
+                    onEndResetModelRequested: {
+                        MainCtx.setTimeout(favoritesModel.requestEndResetModel, VLCStyle.duration_debounceThreshold, [], favoritesModel)
+                    }
                 }
 
                 headerText: qsTr("Favorites")
