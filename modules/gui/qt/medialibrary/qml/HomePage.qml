@@ -108,6 +108,10 @@ Widgets.PageExt {
             }
         }
 
+        function positionContentAtBeginning() {
+            contentY = -originY
+        }
+
         property Component implicitFlickableScrollHandler: DefaultFlickableScrollHandler { }
 
         // NOTE: This property can be set to null to prevent using a scroll handler:

@@ -100,6 +100,30 @@ T.Page {
         _firstChild.Navigation.upItem = root.header
     }
 
+    function positionContentAtBeginning() {
+        const tryScroll = (c) => {
+            if (!c)
+                return false
+
+            // home view
+            if (typeof c.positionContentAtBeginning === "function") {
+                c.positionContentAtBeginning()
+                return true
+            }
+
+            for (const ch of c.children) {
+                if (typeof ch.positionContentAtBeginning === "function") {
+                    ch.positionContentAtBeginning()
+                    return true
+                }
+            }
+            return false
+        }
+
+        if (!tryScroll(contentItem))
+            tryScroll(_firstChild)
+    }
+
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
