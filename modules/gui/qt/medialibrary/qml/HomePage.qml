@@ -421,6 +421,8 @@ T.Page {
                 }
 
                 model: MLMediaModel {
+                    id: newMediaModel
+
                     ml: MediaLib
 
                     sortCriteria: MainCtx.sort.criteria || "insertion"
@@ -429,6 +431,10 @@ T.Page {
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(newMediaRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+
+                    onEndResetModelRequested: {
+                        MainCtx.setTimeout(newMediaModel.requestEndResetModel, VLCStyle.duration_debounceThreshold, [], newMediaModel)
+                    }
                 }
 
                 headerText: qsTr("New Media")
