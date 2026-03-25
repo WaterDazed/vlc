@@ -109,7 +109,9 @@ Widgets.PageExt {
         }
 
         function positionContentAtBeginning() {
+            contentYBehavior.enabled = true
             contentY = -originY
+            contentYBehavior.enabled = false
         }
 
         property Component implicitFlickableScrollHandler: DefaultFlickableScrollHandler { }

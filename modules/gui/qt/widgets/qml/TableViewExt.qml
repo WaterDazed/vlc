@@ -154,6 +154,25 @@ ListViewExt {
         MainCtx.setItemFlag(this, Item.ItemIsFocusScope)
     }
 
+    function positionContentAtBeginning() {
+        scrollAnimation.stop()
+
+        // NOTE: Qt has no way to read the beginning contentY without moving,
+        // so move->measure->restore->animate
+        const fromY = root.contentY
+        root.positionViewAtBeginning()
+        const toY = root.contentY
+
+        if (Math.abs(toY - fromY) < 0.5)
+            return
+
+        root.contentY = fromY
+        scrollAnimation.duration = VLCStyle.duration_long
+        scrollAnimation.from = fromY
+        scrollAnimation.to = toY
+        scrollAnimation.start()
+    }
+
     function getItemY(index) {
         let size = index * rowHeight + topMargin
 
@@ -164,6 +183,17 @@ ListViewExt {
     }
 
     headerPositioning: ListView.OverlayHeader
+
+    // Animations
+
+    PropertyAnimation {
+        id: scrollAnimation
+
+        target: root
+        property: "contentY"
+    }
+
+    // Private
 
     flickableDirection: Flickable.AutoFlickDirection
 
