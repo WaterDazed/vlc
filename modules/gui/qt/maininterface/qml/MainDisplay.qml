@@ -36,7 +36,9 @@ FocusScope {
     property bool hasMiniPlayer: miniPlayer.visible
 
     // NOTE: The main view must be above the indexing bar and the mini player.
-    property real displayMargin: (height - miniPlayer.y) + (loaderProgress.active ? loaderProgress.height : 0)
+    property real displayMargin: (height - miniPlayer.y) +
+                                 (loaderProgress.active ? loaderProgress.height : 0) +
+                                 (loaderUpdatePane.active ? loaderUpdatePane.height : 0)
 
     //MainDisplay behave as a PageLoader
     property alias pagePrefix: stackView.pagePrefix
@@ -250,7 +252,7 @@ FocusScope {
 
                 layer.enabled: MainCtx.backdropBlurRequested() &&
                                (GraphicsInfo.shaderType === GraphicsInfo.RhiShader) &&
-                               (miniPlayer.visible || !!loaderProgress.item?.visible)
+                               (miniPlayer.visible || !!loaderProgress.item?.visible || !!loaderUpdatePane.item?.visible)
 
                 // Blurring requires to access neighbour pixels, thus the source texture should be bigger than
                 // the effect so that the effect have access to the neighbor pixels for the pixels near the
@@ -292,7 +294,7 @@ FocusScope {
                     effectRect: Qt.rect(0,
                                         stackView.height - stackViewParent.edgeExtension,
                                         width,
-                                        loaderProgress.height + miniPlayer.height + 2 * stackViewParent.edgeExtension)
+                                        loaderProgress.height + loaderUpdatePane.height + miniPlayer.height + 2 * stackViewParent.edgeExtension)
 
                     // Edge extension is not necessary here, but it is provided to prevent stretching glitch at
                     // initialization. Currently this is not a problem because the effect is opaque since the
@@ -366,7 +368,7 @@ FocusScope {
                     Navigation.parentItem: mainColumn
                     Navigation.upItem: sourcesBanner
                     Navigation.rightItem: playlistLoader
-                    Navigation.downItem:  miniPlayer.visible ? miniPlayer : null
+                    Navigation.downItem: loaderUpdatePane
                 }
 
                 Rectangle {
@@ -468,7 +470,7 @@ FocusScope {
 
                     Navigation.parentItem: mainColumn
                     Navigation.upItem: sourcesBanner
-                    Navigation.downItem: miniPlayer.visible ? miniPlayer : null
+                    Navigation.downItem: loaderUpdatePane
 
                     Navigation.leftAction: function() {
                         stackView.currentItem.setCurrentItemFocus(Qt.TabFocusReason);
@@ -541,6 +543,78 @@ FocusScope {
                     }
                 }
             }
+        }
+    }
+
+    Loader {
+        id: loaderUpdatePane
+
+        // WARNING: Object name is used from C++ side to acknowledge the modern update pane is loaded,
+        //          if C++ side does not get this acknowledgement, the old update dialog is shown as
+        //          fallback.
+        objectName: "updatePaneLoader"
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: loaderProgress.top
+
+        active: !!UpdateModel && (shouldShow || height > 0.0)
+
+        focus: !!item
+
+        readonly property bool shouldShow: !!UpdateModel && (UpdateModel.updateStatus !== UpdateModel.Unchecked)
+
+        // This property can be used to enable/disable the animation:
+        property alias toggleAnimation: heightBehavior.enabled
+
+        function dismiss() {
+            height = 0.0
+        }
+
+        onShouldShowChanged: {
+            if (shouldShow)
+                height = Qt.binding(() => { return implicitHeight })
+        }
+
+        onActiveChanged: {
+            console.assert(!!UpdateModel)
+            if (!active)
+                UpdateModel.resetStatus()
+        }
+
+        clip: (height < implicitHeight)
+
+        Behavior on height {
+            id: heightBehavior
+
+            NumberAnimation {
+                easing.type: Easing.InOutSine
+                duration: VLCStyle.duration_long
+            }
+        }
+
+        source: "qrc:///qt/qml/VLC/MainInterface/UpdatePane.qml"
+
+        Navigation.parentItem: mainColumn
+        Navigation.upItem: mainRow
+        Navigation.downItem: miniPlayer
+
+        onLoaded: {            
+            item.background.visible = Qt.binding(function() { return !stackViewParent.layer.enabled })
+
+            item.leftPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
+            item.rightPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
+            item.bottomPadding = Qt.binding(function() { return VLCStyle.margin_small + ((miniPlayer.visible || loaderProgress.visible) ? 0
+                                                                                                                                        : VLCStyle.applicationVerticalMargin) })
+
+            item.dismissRequested.connect(loaderUpdatePane, loaderUpdatePane.dismiss)
+
+            // We have height animation here, we don't want animation inside the item in addition to that:
+            item.animations = Qt.binding(function() { return !loaderUpdatePane.toggleAnimation })
+
+            item.Navigation.parentItem = loaderUpdatePane
+
+            item.focus = true // Loader itself is a focus scope, so we need this
         }
     }
 
@@ -642,7 +716,7 @@ FocusScope {
         background.visible: !stackViewParent.layer.enabled
 
         Navigation.parentItem: mainColumn
-        Navigation.upItem: mainRow
+        Navigation.upItem: loaderUpdatePane
         Navigation.cancelItem:sourcesBanner
         onVisibleChanged: {
             if (!visible && miniPlayer.activeFocus)
