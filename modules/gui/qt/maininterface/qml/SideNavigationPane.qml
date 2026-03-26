@@ -105,7 +105,8 @@ T.Pane {
                     iconTxt: model.icon
                     text: model.title
 
-                    checked: !model.expanded && !!model.uri && History.match(History.viewPath, model.uri)
+                    onActiveNavPath: !!model.uri && History.match(History.viewPath, model.uri)
+                    checked: !model.expanded && onActiveNavPath
 
                     onClicked: {
                         itemClicked(model.uri)
