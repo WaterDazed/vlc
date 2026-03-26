@@ -367,7 +367,7 @@ int libvlc_audio_set_mixmode( libvlc_media_player_t *mp, libvlc_audio_output_mix
 /*****************************************************************************
  * libvlc_audio_get_delay : Get the current audio delay
  *****************************************************************************/
-int64_t libvlc_audio_get_delay( libvlc_media_player_t *p_mi )
+libvlc_time_t libvlc_audio_get_delay( libvlc_media_player_t *p_mi )
 {
     vlc_player_t *player = p_mi->player;
     vlc_player_Lock(player);
@@ -376,18 +376,18 @@ int64_t libvlc_audio_get_delay( libvlc_media_player_t *p_mi )
 
     vlc_player_Unlock(player);
 
-    return US_FROM_VLC_TICK(delay);
+    return libvlc_time_from_vlc_tick(delay);
 }
 
 /*****************************************************************************
  * libvlc_audio_set_delay : Set the current audio delay
  *****************************************************************************/
-int libvlc_audio_set_delay( libvlc_media_player_t *p_mi, int64_t i_delay )
+int libvlc_audio_set_delay( libvlc_media_player_t *p_mi, libvlc_time_t i_delay )
 {
     vlc_player_t *player = p_mi->player;
     vlc_player_Lock(player);
 
-    vlc_player_SetAudioDelay(player, VLC_TICK_FROM_US(i_delay),
+    vlc_player_SetAudioDelay(player, vlc_tick_from_libvlc_time(i_delay),
                              VLC_PLAYER_WHENCE_ABSOLUTE);
 
     vlc_player_Unlock(player);

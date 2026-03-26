@@ -128,7 +128,7 @@ static libvlc_picture_t* libvlc_picture_from_attachment( input_attachment_t* att
     }
     vlc_atomic_rc_init( &pic->rc );
     pic->attachment = vlc_input_attachment_Hold( attachment );
-    pic->time = VLC_TICK_INVALID;
+    pic->time = LIBVLC_TIME_INVALID;
     video_format_Init( &pic->fmt, 0 );
     switch ( fcc )
     {
@@ -256,4 +256,23 @@ void libvlc_picture_list_destroy( libvlc_picture_list_t* list )
     for ( size_t i = 0; i < list->count; ++i )
         libvlc_picture_release( list->pictures[i] );
     free( list );
+}
+
+libvlc_picture_list_t* libvlc_picture_list_dup( libvlc_picture_list_t *source )
+{
+    assert( source );
+
+    size_t size = 0;
+    if ( mul_overflow( source->count, sizeof( libvlc_picture_t* ), &size ) )
+        return NULL;
+    if ( add_overflow( size, sizeof( *source ), &size ) )
+        return NULL;
+    libvlc_picture_list_t *dup = malloc( size );
+    if ( dup == NULL )
+        return NULL;
+    dup->count = source->count;
+    for ( size_t i = 0; i < source->count; ++i )
+        dup->pictures[i] = libvlc_picture_retain( source->pictures[i] );
+
+    return dup;
 }

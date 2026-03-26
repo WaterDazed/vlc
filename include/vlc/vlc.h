@@ -37,6 +37,7 @@ extern "C" {
 # endif
 
 #include "libvlc.h"
+#include "libvlc_time.h"
 #include "libvlc_renderer_discoverer.h"
 #include "libvlc_picture.h"
 #include "libvlc_media.h"
@@ -44,7 +45,6 @@ extern "C" {
 #include "libvlc_media_list.h"
 #include "libvlc_media_list_player.h"
 #include "libvlc_media_discoverer.h"
-#include "libvlc_events.h"
 #include "libvlc_dialog.h"
 #include "libvlc_version.h"
 

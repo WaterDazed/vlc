@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     //m = libvlc_media_new_path("/path/to/test.mov");
 
     /* Create a media player playing environement */
-    mp = libvlc_media_player_new_from_media (inst, m);
+    mp = libvlc_media_player_new_from_media (inst, m, NULL, NULL);
 
     /* No need to keep the media now */
     libvlc_media_release (m);
@@ -33,14 +33,25 @@ int main(int argc, char* argv[])
     while (libvlc_media_player_is_playing(mp))
     {
         sleep (1);
-        int64_t milliseconds = libvlc_media_player_get_time(mp);
-        int64_t seconds = milliseconds / 1000;
-        int64_t minutes = seconds / 60;
-        milliseconds -= seconds * 1000;
-        seconds -= minutes * 60;
+        libvlc_time_t time = libvlc_media_player_get_time(mp);
+        if (LIBVLC_TIME_IS_VALID(time))
+        {
+            int64_t milliseconds = libvlc_time_to_milliseconds(time);
+            if (milliseconds == INT64_MIN)
+            {
+                printf("Current time: unknown (invalid time or overflow error)\n");
+                continue;
+            }
+            int64_t seconds = milliseconds / 1000;
+            int64_t minutes = seconds / 60;
+            milliseconds -= seconds * 1000;
+            seconds -= minutes * 60;
 
-        printf("Current time: %" PRId64 ":%" PRId64 ":%" PRId64 "\n",
-               minutes, seconds, milliseconds);
+            printf("Current time: %" PRId64 ":%" PRId64 ":%" PRId64 "\n",
+                   minutes, seconds, milliseconds);
+        }
+        else
+            printf("Current time: unknown (invalid time or overflow error)\n");
     }
 
     /* Stop playing */
