@@ -152,6 +152,7 @@ class MainCtx : public QObject
     Q_PROPERTY(bool bgCone READ isbgCone WRITE setbgCone NOTIFY bgConeToggled FINAL)
     Q_PROPERTY(bool windowSuportExtendedFrame READ windowSuportExtendedFrame NOTIFY windowSuportExtendedFrameChanged)
     Q_PROPERTY(unsigned windowExtendedMargin READ windowExtendedMargin WRITE setWindowExtendedMargin NOTIFY windowExtendedMarginChanged)
+    Q_PROPERTY(int windowRadius READ windowRadius MEMBER m_windowRadius NOTIFY windowRadiusChanged FINAL)
     Q_PROPERTY(SearchCtx* search MEMBER m_search CONSTANT FINAL)
     Q_PROPERTY(SortCtx* sort MEMBER m_sort CONSTANT FINAL)
 
@@ -255,6 +256,7 @@ public:
 
     inline bool windowSuportExtendedFrame() const { return m_windowSuportExtendedFrame; }
     inline unsigned windowExtendedMargin() const { return m_windowExtendedMargin; }
+    int windowRadius() const { return m_windowRadius; }
     void setWindowSuportExtendedFrame(bool support);
     void setWindowExtendedMargin(unsigned margin);
 
@@ -459,6 +461,7 @@ protected:
     bool m_bgCone = true;
     bool m_windowSuportExtendedFrame = false;
     unsigned m_windowExtendedMargin = 0;
+    int m_windowRadius = 0;
 
     std::unique_ptr<CSDButtonModel> m_csdButtonModel;
 
@@ -575,6 +578,7 @@ signals:
     void bgConeToggled();
     void windowSuportExtendedFrameChanged();
     void windowExtendedMarginChanged(unsigned margin);
+    void windowRadiusChanged(int radius);
 
     void requestShowMainView();
     void requestShowPlayerView();
