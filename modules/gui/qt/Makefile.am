@@ -1367,7 +1367,8 @@ libqt_plugin_la_SHADER_FRAG = shaders/FadingEdge.frag \
                               shaders/FastBlend_multiply.frag \
                               shaders/FastBlend_screen.frag \
                               shaders/RoundedRectangleShadow.frag \
-                              shaders/RoundedRectangleShadow_hollow.frag \
+                              shaders/RoundedRectangleShadow_hollow_rectangular.frag \
+                              shaders/RoundedRectangleShadow_hollow_roundedrectangular.frag \
                               shaders/VoronoiSnow.frag \
                               shaders/DualKawaseBlur_upsample.frag \
                               shaders/DualKawaseBlur_downsample.frag \

@@ -72,6 +72,6 @@ ShaderEffect {
 
     // cullMode: ShaderEffect.BackFaceCulling // QTBUG-136611 (Layering breaks culling with OpenGL)
 
-    fragmentShader: hollow ? "qrc:///shaders/RoundedRectangleShadow_hollow.frag.qsb"
+    fragmentShader: hollow ? "qrc:///shaders/RoundedRectangleShadow_hollow_rectangular.frag.qsb"
                            : "qrc:///shaders/RoundedRectangleShadow.frag.qsb"
 }
