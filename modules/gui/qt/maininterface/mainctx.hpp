@@ -97,6 +97,7 @@ class MainCtx : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(bool favorLowerVideoMemoryConsumption READ favorLowerVideoMemoryConsumption CONSTANT FINAL)
     Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
     Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
     Q_PROPERTY(double playlistWidthFactor READ getPlaylistWidthFactor WRITE setPlaylistWidthFactor NOTIFY playlistWidthFactorChanged FINAL)
@@ -203,6 +204,8 @@ public:
         Unknown
     };
     Q_ENUM(OsType)
+
+    constexpr bool favorLowerVideoMemoryConsumption() { return false; }
 
     inline QWindow::Visibility interfaceVisibility() const { return m_windowVisibility; }
     bool isPlaylistDocked() { return b_playlistDocked; }
