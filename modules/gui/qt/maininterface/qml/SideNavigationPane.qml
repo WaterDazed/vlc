@@ -61,6 +61,29 @@ T.Pane {
         hasMedialib: MainCtx.mediaLibraryAvailable
     }
 
+    Connections {
+        target: History
+
+        // NOTE: handles cases where the path changes not only when the sidebar is clicked
+        function onViewPathChanged(viewPath) {
+            let checkedRow
+            let pathRow
+            for (let i = 0; i < listView.count; ++i) {
+                const item = listView.itemAtIndex(i)
+                if (item?.checked) {
+                    checkedRow = i
+                    break
+                }
+                if (item?.onActiveNavPath)
+                    pathRow = i
+            }
+            const row = checkedRow ?? pathRow
+
+            if (row >= 0)
+                listView.currentIndex = row
+        }
+    }
+
     background: Widgets.AcrylicBackground {
         enabled: root.useAcrylic
         tintColor: theme.bg.primary
@@ -91,6 +114,14 @@ T.Pane {
                 fadingEdge.backgroundColor:  (root.background && (root.background.color.a >= 1.0)) ? root.background.color
                                                                                                    : "transparent"
 
+                onCurrentIndexChanged: {
+                    const rowIndex = navigationModel.index(currentIndex, 0)
+
+                    if (rowIndex.valid && !navigationModel.data(rowIndex, NavigationModel.EXPANDED)
+                            && History.match(History.viewPath, navigationModel.data(rowIndex, NavigationModel.URI)))
+                        navigationModel.setData(rowIndex, true, NavigationModel.EXPANDED)
+                }
+
                 Navigation.parentItem: root
                 Navigation.downItem: preferenceButton
 
@@ -112,8 +143,6 @@ T.Pane {
                         itemClicked(model.uri)
                         listView.currentIndex = index
                         listView.forceActiveFocus(focusReason)
-                        if (!model.expanded && History.match(History.viewPath, model.uri))
-                            model.expanded = true
                     }
                 }
             }
