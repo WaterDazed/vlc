@@ -138,7 +138,7 @@ Item {
     // NOTE: The unit of width is not specified. It is
     //       recommended to do only relative adjustments.
     property color borderColor: "black"
-    property int borderWidth: 0
+    property real borderWidth: 0.0
     readonly property int effectiveBorderWidth: shaderEffect.visible ? borderWidth : 0
 
     // NOTE: Note the distinction between ShaderEffect and
