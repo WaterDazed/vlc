@@ -212,16 +212,9 @@ void VideoSurface::keyPressEvent(QKeyEvent* event)
 {
     if (!isBoosting && event->key() == triggerKey && !event->isAutoRepeat())
     {
-        if (this->p_intf && this->p_intf->p_playerController)
-        {
-            auto player = this->p_intf->p_playerController;
-            prev_rate = player->getRate();
-            player->setRate(boostRate);
-            isBoosting = true;
-
-            event->accept();
-            return;
-        }
+        isBoosting = true;
+        event->accept();
+        return;
     }
 
     QWidget::keyPressEvent(event);
@@ -232,10 +225,6 @@ void VideoSurface::keyReleaseEvent(QKeyEvent* event)
 {
     if (isBoosting && event->key() == triggerKey && !event->isAutoRepeat())
     {
-        if (this->p_intf && this->p_intf->p_playerController)
-        {
-            this->p_intf->p_playerController->setRate(prev_rate);
-        }
         isBoosting = false;
     }
 
