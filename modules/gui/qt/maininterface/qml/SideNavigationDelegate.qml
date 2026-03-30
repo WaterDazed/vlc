@@ -37,7 +37,7 @@ T.ItemDelegate {
 
     property bool onActiveNavPath: false
 
-    readonly property bool navHighlighted: onActiveNavPath || activeFocus || hovered
+    readonly property bool navHighlighted: onActiveNavPath || hovered || checked || visualFocus
 
     // Settings
 
