@@ -31,6 +31,8 @@ T.Page {
     //path of the current page loader
     property var pagePrefix: []
 
+    property int initialIndex: -1
+
     //note that T.Page introduce an intermediate Item, so to access our delegate,
     //we need to use contentChildren[0] rather than contentItem
     readonly property Item _firstChild: contentChildren[0] ?? null

@@ -31,6 +31,8 @@ StackViewExt {
     //path of the current page loader
     property var pagePrefix: []
 
+    property int initialIndex: -1
+
     //list of available pages
     property var pageModel: []
 
