@@ -54,6 +54,7 @@ FocusScope {
 
     property bool _showCSD: MainCtx.clientSideDecoration
         && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
+    property bool _smallScreenDimActive: false
 
     // functions
 
@@ -374,7 +375,7 @@ FocusScope {
         z: 2
 
         anchors.fill: parent
-        visible: VLCStyle.isScreenSmall && (playlistLoader.shown || sidebar.visible)
+        visible: g_mainDisplay._smallScreenDimActive
         color: "black"
         opacity: 0.4
 
@@ -489,6 +490,14 @@ FocusScope {
         }
     }
 
+    Connections {
+        target: sidebar
+
+        function onVisibleChanged() {
+            pannelVisiblity.recomputeSmallScreenDimActive()
+        }
+    }
+
     Loader {
         id: playlistLoader
 
@@ -598,6 +607,14 @@ FocusScope {
         }
     }
 
+    Connections {
+        target: playlistLoader
+
+        function onShownChanged() {
+            pannelVisiblity.recomputeSmallScreenDimActive()
+        }
+    }
+
     //track the visiblity state of the side panels
     //FIXME do we want proper state machine?
     Item {
@@ -613,12 +630,14 @@ FocusScope {
             if (VLCStyle.isScreenSmall && pannelVisiblity.showPlayqueue && MainCtx.playqueuePanel.docked && pannelVisiblity.showNavigation) {
                 pannelVisiblity.showPlayqueue = false
             }
+            recomputeSmallScreenDimActive()
         }
 
         onShowPlayqueueChanged: {
             if (VLCStyle.isScreenSmall && pannelVisiblity.showPlayqueue && MainCtx.playqueuePanel.docked && pannelVisiblity.showNavigation) {
                 pannelVisiblity.showNavigation = false
             }
+            recomputeSmallScreenDimActive()
         }
 
         function hideVisiblePanels() {
@@ -628,6 +647,7 @@ FocusScope {
                 pannelVisiblity.showPlayqueue = false
                 MainCtx.playqueuePanel.visible = false
             }
+            recomputeSmallScreenDimActive()
         }
 
         function toggleNavigationVisibility() {
@@ -650,6 +670,15 @@ FocusScope {
                 pannelVisiblity.showNavigation = MainCtx.navigationPanel.visible
                 pannelVisiblity.showPlayqueue =  MainCtx.playqueuePanel.visible
             }
+
+            recomputeSmallScreenDimActive()
+        }
+
+        function recomputeSmallScreenDimActive() {
+            g_mainDisplay._smallScreenDimActive = VLCStyle.isScreenSmall
+                    && ((pannelVisiblity.showNavigation && sidebar.visible)
+                        || (MainCtx.playqueuePanel.docked && pannelVisiblity.showPlayqueue
+                            && playlistLoader.shown))
         }
 
         Connections {
@@ -665,6 +694,7 @@ FocusScope {
 
             function onVisibleChanged() {
                 pannelVisiblity.showPlayqueue = MainCtx.playqueuePanel.visible
+                pannelVisiblity.recomputeSmallScreenDimActive()
             }
         }
 
@@ -673,6 +703,7 @@ FocusScope {
 
             function onVisibleChanged() {
                 pannelVisiblity.showNavigation = MainCtx.navigationPanel.visible
+                pannelVisiblity.recomputeSmallScreenDimActive()
             }
         }
     }
