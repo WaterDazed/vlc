@@ -2073,7 +2073,9 @@ void PlayerController::setArt( input_item_t *p_item, QString fileUrl )
         free( psz_cachedir );
 
         input_item_SetArtURL( p_item , fileUrl.toUtf8().constData() );
+        input_item_WriteMeta( VLC_OBJECT(d->p_intf), p_item );
         d->UpdateArt( p_item );
+        d->UpdateMeta( p_item );
     }
 }
 
