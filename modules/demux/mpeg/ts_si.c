@@ -88,7 +88,7 @@ void ts_si_Packet_Push( ts_pid_t *p_pid, const uint8_t *p_pktbuffer )
 static char *EITConvertToUTF8( demux_t *p_demux,
                                const unsigned char *psz_instring,
                                size_t i_length,
-                               bool b_broken )
+                               const char *default_charset )
 {
     demux_sys_t *p_sys = p_demux->p_sys;
 #ifdef HAVE_ARIBB24
@@ -125,9 +125,10 @@ static char *EITConvertToUTF8( demux_t *p_demux,
       removing them from the broken providers table
       (keep the entry for correctly handling recorded TS).
     */
-    b_broken = b_broken && i_length;
+    if (i_length == 0)
+        default_charset = NULL;
 
-    return vlc_from_EIT( psz_instring, i_length, b_broken ? "ISO_8859-1" : NULL );
+    return vlc_from_EIT( psz_instring, i_length, default_charset );
 }
 
 #define attach_SI_decoders(i_pid, name, member) do {\
@@ -182,7 +183,8 @@ static void SDTCallBack( void *opaque, dvbpsi_sdt_t *p_sdt )
              p_sdt->i_version, p_sdt->b_current_next,
              p_sdt->i_network_id );
 
-    p_sys->b_broken_charset = false;
+    free(p_sys->forced_charset);
+    p_sys->forced_charset = var_InheritString(p_demux, "ts-force-charset");
 
     for( p_srv = p_sdt->p_first_service; p_srv; p_srv = p_srv->p_next )
     {
@@ -234,10 +236,13 @@ static void SDTCallBack( void *opaque, dvbpsi_sdt_t *p_sdt )
                 char *str1 = NULL;
                 char *str2 = NULL;
 
+                if (p_sys->forced_charset == NULL)
+                {
                 /* Workarounds for broadcasters with broken EPG */
 
+                bool b_broken_charset = false;
                 if( p_sdt->i_network_id == 133 )
-                    p_sys->b_broken_charset = true;  /* SKY DE & BetaDigital use ISO8859-1 */
+                    b_broken_charset = true;  /* SKY DE & BetaDigital use ISO8859-1 */
 
                 /* List of providers using ISO8859-1 */
                 static const char ppsz_broken_providers[][8] = {
@@ -252,7 +257,17 @@ static void SDTCallBack( void *opaque, dvbpsi_sdt_t *p_sdt )
                     const size_t i_length = strlen(ppsz_broken_providers[i]);
                     if( pD->i_service_provider_name_length == i_length &&
                         !strncmp( (char *)pD->i_service_provider_name, ppsz_broken_providers[i], i_length ) )
-                        p_sys->b_broken_charset = true;
+                    {
+                        b_broken_charset = true;
+                        break;
+                    }
+                }
+
+                if (b_broken_charset)
+                {
+                    free(p_sys->forced_charset);
+                    p_sys->forced_charset = strdup("ISO_8859-1");
+                }
                 }
 
                 /* FIXME: Digital+ ES also uses ISO8859-1 */
@@ -260,11 +275,11 @@ static void SDTCallBack( void *opaque, dvbpsi_sdt_t *p_sdt )
                 str1 = EITConvertToUTF8(p_demux,
                                         pD->i_service_provider_name,
                                         pD->i_service_provider_name_length,
-                                        p_sys->b_broken_charset );
+                                        p_sys->forced_charset );
                 str2 = EITConvertToUTF8(p_demux,
                                         pD->i_service_name,
                                         pD->i_service_name_length,
-                                        p_sys->b_broken_charset );
+                                        p_sys->forced_charset );
 
                 msg_Dbg( p_demux, "    - type=%"PRIu8" provider=%s name=%s",
                          pD->i_service_type, str1, str2 );
@@ -445,7 +460,7 @@ static void EITExtractDrDescItems( demux_t *p_demux, const dvbpsi_extended_event
                 psz_key = EITConvertToUTF8( p_demux,
                                             pE->i_item_description[i],
                                             pE->i_item_description_length[i],
-                                            p_sys->b_broken_charset );
+                                            p_sys->forced_charset );
                 if( !psz_key )
                 {
                     ppsz_prev = NULL;
@@ -457,7 +472,7 @@ static void EITExtractDrDescItems( demux_t *p_demux, const dvbpsi_extended_event
 
             char *psz_itm = EITConvertToUTF8( p_demux,
                                               pE->i_item[i], pE->i_item_length[i],
-                                              p_sys->b_broken_charset );
+                                              p_sys->forced_charset );
             if( !psz_itm )
             {
                 free( psz_key );
@@ -578,12 +593,12 @@ static void EITCallBack( void *opaque, dvbpsi_eit_t *p_eit )
                     free( *ppsz );
                     *ppsz = EITConvertToUTF8( p_demux,
                                               pE->i_event_name, pE->i_event_name_length,
-                                              p_sys->b_broken_charset );
+                                              p_sys->forced_charset );
                     ppsz = &p_epgevt->psz_short_description;
                     free( *ppsz );
                     *ppsz = EITConvertToUTF8( p_demux,
                                               pE->i_text, pE->i_text_length,
-                                              p_sys->b_broken_charset );
+                                              p_sys->forced_charset );
                     msg_Dbg( p_demux, "    - short event lang=%3.3s '%s' : '%s'",
                              pE->i_iso_639_code, p_epgevt->psz_name, *ppsz );
                 }
@@ -603,7 +618,7 @@ static void EITCallBack( void *opaque, dvbpsi_eit_t *p_eit )
                     {
                         char *psz_text = EITConvertToUTF8( p_demux,
                                                            pE->i_text, pE->i_text_length,
-                                                           p_sys->b_broken_charset );
+                                                           p_sys->forced_charset );
                         if( psz_text )
                         {
                             msg_Dbg( p_demux, "       - text='%s'", psz_text );
