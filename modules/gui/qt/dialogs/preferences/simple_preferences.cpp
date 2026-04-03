@@ -730,6 +730,14 @@ SPrefsPanel::SPrefsPanel( qt_intf_t *_p_intf, QWidget *_parent,
 
 #ifdef _WIN32
             BUTTONACT( ui.assoButton, &SPrefsPanel::assoDialog );
+            if( module_exists( "win_smtc" ) )
+            {
+                CONFIG_BOOL( "smtc", enableSMTC );
+            }
+            else
+            {
+                ui.enableSMTC->hide();
+            }
 #else
             ui.osGroupBox->hide();
 #endif

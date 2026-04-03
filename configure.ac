@@ -4878,6 +4878,26 @@ AC_ARG_WITH([doxygen-stylesheet],
                    [ doxygen_stylesheet="$with_doxygen_stylesheet" ], [])
 AC_SUBST([doxygen_stylesheet])
 
+dnl
+dnl Check for C++/WinRT
+dnl
+have_cppwinrt="no"
+AM_COND_IF([HAVE_WIN32_DESKTOP], [
+  PKG_CHECK_MODULES([CPPWINRT], [CppWinRT], [
+    AC_LANG_PUSH([C++])
+    AX_CHECK_COMPILE_FLAG([-std=c++20], [
+      AX_APPEND_FLAG([-std=c++20],[CPPWINRT_CFLAGS])
+      have_cppwinrt="yes"
+    ], [
+      AC_MSG_WARN([CppWinRT disabled because compiler does not support C++20.])
+    ])
+    AC_LANG_POP([C++])
+  ], [
+    AC_MSG_WARN([${CPPWINRT_PKG_ERRORS}.])
+  ])
+])
+AM_CONDITIONAL([HAVE_CPPWINRT], [test "${have_cppwinrt}" = "yes"])
+
 
 
 dnl

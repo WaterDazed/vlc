@@ -161,6 +161,9 @@ void system_Configure( libvlc_int_t *p_this, int i_argc, const char *const ppsz_
             exit( 0 );
         }
     }
+
+    if( var_InheritBool( p_this, "smtc" ) )
+        libvlc_InternalAddIntf( p_this, "win_smtc,none" );
 #endif
 }
 

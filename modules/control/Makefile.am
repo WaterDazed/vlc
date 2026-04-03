@@ -53,7 +53,13 @@ endif
 libntservice_plugin_la_SOURCES = control/ntservice.c
 libwin_hotkeys_plugin_la_SOURCES = control/globalhotkeys/win32.c
 libwin_msg_plugin_la_SOURCES = control/win_msg.c
+libwin_smtc_plugin_la_SOURCES = control/win_smtc.cpp
+libwin_smtc_plugin_la_CXXFLAGS = $(AM_CXXFLAGS) $(LIBCOMCXXFLAGS) $(CPPWINRT_CFLAGS)
+libwin_smtc_plugin_la_LIBADD = $(LIBCOM)
 if HAVE_WIN32_DESKTOP
 control_LTLIBRARIES += libntservice_plugin.la
 control_LTLIBRARIES += libwin_hotkeys_plugin.la libwin_msg_plugin.la
+if HAVE_CPPWINRT
+control_LTLIBRARIES += libwin_smtc_plugin.la
+endif
 endif
