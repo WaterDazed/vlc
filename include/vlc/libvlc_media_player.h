@@ -44,6 +44,8 @@ typedef struct libvlc_media_tracklist_t libvlc_media_tracklist_t;
 typedef enum libvlc_track_type_t libvlc_track_type_t;
 typedef struct libvlc_renderer_item_t libvlc_renderer_item_t;
 typedef enum libvlc_state_t libvlc_state_t;
+struct wl_surface;
+struct wl_display;
 
 /** \defgroup libvlc_media_player LibVLC media player
  * \ingroup libvlc
@@ -1076,6 +1078,27 @@ LIBVLC_API void libvlc_media_player_set_xwindow(libvlc_media_player_t *p_mi,
  * \return an X window ID, or 0 if none where set.
  */
 LIBVLC_API uint32_t libvlc_media_player_get_xwindow ( libvlc_media_player_t *p_mi );
+
+/**
+ * Set a Wayland surface where the media player should render its video output.
+ * 
+ * \param p_mi the Media Player
+ * \param display the Wayland display
+ * \param parent_surface the parent surface to use for rendering
+ * \param set_window_cb callback to set the window
+ */
+LIBVLC_API void libvlc_media_player_set_wayland_surface( libvlc_media_player_t *p_mi,
+                                struct wl_display *display, 
+                                struct wl_surface *parent_surface,
+                                libvlc_video_output_set_window_cb set_window_cb );
+
+/**
+ * Get the Wayland surface previously set
+ * 
+ * \param p_mi the Media Player
+ * \return wl_surface pointer
+ */
+LIBVLC_API struct wl_surface *libvlc_media_player_get_wayland_surface ( libvlc_media_player_t *p_mi );
 
 /**
  * Set a Win32/Win64 API window handle (HWND) where the media player should

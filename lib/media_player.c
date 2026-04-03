@@ -682,6 +682,8 @@ libvlc_media_player_new( libvlc_instance_t *instance )
     mp->vout.default_dec_dev = var_GetString(mp, "dec-dev");
 
     var_Create (mp, "drawable-xid", VLC_VAR_INTEGER);
+    var_Create (mp, "wl-parent-surface" , VLC_VAR_ADDRESS);
+    var_Create (mp, "wl-parent-display", VLC_VAR_ADDRESS);
 #if defined (_WIN32) || defined (__OS2__)
     var_Create (mp, "drawable-hwnd", VLC_VAR_INTEGER);
 #endif
@@ -1301,6 +1303,32 @@ static void libvlc_media_player_detach_hwnd(libvlc_media_player_t *player)
     /* Window variable is not configurable from libvlc */
     var_SetString(player, "window", "any");
     var_SetInteger(player, "drawable-hwnd", 0);
+}
+
+/**************************************************************************
+ * set_wayland_surface
+ **************************************************************************/
+void libvlc_media_player_set_wayland_surface( libvlc_media_player_t *p_mi,
+                                struct wl_display* display, 
+                                struct wl_surface* parent_surface,
+                                libvlc_video_output_set_window_cb set_window_cb )
+{
+    assert (p_mi != NULL);
+
+    var_SetString (p_mi, "dec-dev", "any");
+    var_SetString (p_mi, "vout", "any");
+    var_SetString (p_mi, "window", parent_surface != NULL ? "embed-wayland,any" : "any");
+    var_SetAddress (p_mi, "wl-parent-display", display);
+    var_SetAddress (p_mi, "wl-parent-surface", parent_surface);
+    var_SetAddress (p_mi, "vout-cb-window-cb", set_window_cb );
+}
+
+/**************************************************************************
+ * get_wayland_surface
+ **************************************************************************/
+struct wl_surface *libvlc_media_player_get_wayland_surface( libvlc_media_player_t *p_mi )
+{
+    return (struct wl_surface *)var_GetAddress (p_mi, "wl-parent-surface");
 }
 
 /**************************************************************************
