@@ -283,6 +283,7 @@ libqt_plugin_la_SOURCES = \
 	style/systempalette.hpp \
 	style/defaultthemeproviders.hpp \
 	style/systempalettethemeprovider.cpp \
+	style/vlcicons.hpp \
 	player/input_models.cpp player/input_models.hpp \
 	player/delay_estimator.cpp \
 	player/delay_estimator.hpp \
@@ -482,6 +483,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	network/standardpathmodel.moc.cpp \
 	style/colorcontext.moc.cpp \
 	style/systempalette.moc.cpp \
+	style/vlcicons.moc.cpp \
 	player/delay_estimator.moc.cpp \
 	player/input_models.moc.cpp \
 	player/player_controller.moc.cpp \
@@ -1212,7 +1214,6 @@ libqml_module_style_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
 libqml_module_style_a_QML =
 libqml_module_style_a_Singleton_QML = \
 	style/AcrylicController.qml \
-	style/VLCIcons.qml \
 	style/VLCStyle.qml
 nodist_libqml_module_style_a_SOURCES = style_qmlassets.cpp
 $(libqml_module_style_a_QML:.qml=.cpp) $(libqml_module_style_a_Singleton_QML:.qml=.cpp) : $(builddir)/style/res.qrc
