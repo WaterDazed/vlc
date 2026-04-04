@@ -62,6 +62,9 @@ public slots:
     void askForUpdate();
     void setArtFromFile();
     void clear();
+
+signals:
+    void editing();
 };
 
 #endif
