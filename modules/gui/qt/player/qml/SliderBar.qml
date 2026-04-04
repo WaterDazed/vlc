@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Templates as T
 import QtQuick.Layouts
@@ -64,6 +65,53 @@ T.ProgressBar {
         hovered: hoverHandler.hovered
     }
 
+    property var sampledTimerPoint // Qt 6.2 can not use value type TimerPoint
+    property var _lastSamplingTime
+
+    Connections {
+        target: control.Window.window
+        enabled: control.visible
+                 && Player.isStarted // We can not assume the timer point to change only during playing state.
+
+        function onAfterAnimating() {
+            // Sampling point
+            // This is emitted per frame from the GUI thread.
+
+            // Constantly update the label, so that the window
+            // prepares new frames and we make sure that this
+            // function is also called in the very next frame.
+            // This is similar to animations:
+            control.update()
+
+            const sampledTimerPoint = Player.sampleTimerPoint()
+
+            if (sampledTimerPoint.time === control.sampledTimerPoint?.time) {
+                // No change, interpolate if still playing:
+
+                const length = sampledTimerPoint.length.toMilliseconds()
+                if ((Player.playingState === Player.PLAYING_STATE_PLAYING) && length > 0) {
+                    const currentTime = Date.now()
+                    const elapsedTime = (currentTime - control._lastSamplingTime)
+                    fsm.playerUpdatePosition(control.value + elapsedTime / length)
+                }
+            } else {
+                // If different, we must update the slider position:
+                fsm.playerUpdatePosition(sampledTimerPoint.position)
+            }
+
+            control._lastSamplingTime = Date.now()
+
+            control.sampledTimerPoint = sampledTimerPoint
+
+            // Control would like re-polishing after value change.
+            // We should have this because `afterAnimating()` is
+            // signalled after the items are polished. This may
+            // not be necessary, but it is better to have it:
+             if (control.ensurePolished)
+                 control.ensurePolished()
+        }
+    }
+
     Timer {
         id: seekpointTimer
         running: Player.hasChapters && !hoverHandler.hovered && _isSeekPointsShown
@@ -82,13 +130,17 @@ T.ProgressBar {
         text: {
             let _text
 
-            const length = Player.length
-            if (hoverHandler.hovered)
-                _text = length.scale(pos.x / control.width)
-            else
-                _text = Player.time
+            if (!!control.sampledTimerPoint) {
+                const length = control.sampledTimerPoint.length
+                if (hoverHandler.hovered)
+                    _text = length.scale(pos.x / control.width)
+                else
+                    _text = control.sampledTimerPoint.time
 
-            _text = _text.formatHMS(length.isSubSecond() ? VLCTick.SubSecondFormattedAsMS : 0)
+                _text = _text.formatHMS(length.isSubSecond() ? VLCTick.SubSecondFormattedAsMS : 0)
+            } else {
+                _text = "00:00"
+            }
 
             if (Player.hasChapters)
                 _text += " - " + Player.chapters.getNameAtPosition(control._tooltipPosition)
@@ -178,7 +230,7 @@ T.ProgressBar {
             id: fsmHeldWrongInput
 
             function enter() {
-                fsm._setPositionFromValue(Player.position)
+                fsm._setPositionFromValue(control.sampledTimerPoint.time)
             }
 
             transitions: ({
@@ -194,7 +246,7 @@ T.ProgressBar {
 
     Connections {
         target: Player
-        function onPositionChanged() {  fsm.playerUpdatePosition(Player.position) }
+
         function onInputChanged() {  fsm.inputChanged() }
     }
 

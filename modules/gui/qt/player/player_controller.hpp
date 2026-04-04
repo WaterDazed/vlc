@@ -86,7 +86,7 @@ class TimerPoint
     Q_PROPERTY(VLCDuration length READ getLength CONSTANT FINAL)
     Q_PROPERTY(bool live READ getLive CONSTANT FINAL)
     Q_PROPERTY(VLCTime systemDate READ getSystemDate CONSTANT FINAL)
-    Q_PROPERTY(VLCTime remainingTime READ getRemainingTime CONSTANT FINAL)
+    Q_PROPERTY(VLCDuration remainingTime READ getRemainingTime CONSTANT FINAL)
 
 public:
     TimerPoint() = default;
@@ -165,13 +165,24 @@ public:
     Q_PROPERTY(bool isStarted READ isStarted NOTIFY playingStateChanged FINAL)
     Q_PROPERTY(QString name READ getName NOTIFY nameChanged FINAL)
     Q_PROPERTY(float buffering READ getBuffering  NOTIFY bufferingChanged FINAL)
-    Q_PROPERTY(float rate READ getRate WRITE setRate NOTIFY rateChanged FINAL)
     Q_PROPERTY(QUrl url READ getUrl NOTIFY inputChanged FINAL)
 
+    // NOTE: If update frequency becomes too high, get rid of NOTIFY signals for
+    //       time, remainingTime, and position. For now they are available,
+    //       because they are not updated too frequently (as in high precision
+    //       timer). This is to prevent event backlogging.
+    // WARNING: The read methods of these properties are thread-safe, but they
+    //          may not be lock-less. For that reason, if you intend to use multiple
+    //          properties at one time, it is better to sample using `::sampleTimerPoint()`
+    //          and use the properties in the returned gadget instead. If you
+    //          only use one property, you do not need to do that and it is
+    //          better to not do because these can be used in bindings that way
+    //          since they have the NOTIFY signal.
     Q_PROPERTY(VLCTime time READ getTime WRITE setTime NOTIFY timeChanged FINAL)
-    Q_PROPERTY(VLCTime remainingTime READ getRemainingTime NOTIFY remainingTimeChanged FINAL)
+    Q_PROPERTY(VLCDuration remainingTime READ getRemainingTime NOTIFY remainingTimeChanged FINAL)
     Q_PROPERTY(double position READ getPosition WRITE setPosition NOTIFY positionChanged FINAL)
     Q_PROPERTY(VLCDuration length READ getLength NOTIFY lengthChanged FINAL)
+    Q_PROPERTY(float rate READ getRate WRITE setRate NOTIFY rateChanged FINAL)
 
     Q_PROPERTY(bool seekable READ isSeekable NOTIFY seekableChanged FINAL)
     Q_PROPERTY(bool rewindable READ isRewindable NOTIFY rewindableChanged FINAL)
@@ -255,6 +266,12 @@ public:
 
     /* exposed actions */
 public slots:
+    // This method is thread-safe:
+    TimerPoint sampleTimerPoint() const;
+
+    // This method is thread-safe:
+    void updateTimerPointProperties(const struct vlc_player_timer_point& point);
+
     void reverse();
     void slower();
     void faster();
@@ -327,8 +344,6 @@ public:
     void requestArtUpdate( input_item_t *p_item );
     void setArt( input_item_t *p_item, QString fileUrl );
     static const QString decodeArtURL( input_item_t *p_item );
-    void updatePosition();
-    void updateTime(vlc_tick_t system_now, bool forceTimer);
 
     //getter/setters binded to a Q_PROPERTY
 public slots:
@@ -350,8 +365,6 @@ public slots:
     bool isRewindable() const;
     bool isPausable() const;
     bool isRateChangable() const;
-    void updatePositionFromTimer();
-    void updateTimeFromTimer();
     bool canRestorePlayback() const;
     void restorePlaybackPos();
     void openVLsub();
