@@ -718,6 +718,14 @@ static int ReloadWaveoutDevices( char const *psz_name,
 
     (*values)[0] = strdup( "wavemapper" );
     (*descs)[0] = strdup( _("Microsoft Soundmapper") );
+    if( (*values)[0] == NULL || (*descs)[0] == NULL )
+    {
+        free( (*values)[0] );
+        free( (*descs)[0] );
+        free( values );
+        free( descs );
+        return 0;
+    }
 
     for(UINT i = 0; i < nb_devices; i++)
     {
@@ -732,7 +740,16 @@ static int ReloadWaveoutDevices( char const *psz_name,
                    caps.szPname, caps.wMid, caps.wPid);
         (*values)[n] = FromWide( dev_name );
         (*descs)[n] = strdup( (*values)[n] );
-        n++;
+        if(likely((*values)[n] && (*descs)[n]))
+        {
+            n++;
+        }
+        else
+        {
+           free((*values)[n]);
+           free((*descs)[n]);
+           break;
+        }
     }
 
     return n;
