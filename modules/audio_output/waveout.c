@@ -697,7 +697,12 @@ static void WaveOutClearBuffer( HWAVEOUT h_waveout, WAVEHDR *p_waveheader )
 static int ReloadWaveoutDevices( char const *psz_name,
                                  char ***values, char ***descs )
 {
-    int n = 0, nb_devices = waveOutGetNumDevs();
+    UINT nb_devices = waveOutGetNumDevs();
+    int n = 0;
+
+    /* config_GetPszChoices callback signature returns int */
+    if( nb_devices > INT_MAX - 1 )
+        nb_devices = INT_MAX - 1;
 
     VLC_UNUSED( psz_name );
 
@@ -708,7 +713,7 @@ static int ReloadWaveoutDevices( char const *psz_name,
     (*descs)[n] = strdup( _("Microsoft Soundmapper") );
     n++;
 
-    for(int i = 0; i < nb_devices; i++)
+    for(UINT i = 0; i < nb_devices; i++)
     {
         WAVEOUTCAPS caps;
         wchar_t dev_name[MAXPNAMELEN+32];
