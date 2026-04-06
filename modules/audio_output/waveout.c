@@ -698,7 +698,7 @@ static int ReloadWaveoutDevices( char const *psz_name,
                                  char ***values, char ***descs )
 {
     UINT nb_devices = waveOutGetNumDevs();
-    int n = 0;
+    int n = 1;
 
     /* config_GetPszChoices callback signature returns int */
     if( nb_devices > INT_MAX - 1 )
@@ -716,9 +716,8 @@ static int ReloadWaveoutDevices( char const *psz_name,
         return 0;
     }
 
-    (*values)[n] = strdup( "wavemapper" );
-    (*descs)[n] = strdup( _("Microsoft Soundmapper") );
-    n++;
+    (*values)[0] = strdup( "wavemapper" );
+    (*descs)[0] = strdup( _("Microsoft Soundmapper") );
 
     for(UINT i = 0; i < nb_devices; i++)
     {
