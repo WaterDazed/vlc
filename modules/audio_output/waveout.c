@@ -730,7 +730,7 @@ static int ReloadWaveoutDevices( char const *psz_name,
     for(UINT i = 0; i < nb_devices; i++)
     {
         WAVEOUTCAPS caps;
-        wchar_t dev_name[MAXPNAMELEN+32];
+        wchar_t dev_name[MAXPNAMELEN+32+1] = {};
 
         if(waveOutGetDevCaps(i, &caps, sizeof(WAVEOUTCAPS))
                                                            != MMSYSERR_NOERROR)
@@ -773,7 +773,7 @@ static uint32_t findDeviceID(char *psz_device_name)
     for( uint32_t i = 0; i < wave_devices; i++ )
     {
         WAVEOUTCAPS caps;
-        wchar_t dev_name[MAXPNAMELEN+32];
+        wchar_t dev_name[MAXPNAMELEN+32+1] = {};
 
         if( waveOutGetDevCaps( i, &caps, sizeof(WAVEOUTCAPS) )
                                                           != MMSYSERR_NOERROR )
