@@ -49,6 +49,8 @@
 /*****************************************************************************
  * Local prototypes.
  *****************************************************************************/
+#define MAX_CLASS_VIDEO_CHARS 256
+
 struct event_thread_t
 {
     vlc_object_t *obj;
@@ -74,7 +76,7 @@ struct event_thread_t
 
     /* */
     vlc_window_t *parent_window;
-    WCHAR class_video[256];
+    WCHAR class_video[MAX_CLASS_VIDEO_CHARS+1];
     HWND hparent;
     HWND hvideownd;
 };
@@ -346,7 +348,8 @@ struct event_thread_t *EventThreadCreate( vlc_object_t *obj, vlc_window_t *paren
 
     p_event->parent_window = parent_window;
 
-    _snwprintf( p_event->class_video, ARRAY_SIZE(p_event->class_video),
+    p_event->class_video[MAX_CLASS_VIDEO_CHARS] = 0;
+    _snwprintf( p_event->class_video, MAX_CLASS_VIDEO_CHARS,
                 TEXT("VLC video output %p"), (void *)p_event );
 
 #ifdef HAVE_WIN32_SENSORS
