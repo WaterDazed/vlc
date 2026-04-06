@@ -736,8 +736,9 @@ static int ReloadWaveoutDevices( char const *psz_name,
                                                            != MMSYSERR_NOERROR)
             continue;
 
-        _snwprintf(dev_name, MAXPNAMELEN + 32, device_name_fmt,
-                   caps.szPname, caps.wMid, caps.wPid);
+        if(_snwprintf(dev_name, MAXPNAMELEN + 32, device_name_fmt,
+                      caps.szPname, caps.wMid, caps.wPid) < 0)
+            continue;
         (*values)[n] = FromWide( dev_name );
         (*descs)[n] = strdup( (*values)[n] );
         if(likely((*values)[n] && (*descs)[n]))
@@ -779,8 +780,9 @@ static uint32_t findDeviceID(char *psz_device_name)
                                                           != MMSYSERR_NOERROR )
             continue;
 
-        _snwprintf( dev_name, MAXPNAMELEN + 32, device_name_fmt,
-                  caps.szPname, caps.wMid, caps.wPid );
+        if(_snwprintf( dev_name, MAXPNAMELEN + 32, device_name_fmt,
+                       caps.szPname, caps.wMid, caps.wPid ) < 0)
+            continue;
         char *u8 = FromWide(dev_name);
         if( !_stricmp(u8, psz_device_name) )
         {
