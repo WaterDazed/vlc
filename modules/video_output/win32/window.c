@@ -801,8 +801,9 @@ static int Open(vlc_window_t *wnd)
     if (unlikely(sys == NULL))
         return VLC_ENOMEM;
 
-    _snwprintf( sys->class_main, CLASS_MAIN_MAX_CHARS,
-               TEXT("VLC standalone window %p"), (void *)sys );
+    if( _snwprintf( sys->class_main, CLASS_MAIN_MAX_CHARS,
+               TEXT("VLC standalone window %p"), (void *)sys ) < 0 )
+        sys->class_main[0] = 0;
 
     HINSTANCE hInstance = GetModuleHandle(NULL);
 

@@ -349,8 +349,9 @@ struct event_thread_t *EventThreadCreate( vlc_object_t *obj, vlc_window_t *paren
     p_event->parent_window = parent_window;
 
     p_event->class_video[MAX_CLASS_VIDEO_CHARS] = 0;
-    _snwprintf( p_event->class_video, MAX_CLASS_VIDEO_CHARS,
-                TEXT("VLC video output %p"), (void *)p_event );
+    if(_snwprintf( p_event->class_video, MAX_CLASS_VIDEO_CHARS,
+                   TEXT("VLC video output %p"), (void *)p_event ) < 0)
+        p_event->class_video[0] = 0;
 
 #ifdef HAVE_WIN32_SENSORS
     p_event->init_move = owner;
