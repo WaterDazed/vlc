@@ -784,7 +784,7 @@ static uint32_t findDeviceID(char *psz_device_name)
                        caps.szPname, caps.wMid, caps.wPid ) < 0)
             continue;
         char *u8 = FromWide(dev_name);
-        if( !_stricmp(u8, psz_device_name) )
+        if( !u8 || !_stricmp(u8, psz_device_name) )
         {
             free( u8 );
             return i;
