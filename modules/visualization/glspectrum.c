@@ -478,12 +478,11 @@ static void *Thread( void *p_data )
         {
             if(block->i_nb_samples > SIZE_MAX / (sizeof(int16_t) * p_sys->i_channels))
                 goto release;
-            free(p_sys->p_prev_s16_buff);
-            p_sys->p_prev_s16_buff = malloc(block->i_nb_samples *
-                                            p_sys->i_channels *
-                                            sizeof(int16_t));
-            if (!p_sys->p_prev_s16_buff)
+            void *p_realloc = realloc(p_sys->p_prev_s16_buff,
+                                      sizeof(int16_t) * block->i_nb_samples * p_sys->i_channels);
+            if (!p_realloc)
                 goto release;
+            p_sys->p_prev_s16_buff = p_realloc;
             p_sys->i_prev_nb_samples = block->i_nb_samples;
         }
         p_buffs = p_s16_buff = p_sys->p_prev_s16_buff;
