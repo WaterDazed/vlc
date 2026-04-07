@@ -211,7 +211,7 @@ static void Filter( filter_t *p_filter, picture_t *p_pic, picture_t *p_outpic )
     pt_buffer = p_sys->pt_buffer;
     if( !p_sys->pt_scale )
     {
-        p_sys->pt_scale = malloc( i_y_plane_bytes );
+        p_sys->pt_scale = realloc_or_free( p_sys->pt_scale, i_y_plane_bytes );
         if( !p_sys->pt_scale )
             return;
         pt_scale = p_sys->pt_scale;
