@@ -551,11 +551,11 @@ int (var_Change)(vlc_object_t *p_this, const char *psz_name, int i_action, ...)
             char ***texts = va_arg(ap, char ***);
 
             *count = p_var->choices_count;
-            *values = xmalloc(p_var->choices_count * sizeof (**values));
+            *values = xmalloc(p_var->choices_count * sizeof (*values));
 
             for (size_t i = 0; i < p_var->choices_count; i++)
             {
-                vlc_value_t *val = (*values) + i;
+                vlc_value_t *val = values[i];
                 *val = p_var->choices[i];
                 p_var->ops->pf_dup(val);
             }
