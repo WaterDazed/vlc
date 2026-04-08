@@ -52,9 +52,9 @@ Item {
     property bool _minimalRestorePlayer: false
 
     readonly property var _pageModel: [
-        { name: "mc", url: "qrc:///qt/qml/VLC/MainInterface/MainDisplay.qml" },
-        { name: "player", url:"qrc:///qt/qml/VLC/Player/Player.qml" },
-        { name: "minimal", url:"qrc:///qt/qml/VLC/Player/MinimalView.qml" },
+        { name: "mc", component: { module: 'VLC.MainInterface', type: 'MainDisplay' } },
+        { name: "player", component: { module: 'VLC.Player', type: 'Player' } },
+        { name: "minimal", component: { module: 'VLC.Player', type: 'MinimalView' }}
     ]
 
     function setInitialView() {
