@@ -221,11 +221,19 @@ Item {
         }
 
         Component.onCompleted: {
+            globalShortcutsComponent.incubateObject(this) // Incubator creates the object asynchronously
+
             root._interfaceReady = true
             if (!root._playlistReady && MainPlaylistController.initialized) {
                 root._playlistReady = true
                 setInitialView()
             }
+        }
+
+        Component {
+            id: globalShortcutsComponent
+
+            GlobalShortcuts { }
         }
 
         DropArea {
@@ -297,11 +305,6 @@ Item {
                     }
                 }
             }
-        }
-
-        Loader {
-            asynchronous: true
-            source: "qrc:///qt/qml/VLC/Menus/GlobalShortcuts.qml"
         }
 
         MouseArea {
