@@ -166,7 +166,7 @@ FocusScope {
         id: voronoiSnowLoader
 
         z: 1.5
-        source: "qrc:///qt/qml/VLC/Widgets/VoronoiSnow.qml"
+        sourceComponent: MainCtx.createComponent('VLC.Widgets', 'VoronoiSnow')
         anchors.fill: parent
         active: false
 
@@ -556,14 +556,17 @@ FocusScope {
 
         height: active ? implicitHeight : 0
 
-        source: "qrc:///qt/qml/VLC/Widgets/ScanProgressBar.qml"
+        // TODO: Use `sourceComponent: Qt.createComponent('VLC.Widgets', 'ScanProgressBar') once
+        //       Qt starts allowing setting initial properties with source component.
+        // NOTE: We are not using `Component {}` because `ScanProgressBar` is soon to be moved
+        //       to the `VLC.MediaLibrary` module.
+        readonly property url targetSource: MainCtx.createComponent('VLC.Widgets', 'ScanProgressBar').url
 
-        onLoaded: {
-            item.background.visible = Qt.binding(function() { return !stackViewParent.layer.enabled })
-
-            item.leftPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
-            item.rightPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
-            item.bottomPadding = Qt.binding(function() { return VLCStyle.margin_small + (miniPlayer.visible ? 0 : VLCStyle.applicationVerticalMargin) })
+        onTargetSourceChanged: {
+            loaderProgress.setSource(targetSource, { 'background.visible': Qt.binding(() => !stackViewParent.layer.enabled),
+                                                     'leftPadding': Qt.binding(() => VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin),
+                                                     'rightPadding': Qt.binding(() => VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin),
+                                                     'bottomPadding': Qt.binding(() => VLCStyle.margin_small + (miniPlayer.visible ? 0 : VLCStyle.applicationVerticalMargin)) })
         }
     }
 
