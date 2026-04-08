@@ -265,8 +265,8 @@ Item {
 
                 if (urls.length > 0) {
                     /* D&D of a subtitles file, add it on the fly */
-                    if (Player.isStarted && urls.length == 1) {
-                        if (Player.associateSubtitleFile(urls[0])) {
+                    if (MainPlayerController.isStarted && urls.length == 1) {
+                        if (MainPlayerController.associateSubtitleFile(urls[0])) {
                             drop.accept()
                             return
                         }
@@ -288,9 +288,9 @@ Item {
             pageModel: _pageModel
 
             Connections {
-                target: Player
+                target: MainPlayerController
                 function onPlayingStateChanged() {
-                    if (Player.playingState === Player.PLAYING_STATE_STOPPED) {
+                    if (MainPlayerController.playingState === MainPlayerController.PLAYING_STATE_STOPPED) {
                         MainCtx.requestShowMainView()
                     }
                 }

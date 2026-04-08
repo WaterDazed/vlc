@@ -77,7 +77,7 @@ FocusScope {
         MainCtx.sort.model = Qt.binding(function () { return item.sortModel })
         MainCtx.sort.available = Qt.binding(function () { return Helpers.isArray(item.sortModel) && item.sortModel.length > 0 })
 
-        if (Player.hasVideoOutput && MainCtx.hasEmbededVideo)
+        if (MainPlayerController.hasVideoOutput && MainCtx.hasEmbededVideo)
             _showMiniPlayer = true
     }
 
@@ -651,9 +651,9 @@ FocusScope {
     }
 
     Connections {
-        target: Player
+        target: MainPlayerController
         function onHasVideoOutputChanged() {
-            if (Player.hasVideoOutput && MainCtx.hasEmbededVideo) {
+            if (MainPlayerController.hasVideoOutput && MainCtx.hasEmbededVideo) {
                 MainCtx.requestShowPlayerView()
             } else {
                 _showMiniPlayer = false;
