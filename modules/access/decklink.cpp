@@ -355,9 +355,9 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
             return S_OK;
         }
 
-        const int width = videoFrame->GetWidth();
-        const int height = videoFrame->GetHeight();
-        const int stride = videoFrame->GetRowBytes();
+        const long width = videoFrame->GetWidth();
+        const long height = videoFrame->GetHeight();
+        const long stride = videoFrame->GetRowBytes();
 
         int bpp = 0;
         switch (sys->video_fmt.i_codec) {
