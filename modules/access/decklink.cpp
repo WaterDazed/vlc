@@ -423,7 +423,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
                 }
                 vanc->Release();
             }
-        } else if (sys->video_fmt.i_codec == VLC_CODEC_UYVY) {
+        } else if (sys->video_fmt.i_codec == VLC_CODEC_UYVY && stride != width) {
             for (int y = 0; y < height; ++y) {
                 const uint8_t *src = (const uint8_t *)frame_bytes + stride * y;
                 uint8_t *dst = video_frame->p_buffer + (size_t)width * 2 * y;
