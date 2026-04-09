@@ -435,7 +435,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 
     if (audioFrame && audioFrame->GetSampleFrameCount())
     {
-        const int bytes = audioFrame->GetSampleFrameCount() * sizeof(int16_t) * sys->channels;
+        const size_t bytes = audioFrame->GetSampleFrameCount() * sizeof(int16_t) * sys->channels;
         BMDTimeValue packet_time;
         void *frame_bytes;
 
@@ -444,18 +444,19 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 
         if(sys->audio_streams > 1)
         {
+            const size_t bytes_per_sample = sizeof(int16_t) * 2; // each audio stream is a stereo tuple
             for(int i=0; i<sys->audio_streams; i++)
             {
-                size_t i_samples = bytes / (sys->audio_streams * 4);
-                block_t *p_frame = block_Alloc(i_samples * 4);
+                size_t i_samples = bytes / (sys->audio_streams * bytes_per_sample);
+                block_t *p_frame = block_Alloc(i_samples * bytes_per_sample);
                 if (!p_frame)
                     continue;
 
                 for(size_t j=0; j<i_samples; j++) /* for each pair sample */
                 {
-                    memcpy(&p_frame->p_buffer[j * 4],
-                           &reinterpret_cast<uint8_t *>(frame_bytes)[(j * sys->audio_streams + i) * 4],
-                           4);
+                    memcpy(&p_frame->p_buffer[j * bytes_per_sample],
+                           &reinterpret_cast<uint8_t *>(frame_bytes)[(j * sys->audio_streams + i) * bytes_per_sample],
+                           bytes_per_sample);
                 }
 
                 p_frame->i_pts = p_frame->i_dts = VLC_TICK_0 + packet_time;
