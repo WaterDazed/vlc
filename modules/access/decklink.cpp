@@ -319,8 +319,11 @@ public:
                 return S_OK;
         }
 
-        es_out_Del(demux_->out, sys->video_es);
-        sys->video_es = NULL;
+        if(sys->video_es)
+        {
+            es_out_Del(demux_->out, sys->video_es);
+            sys->video_es = NULL;
+        }
         if (GetModeSettings(demux_, mode, flags) != VLC_SUCCESS)
             return E_NOTIMPL;
         sys->video_es = es_out_Add(demux_->out, &sys->video_fmt);
@@ -430,7 +433,10 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
         vlc_mutex_unlock(&sys->pts_lock);
 
         es_out_SetPCR(demux_->out, video_frame->i_pts);
-        es_out_Send(demux_->out, sys->video_es, video_frame);
+        if(sys->video_es)
+            es_out_Send(demux_->out, sys->video_es, video_frame);
+        else
+            block_Release(video_frame);
     }
 
     if (audioFrame && audioFrame->GetSampleFrameCount())
@@ -460,10 +466,13 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
                 }
 
                 p_frame->i_pts = p_frame->i_dts = VLC_TICK_0 + packet_time;
-                es_out_Send(demux_->out, sys->audio_es[i], p_frame);
+                if(sys->audio_es[i])
+                    es_out_Send(demux_->out, sys->audio_es[i], p_frame);
+                else
+                    block_Release(p_frame);
             }
         }
-        else
+        else if(sys->audio_es[0])
         {
             block_t *audio_frame = block_Alloc(bytes);
             if (!audio_frame)
