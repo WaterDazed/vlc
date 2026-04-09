@@ -101,18 +101,10 @@ typedef struct
     bool b_sps;
     bool b_pps;
     bool b_vps;
-} hevc_probe_ctx_t;
+} hxxx_probe_ctx_t;
 
-typedef struct
+static int ProbeHEVC( const uint8_t *p_peek, size_t i_peek, hxxx_probe_ctx_t *p_ctx )
 {
-    bool b_sps;
-    bool b_pps;
-} h264_probe_ctx_t;
-
-static int ProbeHEVC( const uint8_t *p_peek, size_t i_peek, void *p_priv )
-{
-    hevc_probe_ctx_t *p_ctx = (hevc_probe_ctx_t *) p_priv;
-
     if( i_peek < 2 )
         return -1;
 
@@ -168,10 +160,8 @@ static int ProbeHEVC( const uint8_t *p_peek, size_t i_peek, void *p_priv )
     return 0; /* Probe more */
 }
 
-static int ProbeH264( const uint8_t *p_peek, size_t i_peek, void *p_priv )
+static int ProbeH264( const uint8_t *p_peek, size_t i_peek, hxxx_probe_ctx_t *p_ctx )
 {
-    h264_probe_ctx_t *p_ctx = (h264_probe_ctx_t *) p_priv;
-
     if( i_peek < 1 )
         return -1;
     const uint8_t i_nal_type = p_peek[0] & 0x1F;
@@ -247,8 +237,8 @@ static inline bool check_Property( demux_t *p_demux, const char **pp_psz,
 
 static int GenericOpen( demux_t *p_demux, const char *psz_module,
                         vlc_fourcc_t i_codec,
-                        int(*pf_probe)(const uint8_t *, size_t, void *),
-                        void *p_ctx,
+                        int(*pf_probe)(const uint8_t *, size_t, hxxx_probe_ctx_t *),
+                        hxxx_probe_ctx_t *p_ctx,
                         const char **pp_psz_exts,
                         const char **pp_psz_mimes )
 {
@@ -375,7 +365,7 @@ static int GenericOpen( demux_t *p_demux, const char *psz_module,
  *****************************************************************************/
 static int OpenH264( vlc_object_t * p_this )
 {
-    h264_probe_ctx_t ctx = { 0, 0 };
+    hxxx_probe_ctx_t ctx = { 0, 0, 0 };
     const char *rgi_psz_ext[] = { ".h264", ".264", ".bin", ".bit", ".raw", NULL };
     const char *rgi_psz_mime[] = { "video/H264", "video/h264", "video/avc", NULL };
 
@@ -385,7 +375,7 @@ static int OpenH264( vlc_object_t * p_this )
 
 static int OpenHEVC( vlc_object_t * p_this )
 {
-    hevc_probe_ctx_t ctx = { 0, 0, 0 };
+    hxxx_probe_ctx_t ctx = { 0, 0, 0 };
     const char *rgi_psz_ext[] = { ".h265", ".265", ".hevc", ".bin", ".bit", ".raw", NULL };
     const char *rgi_psz_mime[] = { "video/h265", "video/hevc", "video/HEVC", NULL };
 
