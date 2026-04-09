@@ -372,7 +372,13 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
                 bpp = 2;
                 break;
         };
-        block_t *video_frame = block_Alloc(width * height * bpp);
+
+        size_t block_size;
+        if(mul_overflow(width, height, &block_size) ||
+           mul_overflow(block_size, bpp, &block_size))
+            return E_INVALIDARG;
+
+        block_t *video_frame = block_Alloc(block_size);
         if (!video_frame)
             return S_OK;
 
@@ -394,7 +400,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
                         break;
                     std::vector<uint16_t> dec(width);
                     v210_convert(&dec.front(), buf, width, 1);
-                    block_t *cc = vanc_to_cc(demux_, &dec.front(), width * 2);
+                    block_t *cc = vanc_to_cc(demux_, &dec.front(), (size_t)width * 2);
                     if (!cc)
                         continue;
                     cc->i_pts = cc->i_dts = VLC_TICK_0 + stream_time;
@@ -420,11 +426,11 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
         } else if (sys->video_fmt.i_codec == VLC_CODEC_UYVY) {
             for (int y = 0; y < height; ++y) {
                 const uint8_t *src = (const uint8_t *)frame_bytes + stride * y;
-                uint8_t *dst = video_frame->p_buffer + width * 2 * y;
-                memcpy(dst, src, width * 2);
+                uint8_t *dst = video_frame->p_buffer + (size_t)width * 2 * y;
+                memcpy(dst, src, (size_t)width * 2);
             }
         } else {
-                memcpy(video_frame->p_buffer, frame_bytes, width * height * bpp);
+                memcpy(video_frame->p_buffer, frame_bytes, (size_t)width * height * bpp);
         }
 
         vlc_mutex_lock(&sys->pts_lock);
