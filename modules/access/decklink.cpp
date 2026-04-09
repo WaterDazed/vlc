@@ -447,7 +447,10 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 
     if (audioFrame && audioFrame->GetSampleFrameCount())
     {
-        const size_t bytes = audioFrame->GetSampleFrameCount() * sizeof(int16_t) * sys->channels;
+        size_t bytes;
+        if(mul_overflow(audioFrame->GetSampleFrameCount(), sizeof(int16_t) * sys->channels, &bytes))
+            return E_INVALIDARG;
+
         BMDTimeValue packet_time;
         void *frame_bytes;
 
