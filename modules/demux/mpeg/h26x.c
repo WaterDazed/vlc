@@ -96,12 +96,14 @@ static int Control( demux_t *, int, va_list );
 /*****************************************************************************
  * Probing
  *****************************************************************************/
-typedef struct
+typedef struct hxxx_probe_ctx_t hxxx_probe_ctx_t;
+struct hxxx_probe_ctx_t
 {
+    int(*pf_probe)(const uint8_t *, size_t, hxxx_probe_ctx_t *);
     bool b_sps;
     bool b_pps;
     bool b_vps;
-} hxxx_probe_ctx_t;
+};
 
 static int ProbeHEVC( const uint8_t *p_peek, size_t i_peek, hxxx_probe_ctx_t *p_ctx )
 {
@@ -237,7 +239,6 @@ static inline bool check_Property( demux_t *p_demux, const char **pp_psz,
 
 static int GenericOpen( demux_t *p_demux, const char *psz_module,
                         vlc_fourcc_t i_codec,
-                        int(*pf_probe)(const uint8_t *, size_t, hxxx_probe_ctx_t *),
                         hxxx_probe_ctx_t *p_ctx,
                         const char **pp_psz_exts,
                         const char **pp_psz_mimes )
@@ -293,7 +294,7 @@ static int GenericOpen( demux_t *p_demux, const char *psz_module,
             if( b_synced )
             {
                 p_probe = &p_peek[i_probe_offset];
-                i_ret = pf_probe( p_probe, (size_t)(i_peek - i_probe_offset), p_ctx );
+                i_ret = p_ctx->pf_probe( p_probe, (size_t)(i_peek - i_probe_offset), p_ctx );
             }
 
             if( i_ret != 0 )
@@ -365,21 +366,21 @@ static int GenericOpen( demux_t *p_demux, const char *psz_module,
  *****************************************************************************/
 static int OpenH264( vlc_object_t * p_this )
 {
-    hxxx_probe_ctx_t ctx = { 0, 0, 0 };
+    hxxx_probe_ctx_t ctx = { ProbeH264, false, false, false };
     const char *rgi_psz_ext[] = { ".h264", ".264", ".bin", ".bit", ".raw", NULL };
     const char *rgi_psz_mime[] = { "video/H264", "video/h264", "video/avc", NULL };
 
-    return GenericOpen( (demux_t*)p_this, "h264", VLC_CODEC_H264, ProbeH264,
+    return GenericOpen( (demux_t*)p_this, "h264", VLC_CODEC_H264,
                         &ctx, rgi_psz_ext, rgi_psz_mime );
 }
 
 static int OpenHEVC( vlc_object_t * p_this )
 {
-    hxxx_probe_ctx_t ctx = { 0, 0, 0 };
+    hxxx_probe_ctx_t ctx = { ProbeHEVC, false, false, false };
     const char *rgi_psz_ext[] = { ".h265", ".265", ".hevc", ".bin", ".bit", ".raw", NULL };
     const char *rgi_psz_mime[] = { "video/h265", "video/hevc", "video/HEVC", NULL };
 
-    return GenericOpen( (demux_t*)p_this, "hevc", VLC_CODEC_HEVC, ProbeHEVC,
+    return GenericOpen( (demux_t*)p_this, "hevc", VLC_CODEC_HEVC,
                         &ctx, rgi_psz_ext, rgi_psz_mime );
 }
 
