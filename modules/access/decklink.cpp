@@ -383,7 +383,8 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
             return S_OK;
 
         const uint32_t *frame_bytes;
-        videoFrame->GetBytes((void**)&frame_bytes);
+        if(videoFrame->GetBytes((void**)&frame_bytes) != S_OK)
+            return E_FAIL;
 
         BMDTimeValue stream_time, frame_duration;
         videoFrame->GetStreamTime(&stream_time, &frame_duration, CLOCK_FREQ);
@@ -454,7 +455,9 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
         BMDTimeValue packet_time;
         void *frame_bytes;
 
-        audioFrame->GetBytes(&frame_bytes);
+        if(audioFrame->GetBytes(&frame_bytes) != S_OK)
+            return E_FAIL;
+
         audioFrame->GetPacketTime(&packet_time, CLOCK_FREQ);
 
         if(sys->audio_streams > 1)
