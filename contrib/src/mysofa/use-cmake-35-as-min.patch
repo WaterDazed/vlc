@@ -1,0 +1,65 @@
+From 444d2c1d7ececf5cc2d96d3b17b209047b02318d Mon Sep 17 00:00:00 2001
+From: Christian Hoene <christian.hoene@symonics.com>
+Date: Sat, 19 Oct 2024 21:02:33 +0200
+Subject: [PATCH] use cmake 3.5 as minimum
+
+---
+ CMakeLists.txt     |  4 ++--
+ README.md          |  4 +++-
+ src/CMakeLists.txt | 12 +-----------
+ 3 files changed, 6 insertions(+), 14 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c092cb0..44c27bc 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8.12)
++cmake_minimum_required(VERSION 3.5)
+ project(libmysofa C CXX)
+ 
+ include(CheckCCompilerFlag)
+@@ -20,7 +20,7 @@ set(CPACK_GENERATOR "DEB")
+ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "IOhannes m zmölnig")
+ set(CPACK_PACKAGE_VERSION_MAJOR "1")
+ set(CPACK_PACKAGE_VERSION_MINOR "3")
+-set(CPACK_PACKAGE_VERSION_PATCH "2")
++set(CPACK_PACKAGE_VERSION_PATCH "3")
+ set(CPACK_DEBIAN_PACKAGE_DEPENDS "zlib1g")
+ 
+ set(PKG_CONFIG_PRIVATELIBS "")
+diff --git a/README.md b/README.md
+index 0d98b23..d1caf32 100644
+--- a/README.md
++++ b/README.md
+@@ -45,7 +45,9 @@ Then, to compile enter following commands
+ 
+ > cmake -DCMAKE_BUILD_TYPE=Debug ..
+ 
+-> make all test
++> make -j8 all
++
++> ctest -j8
+ 
+ If you need an Debian package, call
+ 
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 018f4ce..97d52d2 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -1,14 +1,4 @@
+-macro(use_c99)
+-  if(CMAKE_VERSION VERSION_LESS "3.1")
+-    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+-      set(CMAKE_C_FLAGS "--std=gnu99 -pedantic ${CMAKE_C_FLAGS}")
+-    endif()
+-  else()
+-    set(CMAKE_C_STANDARD 99)
+-  endif()
+-endmacro(use_c99)
+-
+-use_c99()
++set(CMAKE_C_STANDARD 99)
+ 
+ configure_file(config.h.in config.h)
+ include_directories(${CMAKE_CURRENT_BINARY_DIR})

@@ -1,6 +1,6 @@
 # Mysofa
 
-MYSOFA_VERSION := 0.5
+MYSOFA_VERSION := 1.3.2
 MYSOFA_URL = $(GITHUB)/hoene/libmysofa/archive/v$(MYSOFA_VERSION).tar.gz
 
 PKGS += mysofa
@@ -21,6 +21,7 @@ $(TARBALLS)/libmysofa-$(MYSOFA_VERSION).tar.gz:
 
 mysofa: libmysofa-$(MYSOFA_VERSION).tar.gz .sum-mysofa
 	$(UNPACK)
+	$(APPLY) $(SRC)/mysofa/use-cmake-35-as-min.patch
 	$(MOVE)
 
 MYSOFA_CONF := -DBUILD_TESTS=OFF \
@@ -32,4 +33,3 @@ MYSOFA_CONF := -DBUILD_TESTS=OFF \
 	+$(CMAKEBUILD)
 	$(CMAKEINSTALL)
 	touch $@
-
