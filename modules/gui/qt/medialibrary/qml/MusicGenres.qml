@@ -120,6 +120,101 @@ MainViewLoader {
         model: genreModel
     }
 
+    TextureAtlasWithEffect {
+        id: atlas
+
+        model: genreModel
+
+        // Give some spacing so that the sub-textures are not inter-blurred.
+        // Ideally this should depend on the blur kernel:
+        spacing: 4
+
+        effect: Widgets.DualKawaseBlur {
+            // We want don't want strong blurring here:
+            radius: 1
+            mode: Widgets.DualKawaseBlur.TwoPass
+        }
+
+        live: false
+
+        // This is necessary to release unused resources:
+        breakLayerReference: true
+
+        delegate: {
+            if (root._currentView instanceof Widgets.ExpandGridItemView)
+                return gridImageDelegateComponent
+            else if (root._currentView instanceof Widgets.TableViewExt)
+                return listImageDelegateComponent
+            else
+                return null
+        }
+
+        property int imageLoadedCount: 0
+
+        property Component _oldDelegate: null
+
+        onDelegateChanged: {
+            if (_oldDelegate) {
+                atlas.releaseUnusedResources()
+                imageLoadedCount = 0
+                atlas.acquireResources()
+            }
+
+            _oldDelegate = delegate
+        }
+
+        onImageLoadedCountChanged: {
+            if (imageLoadedCount === genreModel.rowCount())
+                Qt.callLater(liveTimer.transientTurnOnLive)
+        }
+
+        Timer {
+            id: liveTimer
+
+            repeat: false
+            interval: VLCStyle.duration_humanMoment
+
+            function transientTurnOnLive() {
+                atlas.live = true
+                liveTimer.restart()
+            }
+
+            onTriggered: {
+                atlas.releaseUnusedResources()
+            }
+        }
+
+        component ImageDelegate : Image {
+            required property url cover
+
+            source: cover
+
+            asynchronous: true
+
+            onStatusChanged: {
+                if (status === Image.Ready || status === Image.Error) {
+                    atlas.imageLoadedCount++
+                }
+            }
+        }
+
+        Component {
+            id: gridImageDelegateComponent
+
+            ImageDelegate {
+                sourceSize: Qt.size(root._currentView.maxPictureWidth, root._currentView.maxPictureHeight)
+            }
+        }
+
+        Component {
+            id: listImageDelegateComponent
+
+            ImageDelegate {
+                sourceSize: Qt.size(VLCStyle.listAlbumCover_width, VLCStyle.listAlbumCover_height)
+            }
+        }
+    }
+
     /* Grid View */
     Component {
         id: gridComponent
@@ -151,12 +246,16 @@ MainViewLoader {
                 pictureWidth: gridView_id.maxPictureWidth
                 pictureHeight: gridView_id.maxPictureHeight
 
-                image: model.cover || ""
+                image: "" // See `Component.onCompleted()`
+                readonly property url targetSource: model.cover || ""
+
                 cacheImage: true // for this view, we generate custom covers, cache it
 
                 fallbackImage: VLCStyle.noArtAlbumCover
 
                 dragItem: genreDragItem
+
+                customTextureProvider: atlas.subTextureProviders[index] ?? null
 
                 onItemDoubleClicked: root.showAlbumView(model.id, model.name, Qt.MouseFocusReason)
                 onItemClicked: (modifier) => { gridView_id.leftClickOnItem(modifier, index) }
@@ -169,6 +268,14 @@ MainViewLoader {
                 onContextMenuButtonClicked: (_, globalMousePos) => {
                     gridView_id.rightClickOnItem(index)
                     contextMenu.popup(selectionModel.selectedIndexes, globalMousePos)
+                }
+
+                Component.onCompleted: {
+                    // Give reasonable time until the custom atlas is ready before letting the delegate
+                    // try to load the image itself:
+                    MainCtx.setTimeout(() => {
+                        genreGridDelegate.image = Qt.binding(() => { return genreGridDelegate.targetSource })
+                    }, 200, [], genreGridDelegate)
                 }
 
                 pictureOverlay: Item {
@@ -280,6 +387,8 @@ MainViewLoader {
             fadingEdge.enableBeginningFade: root.enableBeginningFade
             fadingEdge.enableEndFade: root.enableEndFade
 
+            customTextureProviders: atlas.subTextureProviders ?? []
+
             preferredHeader: root.header
 
             rowContextMenu: contextMenu
@@ -300,6 +409,16 @@ MainViewLoader {
                 titleCover_height: VLCStyle.listAlbumCover_height
                 titleCover_width: VLCStyle.listAlbumCover_width
                 titleCover_radius: VLCStyle.listAlbumCover_radius
+
+                criteriaCover: "_" // See `Component.onCompleted()`
+
+                Component.onCompleted: {
+                    // Give reasonable time until the custom atlas is ready before letting the delegate
+                    // try to load the image itself:
+                    MainCtx.setTimeout(() => {
+                        tableColumns.criteriaCover = "cover"
+                    }, 200, [], tableColumns)
+                }
             }
         }
     }

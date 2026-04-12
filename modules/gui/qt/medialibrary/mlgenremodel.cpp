@@ -131,7 +131,7 @@ QString MLGenreModel::getCover(const MLGenre * genre) const
                             , m_coverDefault
                             , MLGENREMODEL_COVER_COUNTX
                             , MLGENREMODEL_COVER_COUNTY
-                            , MLGENREMODEL_COVER_BLUR
+                            , 0
                             , true);
 }
 
