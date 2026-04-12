@@ -145,6 +145,9 @@ ListViewExt {
     property bool sortingFromHeader: true
     property bool useCurrentSectionLabel: true
 
+    // Optional, can be used to use custom texture provider in delegate:
+    property list<Item> customTextureProviders
+
     signal actionForSelection( var selection )
     signal rightClick(Item menuParent, var menuModel, point globalMousePos)
     signal itemDoubleClicked(var index, var model)
@@ -352,6 +355,8 @@ ListViewExt {
 
         rowModel: model
         sortModel: root.sortModel
+
+        customTextureProvider: root.customTextureProviders[index] ?? null
 
         onRightClick: (menuParent, menuModel, globalMousePos) => {
             root.rightClick(menuParent, menuModel, globalMousePos)
