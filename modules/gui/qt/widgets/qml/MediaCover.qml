@@ -51,6 +51,7 @@ Item {
 
     property alias color: image.backgroundColor
 
+    property Item customTextureProvider
     property url source
 
     property alias cacheImage: image.cache
@@ -73,7 +74,8 @@ Item {
 
     property alias fillMode: image.fillMode
 
-    readonly property Item textureProvider: fallbackImage.visible ? fallbackImage.textureProviderItem : image.textureProviderItem
+    readonly property Item textureProvider: fallbackImage.visible ? fallbackImage.effectiveTextureProviderItem
+                                                                  : image.effectiveTextureProviderItem
 
     // Signals
 
@@ -116,6 +118,7 @@ Item {
 
         anchors.fill: parent
 
+        textureProviderItem: root.customTextureProvider ?? sourceTextureProviderItem
         source: defaultSource
         sourceSize: Qt.size(root.pictureWidth * root.eDPR,
                             root.pictureHeight * root.eDPR)
@@ -147,7 +150,7 @@ Item {
 
         fillMode: root.fillMode
 
-        visible: image.source.toString() === "" //RoundImage.source is a QUrl
+        visible: image.status === Image.Null //RoundImage.source is a QUrl
                  || image.status === Image.Error
                  || (image.status === Image.Loading && root._loadTimeout)
 
