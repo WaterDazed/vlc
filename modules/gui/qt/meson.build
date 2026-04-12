@@ -816,6 +816,7 @@ qml_modules += {
         'util/qml/FadeControllerStateGroup.qml',
         'util/qml/DelayedBehavior.qml',
         'util/qml/TextureAtlas.qml',
+        'util/qml/TextureAtlasWithEffect.qml',
     ),
     'singletons': files(
         'util/qml/Helpers.qml',
