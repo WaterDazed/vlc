@@ -64,9 +64,6 @@ public: // Interface
     // NOTE: Applies SmoothTransformation to thumbnails. Disabled by default.
     void setSmooth(bool enabled);
 
-    // NOTE: You need to specify a radius to enable blur, 8 looks good.
-    void setBlur(int radius);
-
     void setDefaultThumbnail(const QString & fileName);
 
     int requiredNoOfThumbnails() const;
@@ -80,8 +77,6 @@ private: // Functions
 
     void drawImage(QPainter & painter, const QString & fileName, const QRect & rect) const;
 
-    void blur(QImage &image) const;
-
     QString getPrefix(vlc_ml_parent_type type) const;
 
 private:
@@ -91,8 +86,6 @@ private:
     int m_countY;
 
     Split m_split;
-
-    int m_blur;
 
     QString m_default;
 };

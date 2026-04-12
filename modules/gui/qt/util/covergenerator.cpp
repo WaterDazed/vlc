@@ -31,16 +31,8 @@
 // Qt includes
 #include <QDir>
 #include <QImageReader>
-#include <QGraphicsScene>
-#include <QGraphicsPixmapItem>
-#include <QGraphicsBlurEffect>
 #include <QUrl>
 #include <QQmlFile>
-
-// Qt private exported function
-QT_BEGIN_NAMESPACE
-extern void VLC_WEAK qt_blurImage(QImage &blurImage, qreal radius, bool quality, int transposed = 0);
-QT_END_NAMESPACE
 
 //-------------------------------------------------------------------------------------------------
 // Static variables
@@ -59,7 +51,6 @@ CoverGenerator::CoverGenerator()
     : m_countX(COVERGENERATOR_COUNT)
     , m_countY(COVERGENERATOR_COUNT)
     , m_split(Divide)
-    , m_blur(0)
     , m_default(COVERGENERATOR_DEFAULT) {}
 
 //-------------------------------------------------------------------------------------------------
@@ -84,11 +75,6 @@ void CoverGenerator::setCountY(int y)
 void CoverGenerator::setSplit(Split split)
 {
     m_split = split;
-}
-
-void CoverGenerator::setBlur(int radius)
-{
-    m_blur = radius;
 }
 
 void CoverGenerator::setDefaultThumbnail(const QString & fileName)
@@ -165,9 +151,6 @@ QImage CoverGenerator::execute(QStringList thumbnails) const
     draw(painter, thumbnails, countX, countY);
 
     painter.end();
-
-    if (m_blur > 0)
-        blur(image);
 
     return image;
 }
@@ -268,51 +251,6 @@ void CoverGenerator::drawImage(QPainter & painter, const QString & fileName, con
     QRect source(x, y, target.width(), target.height());
 
     painter.drawImage(target, image, source);
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CoverGenerator::blur(QImage& image) const
-{
-    if (Q_LIKELY(&qt_blurImage))
-    {
-        // A symbol is available for qt_blurImage()
-        // Exported function can be used directly within a separate thread:
-        qt_blurImage(image, 2.5 * (m_blur + 1), true);
-    }
-    else
-    {
-        const auto blurImage = [&]() {
-            QGraphicsScene scene;
-
-            QGraphicsPixmapItem item(QPixmap::fromImage(image));
-
-            QGraphicsBlurEffect effect;
-
-            effect.setBlurRadius(m_blur);
-
-            effect.setBlurHints(QGraphicsBlurEffect::QualityHint);
-
-            item.setGraphicsEffect(&effect);
-
-            scene.addItem(&item);
-
-            QPainter painter(&image);
-
-            scene.render(&painter);
-        };
-
-        if (qApp->thread() == QThread::currentThread())
-        {
-            blurImage();
-        }
-        else
-        {
-            // Not executing in Qt GUI thread, this is not supported.
-            // Block this thread, and blur the image in the GUI thread instead:
-            QMetaObject::invokeMethod(qApp, blurImage, Qt::BlockingQueuedConnection);
-        }
-    }
 }
 
 //-------------------------------------------------------------------------------------------------

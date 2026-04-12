@@ -42,7 +42,6 @@ const QString WIDTH_KEY = QStringLiteral("width");
 const QString HEIGHT_KEY = QStringLiteral("height");
 const QString COUNTX_KEY = QStringLiteral("countX");
 const QString COUNTY_KEY = QStringLiteral("countY");
-const QString BLUR_KEY = QStringLiteral("blur");
 const QString SPLIT_KEY = QStringLiteral("split");
 const QString DEFAULT_COVER_KEY = QStringLiteral("default_cover");
 
@@ -52,7 +51,6 @@ struct CoverData
     QSize size;
     int countX;
     int countY;
-    int blur;
     int split;
     QString defaultCover;
 };
@@ -66,7 +64,6 @@ QUrlQuery toQuery(const CoverData &data)
     query.addQueryItem(HEIGHT_KEY, QString::number(data.size.height()));
     query.addQueryItem(COUNTX_KEY, QString::number(data.countX));
     query.addQueryItem(COUNTY_KEY, QString::number(data.countY));
-    query.addQueryItem(BLUR_KEY, QString::number(data.blur));
     query.addQueryItem(SPLIT_KEY, QString::number(data.split));
     query.addQueryItem(DEFAULT_COVER_KEY, data.defaultCover);
     return query;
@@ -102,7 +99,6 @@ CoverData fromQuery(const QUrlQuery &query, QString *error)
         data.size.setHeight(intValue(HEIGHT_KEY));
         data.countX = intValue(COUNTX_KEY);
         data.countY = intValue(COUNTY_KEY);
-        data.blur = intValue(BLUR_KEY);
         data.split = intValue(SPLIT_KEY);
         data.defaultCover = getValue(DEFAULT_COVER_KEY);
 
@@ -277,7 +273,6 @@ private:
                 generator.setCountY(data.countY);
                 generator.setSize(data.size);
                 generator.setSplit((CoverGenerator::Split)data.split);
-                generator.setBlur(data.blur);
 
                 if (!data.defaultCover.isEmpty())
                     generator.setDefaultThumbnail(data.defaultCover);
@@ -312,12 +307,12 @@ MLCustomCover::MLCustomCover(MediaLib *ml)
 }
 
 QString MLCustomCover::url(const MLItemId &parentId, const QSize &size, const QString &defaultCover
-                           , const int countX, const int countY, const int blur, const bool split_duplicate)
+                           , const int countX, const int countY, const bool split_duplicate)
 {
     QUrl url;
     url.setScheme(QStringLiteral("image"));
     url.setHost(MLCustomCover::providerId);
-    url.setQuery(toQuery({parentId, size, countX, countY, blur, split_duplicate, defaultCover}));
+    url.setQuery(toQuery({parentId, size, countX, countY, split_duplicate, defaultCover}));
     return url.toString();
 }
 

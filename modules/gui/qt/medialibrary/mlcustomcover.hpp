@@ -40,7 +40,6 @@ public:
                 , const QString &defaultCover
                 , const int countX = 2
                 , const int countY = 2
-                , const int blur = 0
                 , const bool split_duplicate = false);
 
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize);
