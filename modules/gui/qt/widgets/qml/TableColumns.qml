@@ -93,6 +93,7 @@ Item {
     property Component titleDelegate: TableRowDelegate {
         id: titleDel
 
+        property alias customTextureProvider: cover.customTextureProvider
         property alias artworkTextureProvider: cover.textureProvider
 
         RowLayout {
