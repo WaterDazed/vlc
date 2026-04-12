@@ -814,7 +814,8 @@ qml_modules += {
         'util/qml/GridSizeHelper.qml',
         'util/qml/NativeMenu.qml',
         'util/qml/FadeControllerStateGroup.qml',
-        'util/qml/DelayedBehavior.qml'
+        'util/qml/DelayedBehavior.qml',
+        'util/qml/TextureAtlas.qml',
     ),
     'singletons': files(
         'util/qml/Helpers.qml',
