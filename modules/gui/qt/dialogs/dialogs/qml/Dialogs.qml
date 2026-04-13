@@ -277,7 +277,7 @@ Item {
             columns: 2
             rowspacing : VLCStyle.margin_small
             columnSpacing : VLCStyle.margin_small
-            anchors.margins : VLCStyle.margin_small
+          
         
 
 
