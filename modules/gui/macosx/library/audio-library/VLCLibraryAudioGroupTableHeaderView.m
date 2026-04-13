@@ -30,7 +30,7 @@
 #import "extensions/NSString+Helpers.h"
 #import "extensions/NSView+VLCAdditions.h"
 
-const CGFloat VLCLibraryAudioGroupTableHeaderViewHeight = 86.f;
+const CGFloat VLCLibraryAudioGroupTableHeaderViewHeight = 66.f;
 NSString * const VLCLibraryAudioGroupTableHeaderViewIdentifier = @"VLCLibraryAudioGroupTableHeaderView";
 
 @interface VLCLibraryAudioGroupTableHeaderView ()
@@ -50,6 +50,32 @@ NSString * const VLCLibraryAudioGroupTableHeaderViewIdentifier = @"VLCLibraryAud
 @end
 
 @implementation VLCLibraryAudioGroupTableHeaderView
+
++ (CGFloat)internalPaddingHeight
+{
+    const CGFloat topInset = VLCLibraryUIUnits.largeSpacing + VLCLibraryUIUnits.mediumSpacing;
+    CGFloat bottomInset = 0.f;
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000
+    if (@available(macOS 26.0, *)) {
+        bottomInset = VLCLibraryUIUnits.largeSpacing + VLCLibraryUIUnits.mediumSpacing + VLCLibraryUIUnits.smallSpacing;
+    }
+#endif
+    return topInset + bottomInset;
+}
+
++ (CGFloat)paddedHeaderViewHeight
+{
+    return VLCLibraryAudioGroupTableHeaderViewHeight + self.internalPaddingHeight;
+}
+
++ (instancetype)paddedHeaderView
+{
+    const NSRect headerFrame = NSMakeRect(0.f, 0.f, 0.f, self.paddedHeaderViewHeight);
+    VLCLibraryAudioGroupTableHeaderView * const headerView =
+        [[self alloc] initWithFrame:headerFrame withInternalPaddingAddedForContentView:YES];
+    headerView.autoresizingMask = NSViewWidthSizable;
+    return headerView;
+}
 
 - (instancetype)initWithFrame:(NSRect)frameRect
 {

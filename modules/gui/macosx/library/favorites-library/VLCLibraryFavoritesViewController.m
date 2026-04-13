@@ -106,17 +106,7 @@
 {
     self.favoritesLibrarySplitView.delegate = _splitViewDelegate;
 
-    CGFloat headerHeight = VLCLibraryAudioGroupTableHeaderViewHeight;
-    if (@available(macOS 26.0, *)) {
-        headerHeight += VLCLibraryUIUnits.largeSpacing * 2.f;
-    }
-
-    const NSRect headerFrame = NSMakeRect(0.f,
-                                          0.f,
-                                          self.favoritesLibraryGroupSelectionTableView.bounds.size.width,
-                                          headerHeight);
-    _favoritesHeaderView = [[VLCLibraryAudioGroupTableHeaderView alloc] initWithFrame:headerFrame withInternalPaddingAddedForContentView:YES];
-    _favoritesHeaderView.autoresizingMask = NSViewWidthSizable;
+    _favoritesHeaderView = [VLCLibraryAudioGroupTableHeaderView paddedHeaderView];
 
     _favoritesLibraryTableViewDelegate.detailTableHeaderView = self.favoritesHeaderView;
     self.favoritesLibraryGroupSelectionTableView.headerView = self.favoritesHeaderView;
@@ -149,7 +139,9 @@
     
     self.favoritesLibraryGroupsTableView.rowHeight = VLCLibraryUIUnits.mediumTableViewRowHeight;
     self.favoritesLibraryGroupSelectionTableView.rowHeight = VLCLibraryUIUnits.mediumTableViewRowHeight;
-                                                
+
+    self.favoritesLibraryGroupsTableView.allowsMultipleSelection = YES;
+    self.favoritesLibraryGroupSelectionTableView.allowsMultipleSelection = YES;
 }
 
 - (void)setupCollectionView

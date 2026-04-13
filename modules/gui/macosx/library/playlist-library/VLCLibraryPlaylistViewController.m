@@ -125,7 +125,7 @@
     _collectionView.delegate = _collectionViewDelegate;
     _collectionView.collectionViewLayout = VLCLibraryCollectionViewFlowLayout.standardLayout;
     _collectionView.selectable = YES;
-    _collectionView.allowsMultipleSelection = NO;
+    _collectionView.allowsMultipleSelection = YES;
     _collectionView.allowsEmptySelection = YES;
 
     self.dataSource.collectionViews = @[self.collectionView];
@@ -187,17 +187,7 @@
     [self.detailTableView registerNib:tableCellViewNib
                         forIdentifier:@"VLCLibraryTableViewCellIdentifier"];
 
-    CGFloat headerHeight = VLCLibraryAudioGroupTableHeaderViewHeight;
-    if (@available(macOS 26.0, *)) {
-        headerHeight += VLCLibraryUIUnits.largeSpacing * 2;
-    }
-
-    const NSRect headerFrame = NSMakeRect(0.f,
-                                          0.f,
-                                          self.masterTableView.bounds.size.width,
-                                          headerHeight);
-    _detailTableHeaderView = [[VLCLibraryAudioGroupTableHeaderView alloc] initWithFrame:headerFrame withInternalPaddingAddedForContentView:YES];
-    self.detailTableHeaderView.autoresizingMask = NSViewWidthSizable;
+    _detailTableHeaderView = [VLCLibraryAudioGroupTableHeaderView paddedHeaderView];
 
     self.tableViewDelegate.detailTableHeaderView = self.detailTableHeaderView;
 

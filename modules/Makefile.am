@@ -36,7 +36,7 @@ LIBTOOL_CARGO = \
 	LIBTOOL="$(LIBTOOL)" \
 	$(LIBTOOL_CARGO_EXE) $(CARGO) $(CARGO_BUILD_STD) rustc $(CARGO_BUILD_ARGS)
 
-CARGO_PLUGINS_INV = ${LTLIBRARIES:%rs_plugin.la=%rs_plugin}
+CARGO_PLUGINS_INV = ${LTLIBRARIES:%_rs_plugin.la=%_rs_plugin}
 CARGO_PLUGINS_CUT = ${CARGO_PLUGINS_INV:%.la=}
 CARGO_PLUGINS = ${CARGO_PLUGINS_CUT:%=%.la}
 
@@ -53,7 +53,7 @@ mostlyclean-local: mostlyclean-local-rust
 mostlyclean-local-rust:
 	rm -rf $(CARGO_DEPS) ${CARGO_PLUGINS:%_plugin.la=%.la}
 	$(CARGO) clean \
-		--manifest-path "${srcdir}/Cargo.toml" \
+		--manifest-path "$(top_srcdir)/Cargo.toml" \
 		--target "@RUST_TARGET@" \
 		--target-dir "target-rust"
 endif
