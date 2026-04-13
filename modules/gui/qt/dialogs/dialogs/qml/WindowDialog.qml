@@ -84,7 +84,7 @@ Window {
             id: loader
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.margins: VLCStyle.margin_small
+           
 
             clip: true
             sourceComponent: contentComponent
