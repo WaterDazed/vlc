@@ -476,6 +476,8 @@ static void *Thread( void *p_data )
         /* Allocate the buffer only if the number of samples change */
         if (block->i_nb_samples != p_sys->i_prev_nb_samples)
         {
+            if(block->i_nb_samples > SIZE_MAX / (sizeof(int16_t) * p_sys->i_channels))
+                goto release;
             free(p_sys->p_prev_s16_buff);
             p_sys->p_prev_s16_buff = malloc(block->i_nb_samples *
                                             p_sys->i_channels *
