@@ -66,7 +66,7 @@ int InitSubtitleDec(vlc_object_t *obj)
     /* */
     switch (codec->id) {
     case AV_CODEC_ID_HDMV_PGS_SUBTITLE:
-        if (var_InheritBool( dec, "pgssub-forced-only" )) {
+        if (var_InheritBool( dec, "sub-forced-only" )) {
             av_opt_set_int(context->priv_data, "forced_subs_only", 1, 0);
         }
         break;

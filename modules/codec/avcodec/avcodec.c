@@ -126,7 +126,6 @@ vlc_module_begin ()
     add_string( "avcodec-codec", NULL, CODEC_TEXT, CODEC_LONGTEXT )
     add_obsolete_string( "avcodec-hw" ) /* removed since 4.0.0 */
     add_integer( "avcodec-threads", 0, THREADS_TEXT, THREADS_LONGTEXT )
-    add_bool( "pgssub-forced-only", false, PGSSUB_FORCED_ONLY_TEXT, PGSSUB_FORCED_ONLY_LONGTEXT )
     add_string( "avcodec-options", NULL, AV_OPTIONS_TEXT, AV_OPTIONS_LONGTEXT )
 
 
