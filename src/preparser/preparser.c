@@ -40,7 +40,7 @@ vlc_preparser_t *vlc_preparser_New(vlc_object_t *obj,
     if (preparser == NULL) {
         return NULL;
     }
-#if defined(HAVE_VLC_PROCESS_SPAWN)
+#if defined(HAVE_VLC_EXTERNAL_PREPARSER)
     const bool external_process = cfg->external_process;
 #else
     if (cfg->external_process) {
