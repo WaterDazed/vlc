@@ -841,6 +841,14 @@ extern const CGFloat VLCVolumeDefault;
 - (void)takeSnapshot;
 
 /**
+ * obtain a preview frame at the specified position for timeslider hover preview
+ * @param position the position (0.0 to 1.0) to capture the frame at
+ * @param completion completion block called with the preview image or nil if failed
+ */
+- (void)getPreviewFrameAtPosition:(float)position
+                       completion:(void (^)(NSImage * _Nullable previewImage))completion;
+
+/**
  * displays a OSD message format string
  */
 - (void)displayOSDMessage:(NSString *)message;

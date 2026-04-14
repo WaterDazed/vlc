@@ -191,6 +191,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryModelChangeDelegate.m \
 	gui/macosx/library/VLCLibraryRepresentedItem.h \
 	gui/macosx/library/VLCLibraryRepresentedItem.m \
+	gui/macosx/library/VLCThumbnailCache.h \
+	gui/macosx/library/VLCThumbnailCache.m \
 	gui/macosx/library/VLCLibrarySegment.h \
 	gui/macosx/library/VLCLibrarySegment.m \
 	gui/macosx/library/VLCLibrarySegmentBookmarkedLocation.h \
@@ -525,6 +527,10 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/windows/video/VLCMainVideoViewController.m \
 	gui/macosx/windows/video/VLCMainVideoViewOverlayView.h \
 	gui/macosx/windows/video/VLCMainVideoViewOverlayView.m \
+	gui/macosx/windows/video/VLCProgressSliderPreviewController.h \
+	gui/macosx/windows/video/VLCProgressSliderPreviewController.m \
+	gui/macosx/windows/video/VLCProgressSliderPreviewWindow.h \
+	gui/macosx/windows/video/VLCProgressSliderPreviewWindow.m \
 	gui/macosx/windows/video/VLCVideoOutputProvider.h \
 	gui/macosx/windows/video/VLCVideoOutputProvider.m \
 	gui/macosx/windows/video/VLCVideoWindowCommon.h \

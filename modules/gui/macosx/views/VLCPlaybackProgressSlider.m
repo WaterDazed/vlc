@@ -22,8 +22,18 @@
 
 #import "VLCPlaybackProgressSlider.h"
 
+#import "vlc_common.h"
+
 #import "extensions/NSView+VLCAdditions.h"
 #import "views/VLCPlaybackProgressSliderCell.h"
+
+@interface VLCPlaybackProgressSlider ()
+{
+    BOOL             _isShowingPreview;
+    NSTimer         *_previewTimer;
+    NSTrackingArea  *_trackingArea;
+}
+@end
 
 @implementation VLCPlaybackProgressSlider
 
@@ -57,8 +67,40 @@
             [(VLCPlaybackProgressSliderCell*)self.cell setSliderStyleLight];
         }
 
+        [self setupTrackingArea];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [self removeTrackingArea];
+}
+
+- (void)setupTrackingArea
+{
+    [self removeTrackingArea];
+    _trackingArea = [[NSTrackingArea alloc]
+        initWithRect:self.bounds
+             options:(NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
+                      NSTrackingActiveInKeyWindow)
+               owner:self
+            userInfo:nil];
+    [self addTrackingArea:_trackingArea];
+}
+
+- (void)removeTrackingArea
+{
+    if (_trackingArea) {
+        [self removeTrackingArea:_trackingArea];
+        _trackingArea = nil;
+    }
+}
+
+- (void)updateTrackingAreas
+{
+    [super updateTrackingAreas];
+    [self setupTrackingArea];
 }
 
 - (void)scrollWheel:(NSEvent *)event
@@ -129,6 +171,115 @@
     } else {
         [(VLCPlaybackProgressSliderCell*)self.cell setSliderStyleLight];
     }
+}
+
+#pragma mark -
+#pragma mark Preview
+
+- (void)mouseExited:(NSEvent *)event
+{
+    [self hidePreview];
+}
+
+- (void)mouseMoved:(NSEvent *)event
+{
+    if (!self.previewDelegate) {
+        return;
+    }
+    
+    if ([NSApp currentEvent].type == NSEventTypeLeftMouseDragged) {
+        return;
+    }
+    
+    if (_isShowingPreview) {
+        [self cancelPreviewTimer];
+        _previewTimer = [NSTimer scheduledTimerWithTimeInterval:0.05
+                                                         target:self
+                                                       selector:@selector(showPreviewFromTimer:)
+                                                       userInfo:@{@"event": event}
+                                                        repeats:NO];
+    } else {
+        [self showPreviewForMouseEvent:event];
+    }
+}
+
+- (void)showPreviewFromTimer:(NSTimer *)timer
+{
+    NSEvent *event = timer.userInfo[@"event"];
+    if (event) {
+        [self showPreviewForMouseEvent:event];
+    }
+    _previewTimer = nil;
+}
+
+- (void)showPreviewForMouseEvent:(NSEvent *)event 
+{
+    if (!self.previewDelegate) {
+        return;
+    }
+
+    NSPoint mouseLocation = [self convertPoint:event.locationInWindow fromView:nil];
+    float position = [self positionForMouseLocation:mouseLocation];
+
+    NSPoint windowMouseLocation = event.locationInWindow;
+    NSPoint screenMouseLocation;
+
+    if (@available(macOS 10.12, *)) {
+        screenMouseLocation = [self.window convertPointToScreen:windowMouseLocation];
+    } else {
+        screenMouseLocation = [self.window convertBaseToScreen:windowMouseLocation];
+    }
+
+    if (_isShowingPreview) {
+        [self.previewDelegate slider:self updatePreviewAtPosition:position mouseLocation:screenMouseLocation];
+    } else {
+        _isShowingPreview = YES;
+        [self.previewDelegate slider:self showPreviewAtPosition:position mouseLocation:screenMouseLocation];
+    }
+}
+
+- (float)positionForMouseLocation:(NSPoint)mouseLocation
+{
+    NSRect trackRect = [self.cell trackRect];
+    
+    if (trackRect.size.width <= 0) {
+        return 0.0f;
+    }
+    
+    float relativeX = (mouseLocation.x - trackRect.origin.x) / trackRect.size.width;
+    relativeX = VLC_CLIP(relativeX, 0.0f, 1.0f);
+
+    return relativeX;
+}
+
+- (void)hidePreview
+{
+    [self cancelPreviewTimer];
+    _isShowingPreview = NO;
+    
+    if (self.previewDelegate) {
+        [self.previewDelegate sliderHidePreview:self];
+    }
+}
+
+- (void)cancelPreviewTimer
+{
+    if (_previewTimer) {
+        [_previewTimer invalidate];
+        _previewTimer = nil;
+    }
+}
+
+- (void)mouseDown:(NSEvent *)event
+{
+    [self hidePreview];
+
+    NSPoint mouseLocation = [self convertPoint:event.locationInWindow fromView:nil];
+    float position = [self positionForMouseLocation:mouseLocation];
+
+    self.floatValue = (self.maxValue - self.minValue) * position + self.minValue;
+
+    [super mouseDown:event];
 }
 
 @end

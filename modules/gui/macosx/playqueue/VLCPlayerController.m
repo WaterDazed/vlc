@@ -24,6 +24,7 @@
 #include "vlc_player.h"
 
 #import <vlc_configuration.h>
+#import <vlc_preparser.h>
 #import <vlc_url.h>
 
 #import "extensions/NSString+Helpers.h"
@@ -513,6 +514,61 @@ static void cb_player_timer_seeked(const struct vlc_player_timer_point * const _
     });
 }
 
+typedef struct thumbnail_context {
+    intf_thread_t *intf;
+    vlc_preparser_t *preparser;
+    void (^completion)(NSImage *);
+} thumbnail_context_t;
+static void cb_player_thumbnail_generated(input_item_t *item, int status, picture_t *pic, void *data)
+{
+    thumbnail_context_t *ctx = (thumbnail_context_t *)data;
+    if (!ctx || !ctx->completion || !ctx->preparser) {
+        if (ctx) {
+            if (ctx->preparser) {
+                vlc_preparser_Delete(ctx->preparser);
+            }
+            free(ctx);
+        }
+        input_item_Release(item);
+        return;
+    }
+
+    NSImage *thumbnailImage = nil;
+
+    if (status == VLC_SUCCESS && pic && ctx->intf) {
+        block_t *p_block = NULL;
+        video_format_t fmt_out;
+        video_format_Init(&fmt_out, 0);
+
+        int ret = picture_Export(VLC_OBJECT(ctx->intf), &p_block, &fmt_out, pic,
+                                 VLC_CODEC_PNG, 640, 360, true);
+        if (ret == VLC_SUCCESS && p_block && p_block->p_buffer) {
+            NSData *imageData = [NSData dataWithBytes:p_block->p_buffer
+                                               length:p_block->i_buffer];
+            if (imageData) {
+                thumbnailImage = [[NSImage alloc] initWithData:imageData];
+            }
+
+            block_Release(p_block);
+        }
+
+        video_format_Clean(&fmt_out);
+    }
+
+    void (^completion)(NSImage *) = ctx->completion;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        completion(thumbnailImage);
+    });
+
+    vlc_preparser_t *preparser_to_delete = ctx->preparser;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        vlc_preparser_Delete(preparser_to_delete);
+    });
+
+    input_item_Release(item);
+    free(ctx);
+}
+
 static const struct vlc_player_cbs player_callbacks = {
     .on_current_media_changed = cb_player_current_media_changed,
     .on_state_changed = cb_player_state_changed,
@@ -552,6 +608,17 @@ static const struct vlc_player_timer_cbs player_timer_callbacks = {
     .on_update = cb_player_timer_updated,
     .on_paused = cb_player_timer_paused,
     .on_seek = cb_player_timer_seeked
+};
+
+static const struct vlc_preparser_cfg cfg = {
+    .max_parser_threads = 2,
+    .max_thumbnailer_threads = 2,
+    .timeout = VLC_TICK_FROM_SEC(10),
+    .types = VLC_PREPARSER_TYPE_THUMBNAIL,
+};
+
+static const struct vlc_thumbnailer_cbs cbs = {
+    .on_ended = cb_player_thumbnail_generated,
 };
 
 #pragma mark - video specific callback implementations
@@ -1900,6 +1967,76 @@ static int BossCallback(vlc_object_t *p_this,
     return vouts;
 }
 
+- (void)getPreviewFrameAtPosition:(float)position completion:(void (^)(NSImage * _Nullable previewImage))completion
+{
+    input_item_t *p_item;
+    vlc_preparser_req_id req_id = 0;
+    vlc_tick_t duration;
+    vlc_tick_t time;
+
+    vlc_player_Lock(_p_player);
+    p_item = vlc_player_GetCurrentMedia(_p_player);
+    if (!p_item) {
+        vlc_player_Unlock(_p_player);
+        completion(nil);
+        return;
+    }
+    input_item_Hold(p_item);
+    duration = vlc_player_GetLength(_p_player);
+    vlc_player_Unlock(_p_player);
+
+    if (duration <= 0) {
+        input_item_Release(p_item);
+        completion(nil);
+        return;
+    }
+
+    time = (vlc_tick_t)(position * duration);
+
+    intf_thread_t *p_intf = getIntf();
+    if (!p_intf) {
+        input_item_Release(p_item);
+        completion(nil);
+        return;
+    }
+
+    vlc_preparser_t *preparser = vlc_preparser_New(VLC_OBJECT(p_intf), &cfg);
+    if (!preparser) {
+        input_item_Release(p_item);
+        completion(nil);
+        return;
+    }
+
+    struct vlc_thumbnailer_arg arg = {
+        .seek = {
+            .type = VLC_THUMBNAILER_SEEK_TIME,
+            .time = time,
+            .speed = VLC_THUMBNAILER_SEEK_FAST
+        },
+        .hw_dec = false
+    };
+
+    thumbnail_context_t *ctx = malloc(sizeof(thumbnail_context_t));
+    if (!ctx) {
+        vlc_preparser_Delete(preparser);
+        input_item_Release(p_item);
+        completion(nil);
+        return;
+    }
+    ctx->completion = completion;
+    ctx->intf = p_intf;
+    ctx->preparser = preparser;
+
+    req_id = vlc_preparser_GenerateThumbnail(preparser, p_item, &arg, &cbs, ctx);
+    if (req_id == VLC_PREPARSER_REQ_ID_INVALID) {
+        input_item_Release(p_item);
+        vlc_preparser_Delete(preparser);
+        completion(nil);
+        free(ctx);
+        return;
+    }
+}
+
 - (void)displayOSDMessage:(NSString *)message
 {
     vlc_player_osd_Message(_p_player, [message UTF8String]);
@@ -2047,3 +2184,4 @@ static int BossCallback(vlc_object_t *p_this,
 }
 
 @end
+

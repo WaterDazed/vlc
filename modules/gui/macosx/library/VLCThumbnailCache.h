@@ -1,9 +1,9 @@
 /*****************************************************************************
- * VLCPlaybackProgressSlider.h
+ * VLCThumbnailCache.h: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2017 VLC authors and VideoLAN
+ * Copyright (C) 2025 VLC authors and VideoLAN
  *
- * Authors: Marvin Scholz <epirat07 at gmail dot com>
+ * Authors: Bob Moriasi <official.bobmoriasi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,24 +22,24 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class VLCPlaybackProgressSlider;
+NS_ASSUME_NONNULL_BEGIN
 
-@protocol VLCPlaybackProgressSliderPreviewDelegate <NSObject>
+@class VLCPlayerController;
 
-- (void)slider:(VLCPlaybackProgressSlider *)slider showPreviewAtPosition:(float)position mouseLocation:(NSPoint)mouseLocation;
-- (void)slider:(VLCPlaybackProgressSlider *)slider updatePreviewAtPosition:(float)position mouseLocation:(NSPoint)mouseLocation;
-- (void)sliderHidePreview:(VLCPlaybackProgressSlider *)slider;
+@interface VLCThumbnailCache : NSObject
 
-@end
+@property (nonatomic, assign) NSUInteger maxCacheSize;
 
-@interface VLCPlaybackProgressSlider : NSSlider
++ (instancetype)sharedCache;
 
-@property (readwrite, nonatomic) BOOL indefinite;
-@property (readwrite, nonatomic) BOOL knobHidden;
+- (void)getThumbnailForMedia:(NSString *)mediaURL
+                  atPosition:(float)position
+            playerController:(VLCPlayerController *)playerController
+                  completion:(void (^)(NSImage *_Nullable image))completion;
 
-/* Indicates if the slider is scrollable with the mouse or trackpad scrollwheel. */
-@property (readwrite) BOOL scrollable;
-
-@property (weak, nonatomic) id<VLCPlaybackProgressSliderPreviewDelegate> previewDelegate;
+- (void)clearCache;
+- (void)cancelPendingRequestsForMedia:(NSString *)mediaURL;
 
 @end
+
+NS_ASSUME_NONNULL_END

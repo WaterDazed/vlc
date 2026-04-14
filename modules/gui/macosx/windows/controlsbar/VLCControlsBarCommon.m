@@ -39,6 +39,8 @@
 #import "views/VLCTimeField.h"
 #import "views/VLCVolumeSlider.h"
 
+#import "windows/video/VLCProgressSliderPreviewController.h"
+
 /*****************************************************************************
  * VLCControlsBarCommon
  *
@@ -66,6 +68,8 @@
 
     VLCPlayQueueController *_playQueueController;
     VLCPlayerController *_playerController;
+
+    VLCProgressSliderPreviewController *_previewController;
 }
 @end
 
@@ -77,6 +81,7 @@
 
     _playQueueController = VLCMain.sharedInstance.playQueueController;
     _playerController = _playQueueController.playerController;
+    _previewController = [[VLCProgressSliderPreviewController alloc] initWithPlayerController:_playerController];
 
     NSNotificationCenter *notificationCenter = NSNotificationCenter.defaultCenter;
     [notificationCenter addObserver:self
@@ -260,6 +265,8 @@
         self.pipButton.hidden = YES;
     }
 
+    self.timeSlider.previewDelegate = _previewController;
+
     // Update verything post-init
     [self update];
 }
@@ -368,6 +375,7 @@
         case NSEventTypeLeftMouseDown:
         {
             _isTimeSliderBeingDragged = YES;
+            [_previewController setTimeSliderBeingDragged:YES];
             const float newPosition = [sender floatValue];
             [_playerController setPositionFast:newPosition];
             break;
@@ -382,6 +390,7 @@
         }
         case NSEventTypeLeftMouseUp:
             _isTimeSliderBeingDragged = NO;
+            [_previewController setTimeSliderBeingDragged:NO];
             break;
         default:
             return;
