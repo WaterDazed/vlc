@@ -181,6 +181,8 @@ static int Open(vlc_object_t * p_this)
 
     /* Create the object for the thread */
     p_sys->i_channels = aout_FormatNbChannels(&p_filter->fmt_in.audio);
+    if(p_sys->i_channels == 0)
+        return VLC_EGENERIC;
     p_sys->i_prev_nb_samples = 0;
     p_sys->p_prev_s16_buff = NULL;
 
