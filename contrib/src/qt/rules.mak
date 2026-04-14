@@ -68,7 +68,22 @@ QTBASE_CONFIG += -DFEATURE_framework=OFF
 
 ifdef HAVE_CROSS_COMPILE
 # This is necessary to make use of qmake
-QTBASE_CONFIG += -DQT_QMAKE_DEVICE_OPTIONS:STRING=CROSS_COMPILE=$(HOST)-
+QT_QMAKE_DEVICE_OPTIONS := CROSS_COMPILE=$(HOST)-
+
+ifdef HAVE_EMSCRIPTEN
+# Thread feature is not detected automatically by default with Emscripten.
+# VLC needs it, so we manually enable it here:
+QTBASE_CONFIG += -DFEATURE_thread=ON
+
+# Enable JSPI (JS Promise Integration)
+QT_QMAKE_DEVICE_OPTIONS += ;QT_EMSCRIPTEN_ASYNCIFY=2
+QTBASE_CONFIG += -DFEATURE_wasm_jspi=ON -DFEATURE_wasm_exceptions=ON
+
+# Enable WebAssembly SIMD
+QTBASE_CONFIG += -DFEATURE_wasm_simd128=ON
+endif
+
+QTBASE_CONFIG += -DQT_QMAKE_DEVICE_OPTIONS:STRING=$(QT_QMAKE_DEVICE_OPTIONS)
 endif
 
 ifdef HAVE_WIN32
