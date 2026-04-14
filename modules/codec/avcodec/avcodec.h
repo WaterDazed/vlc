@@ -88,6 +88,9 @@ int ffmpeg_OpenCodec( decoder_t *p_dec, AVCodecContext *, const AVCodec * );
 #define THREADS_TEXT N_( "Threads" )
 #define THREADS_LONGTEXT N_( "Number of threads used for decoding, 0 meaning auto" )
 
+#define PGSSUB_FORCED_ONLY_TEXT N_("Only show forced subtitles (Blu-ray)")
+#define PGSSUB_FORCED_ONLY_LONGTEXT N_("Only show forced Blu-ray subtitles, e.g. used for alien languages.")
+
 /*
  * Encoder options
  */
