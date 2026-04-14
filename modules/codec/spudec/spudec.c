@@ -44,6 +44,9 @@ static void Close         ( vlc_object_t * );
 #define DVDSUBTRANS_DISABLE_TEXT N_("Disable DVD subtitle transparency")
 #define DVDSUBTRANS_DISABLE_LONGTEXT N_("Removes all transparency effects " \
                                         "used in DVD subtitles.")
+#define DVDSUB_FORCED_ONLY_TEXT N_("Only show forced subtitles")
+#define DVDSUB_FORCED_ONLY_LONGTEXT N_("Only show forced DVD subtitles, " \
+                                        "e.g. used for alien languages.")
 
 vlc_module_begin ()
     set_description( N_("DVD subtitles decoder") )
@@ -54,6 +57,8 @@ vlc_module_begin ()
 
     add_bool( "dvdsub-transparency", false,
               DVDSUBTRANS_DISABLE_TEXT, DVDSUBTRANS_DISABLE_LONGTEXT )
+    add_bool("dvdsub-forced-only", false,
+              DVDSUB_FORCED_ONLY_TEXT, DVDSUB_FORCED_ONLY_LONGTEXT )
     add_submodule ()
     set_description( N_("DVD subtitles packetizer") )
     set_capability( "spu packetizer", 50 )
@@ -81,6 +86,7 @@ static int OpenCommon( vlc_object_t *p_this, bool b_packetizer )
 
     p_sys->b_packetizer = b_packetizer;
     p_sys->b_disabletrans = var_InheritBool( p_dec, "dvdsub-transparency" );
+    p_sys->b_forcedonly = var_InheritBool( p_dec, "dvdsub-forced-only" );
     p_sys->i_spu_size = 0;
     p_sys->buffer     = NULL;
     p_sys->buffer_size = 0;
