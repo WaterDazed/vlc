@@ -154,7 +154,7 @@ MainViewLoader {
             displayMarginBeginning: root.displayMarginBeginning
             displayMarginEnd: root.displayMarginEnd
 
-            headerDelegate: BrowseTreeHeader {
+            header: BrowseTreeHeader {
                 providerModel: root.model
 
                 leftPadding: root.headerLeftPadding
