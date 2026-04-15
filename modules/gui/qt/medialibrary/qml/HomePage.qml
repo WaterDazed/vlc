@@ -232,10 +232,6 @@ T.Page {
 
                 emptyLabel: null
 
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
-
                 listCoverWidth: root.listCoverWidth
                 listCoverHeight: root.listCoverHeight
                 listCoverRadius: root.listCoverRadius
@@ -327,10 +323,6 @@ T.Page {
 
                 emptyLabel: null
 
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
-
                 listCoverWidth: root.listCoverWidth
                 listCoverHeight: root.listCoverHeight
                 listCoverRadius: root.listCoverRadius
@@ -407,10 +399,6 @@ T.Page {
                 interactive: false
 
                 emptyLabel: null
-
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
 
                 listCoverWidth: root.listCoverWidth
                 listCoverHeight: root.listCoverHeight
