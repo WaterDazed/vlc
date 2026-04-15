@@ -199,7 +199,7 @@ FocusScope {
 
             model: root.model
 
-            headerDelegate: root.header
+            header: root.header
 
             selectionModel: modelSelect
 
