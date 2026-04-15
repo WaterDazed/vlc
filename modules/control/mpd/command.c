@@ -617,7 +617,7 @@ static mpd_cmd_result_t cmd_pause(intf_thread_t *intf, mpd_client_t *client, cha
         bool state;
         PARSE_BOOL(argv[1], &state);
 
-            if (state)
+        if (state)
             vlc_playlist_Pause(sys->playlist);
         else
             vlc_playlist_Resume(sys->playlist);
