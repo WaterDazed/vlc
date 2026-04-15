@@ -998,7 +998,7 @@ static void DelStream( sout_mux_t *p_mux, sout_input_t *p_input )
     p_sys->i_pmt_version_number %= 32;
 }
 
-static void SetHeader( sout_buffer_chain_t *c,
+static void SetRandomAccessFlag( sout_buffer_chain_t *c,
                         int depth )
 {
     block_t *p_ts = BufferChainPeek( c );
@@ -1007,7 +1007,7 @@ static void SetHeader( sout_buffer_chain_t *c,
         p_ts = p_ts->p_next;
         depth--;
     }
-    p_ts->i_flags |= BLOCK_FLAG_HEADER;
+    p_ts->i_flags |= BLOCK_FLAG_RANDOM_ACCESS;
 }
 
 static block_t *Pack_Opus(block_t *p_data)
@@ -1515,10 +1515,10 @@ static int MuxStreams( sout_mux_t *p_mux )
                 int startcount = chain_ts.i_depth;
                 GetPAT( p_mux, &chain_ts );
                 GetPMT( p_mux, &chain_ts );
-                SetHeader( &chain_ts, startcount );
+                SetRandomAccessFlag( &chain_ts, startcount );
                 i_packet_count += (chain_ts.i_depth - startcount );
             } else {
-                SetHeader( &chain_ts, 0); //We just inserted pat/pmt,so just flag it instead of adding new one
+                SetRandomAccessFlag( &chain_ts, 0); //We just inserted pat/pmt,so just flag it instead of adding new one
             }
         }
         pat_was_previous = false;

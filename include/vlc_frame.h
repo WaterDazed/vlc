@@ -78,10 +78,19 @@ typedef struct vlc_frame_t vlc_frame_t;
 #define VLC_FRAME_FLAG_TYPE_B        0x0008
 /** For inter frame when you don't know the real type */
 #define VLC_FRAME_FLAG_TYPE_PB       0x0010
-/** Warn that this frame is a header one */
+/**
+ * Indicates that a frame contains format-level metadata required for stream
+ * initialization, typically, MP4 ftyp/moov boxes or MPEG system headers.
+ */
 #define VLC_FRAME_FLAG_HEADER        0x0020
 /** This frame contains the last part of a sequence  */
 #define VLC_FRAME_FLAG_END_OF_SEQUENCE 0x0040
+/**
+ * Indicates a muxed sequence that decoders can safely start from.
+ * Primarily used by muxers to mark blocks that contain synchronized keyframes
+ * from all tracks.
+ */
+#define VLC_FRAME_FLAG_RANDOM_ACCESS 0x0080
 /** This frame is scrambled */
 #define VLC_FRAME_FLAG_SCRAMBLED     0x0100
 /** This frame has to be decoded but not be displayed */
