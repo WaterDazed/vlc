@@ -3553,7 +3553,7 @@ static bool Ogg_ReadDiracHeader( logical_stream_t *p_stream,
         }
     }
 
-    if( !u_n || !u_d )
+    if( !u_n || u_n > UINT32_MAX/2 || !u_d )
         return false;
 
     /*
