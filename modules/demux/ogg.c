@@ -3311,6 +3311,10 @@ unsigned const char * Read7BitsVariableLE( unsigned const char *p_begin,
     int64_t i_read = 0;
     *pi_value = 0;
 
+    /* limit read to 63 bits */
+    if( p_end - p_begin > 9 )
+        p_end = p_begin + 9;
+
     while ( p_begin < p_end )
     {
         i_read = *p_begin & 0x7F; /* High bit is start of integer */
