@@ -3197,14 +3197,14 @@ static void Ogg_ReadAnnodexHeader( demux_t *p_demux,
     else if( p_oggpacket->bytes >= 42 &&
              !memcmp( p_oggpacket->packet, "AnxData", 7 ) )
     {
-        uint64_t granule_rate_numerator;
-        uint64_t granule_rate_denominator;
         char content_type_string[1024];
 
         /* Read in Annodex header fields */
-
-        granule_rate_numerator = GetQWLE( &p_oggpacket->packet[8] );
-        granule_rate_denominator = GetQWLE( &p_oggpacket->packet[16] );
+        unsigned num, den;
+        vlc_ureduce( &num, &den,
+                     GetQWLE( &p_oggpacket->packet[8] ), // granule_rate_numerator
+                     GetQWLE( &p_oggpacket->packet[16] ), // granule_rate_denominator
+                     0 );
         p_stream->i_secondary_header_packets =
             GetDWLE( &p_oggpacket->packet[24] );
 
@@ -3220,12 +3220,12 @@ static void Ogg_ReadAnnodexHeader( demux_t *p_demux,
                         content_type_string );
         }
 
-        msg_Dbg( p_demux, "AnxData packet info: %"PRId64" / %"PRId64", %d, ``%s''",
-                 granule_rate_numerator, granule_rate_denominator,
+        msg_Dbg( p_demux, "AnxData packet info: %u / %u, %d, ``%s''",
+                 num, den,
                  p_stream->i_secondary_header_packets, content_type_string );
 
-        if( granule_rate_numerator && granule_rate_denominator )
-            date_Init( &p_stream->dts, granule_rate_numerator, granule_rate_denominator );
+        if( num && den )
+            date_Init( &p_stream->dts, num, den );
 
         /* What type of file do we have?
          * strcmp is safe to use here because we've extracted
