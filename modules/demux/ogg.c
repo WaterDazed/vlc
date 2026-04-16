@@ -2028,6 +2028,8 @@ static int Ogg_FindLogicalStreams( demux_t *p_demux )
                         /* FIXME: no clue where it's from */
                         if( st->time_unit <= 0 )
                             st->time_unit = 400000;
+                        if( st->samples_per_unit > INT64_MAX / OGGDS_RESOLUTION )
+                            goto skipfail;
                         unsigned num, den;
                         vlc_ureduce( &num, &den,
                                      st->samples_per_unit * OGGDS_RESOLUTION,
@@ -2087,6 +2089,9 @@ static int Ogg_FindLogicalStreams( demux_t *p_demux )
                         i_format_tag = strtol(p_buffer,NULL,16);
                         p_stream->fmt.audio.i_channels = st->sh.audio.channels;
                         fill_channels_info(&p_stream->fmt.audio);
+
+                        if( st->samples_per_unit > INT64_MAX / OGGDS_RESOLUTION )
+                            goto skipfail;
 
                         unsigned num,den;
                         vlc_ureduce( &num, &den,
@@ -2175,12 +2180,12 @@ static int Ogg_FindLogicalStreams( demux_t *p_demux )
                 }
                 else
                 {
-                    Ogg_LogicalStreamDelete( p_demux, p_stream );
+                    msg_Dbg( p_demux, "stream %d is of unknown type",
+                             p_ogg->i_streams - 1 );
+skipfail:           Ogg_LogicalStreamDelete( p_demux, p_stream );
                     p_stream = NULL;
                     TAB_ERASE( p_ogg->i_streams, p_ogg->pp_stream,
                                p_ogg->i_streams - 1 );
-                    msg_Dbg( p_demux, "stream %d is of unknown type",
-                             p_ogg->i_streams );
                 }
 
                 /* we'll need to get all headers */
