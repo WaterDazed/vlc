@@ -30,6 +30,7 @@
 
 #include <QQmlEngine>
 #include <QJSEngine>
+#include <QItemSelectionModel>
 
 #include "mainctx.hpp"
 #include "mainctx_submodels.hpp"
@@ -811,6 +812,140 @@ QJSValue MainCtx::urlListToMimeData(const QJSValue &array) {
     QJSValue ret = engine->newObject();
     ret.setProperty(QStringLiteral("text/uri-list"), data);
     return ret;
+}
+
+bool MainCtx::updateSelection(const QQuickItem *contentItem,
+                              QItemSelectionModel *selectionModel,
+                              MainCtx::SelectionMode mode,
+                              const QRectF &area)
+{
+    if (!contentItem)
+        return false;
+
+    if (!selectionModel)
+        return false;
+
+    static const auto selectionSetKey = "_managedSelectionSet";
+    QSet<int>* managedIndexesSet = selectionModel->property(selectionSetKey).value<QSet<int>*>();
+
+    const auto childItems = contentItem->childItems();
+
+    switch (mode)
+    {
+        case MainCtx::SelectionMode::Begin:
+        case MainCtx::SelectionMode::Select:
+        case MainCtx::SelectionMode::Toggle:
+        {
+            if (!managedIndexesSet)
+            {
+                managedIndexesSet = new QSet<int>();
+                managedIndexesSet->reserve(childItems.size());
+
+                selectionModel->setProperty(selectionSetKey, QVariant::fromValue(managedIndexesSet));
+
+                connect(selectionModel, &QObject::destroyed, selectionModel, [selectionModel, managedIndexesSet]() {
+                    assert(selectionModel->property(selectionSetKey).value<QSet<int>*>() == managedIndexesSet);
+                    delete managedIndexesSet;
+                    selectionModel->setProperty(selectionSetKey, {}); // Probably not necessary as it is dying anyway
+                });
+            }
+            else if (mode == MainCtx::SelectionMode::Begin)
+            {
+                // Clear managed indexes set, if it already exists.
+                // If it does not exist, we don't need to clear
+                // something that does not exist.
+                managedIndexesSet->clear();
+            }
+            break;
+        }
+        // If the mode is not a temporal mode, we do not need to
+        // create the managed indexes set:
+        default:
+            break;
+    }
+
+    if (mode == MainCtx::SelectionMode::Clear)
+    {
+        if (managedIndexesSet)
+            managedIndexesSet->clear();
+
+        selectionModel->clear();
+        return true;
+    }
+
+    // We don't treat invalid area as empty area, no deselection in this case:
+    if (!area.isValid())
+        return false;
+
+    const QAbstractItemModel* const model = selectionModel->model();
+    assert(model);
+
+    // O(n)
+    for (const auto& item : childItems)
+    {
+        bool ok;
+        const auto index = item->property("index").toInt(&ok);
+
+        if (!ok || (index < 0))
+            continue;
+
+        QRectF itemRect {item->x(), item->y(), item->width(), item->height()};
+        {
+            const QQuickItem* marginItem;
+            marginItem = item->property("background").value<QQuickItem*>();
+            if (!marginItem)
+                marginItem = item->property("contentItem").value<QQuickItem*>();
+            if (marginItem)
+            {
+                itemRect.setX(itemRect.x() + marginItem->x());
+                itemRect.setY(itemRect.y() + marginItem->y());
+                itemRect.setWidth(marginItem->width());
+                itemRect.setHeight(marginItem->height());
+            }
+        }
+
+        const QModelIndex modelIndex = model->index(index, 0);
+
+        if (itemRect.intersects(area))
+        {
+            if (!managedIndexesSet || !managedIndexesSet->contains(index))
+            {
+                QItemSelectionModel::SelectionFlag flag;
+
+                if (managedIndexesSet)
+                {
+                    managedIndexesSet->insert(index);
+                    flag = (mode == MainCtx::Toggle) ? QItemSelectionModel::Toggle : QItemSelectionModel::Select;
+                }
+                else
+                {
+                    flag = QItemSelectionModel::Select;
+                }
+
+                selectionModel->select(modelIndex, flag);
+            }
+        }
+        else
+        {
+            if (!managedIndexesSet || managedIndexesSet->contains(index))
+            {
+                QItemSelectionModel::SelectionFlag flag;
+                if (managedIndexesSet)
+                {
+                    managedIndexesSet->remove(index);
+                    flag = QItemSelectionModel::Toggle;
+                }
+                else
+                {
+                    flag = QItemSelectionModel::Deselect;
+                }
+
+                selectionModel->select(modelIndex, flag);
+            }
+        }
+    }
+
+    return true;
 }
 
 VideoSurfaceProvider* MainCtx::getVideoSurfaceProvider() const
