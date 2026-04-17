@@ -812,7 +812,8 @@ qml_modules += {
         'util/qml/NativeMenu.qml',
         'util/qml/MLContextMenu.qml',
         'util/qml/FadeControllerStateGroup.qml',
-        'util/qml/DelayedBehavior.qml'
+        'util/qml/DelayedBehavior.qml',
+        'util/qml/RubberBandSelector.qml',
     ),
     'singletons': files(
         'util/qml/Helpers.qml',
