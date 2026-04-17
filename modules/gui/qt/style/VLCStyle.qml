@@ -261,6 +261,11 @@ QtObject {
     readonly property int bannerButton_height: icon_banner
     readonly property int bannerButton_width: icon_banner
 
+    // Rubber band selection rectangle:
+    readonly property color rubberBandColor: "#88ADD8E6"
+    readonly property int rubberBandBorderWidth: MainCtx.dp(1, scale)
+    readonly property real rubberBandRadius: MainCtx.dp(4, scale)
+
     // Drag and drop
 
     readonly property int dragDelta: MainCtx.dp(12, scale)
