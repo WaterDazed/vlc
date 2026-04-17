@@ -1021,6 +1021,9 @@ static void ESNew( demux_t *p_demux, int i_id, int i_lang, int i_lang_ext )
             tk->fmt.psz_description =
                 strdup( vlc_gettext( dvd_spu_lang_ext[i_lang_ext] ) );
 
+        if( i_lang_ext == DVD_SPU_LANG_EXT_FORCED )
+            tk->fmt.subs.b_forced = true;
+
         /* Palette */
         tk->fmt.subs.spu.b_palette = true;
         static_assert(sizeof(tk->fmt.subs.spu.palette) == sizeof(p_sys->clut),

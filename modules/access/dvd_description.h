@@ -30,6 +30,9 @@ static const char *const dvd_audio_lang_ext[] = {
     /* 4 */ N_("Alternate director's comments"),
 };
 
+/* subtitle lang_extension value flagging a forced-caption track */
+#define DVD_SPU_LANG_EXT_FORCED 9
+
 /**
  * DVD subtitle track lang_extension values as defined in the DVD-Video spec.
  * Maps subp_attr_t.lang_extension to translatable description strings.
