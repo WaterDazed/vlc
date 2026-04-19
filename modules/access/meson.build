@@ -453,6 +453,19 @@ vlc_modules += {
 # New HTTP(S)
 subdir('http')
 
+# Network.framework-based HTTP(S) access
+vlc_modules += {
+    'name' : 'access_network',
+    'sources' : files('network.m'),
+    'objc_args' : ['-fobjc-arc'],
+    'dependencies' : [
+        frameworks['Foundation'],
+        frameworks['Network'],
+        frameworks['Security'],
+    ],
+    'enabled' : host_system == 'darwin',
+}
+
 # Network file sharing
 nfs_dep = dependency('libnfs', version: '>= 1.10.0', required: get_option('nfs'))
 vlc_modules += {

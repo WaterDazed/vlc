@@ -367,6 +367,17 @@ libhttp_plugin_la_SOURCES = access/http.c
 libhttp_plugin_la_LIBADD = $(SOCKET_LIBS)
 access_PLUGINS += libhttp_plugin.la
 
+libaccess_network_plugin_la_SOURCES = access/network.m
+libaccess_network_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc \
+	-I$(srcdir)/access/http
+libaccess_network_plugin_la_LIBADD = libvlc_http.la
+libaccess_network_plugin_la_LDFLAGS = $(AM_LDFLAGS) $(access_RPATH) \
+	-Wl,-framework,Foundation -Wl,-framework,Network \
+	-Wl,-framework,Security
+if HAVE_DARWIN
+access_PLUGINS += libaccess_network_plugin.la
+endif
+
 liblive555_plugin_la_SOURCES = access/live555.cpp access/mms/asf.c access/mms/buffer.c \
                                access/live555_dtsgen.h codec/opus_header.c codec/opus_header.h
 liblive555_plugin_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_live555)
