@@ -376,9 +376,15 @@ FocusScope {
                     anchors.topMargin: VLCStyle.margin_xsmall + audioFocusScope.topPadding
                     anchors.bottomMargin: VLCStyle.margin_xsmall + audioFocusScope.bottomPadding
 
-                    onWheel: (wheel) => {
-                        wheel.accepted = true
-                        wheelToVlc.qmlWheelEvent(wheel)
+                    WheelHandler {
+                        orientation: Qt.Vertical | Qt.Horizontal
+
+                        acceptedDevices: PointerDevice.AllDevices
+
+                        onWheel: (wheel) => {
+                            wheelToVLC.qmlWheelEvent(wheel)
+                            wheel.accepted = true
+                        }
                     }
 
                     WheelToVLCConverter {
