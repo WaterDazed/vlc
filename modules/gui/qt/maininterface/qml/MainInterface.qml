@@ -114,6 +114,54 @@ Item {
             }
         }
 
+        PinchHandler {
+            id: interfaceScalePinchHandler
+
+            acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
+
+            minimumPointCount: 2
+            maximumPointCount: 2
+
+            target: null
+
+            property double accumulatedDelta: 0.0
+
+            function adjustScaleFactor() {
+                // We don't want too fine change, since changing it requires reloading
+                // all images from disk:
+                if (accumulatedDelta >= 0.5) {
+                    MainCtx.setIntfUserScaleFactor(+((MainCtx.getIntfUserScaleFactor() * accumulatedDelta).toFixed(2)))
+                    accumulatedDelta = 0.0
+                }
+            }
+
+            Component.onCompleted: {
+                if (interfaceScalePinchHandler?.scaleAxis?.activeValueChanged) {
+                    scaleAxis.activeValueChanged.connect(interfaceScalePinchHandler, onScaleAxisActiveValueChanged)
+                }
+            }
+
+            function onScaleAxisActiveValueChanged(delta) {
+                if (delta < 0.25)
+                    return
+
+                accumulatedDelta += delta
+
+                // Naive compression:
+                Qt.callLater(interfaceScalePinchHandler.adjustScaleFactor)
+            }
+
+            onActiveChanged: {
+                if (active) {
+                    if (!interfaceScalePinchHandler?.scaleAxis?.activeValueChanged) {
+                        console.warn("Touch pinch zoom is only available with Qt 6.5!")
+                    }
+                } else {
+                    accumulatedDelta = 0.0
+                }
+            }
+        }
+
         ColorContext {
             id: theme
             palette: VLCStyle.palette
