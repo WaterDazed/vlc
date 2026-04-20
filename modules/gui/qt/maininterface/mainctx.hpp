@@ -131,6 +131,7 @@ class MainCtx : public QObject
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ getVideoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(int mouseHideTimeout READ mouseHideTimeout NOTIFY mouseHideTimeoutChanged FINAL)
     Q_PROPERTY(bool albumSections READ albumSections WRITE setAlbumSections NOTIFY albumSectionsChanged FINAL)
+    Q_PROPERTY(bool usingTouch READ usingTouch NOTIFY usingTouchChanged FINAL)
 
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
 
@@ -261,6 +262,8 @@ public:
 
     int mouseHideTimeout() const { return m_mouseHideTimeout; }
     
+    bool usingTouch() const { return m_usingTouch; }
+
     Q_INVOKABLE bool backdropBlurRequested() const { return var_InheritBool(p_intf, "qt-backdrop-blur"); }
 
     Q_INVOKABLE static inline void setCursor(Qt::CursorShape cursor) { QApplication::setOverrideCursor(QCursor(cursor)); }
@@ -345,6 +348,14 @@ public:
     Q_INVOKABLE virtual bool platformHandlesResizeWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesTitleBarButtonsWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesShadowsWithCSD() const { return false; };
+
+    void setUsingTouch(bool touch)
+    {
+        if (m_usingTouch == touch)
+            return;
+        m_usingTouch = touch;
+        usingTouchChanged();
+    }
 
     /**
      * @brief ask for the application to terminate
@@ -454,6 +465,8 @@ protected:
     int m_mouseHideTimeout = 1000;
 
     bool m_albumSections = true;
+
+    bool m_usingTouch = false;
 
     OsType m_osName;
     int m_osVersion;
@@ -582,6 +595,8 @@ signals:
     void requestShowPlayerView();
 
     void artistAlbumsWidthFactorChanged( double );
+
+    void usingTouchChanged();
 
 private:
     void loadPrefs(bool callSignals);
