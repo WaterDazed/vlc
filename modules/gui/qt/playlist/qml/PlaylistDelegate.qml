@@ -22,7 +22,7 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QtQml.Models
 
-// import VLC.MainInterface // TODO: for vlcTick, not used for now due to Qt 6.2
+import VLC.MainInterface
 import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Playlist
@@ -369,17 +369,58 @@ T.Control {
         }
 
         TapHandler {
+            id: touchScreenTapHandler
+
             acceptedDevices: PointerDevice.TouchScreen
 
             grabPermissions: TapHandler.CanTakeOverFromHandlersOfDifferentType | TapHandler.ApprovesTakeOverByAnything
 
-            onTapped: (eventPoint, button) => {
-                MainPlaylistController.goTo(index, true)
+            property bool pendingContextMenu: false
+
+            onSingleTapped: (eventPoint, button) => {
+                initialAction()
+
+                MainPlaylistController.goTo(delegate.index, true)
             }
 
-            onLongPressed: (eventPoint, button) => {
-                if (contextMenu)
-                    contextMenu.popup(index, point.scenePosition)
+            onDoubleTapped: (eventPoint, button) => {
+                MainCtx.requestShowPlayerView()
+            }
+
+            onLongPressed: {
+                initialAction()
+
+                pendingContextMenu = true
+            }
+
+            function invokeContextMenu(point : point) : bool {
+                if (delegate && touchScreenTapHandler?.pendingContextMenu) {
+                    if (delegate.contextMenu)
+                        delegate.contextMenu.popup(delegate.index, point)
+                    touchScreenTapHandler.pendingContextMenu = false
+                    return true
+                }
+                return false
+            }
+
+            onPressedChanged: {
+                if (!pressed) {
+                    // We need to do it asynchronously, because if tapping is canceled we need to acknowledge it:
+                    Qt.callLater(touchScreenTapHandler.invokeContextMenu, parent.mapToGlobal(point.position.x,
+                                                                                             point.position.y))
+                }
+            }
+
+            onCanceled: {
+                pendingContextMenu = false
+            }
+
+            function initialAction() {
+                delegate.forceActiveFocus(Qt.MouseFocusReason)
+
+                // NOTE: Selection is not applicable to touch, so we don't want to manipulate the selection.
+                //       That being said, we need to adjust the current index regardless:
+                delegate.view.currentIndex = delegate.index
             }
         }
     }
