@@ -108,7 +108,8 @@ T.Control {
         visible: hoverHandler.hovered ||
                  playButton.hovered ||
                  closeButton.hovered ||
-                 fullscreenButton.hovered
+                 fullscreenButton.hovered ||
+                 MainCtx.usingTouch
 
         // Raise the content item so that the handlers of the control do
         // not handle events that are to be handled by the handlers/items
@@ -128,6 +129,11 @@ T.Control {
                    && Player.playingState !== Player.PLAYING_STATE_STOPPED)
                   ? VLCIcons.pause_filled
                   : VLCIcons.play_filled
+
+            // This can not be shown at all times as it is too big and it
+            // is centered, toggling play pause action is still handled
+            // through the tap handler:
+            visible: !MainCtx._usingTouch
 
             onClicked: MainPlaylistController.togglePlayPause()
         }
