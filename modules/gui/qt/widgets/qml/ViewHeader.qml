@@ -39,7 +39,7 @@ T.Pane {
     leftPadding: view?.contentLeftMargin ?? 0
     rightPadding: view?.contentRightMargin ?? 0
 
-    bottomPadding: VLCStyle.layoutTitle_bottom_padding + ((gridView instanceof Widgets.ExpandGridItemView) ? (-gridView.verticalSpacing / 2) : 0)
+    bottomPadding: VLCStyle.layoutTitle_bottom_padding + ((gridView instanceof Widgets.GridViewExt) ? (-gridView.verticalSpacing / 2) : 0)
     topPadding: VLCStyle.layoutTitle_top_padding
 
     // Aliases

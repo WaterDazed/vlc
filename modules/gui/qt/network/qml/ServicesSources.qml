@@ -28,7 +28,7 @@ import VLC.Network
 import VLC.Dialogs
 import VLC.Menus
 
-Widgets.ExpandGridItemView {
+Widgets.GridViewExt {
     id: root
 
     //properties
@@ -45,8 +45,12 @@ Widgets.ExpandGridItemView {
 
     //settings
 
-    basePictureWidth: VLCStyle.gridCover_network_width
-    basePictureHeight: VLCStyle.gridCover_network_height
+    gridSizeHelper: GridSizeHelper {
+        basePictureWidth: VLCStyle.gridCover_network_width
+        basePictureHeight: VLCStyle.gridCover_network_height
+        availableWidth: root.contentWidth
+    }
+
     subtitleHeight: 0
 
     model: sourcesModel
