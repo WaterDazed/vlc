@@ -144,9 +144,21 @@ T.Pane {
             }
 
             Widgets.CaptionLabel {
-                color: theme.fg.secondary
+                color: (listView.mode === Widgets.ListViewExt.Mode.Select || listView.mode === Widgets.ListViewExt.Move) ? theme.accent
+                                                                                                                         : theme.fg.secondary
                 visible: model.count !== 0
-                text: qsTr("%1 elements, %2").arg(model.count).arg(model.duration.formatLong())
+
+                text: {
+                    switch (listView.mode) {
+                    case Widgets.ListViewExt.Mode.Select:
+                        return qsTr("Selected tracks: %1").arg(root.selectionModel.selectedIndexesFlat.length)
+                    case Widgets.ListViewExt.Mode.Move:
+                        return qsTr("Moving tracks: %1").arg(root.selectionModel.selectedIndexesFlat.length)
+                    case Widgets.ListViewExt.Mode.Normal:
+                    default:
+                        return qsTr("%1 elements, %2").arg(model.count).arg(model.duration.formatLong())
+                    }
+                }
             }
         }
 
