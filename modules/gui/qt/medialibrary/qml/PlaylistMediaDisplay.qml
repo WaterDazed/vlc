@@ -97,8 +97,6 @@ FocusScope {
         else
             index = 0
 
-        view.selectionModel.select(model.index(index, 0), ItemSelectionModel.ClearAndSelect);
-
         view.positionViewAtIndex(index, ItemView.Contain)
 
         view.setCurrentItem(index)
