@@ -238,7 +238,17 @@ FocusScope {
 
             visible: view.count > 0
 
-            text: root.name
+            text: {
+                switch (view.mode) {
+                case Widgets.ListViewExt.Mode.Select:
+                    return root.name + qsTr(" (Selecting items: %1)").arg(view.selectionModel.selectedIndexesFlat.length)
+                case Widgets.ListViewExt.Mode.Move:
+                    return root.name + qsTr(" (Moving items: %1)").arg(view.selectionModel.selectedIndexesFlat.length)
+                case Widgets.ListViewExt.Mode.Normal:
+                default:
+                    return root.name
+                }
+            }
         }
 
         fadingEdge.enableBeginningFade: root.enableBeginningFade
