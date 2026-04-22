@@ -28,15 +28,11 @@
 #include <vlc/libvlc_dialog.h>
 #include <vlc/libvlc_picture.h>
 #include <vlc/libvlc_media.h>
-#include <vlc/libvlc_events.h>
 
 #include <vlc_atomic.h>
 #include <vlc_common.h>
 #include <vlc_arrays.h>
 #include <vlc_threads.h>
-
-typedef struct vlc_preparser_t vlc_preparser_t;
-typedef struct vlc_preparser_t vlc_preparser_t;
 
 /* Note well: this header is included from LibVLC core.
  * Therefore, static inline functions MUST NOT call LibVLC functions here
@@ -103,10 +99,6 @@ struct libvlc_instance_t
     vlc_atomic_rc_t ref_count;
     struct libvlc_callback_entry_list_t *p_callback_list;
 
-    vlc_mutex_t lazy_init_lock;
-    vlc_preparser_t *parser;
-    vlc_preparser_t *thumbnailer;
-
     struct
     {
         void (*cb) (void *, int, const libvlc_log_t *, const char *, va_list);
@@ -119,13 +111,6 @@ struct libvlc_instance_t
     } dialog;
 };
 
-struct libvlc_event_manager_t
-{
-    void * p_obj;
-    vlc_array_t listeners;
-    vlc_mutex_t lock;
-};
-
 /***************************************************************************
  * Other internal functions
  ***************************************************************************/
@@ -134,25 +119,14 @@ struct libvlc_event_manager_t
 void libvlc_threads_init (void);
 void libvlc_threads_deinit (void);
 
-/* Events */
-void libvlc_event_manager_init(libvlc_event_manager_t *, void *);
-void libvlc_event_manager_destroy(libvlc_event_manager_t *);
-
-void libvlc_event_send(
-        libvlc_event_manager_t * p_em,
-        libvlc_event_t * p_event );
-
 static inline libvlc_time_t libvlc_time_from_vlc_tick(vlc_tick_t time)
 {
-    return MS_FROM_VLC_TICK(time + VLC_TICK_FROM_US(500));
+    return US_FROM_VLC_TICK(time);
 }
 
 static inline vlc_tick_t vlc_tick_from_libvlc_time(libvlc_time_t time)
 {
-    return VLC_TICK_FROM_MS(time);
+    return VLC_TICK_FROM_US(time);
 }
-
-vlc_preparser_t *libvlc_get_preparser(libvlc_instance_t *instance);
-vlc_preparser_t *libvlc_get_thumbnailer(libvlc_instance_t *instance);
 
 #endif
