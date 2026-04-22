@@ -40,11 +40,20 @@
 # include <libprojectM/projectM.hpp>
 #endif
 
-#ifndef _WIN32
-# include <locale.h>
+#ifndef HAVE_PROJECTM4
+# ifndef _WIN32
+#  include <locale.h>
+# endif
+# ifdef HAVE_XLOCALE_H
+#  include <xlocale.h>
+# endif
 #endif
-#ifdef HAVE_XLOCALE_H
-# include <xlocale.h>
+
+#ifdef HAVE_PROJECTM4
+# ifdef _WIN32
+#  include <windows.h>
+#  include <GL/glew.h>
+# endif
 #endif
 
 /*****************************************************************************
@@ -283,11 +292,9 @@ static void *Thread( void *p_data )
     filter_t  *p_filter = (filter_t*)p_data;
     filter_sys_t *p_sys = reinterpret_cast<filter_sys_t *>( p_filter->p_sys );
     vlc_gl_t *gl = p_sys->gl;
-    locale_t loc;
-    locale_t oldloc;
 
 #ifdef HAVE_PROJECTM4
-    projectm_handle p_projectm; 
+    projectm_handle p_projectm;
 #else
     projectM *p_projectm;
 #endif
@@ -309,15 +316,27 @@ static void *Thread( void *p_data )
         return NULL;
     }
 
+#ifdef HAVE_PROJECTM4
+#ifdef _WIN32
+    if (glewInit() != GLEW_OK)
+    {
+        vlc_gl_ReleaseCurrent( gl );
+        return NULL;
+    }
+#endif
+#endif
+
+#ifndef HAVE_PROJECTM4
     /* Work-around the projectM locale bug */
-    loc = newlocale (LC_NUMERIC_MASK, "C", NULL);
-    oldloc = uselocale (loc);
+    locale_t loc = newlocale (LC_NUMERIC_MASK, "C", NULL);
+    locale_t oldloc = uselocale (loc);
+#endif
 
     /* Create the projectM object */
 #ifdef HAVE_PROJECTM4
     p_projectm = projectm_create();
-    projectm_set_window_size(p_projectm, 
-                             var_InheritInteger( p_filter, "projectm-width" ), 
+    projectm_set_window_size(p_projectm,
+                             var_InheritInteger( p_filter, "projectm-width" ),
                              var_CreateGetInteger( p_filter, "projectm-height" ));
 #else
 #ifndef HAVE_PROJECTM2
@@ -370,7 +389,7 @@ static void *Thread( void *p_data )
                                       sizeof( float ) );
 
     /* Choose a preset randomly or projectM will always show the first one */
-#ifndef HAVE_PROJECTM4 
+#ifndef HAVE_PROJECTM4
     if ( p_projectm->getPlaylistSize() > 0 )
         p_projectm->selectPreset( (unsigned)vlc_mrand48() % p_projectm->getPlaylistSize() );
 #endif
@@ -401,11 +420,11 @@ static void *Thread( void *p_data )
         {
 #ifdef HAVE_PROJECTM4
             projectm_pcm_add_float( p_projectm, p_sys->p_buffer, p_sys->i_nb_samples, (projectm_channels)1 );
-        
+
 #else
             p_projectm->pcm()->addPCMfloat( p_sys->p_buffer,
                                             p_sys->i_nb_samples );
-                
+
 #endif
             p_sys->i_nb_samples = 0;
         }
@@ -437,11 +456,13 @@ static void *Thread( void *p_data )
 
 #endif
 
+#ifndef HAVE_PROJECTM4
     if (loc != (locale_t)0)
     {
         uselocale (oldloc);
         freelocale (loc);
     }
+#endif
 
     vlc_gl_ReleaseCurrent( gl );
     return NULL;
