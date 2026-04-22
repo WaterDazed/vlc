@@ -219,8 +219,8 @@ static void FillPicture( decoder_t *p_dec, block_t *p_block, picture_t *p_pic )
         {
             memcpy( p_dst, p_src, p_pic->p[i].i_visible_pitch );
             /*Fix chroma sign.*/
-            if( p_dec->fmt_in->i_codec == VLC_CODEC_YUV2 ) {
-                for( int y = 0; y < p_pic->p[i].i_visible_pitch; y++ ) {
+            if( p_dec->fmt_in->i_codec == VLC_CODEC_YUV2 ) { //[Y0][U0][Y1][V0]
+                for( int y = 0; y < p_pic->p[i].i_visible_pitch/2; y++ ) {
                     p_dst[2*y + 1] ^= 0x80;
                 }
             }
