@@ -130,6 +130,9 @@ signals:
 protected:
     void releaseResources() override;
 
+    // This method must be called from item's thread, or scene graph thread during synchronization:
+    bool rhiSanityCheck();
+
 private:
     QPointer<const QQuickItem> m_source;
     QRect m_rect;

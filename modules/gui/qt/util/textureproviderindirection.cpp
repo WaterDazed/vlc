@@ -21,6 +21,19 @@
 #include <QRunnable>
 #include <QMutexLocker>
 
+// For RHI sanity check:
+#if __has_include(<QtGui/rhi/qrhi.h>)
+// RHI is semi-public since Qt 6.6, but still requires gui-private.
+#define RHI_PUBLIC
+#define RHI_AVAILABLE
+#include <QtGui/rhi/qrhi.h>
+#elif __has_include(<QtGui/private/qrhi_p.h>) && __has_include(<QtQuick/private/qquickwindow_p.h>)
+#warning "It is recommended to use Qt 6.6 or greater."
+#define RHI_AVAILABLE
+#include <QtGui/private/qrhi_p.h>
+#include <QtQuick/private/qquickwindow_p.h>
+#endif
+
 class TextureProviderCleaner : public QRunnable
 {
 public:
@@ -166,6 +179,41 @@ void TextureProviderIndirection::releaseResources()
     }
 
     QQuickItem::releaseResources();
+}
+
+bool TextureProviderIndirection::rhiSanityCheck()
+{
+#ifdef RHI_AVAILABLE
+    // Sanity check:
+    const auto w = window();
+
+    if (!w)
+        return false;
+
+#ifdef RHI_PUBLIC
+    QRhi* const rhi = w->rhi();
+#else
+    const QQuickWindowPrivate *const privateWindow = QQuickWindowPrivate::get(w);
+    assert(privateWindow);
+    QRhi* const rhi = privateWindow->rhi;
+#endif
+
+    if (!rhi)
+        return false;
+
+#ifdef RHI_PUBLIC
+    QRhiSwapChain* const swapChain = w->swapChain();
+#else
+    QRhiSwapChain* const swapChain = privateWindow->swapchain;
+#endif
+
+    if (!swapChain)
+        return false;
+
+    return true;
+#else
+    return false;
+#endif
 }
 
 void QSGTextureViewProvider::adjustTexture()
