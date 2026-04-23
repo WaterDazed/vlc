@@ -20,6 +20,7 @@
 #include <QSGTextureProvider>
 #include <QRunnable>
 #include <QMutexLocker>
+#include <QJSEngine>
 
 // For RHI sanity check:
 #if __has_include(<QtGui/rhi/qrhi.h>)
@@ -147,6 +148,109 @@ void TextureProviderIndirection::resetTextureSubRect()
 {
     m_rect = {};
     emit rectChanged({});
+}
+
+bool TextureProviderIndirection::updateTexture()
+{
+    return updateTexture(nullptr, std::function<void()>());
+}
+
+bool TextureProviderIndirection::updateTexture(QObject *context, std::function<void()> callback)
+{
+    if (!m_source)
+        return false;
+
+    const auto w = window();
+    if (!w)
+    {
+        qCritical() << "TextureProviderIndirection::updateTexture(): window is not available!";
+        return false;
+    }
+
+    // Note that `beforeSynchronizing()` is signalled when the GUI thread is blocked,
+    // this means we are already in synchronization phase. We don't want to use
+    // `afterSynchronizing()`, because doing so would make `textureToImage()` to
+    // wait advance one frame, which would be unnecessary waiting.
+    connect(w, &QQuickWindow::beforeSynchronizing, this, [weakThis = QPointer(this), callback, context = QPointer(context)]() {
+        if (!weakThis)
+        {
+            qCritical() << "TextureProviderIndirection::updateTexture(): texture provider indirection is no longer available!";
+            return;
+        }
+
+        // This initializes the texture provider, if it does not already exist:
+        const auto tp = weakThis->textureProvider();
+
+        if (!tp)
+        {
+            qCritical() << "TextureProviderIndirection::updateTexture(): failed to initialize or get the texture provider!";
+            return;
+        }
+
+        const auto texture = qobject_cast<QSGDynamicTexture*>(tp->texture());
+
+        if (!texture)
+        {
+            qCritical() << "TextureProviderIndirection::updateTexture(): failed to get `QSGDynamicTexture`!";
+            return;
+        }
+
+        // As the docs note, this should be called during synchronization:
+        texture->updateTexture();
+
+        if (callback)
+        {
+            if (context)
+            {
+                if (context->thread() == QThread::currentThread())
+                    callback();
+                else
+                    QMetaObject::invokeMethod(context, [callback]() { callback(); }, Qt::QueuedConnection);
+            }
+            else
+            {
+                callback();
+            }
+        }
+    }, static_cast<Qt::ConnectionType>(Qt::DirectConnection | Qt::SingleShotConnection));
+
+    return true;
+}
+
+bool TextureProviderIndirection::updateTexture(QObject *context, QJSValue callback)
+{
+    assert(callback.isCallable());
+    return updateTexture(context, [callback, weakContext = QPointer(context)] () mutable {
+        if (Q_LIKELY(weakContext))
+        {
+            // There is no TOCTOU condition risk here, the callback is called when the
+            // gui thread is blocked.
+            const auto engine = qjsEngine(weakContext);
+
+            assert(engine);
+            assert(engine->thread() == weakContext->thread());
+            if (QThread::currentThread() != engine->thread())
+            {
+                // std::move is to make sure that we do not hold reference to callback
+                // in a (scene graph) thread, which is not the engine's thread:
+                QMetaObject::invokeMethod(engine, [callback = std::move(callback)]() {
+                    assert(callback.isCallable());
+                    std::move(callback).call();
+                }, Qt::QueuedConnection);
+            }
+            else
+            {
+                assert(callback.isCallable());
+                std::move(callback).call();
+            }
+        }
+        else
+        {
+            // We do not need to assert, callback is not that important here (unlike ::textureToImage())
+            qWarning() << "TextureProviderIndirection::updateTexture(): context is no longer available, can not call the callback!";
+            // Callback may be destroyed in a thread different than the engine's thread, but there is not much we can do here.
+        }
+    });
 }
 
 void TextureProviderIndirection::invalidateSceneGraph()

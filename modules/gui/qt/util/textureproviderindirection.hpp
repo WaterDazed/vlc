@@ -21,6 +21,7 @@
 #include <QQuickItem>
 #include <QSGTextureProvider>
 #include <QMutex>
+#include <QJSValue>
 
 #include "util/qsgtextureview.hpp"
 
@@ -111,6 +112,17 @@ public:
     QSGTextureProvider *textureProvider() const override;
 
     void resetTextureSubRect();
+
+    // Schedules a `QSGDynamicTexture::updateTexture()` call during synchronization.
+    // This method initializes the texture provider, if it is not already initialized.
+    Q_INVOKABLE bool updateTexture();
+    // If context is provided, callback is queued if context does not live in the rendering thread.
+    // If not provided, callback is called from the rendering thread without queuing. That being
+    // said, when called, GUI thread is guaranteed to be blocked because it is called during
+    // synchronization.
+    bool updateTexture(QObject *context, std::function<void()> callback);
+    // Context must belong to the GUI thread, and the callback must be bound to context's JS engine:
+    Q_INVOKABLE bool updateTexture(QObject *context, QJSValue callback);
 
 public slots:
     void invalidateSceneGraph();
