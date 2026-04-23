@@ -124,6 +124,18 @@ public:
     // Context must belong to the GUI thread, and the callback must be bound to context's JS engine:
     Q_INVOKABLE bool updateTexture(QObject *context, QJSValue callback);
 
+    // These methods implicitly calls `updateTexture()`.
+    // These methods require RHI.
+    // Note that if JS callback is provided, a QQuickItemGrabResult-like object will be provided
+    // instead of the `QImage` itself, since raw `QImage` useless in Qt Quick. To prevent leaks,
+    // once the image provider provides the image, the image's reference count will decrease
+    // (`QImage` is implicitly shared), so you will own the provided image like the C++ callback.
+    // This method must be called from JS engine's thread where the callback is bound to the same
+    // JS engine, and context must belong to the GUI thread:
+    Q_INVOKABLE bool textureToImage(QObject *context, const QJSValue& callback);
+    // This method is thread-safe:
+    bool textureToImage(QObject *context, std::function<void(const QImage& image)> callback);
+
 public slots:
     void invalidateSceneGraph();
 
@@ -146,6 +158,9 @@ protected:
     bool rhiSanityCheck();
 
 private:
+    template<typename T>
+    bool textureToImageImpl(QObject *context, const T& callback);
+
     QPointer<const QQuickItem> m_source;
     QRect m_rect;
 

@@ -35,6 +35,8 @@
 #include <QtQuick/private/qquickwindow_p.h>
 #endif
 
+#include "util/rhireadbacktexturejob.hpp"
+
 class TextureProviderCleaner : public QRunnable
 {
 public:
@@ -253,6 +255,18 @@ bool TextureProviderIndirection::updateTexture(QObject *context, QJSValue callba
     });
 }
 
+bool TextureProviderIndirection::textureToImage(QObject *context, const QJSValue& callback)
+{
+    assert(callback.isCallable());
+    return textureToImageImpl(context, callback);
+}
+
+bool TextureProviderIndirection::textureToImage(QObject *context,
+                                                std::function<void (const QImage &)> callback)
+{
+    return textureToImageImpl(context, callback);
+}
+
 void TextureProviderIndirection::invalidateSceneGraph()
 {
     // https://doc.qt.io/qt-6/qquickitem.html#graphics-resource-handling
@@ -430,4 +444,58 @@ void QSGTextureViewProvider::setVerticalWrapMode(QSGTexture::WrapMode vwrap)
 void QSGTextureViewProvider::requestDetachFromAtlas()
 {
     m_textureView.requestDetachFromAtlas();
+}
+
+template<typename T>
+bool TextureProviderIndirection::textureToImageImpl(QObject *context, const T& callback)
+{
+    bool sanityCheck = false;
+    QPointer<QQuickWindow> weakQuickWindow;
+
+    if (QThread::currentThread() == thread())
+    {
+        sanityCheck = rhiSanityCheck();
+        weakQuickWindow = window();
+    }
+    else
+    {
+        QMetaObject::invokeMethod(this, [this, &sanityCheck, &weakQuickWindow]() {
+            sanityCheck = rhiSanityCheck();
+            weakQuickWindow = window();
+        }, Qt::BlockingQueuedConnection);
+    }
+
+    if (!sanityCheck)
+    {
+        qDebug() << "TextureProviderIndirection::textureToImage(): rhi is not available.";
+        return false;
+    }
+
+    assert(weakQuickWindow); // `rhiSanityCheck()` would have caught it, this is not aggressive assertion.
+
+    // We have to create this here, and not in the callback, because it needs to be created
+    // in js engine's thread (when the callback is `QJSValue` type).
+    const auto imageRenderJob = new RhiReadBackTextureJob(weakQuickWindow, this, context, callback);
+
+    // Context is not provided so that callback is not queued. It is assumed that `QQuickWindow::scheduleRenderJob()`
+    // can be called from the rendering thread, at least during synchronization phase (GUI thread is blocked).
+    const bool ret = updateTexture(nullptr, [weakQuickWindow, imageRenderJob]() {        
+        // There is no TOCTOU here, because (as noted) this callback is only called during synchronization,
+        // when GUI thread is blocked.
+        if (Q_UNLIKELY(!weakQuickWindow))
+        {
+            qCritical() << "TextureProviderIndirection::textureToImage(): window is no longer available!";
+            return;
+        }
+
+        // This will be the same frame because this stage comes after during synchronization, this is good,
+        // because it means less waiting (no need to wait frame advance). Also note that the window takes
+        // the ownership:
+        weakQuickWindow->scheduleRenderJob(imageRenderJob, QQuickWindow::AfterSynchronizingStage);
+    });
+
+    if (Q_UNLIKELY(!ret))
+        delete imageRenderJob;
+
+    return ret;
 }
