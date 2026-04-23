@@ -506,6 +506,8 @@ qt_plugin_sources = files(
     'util/sgmanipulator.hpp',
     'util/memoryimageprovider.cpp',
     'util/memoryimageprovider.hpp',
+    'util/rhireadbacktexturejob.cpp',
+    'util/rhireadbacktexturejob.hpp',
     'widgets/native/animators.cpp',
     'widgets/native/animators.hpp',
     'widgets/native/customwidgets.cpp',

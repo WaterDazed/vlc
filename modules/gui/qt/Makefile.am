@@ -364,6 +364,8 @@ libqt_plugin_la_SOURCES = \
 	util/sgmanipulator.hpp \
 	util/memoryimageprovider.cpp \
 	util/memoryimageprovider.hpp \
+	util/rhireadbacktexturejob.cpp \
+	util/rhireadbacktexturejob.hpp \
 	widgets/native/animators.cpp \
 	widgets/native/animators.hpp \
 	widgets/native/customwidgets.cpp widgets/native/customwidgets.hpp \
