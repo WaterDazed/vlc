@@ -2029,6 +2029,8 @@ static int Ogg_FindLogicalStreams( demux_t *p_demux )
                         /* FIXME: no clue where it's from */
                         if( st->time_unit <= 0 )
                             st->time_unit = 400000;
+                        if( st->samples_per_unit > INT64_MAX / OGGDS_RESOLUTION )
+                            goto skipfail;
                         unsigned num, den;
                         vlc_ureduce( &num, &den,
                                      st->samples_per_unit * OGGDS_RESOLUTION,
@@ -2088,6 +2090,9 @@ static int Ogg_FindLogicalStreams( demux_t *p_demux )
                         i_format_tag = strtol(p_buffer,NULL,16);
                         p_stream->fmt.audio.i_channels = st->sh.audio.channels;
                         fill_channels_info(&p_stream->fmt.audio);
+
+                        if( st->samples_per_unit > INT64_MAX / OGGDS_RESOLUTION )
+                            goto skipfail;
 
                         unsigned num,den;
                         vlc_ureduce( &num, &den,
@@ -2176,12 +2181,12 @@ static int Ogg_FindLogicalStreams( demux_t *p_demux )
                 }
                 else
                 {
-                    Ogg_LogicalStreamDelete( p_demux, p_stream );
+                    msg_Dbg( p_demux, "stream %d is of unknown type",
+                             p_ogg->i_streams - 1 );
+skipfail:           Ogg_LogicalStreamDelete( p_demux, p_stream );
                     p_stream = NULL;
                     TAB_ERASE( p_ogg->i_streams, p_ogg->pp_stream,
                                p_ogg->i_streams - 1 );
-                    msg_Dbg( p_demux, "stream %d is of unknown type",
-                             p_ogg->i_streams );
                 }
 
                 /* we'll need to get all headers */
@@ -3204,14 +3209,14 @@ static void Ogg_ReadAnnodexHeader( demux_t *p_demux,
     else if( p_oggpacket->bytes >= 42 &&
              !memcmp( p_oggpacket->packet, "AnxData", 7 ) )
     {
-        uint64_t granule_rate_numerator;
-        uint64_t granule_rate_denominator;
         char content_type_string[1024];
 
         /* Read in Annodex header fields */
-
-        granule_rate_numerator = GetQWLE( &p_oggpacket->packet[8] );
-        granule_rate_denominator = GetQWLE( &p_oggpacket->packet[16] );
+        unsigned num, den;
+        vlc_ureduce( &num, &den,
+                     GetQWLE( &p_oggpacket->packet[8] ), // granule_rate_numerator
+                     GetQWLE( &p_oggpacket->packet[16] ), // granule_rate_denominator
+                     0 );
         p_stream->i_secondary_header_packets =
             GetDWLE( &p_oggpacket->packet[24] );
 
@@ -3227,12 +3232,12 @@ static void Ogg_ReadAnnodexHeader( demux_t *p_demux,
                         content_type_string );
         }
 
-        msg_Dbg( p_demux, "AnxData packet info: %"PRId64" / %"PRId64", %d, ``%s''",
-                 granule_rate_numerator, granule_rate_denominator,
+        msg_Dbg( p_demux, "AnxData packet info: %u / %u, %d, ``%s''",
+                 num, den,
                  p_stream->i_secondary_header_packets, content_type_string );
 
-        if( granule_rate_numerator && granule_rate_denominator )
-            date_Init( &p_stream->dts, granule_rate_numerator, granule_rate_denominator );
+        if( num && den )
+            date_Init( &p_stream->dts, num, den );
 
         /* What type of file do we have?
          * strcmp is safe to use here because we've extracted
@@ -3317,6 +3322,10 @@ unsigned const char * Read7BitsVariableLE( unsigned const char *p_begin,
     int i_shift = 0;
     int64_t i_read = 0;
     *pi_value = 0;
+
+    /* limit read to 63 bits */
+    if( p_end - p_begin > 9 )
+        p_end = p_begin + 9;
 
     while ( p_begin < p_end )
     {
@@ -3560,7 +3569,7 @@ static bool Ogg_ReadDiracHeader( logical_stream_t *p_stream,
         }
     }
 
-    if( !u_n || !u_d )
+    if( !u_n || u_n > UINT32_MAX/2 || !u_d )
         return false;
 
     /*
