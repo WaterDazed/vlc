@@ -215,6 +215,12 @@ Item {
             }
     }
 
+    TextureProviderIndirection {
+        id: textureProviderIndirection
+
+        source: dragItem
+    }
+
     function _startNativeDrag() {
         if (!_pendingNativeDragStart)
             return
@@ -225,7 +231,7 @@ Item {
 
         visible = true
 
-        const s = dragItem.grabToImage(function (result) {
+        const cb = function(result) {
             visible = false
 
             if (requestId !== dragItem._grabImageRequest
@@ -233,8 +239,16 @@ Item {
                 return
 
             dragItem.Drag.imageSource = result.url
+            if (dragItem.Drag.imageSourceSize) // Qt 6.8
+                dragItem.Drag.imageSourceSize = Qt.size(0,0)
             dragItem.Drag.startDrag()
-        })
+        }
+
+        let s = textureProviderIndirection.textureToImage(dragItem, cb)
+        if (!s) {
+            console.debug("DragItem: TextureProviderIndirection::textureToImage() failed, using `Item::grabToImage()` instead!")
+            s = dragItem.grabToImage(cb)
+        }
 
         if (!s) {
             // reject all pending requests
