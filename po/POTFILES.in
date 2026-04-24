@@ -1326,6 +1326,7 @@ modules/video_filter/psychedelic.c
 modules/video_filter/puzzle/puzzle.c
 modules/video_filter/ripple.c
 modules/video_filter/rotate.c
+modules/video_filter/sam3.cpp
 modules/video_filter/scale.c
 modules/video_filter/scene.c
 modules/video_filter/sepia.c
