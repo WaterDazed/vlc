@@ -1097,6 +1097,24 @@ EOF
         ])
     ])
 ])
+dnl Select objcopy compatible with the linker's relocatable output format.
+dnl GNU objcopy cannot read LLVM/LLD relocatable output, so when the linker
+dnl is LLD we must use llvm-objcopy. On GNU ld, prefer GNU objcopy (already
+dnl found above) but llvm-objcopy also works.
+AS_IF([test "${have_partial_linking}" = "yes"], [
+    AC_CACHE_CHECK([whether the linker is LLD],
+        [vlc_cv_ld_is_lld], [
+        AS_IF([${CC} ${LDFLAGS} -Wl,--version 2>&1 | grep -q "^LLD"],
+            [vlc_cv_ld_is_lld=yes],
+            [vlc_cv_ld_is_lld=no])
+    ])
+    AS_IF([test "${vlc_cv_ld_is_lld}" = "yes"], [
+        AC_CHECK_TOOL(LLVM_OBJCOPY, llvm-objcopy, [])
+        AS_IF([test -n "$LLVM_OBJCOPY"],
+            [OBJCOPY="$LLVM_OBJCOPY"],
+            [AC_MSG_WARN([LLD detected but llvm-objcopy not found; falling back to $OBJCOPY which may not handle LLD output.])])
+    ])
+])
 AC_SUBST([FORCE_GROUP_ALLOCATION_LDFLAGS])
 
 AC_SUBST([LIBDL])
