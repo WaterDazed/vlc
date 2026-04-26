@@ -315,9 +315,14 @@ static int Control(stream_t *access, int query, va_list args)
 
     switch (query) {
     case STREAM_CAN_SEEK:
-    case STREAM_CAN_FASTSEEK: /* FIXME how to do that ? */
         b = va_arg(args, bool *);
         *b = sys->context->seekable;
+        return VLC_SUCCESS;
+
+    case STREAM_CAN_FASTSEEK:
+        b = va_arg(args, bool *);
+        *b = sys->context->seekable &&
+             !strcmp(access->psz_name, "file");
         return VLC_SUCCESS;
     case STREAM_CAN_PAUSE:
         b = va_arg(args, bool *);
