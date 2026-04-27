@@ -38,7 +38,7 @@ private:
     QWindow*       m_interfaceWindow = nullptr;
 
     QQmlComponent* m_component = nullptr;
-    QQuickItem* m_rootItem = nullptr;
+    QPointer<QQuickItem> m_rootItem;
 
     QPointer<QQmlEngine> m_engineBound;
 };

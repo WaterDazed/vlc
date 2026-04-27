@@ -122,6 +122,10 @@ MainUI::MainUI(qt_intf_t *p_intf, MainCtx *mainCtx, QWindow* interfaceWindow,  Q
 
 MainUI::~MainUI()
 {
+    // Make sure root item is not leaked. The ownership is transferred to `QQuickView`, or the
+    // compositor:
+    assert(!m_rootItem);
+
     if (!m_engineBound)
     {
         // If the global engine is dead, we assume no other QML engine exists hence can clear the
