@@ -1,6 +1,6 @@
 # winpthreads, dxvahd, winrt_headers, dcomp
 
-MINGW64_VERSION := 13.0.0
+MINGW64_VERSION := 14.0.0
 MINGW64_URL := $(SF)/mingw-w64/mingw-w64/mingw-w64-release/mingw-w64-v$(MINGW64_VERSION).tar.bz2
 # MINGW64_HASH=2c35e8ff0d33916bd490e8932cba2049cd1af3d0
 # MINGW64_GITURL := https://git.code.sf.net/p/mingw-w64/mingw-w64
@@ -35,7 +35,7 @@ ifeq ($(call mingw_at_least, 12), true)
 PKGS_FOUND += mingw11-fixes d3d12
 endif # MINGW 12
 ifeq ($(call mingw_at_least, 13), true)
-PKGS_FOUND += mingw12-fixes dxvahd
+PKGS_FOUND += mingw12-fixes dxvahd alloweduwp
 ifeq ($(ARCH),i386)
 PKGS_FOUND += dxva_x86
 endif
@@ -63,7 +63,6 @@ $(TARBALLS)/mingw-w64-v$(MINGW64_VERSION).tar.bz2:
 mingw64: mingw-w64-v$(MINGW64_VERSION).tar.bz2 .sum-mingw64
 # mingw64: mingw-w64-$(MINGW64_HASH).tar.xz .sum-mingw64
 	$(UNPACK)
-	$(APPLY) $(SRC)/mingw64/0001-winnt-define-__MINGW_CXX1-1-4-_CONSTEXPR-found-in-_m.patch
 	$(MOVE)
 
 .mingw64: mingw64

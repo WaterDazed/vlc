@@ -160,10 +160,12 @@ subdir('buildsystem/simd_checks')
 #   named `name_dep`
 #
 
-# zlib library
+# zlib library: meson has specific handling for the library and would
+# fallback to pkgconfig for the contrib
 z_dep = dependency('zlib', required: false)
 if z_dep.found()
     cdata.set('HAVE_ZLIB', 1)
+    cdata.set('HAVE_ZLIB_H', 1)
 endif
 
 # Math library
@@ -271,7 +273,6 @@ check_c_headers = [
     ['valgrind/valgrind.h'],
     ['X11/Xlib.h'],
     ['xlocale.h'],
-    ['zlib.h', { 'args' : [contrib_inc_args] }],
     ['wordexp.h'],
     ['dxgidebug.h'],
     ['d3dx9effect.h'],
@@ -331,12 +332,23 @@ if host_system == 'darwin'
     have_tvos = cc.get_define('TARGET_OS_TV',
         prefix: '#include <TargetConditionals.h>') == '1'
 
-    # If none of the above, assume compiling for macOS
-    have_osx = not have_ios and not have_tvos
+    # Check if compiling for watchOS
+    have_watchos = cc.get_define('TARGET_OS_WATCH',
+        prefix: '#include <TargetConditionals.h>') == '1'
+
+    # Check if compiling for visionOS
+    have_xros = cc.get_define('TARGET_OS_VISION',
+        prefix: '#include <TargetConditionals.h>') == '1'
+
+    # Check if compiling for macOS
+    have_osx = cc.get_define('TARGET_OS_OSX',
+        prefix: '#include <TargetConditionals.h>') == '1'
 
 else
     have_ios = false
     have_tvos = false
+    have_watchos = false
+    have_xros = false
     have_osx = false
 endif
 
@@ -1031,6 +1043,11 @@ if get_option('stream_outputs')
     cdata.set('ENABLE_SOUT', 1)
 endif
 
+# Enable UPnP server
+if not get_option('upnp_server').disabled()
+    cdata.set('ENABLE_UPNP_SERVER', 1)
+endif
+
 # Enable VLM
 if get_option('videolan_manager')
     if not get_option('stream_outputs')
@@ -1092,6 +1109,8 @@ endif
 flex = find_program('flex', required: false)
 bison = find_program('bison', required: false)
 
+bison_gen = disabler()
+flex_gen = disabler()
 if flex.found() and bison.found()
     bison_gen = generator(bison,
         output: ['@BASENAME@.c', '@BASENAME@.h'],

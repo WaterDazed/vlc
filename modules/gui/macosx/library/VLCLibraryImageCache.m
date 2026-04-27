@@ -1,7 +1,7 @@
 /*****************************************************************************
 * VLCLibraryImageCache.m: MacOS X interface module
 *****************************************************************************
-* Copyright (C) 2020 VLC authors and VideoLAN
+* Copyright (C) 2020-2026 VLC authors and VideoLAN
 *
 * Authors: Felix Paul Kühne <fkuehne # videolan -dot- org>
 *
@@ -26,12 +26,17 @@
 
 #import "library/VLCInputItem.h"
 #import "library/VLCLibraryDataTypes.h"
+#import "library/VLCLibraryModel.h"
 
 #import "main/VLCMain.h"
 
 #import "playqueue/VLCPlayQueueItem.h"
 
-NSUInteger kVLCMaximumLibraryImageCacheSize = 50;
+#import <ImageIO/ImageIO.h>
+
+NSUInteger kVLCMaximumLibraryImageCacheSize = 500;
+/* 256 MB cost limit based on estimated pixel data size per image */
+static const NSUInteger kVLCLibraryImageCacheCostLimit = 256 * 1024 * 1024;
 uint32_t kVLCDesiredThumbnailWidth = 512;
 uint32_t kVLCDesiredThumbnailHeight = 512;
 float kVLCDefaultThumbnailPosition = .15;
@@ -41,6 +46,7 @@ const NSUInteger kVLCCompositeImageDefaultCompositedGridItemCount = 4;
 @interface VLCLibraryImageCache()
 {
     NSCache *_imageCache;
+    NSImage *_noArtImage;
     vlc_medialibrary_t *_p_libraryInstance;
 }
 
@@ -48,14 +54,78 @@ const NSUInteger kVLCCompositeImageDefaultCompositedGridItemCount = 4;
 
 @implementation VLCLibraryImageCache
 
++ (NSImage *)downsampledImageFromURL:(NSURL *)url maxPixelSize:(uint32_t)maxPixelSize
+{
+    CGImageSourceRef const imageSource = CGImageSourceCreateWithURL((__bridge CFURLRef)url, NULL);
+    if (!imageSource) {
+        return nil;
+    }
+
+    NSDictionary * const downsampleOptions = @{
+        (NSString *)kCGImageSourceCreateThumbnailFromImageAlways : @YES,
+        (NSString *)kCGImageSourceCreateThumbnailWithTransform : @YES,
+        (NSString *)kCGImageSourceThumbnailMaxPixelSize : @(maxPixelSize),
+        (NSString *)kCGImageSourceShouldCacheImmediately : @YES,
+    };
+
+    CGImageRef const downsampledImage =
+        CGImageSourceCreateThumbnailAtIndex(imageSource, 0, (__bridge CFDictionaryRef)downsampleOptions);
+    CFRelease(imageSource);
+
+    if (!downsampledImage) {
+        return nil;
+    }
+
+    NSImage * const image = [[NSImage alloc] initWithCGImage:downsampledImage
+                                                        size:NSZeroSize];
+    CGImageRelease(downsampledImage);
+    return image;
+}
+
++ (NSUInteger)costForImage:(NSImage *)image
+{
+    NSBitmapImageRep *bitmapRep = nil;
+    for (NSImageRep *rep in image.representations) {
+        if ([rep isKindOfClass:[NSBitmapImageRep class]]) {
+            bitmapRep = (NSBitmapImageRep *)rep;
+            break;
+        }
+    }
+    if (bitmapRep) {
+        return bitmapRep.pixelsWide * bitmapRep.pixelsHigh * bitmapRep.bitsPerPixel / 8;
+    }
+    return (NSUInteger)(image.size.width * image.size.height * 4);
+}
+
 - (instancetype)init
 {
     self = [super init];
     if (self) {
         _imageCache = [[NSCache alloc] init];
         _imageCache.countLimit = kVLCMaximumLibraryImageCacheSize;
+        _imageCache.totalCostLimit = kVLCLibraryImageCacheCostLimit;
+        _noArtImage = NSImage.VLCNoArtImage;
+
+        NSNotificationCenter * const notificationCenter = [NSNotificationCenter defaultCenter];
+        [notificationCenter addObserver:self
+                               selector:@selector(mediaItemThumbnailGenerated:)
+                                   name:VLCLibraryModelMediaItemThumbnailGenerated
+                                 object:nil];
+        [notificationCenter addObserver:self
+                               selector:@selector(mediaItemUpdated:)
+                                   name:VLCLibraryModelAudioMediaItemUpdated
+                                 object:nil];
+        [notificationCenter addObserver:self
+                               selector:@selector(mediaItemUpdated:)
+                                   name:VLCLibraryModelVideoMediaItemUpdated
+                                 object:nil];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 + (instancetype)sharedImageCache
@@ -68,42 +138,61 @@ const NSUInteger kVLCCompositeImageDefaultCompositedGridItemCount = 4;
     return sharedImageCache;
 }
 
-+ (NSImage *)thumbnailForLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
+- (void)mediaItemThumbnailGenerated:(NSNotification *)aNotification
 {
-    return [[VLCLibraryImageCache sharedImageCache] imageForLibraryItem:libraryItem];
-}
-
-- (NSImage *)imageForLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
-{
-    NSImage *cachedImage = [_imageCache objectForKey:libraryItem.smallArtworkMRL];
-    if (cachedImage) {
-        return cachedImage;
+    VLCMediaLibraryMediaItem * const mediaItem = aNotification.object;
+    NSString * const artworkMRL = mediaItem.smallArtworkMRL;
+    if (mediaItem == nil || artworkMRL == nil) {
+        return;
     }
-    return [self smallThumbnailForLibraryItem:libraryItem];
+    [_imageCache removeObjectForKey:artworkMRL];
 }
 
-- (NSImage *)smallThumbnailForLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
+- (void)mediaItemUpdated:(NSNotification *)aNotification
 {
-    NSImage *image;
-    NSString * const artworkMRL = libraryItem.smallArtworkMRL;
+    VLCMediaLibraryMediaItem * const mediaItem = aNotification.object;
+    NSString * const artworkMRL = mediaItem.smallArtworkMRL;
+    if (mediaItem == nil || artworkMRL == nil) {
+        return;
+    }
+    [_imageCache removeObjectForKey:artworkMRL];
+}
 
-    if (libraryItem.smallArtworkGenerated) {
-        image = [[NSImage alloc] initWithContentsOfURL:[NSURL URLWithString:artworkMRL]];
-    } else if ([libraryItem isKindOfClass:[VLCMediaLibraryMediaItem class]]) {
-        VLCMediaLibraryMediaItem * const mediaItem = (VLCMediaLibraryMediaItem*)libraryItem;
-        
-        if (mediaItem.mediaType != VLC_ML_MEDIA_TYPE_AUDIO) {
-            [self generateThumbnailForMediaItem:mediaItem.libraryID];
+- (void)imageForLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
+             withCompletion:(void(^)(const NSImage *))completionHandler
+{
+    NSString * const artworkMRL = libraryItem.smallArtworkMRL;
+    if (artworkMRL) {
+        NSImage * const cachedImage = [_imageCache objectForKey:artworkMRL];
+        if (cachedImage) {
+            completionHandler(cachedImage);
+            return;
         }
     }
 
-    if (image) {
-        [_imageCache setObject:image forKey:artworkMRL];
-    } else { // If nothing so far worked, then fall back on default image
-        image = [NSImage imageNamed:@"noart.png"];
+    if (libraryItem.smallArtworkGenerated && artworkMRL) {
+        NSURL * const artworkURL = [NSURL URLWithString:artworkMRL];
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            NSImage * const image =
+                [VLCLibraryImageCache downsampledImageFromURL:artworkURL
+                                                maxPixelSize:kVLCDesiredThumbnailWidth];
+            if (image) {
+                const NSUInteger cost = [VLCLibraryImageCache costForImage:image];
+                [self->_imageCache setObject:image forKey:artworkMRL cost:cost];
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completionHandler(image ?: self->_noArtImage);
+            });
+        });
+    } else if ([libraryItem isKindOfClass:[VLCMediaLibraryMediaItem class]]) {
+        VLCMediaLibraryMediaItem * const mediaItem = (VLCMediaLibraryMediaItem *)libraryItem;
+        if (mediaItem.mediaType != VLC_ML_MEDIA_TYPE_AUDIO) {
+            [self generateThumbnailForMediaItem:mediaItem.libraryID];
+        }
+        completionHandler(_noArtImage);
+    } else {
+        completionHandler(_noArtImage);
     }
-
-    return image;
 }
 
 - (void)generateThumbnailForMediaItem:(int64_t)mediaID
@@ -136,34 +225,37 @@ const NSUInteger kVLCCompositeImageDefaultCompositedGridItemCount = 4;
     [self generateImageForInputItem:inputItem withCompletion:completionHandler];
 }
 
-- (void)generateImageForInputItem:(VLCInputItem *)inputItem 
+- (void)generateImageForInputItem:(VLCInputItem *)inputItem
                    withCompletion:(void(^)(const NSImage *))completionHandler
 {
     NSURL * const artworkURL = inputItem.artworkURL;
     const NSSize imageSize = NSMakeSize(kVLCDesiredThumbnailWidth, kVLCDesiredThumbnailHeight);
-    
+
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        NSImage * image = [[NSImage alloc] initWithContentsOfURL:artworkURL];
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (image) {
-                image.size = imageSize;
-                [self->_imageCache setObject:image forKey:inputItem.MRL];
+        NSImage * const image = artworkURL ?
+            [VLCLibraryImageCache downsampledImageFromURL:artworkURL
+                                            maxPixelSize:kVLCDesiredThumbnailWidth] : nil;
+
+        if (image) {
+            const NSUInteger cost = [VLCLibraryImageCache costForImage:image];
+            [self->_imageCache setObject:image forKey:inputItem.MRL cost:cost];
+            dispatch_async(dispatch_get_main_queue(), ^{
                 completionHandler(image);
+            });
+            return;
+        }
+
+        [inputItem thumbnailWithSize:imageSize completionHandler:^(NSImage * const thumbnail) {
+            if (thumbnail) {
+                const NSUInteger cost = [VLCLibraryImageCache costForImage:thumbnail];
+                [self->_imageCache setObject:thumbnail forKey:inputItem.MRL cost:cost];
             } else {
-                [inputItem thumbnailWithSize:imageSize completionHandler:^(NSImage * const image) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        if (image) {
-                            [self->_imageCache setObject:image forKey:inputItem.MRL];
-                            completionHandler(image);
-                        } else {
-                            NSLog(@"Failed to generate thumbnail for input item %@", inputItem.MRL);
-                            completionHandler([NSImage imageNamed:@"noart.png"]);
-                        }
-                    });
-                }];
+                NSLog(@"Failed to generate thumbnail for input item %@", inputItem.MRL);
             }
-        });
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completionHandler(thumbnail ?: self->_noArtImage);
+            });
+        }];
     });
 }
 
@@ -177,47 +269,55 @@ const NSUInteger kVLCCompositeImageDefaultCompositedGridItemCount = 4;
 + (void)thumbnailForLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
                  withCompletion:(void(^)(const NSImage *))completionHandler
 {
+    VLCLibraryImageCache * const cache = [VLCLibraryImageCache sharedImageCache];
+
     if (![libraryItem isKindOfClass:VLCMediaLibraryAlbum.class] &&
         ![libraryItem isKindOfClass:VLCMediaLibraryMediaItem.class]) {
 
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
-            NSMutableSet<NSImage *> * const itemImages = NSMutableSet.set;
+            NSMutableArray<NSImage *> * const itemImages = [NSMutableArray array];
+            dispatch_group_t const group = dispatch_group_create();
 
             [libraryItem iterateMediaItemsWithBlock:^(VLCMediaLibraryMediaItem * const item) {
-                NSImage * const itemImage = [VLCLibraryImageCache thumbnailForLibraryItem:item];
-                if (itemImage == nil || [itemImages containsObject:itemImage]) {
-                    return;
-                }
-                [itemImages addObject:itemImage];
+                dispatch_group_enter(group);
+                [cache imageForLibraryItem:item withCompletion:^(const NSImage * thumbnail) {
+                    NSImage * const mutableRef = (NSImage *)thumbnail;
+                    @synchronized (itemImages) {
+                        if (mutableRef && ![mutableRef isEqual:cache->_noArtImage]) {
+                            [itemImages addObject:mutableRef];
+                        }
+                    }
+                    dispatch_group_leave(group);
+                }];
             }];
 
+            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+
+            NSArray<NSImage *> *uniqueImages;
+            @synchronized (itemImages) {
+                uniqueImages = [NSOrderedSet orderedSetWithArray:itemImages].array;
+            }
+
+            if (uniqueImages.count == 0) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completionHandler(cache->_noArtImage);
+                });
+                return;
+            }
+
             const NSSize size = NSMakeSize(kVLCDesiredThumbnailWidth, kVLCDesiredThumbnailHeight);
-            NSArray<NSImage *> * const itemImagesArray = itemImages.allObjects;
             NSArray<NSValue *> * const frames =
-                [NSImage framesForCompositeImageSquareGridWithImages:itemImagesArray size:size gridItemCount:kVLCCompositeImageDefaultCompositedGridItemCount];
+                [NSImage framesForCompositeImageSquareGridWithImages:uniqueImages size:size gridItemCount:kVLCCompositeImageDefaultCompositedGridItemCount];
             NSImage * const compositeImage =
-                [NSImage compositeImageWithImages:itemImagesArray frames:frames size:size];
+                [NSImage compositeImageWithImages:uniqueImages frames:frames size:size];
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 completionHandler(compositeImage);
             });
         });
     } else {
-        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
-            NSImage * const image = [VLCLibraryImageCache thumbnailForLibraryItem:libraryItem];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                completionHandler(image);
-            });
-        });
+        [cache imageForLibraryItem:libraryItem withCompletion:completionHandler];
     }
-}
-
-+ (NSImage *)thumbnailAtMrl:(NSString *)smallArtworkMRL
-{
-    NSImage * const cachedImage = 
-        [VLCLibraryImageCache.sharedImageCache->_imageCache objectForKey:smallArtworkMRL];
-    return cachedImage ?
-        cachedImage : [[NSImage alloc] initWithContentsOfURL:[NSURL URLWithString:smallArtworkMRL]];
 }
 
 @end

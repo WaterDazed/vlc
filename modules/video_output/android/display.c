@@ -144,6 +144,16 @@ static void subpicture_SetDisplaySize(vout_display_t *vd, unsigned width, unsign
     sub->place_changed = true;
 }
 
+static int subpicture_PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
+{
+    struct sys *sys = vd->sys;
+    struct subpicture *sub = &sys->sub;
+    VLC_UNUSED(place);
+
+    sub->place_changed = true;
+    return VLC_SUCCESS;
+}
+
 static int subpicture_Control(vout_display_t *vd, int query)
 {
     struct sys *sys = vd->sys;
@@ -151,15 +161,6 @@ static int subpicture_Control(vout_display_t *vd, int query)
 
     switch (query)
     {
-    case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-    {
-        sub->place_changed = true;
-        return VLC_SUCCESS;
-    }
-
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-    case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        return VLC_SUCCESS;
     default:
         break;
     }
@@ -588,39 +589,35 @@ static int SetDisplaySize(vout_display_t *vd, unsigned width, unsigned height)
     return VLC_SUCCESS;
 }
 
-static int Control(vout_display_t *vd, int query)
+static int PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
 {
     struct sys *sys = vd->sys;
+    msg_Dbg(vd, "change source place: %dx%d @ %ux%u",
+            place->x, place->y,
+            place->width, place->height);
 
     if (sys->sub.window != NULL)
-        subpicture_Control(vd, query);
+        subpicture_PlacementChanged(vd, place);
 
-    switch (query) {
-    case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-    case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-    {
-        if (query == VOUT_DISPLAY_CHANGE_SOURCE_PLACE)
-            msg_Dbg(vd, "change source place: %dx%d @ %ux%u",
-                    vd->place->x, vd->place->y,
-                    vd->place->width, vd->place->height);
-        else
-            msg_Dbg(vd, "change source crop: %ux%u @ %ux%u aspect: %u/%u",
-                    vd->source->i_x_offset, vd->source->i_y_offset,
-                    vd->source->i_visible_width,
-                    vd->source->i_visible_height,
-                    vd->source->i_sar_num,
-                    vd->source->i_sar_den);
-        if (sys->asc.sc != NULL)
-            UpdateASCGeometry(vd);
-        else
-            SetVideoLayout(vd);
-        return VLC_SUCCESS;
-    }
-    default:
-        msg_Warn(vd, "Unknown request in android-display: %d", query);
-        return VLC_EGENERIC;
-    }
+    if (sys->asc.sc != NULL)
+        UpdateASCGeometry(vd);
+    else
+        SetVideoLayout(vd);
+    return VLC_SUCCESS;
+}
+
+static int AspectChanged(vout_display_t *vd, const video_format_t *source)
+{
+    struct sys *sys = vd->sys;
+    msg_Dbg(vd, "change source crop: %ux%u @ %ux%u aspect: %u/%u",
+            source->i_x_offset, source->i_y_offset,
+            source->i_visible_width, source->i_visible_height,
+            source->i_sar_num, source->i_sar_den);
+    if (sys->asc.sc != NULL)
+        UpdateASCGeometry(vd);
+    else
+        SetVideoLayout(vd);
+    return VLC_SUCCESS;
 }
 
 static void Close(vout_display_t *vd)
@@ -769,7 +766,9 @@ static int Open(vout_display_t *vd,
             .prepare = PrepareWithASC,
             .display = DisplayWithASC,
             .set_display_size = SetDisplaySize,
-            .control = Control,
+            .video_place_changed = PlacementChanged,
+            .set_source_aspect = AspectChanged,
+            .set_source_crop = AspectChanged,
         };
         vd->ops = &ops;
     }
@@ -780,7 +779,9 @@ static int Open(vout_display_t *vd,
             .prepare = Prepare,
             .display = Display,
             .set_display_size = SetDisplaySize,
-            .control = Control,
+            .video_place_changed = PlacementChanged,
+            .set_source_aspect = AspectChanged,
+            .set_source_crop = AspectChanged,
         };
         vd->ops = &ops;
     }

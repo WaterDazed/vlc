@@ -25,6 +25,7 @@
 
 #include <vlc_common.h>
 
+#include <vlc_block.h>
 #include <vlc_httpd.h>
 #include <vlc_list.h>
 #include <vlc_tick.h>
@@ -86,10 +87,16 @@ int hls_segment_queue_NewSegment(hls_segment_queue_t *queue,
 {
     hls_segment_t *segment = malloc(sizeof(*segment));
     if (unlikely(segment == NULL))
-        return VLC_ENOMEM;
+    {
+        block_ChainRelease(content);
+        return -ENOMEM;
+    }
 
     segment->id = queue->total_segments;
     segment->length = length;
+    segment->storage = NULL;
+    segment->http_url = NULL;
+    int ret = -ENOMEM;
 
     if (asprintf(&segment->url,
                  "%s/playlist-%u-%u.%s",
@@ -99,6 +106,7 @@ int hls_segment_queue_NewSegment(hls_segment_queue_t *queue,
                  queue->file_extension) == -1)
     {
         segment->url = NULL;
+        block_ChainRelease(content);
         goto nomem;
     }
 
@@ -106,10 +114,10 @@ int hls_segment_queue_NewSegment(hls_segment_queue_t *queue,
         .name = segment->url + strlen(queue->hls_config->base_url) + 1,
         .mime = "video/MP2T",
     };
-    segment->storage =
-        hls_storage_FromBlocks(content, &storage_conf, queue->hls_config);
-    if (unlikely(segment->storage == NULL))
-        goto nomem;
+    ret = hls_storage_FromBlocks(
+        content, &storage_conf, queue->hls_config, &segment->storage);
+    if (unlikely(ret != 0))
+        goto err;
 
     if (queue->httpd_ref != NULL)
     {
@@ -123,8 +131,6 @@ int hls_segment_queue_NewSegment(hls_segment_queue_t *queue,
                        queue->httpd_callback,
                        (httpd_callback_sys_t *)segment->storage);
     }
-    else
-        segment->http_url = NULL;
 
     if (hls_segment_queue_IsAtMaxCapacity(queue))
     {
@@ -138,9 +144,11 @@ int hls_segment_queue_NewSegment(hls_segment_queue_t *queue,
     vlc_list_append(&segment->priv_node, &queue->segments);
     return VLC_SUCCESS;
 nomem:
+    ret = -ENOMEM;
+err:
     if (segment->storage != NULL)
         hls_storage_Destroy(segment->storage);
     free(segment->url);
     free(segment);
-    return VLC_ENOMEM;
+    return ret;
 }

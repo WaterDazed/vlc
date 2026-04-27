@@ -37,7 +37,10 @@ public:
         PLAYLIST_NAME,
         PLAYLIST_THUMBNAIL,
         PLAYLIST_DURATION,
-        PLAYLIST_COUNT
+        PLAYLIST_COUNT,
+        PLAYLIST_NB_AUDIO,
+        PLAYLIST_NB_VIDEO,
+        PLAYLIST_NB_UNKNOWN
     };
     Q_ENUM(Roles)
 

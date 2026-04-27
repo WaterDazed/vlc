@@ -3,9 +3,6 @@
 SCRIPTDIR=$(dirname "$0")
 . "$SCRIPTDIR/env.build.sh" "none"
 
-CFLAGS=${CFLAGS}
-LDFLAGS=${LDFLAGS}
-
 OPTIONS="
         --prefix=/
         --enable-macosx
@@ -18,7 +15,6 @@ OPTIONS="
         --enable-twolame
         --enable-libass
         --enable-macosx-avfoundation
-        --disable-skins2
         --disable-xcb
         --disable-caca
         --disable-pulse
@@ -26,9 +22,6 @@ OPTIONS="
         --with-macosx-version-min=$MINIMAL_OSX_VERSION
         --without-x
 "
-
-export CFLAGS
-export LDFLAGS
 
 vlcSetSymbolEnvironment
 

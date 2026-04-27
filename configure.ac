@@ -9,6 +9,23 @@ VERSION_REVISION=0
 VERSION_EXTRA=0
 VERSION_DEV=dev
 
+VERSION_DATE=$(
+    VERSION_PATTERN='^v?([[0-9]]+\.?)+(-[[0-9]]+)?$'
+    VERSION_TAG=$(git tag --points-at HEAD --sort=-version:refname 2>/dev/null | grep -E "$VERSION_PATTERN" | head -n 1)
+    if test -n "$VERSION_TAG"; then
+        DATE=$(git for-each-ref --format='%(taggerdate:short)' "refs/tags/${VERSION_TAG}" 2>/dev/null)
+        if test -n "$TAG" && test -z "$DATE"; then
+            AC_MSG_ERROR([Building with TAG envvar set but no date found on the tag, please check that your git tag is annotated])
+            exit 1
+        fi
+        echo "$DATE"
+    else
+        date '+%Y-%m-%d'
+    fi
+) || exit $?
+
+AC_SUBST([VERSION_DATE])
+
 # libvlc .so version values
 LIBVLC_ABI_MAJOR=12
 LIBVLC_ABI_MINOR=0
@@ -53,6 +70,7 @@ AC_DEFINE([LIBVLC_INTERNAL_],, [Define within the LibVLC source code tree.])
 AC_PROG_CXX
 AC_PROG_CPP
 AC_PROG_OBJC
+AC_PROG_OBJCXX
 AC_PROG_EGREP
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
@@ -76,6 +94,7 @@ AC_LANG_PUSH([C++])
 AX_CXX_COMPILE_STDCXX_17([noext], [mandatory])
 AX_CXX_TYPEOF
 AC_LANG_POP([C++])
+OBJCXXFLAGS="${OBJCXXFLAGS} -std=c++17"
 
 dnl Extend the --help string at the current spot.
 AC_DEFUN([EXTEND_HELP_STRING], [m4_divert_once([HELP_ENABLE], [$1])])
@@ -282,6 +301,7 @@ int foo() { return my_array[0]; }
         CC="${CC} -isysroot ${with_macosx_sdk}"
         CXX="${CXX} -isysroot ${with_macosx_sdk}"
         OBJC="${OBJC} -isysroot ${with_macosx_sdk}"
+        OBJCXX="${OBJCXX} -isysroot ${with_macosx_sdk}"
         CCAS="${CCAS} -isysroot ${with_macosx_sdk}"
         LD="${LD} -syslibroot ${with_macosx_sdk}"
     fi
@@ -293,6 +313,7 @@ int foo() { return my_array[0]; }
         CC="${CC} -mmacosx-version-min=${with_macosx_version_min}"
         CXX="${CXX} -mmacosx-version-min=${with_macosx_version_min}"
         OBJC="${OBJC} -mmacosx-version-min=${with_macosx_version_min}"
+        OBJCXX="${OBJCXX} -mmacosx-version-min=${with_macosx_version_min}"
         CCAS="${CCAS} -mmacosx-version-min=${with_macosx_version_min}"
         LD="${LD} -mmacosx_version_min=${with_macosx_version_min}"
     fi
@@ -728,7 +749,7 @@ dnl Check for broken versions of mingw-runtime compatibility library
         AC_MSG_RESULT([ok])
     ], [
         AC_MSG_RESULT([present])
-        AC_MSG_ERROR([LibVLC requires Mingw-w64 version 6.0 or higher!])
+        AC_MSG_ERROR([LibVLC requires Mingw-w64 version 8.0 or higher!])
     ])
 
     AS_IF([test "${win_ucrt_build}" = "no"], [
@@ -1002,6 +1023,7 @@ AS_IF([test "${enable_shared}" = "no"], [
   have_dynamic_objects=no
 ])
 AM_CONDITIONAL([HAVE_DYNAMIC_PLUGINS], [test "${have_dynamic_objects}" != "no"])
+AM_CONDITIONAL([HAVE_PARTIAL_LINKING], 0)
 
 AC_SUBST([LIBDL])
 
@@ -2442,8 +2464,23 @@ AM_CONDITIONAL([HAVE_AVFOUNDATION], [test "${have_avfoundation}" != "no"])
 dnl
 dnl  DCP plugin (using asdcplib)
 dnl
-PKG_WITH_MODULES([ASDCP], [asdcplib], [have_asdcp="yes"])
-AM_CONDITIONAL([HAVE_ASDCP], [test "${have_asdcp}" = "yes"])
+ASDCPLIB_FACTORY=0
+PKG_WITH_MODULES([ASDCP], [asdcplib])
+AS_IF([test "${enable_asdcp}" = "yes"],[
+    dnl asdcplib does not provide a version define
+    dnl check the factory necessary API from the package version
+    AC_MSG_CHECKING([asdcplib API version])
+    ($PKG_CONFIG --print-errors "asdcplib >= 2.12.2") 2>&1
+    ac_status=$?
+    AS_IF([test $ac_status = 0],[
+        ASDCPLIB_FACTORY=1
+        AC_MSG_RESULT([2.12.2 API])
+    ],[
+        AC_MSG_RESULT([old API])
+    ])
+])
+AC_SUBST([ASDCPLIB_FACTORY])
+AM_CONDITIONAL([HAVE_ASDCP], [test "${enable_asdcp}" = "yes"])
 
 dnl
 dnl  Demux plugins
@@ -2869,7 +2906,7 @@ PKG_WITH_MODULES([FAAD],[faad2],
                    ],[], [$LIBM])
     ])
     AS_IF([test "${found_faad}" != "yes"],
-        AS_IF([test "${enable_faad}" == "yes"],
+        AS_IF([test "${enable_faad}" = "yes"],
             AC_MSG_ERROR([${FAAD_PKG_ERRORS}.]),
             AC_MSG_WARN([${FAAD_PKG_ERRORS}.]))
     )
@@ -4090,7 +4127,7 @@ AS_IF([test "${enable_qt}" != "no"], [
   AC_MSG_NOTICE([using ${QT_PATHS}])
 
   AC_CHECK_PROGS(PYTHON3, [python3], [no])
-  AS_IF([test "$PYTHON3" == "no"], [
+  AS_IF([test "$PYTHON3" = "no"], [
     AC_MSG_WARN([python is required to detect Qt libraries/flags])
     have_qt="no"
   ],[
@@ -4346,7 +4383,7 @@ AS_IF([test "x$KDE4_CONFIG" = "x"], [
 dnl
 dnl Simple test for skins2 dependency
 dnl
-AS_IF([test "$enable_qt" = "no"], [
+AS_IF([test "$enable_qt" = "no" -a "${SYS}" != "darwin"], [
   AS_IF([test "${enable_skins2}" = "yes"], [
     AC_MSG_ERROR([The skins2 module depends on the Qt interface. Without it you will not be able to open any dialog box from the interface, which makes the skins2 interface rather useless. Install the Qt development package or alternatively you can also configure with: --disable-qt --disable-skins2.])
   ], [
@@ -4370,6 +4407,10 @@ AS_IF([test "${enable_skins2}" != "no"], [
   dnl OS/2
   ], [test "${SYS}" = "os2"], [
     VLC_ADD_CPPFLAGS([skins2],[ -DOS2_SKINS])
+  dnl macOS
+  ], [test "${SYS}" = "darwin"], [
+    VLC_ADD_CPPFLAGS([skins2],[-DMACOSX_SKINS])
+    VLC_ADD_LIBS([skins2],[-Wl,-framework,Cocoa,-framework,CoreGraphics])
   dnl Linux/Unix
   ], [
     PKG_CHECK_MODULES([XPM], [xpm],, [have_skins_deps="no"])
@@ -4634,15 +4675,23 @@ AC_ARG_ENABLE([projectm],
   AS_HELP_STRING([--enable-projectm], [projectM visualization plugin (default enabled)]))
 AS_IF([test "${enable_projectm}" != "no"],
   [
-    PKG_CHECK_MODULES(PROJECTM, libprojectM,
+    PKG_CHECK_MODULES(PROJECTM, [projectM-4],
     [
       VLC_ADD_PLUGIN([projectm])
-      PKG_CHECK_EXISTS([libprojectM >= 2.0.0],
-        [ AC_DEFINE([HAVE_PROJECTM2], 1, [Define to 1 if using libprojectM 2.x]) ],
-        [ AC_MSG_WARN( [Using libprojectM version 1] )
+      VLC_ADD_CPPFLAGS([projectm],[-DHAVE_PROJECTM4])
+    ],
+    [
+      PKG_CHECK_MODULES(PROJECTM, [libprojectM],
+      [
+        VLC_ADD_PLUGIN([projectm])
+        PKG_CHECK_EXISTS([libprojectM >= 2.0.0],
+          [ VLC_ADD_CPPFLAGS([projectm],[-DHAVE_PROJECTM2 -std=gnu++14]) ],
+          [ AC_MSG_WARN( [Using libprojectM version 1] ) ]
+        )
+      ],
+      [
+        AC_MSG_WARN([${PROJECTM_PKG_ERRORS}.])
       ])
-    ],[
-      AC_MSG_WARN([${PROJECTM_PKG_ERRORS}.])
     ])
   ])
 
@@ -4677,7 +4726,18 @@ PKG_ENABLE_MODULES_VLC([MTP], [mtp access_mtp], [libmtp >= 1.0.0], [MTP devices 
 dnl
 dnl UPnP Plugin (Intel SDK)
 dnl
-PKG_ENABLE_MODULES_VLC([UPNP], [upnp], [libupnp >= 1.8.3], [Intel UPNP SDK],[auto])
+PKG_ENABLE_MODULES_VLC([UPNP], [upnp], [libupnp >= 1.8.5], [Intel UPNP SDK],[auto])
+
+dnl
+dnl UPnP Server
+dnl
+AC_ARG_ENABLE([upnp-server],
+  AS_HELP_STRING([--disable-upnp-server],
+    [disable the UPnP server (default enabled)]))
+AM_CONDITIONAL([ENABLE_UPNP_SERVER], [test "${enable_upnp_server}" != "no"])
+AS_IF([test "${enable_upnp_server}" != "no"], [
+  AC_DEFINE([ENABLE_UPNP_SERVER], [1], [Define if the UPnP server is enabled])
+])
 
 dnl
 dnl mDNS using libmicrodns

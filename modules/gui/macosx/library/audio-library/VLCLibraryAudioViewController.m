@@ -175,7 +175,7 @@ NSString *VLCLibraryPlaceholderAudioViewIdentifier = @"VLCLibraryPlaceholderAudi
     _audioLibraryCollectionView.delegate = _audioLibraryCollectionViewDelegate;
 
     _audioLibraryCollectionView.selectable = YES;
-    _audioLibraryCollectionView.allowsMultipleSelection = NO;
+    _audioLibraryCollectionView.allowsMultipleSelection = YES;
     _audioLibraryCollectionView.allowsEmptySelection = YES;
     _audioLibraryCollectionView.collectionViewLayout = VLCLibraryCollectionViewFlowLayout.standardLayout;
 }
@@ -187,18 +187,7 @@ NSString *VLCLibraryPlaceholderAudioViewIdentifier = @"VLCLibraryPlaceholderAudi
     _audioCollectionSelectionTableView.dataSource = _audioDataSource;
     _audioCollectionSelectionTableView.delegate = _audioLibraryTableViewDelegate;
 
-    CGFloat headerHeight = VLCLibraryAudioGroupTableHeaderViewHeight;
-    if (@available(macOS 26.0, *)) {
-        headerHeight += VLCLibraryUIUnits.largeSpacing * 2;
-    }
-
-    const NSRect headerFrame = NSMakeRect(0.f,
-                                          0.f,
-                                          _audioGroupSelectionTableView.bounds.size.width,
-                                          headerHeight);
-    _audioCollectionHeaderView = [[VLCLibraryAudioGroupTableHeaderView alloc] initWithFrame:headerFrame withInternalPaddingAddedForContentView:YES];
-    _audioCollectionHeaderView.autoresizingMask = NSViewWidthSizable;
-
+    _audioCollectionHeaderView = [VLCLibraryAudioGroupTableHeaderView paddedHeaderView];
     _audioGroupSelectionTableView.headerView = self.audioCollectionHeaderView;
     _audioGroupSelectionTableView.tableColumns.firstObject.headerCell = [VLCLibraryAudioGroupTableHeaderCell new];
 
@@ -226,7 +215,7 @@ NSString *VLCLibraryPlaceholderAudioViewIdentifier = @"VLCLibraryPlaceholderAudi
     _audioLibraryGridModeSplitViewListSelectionCollectionView.delegate = _audioLibraryCollectionViewDelegate;
 
     _audioLibraryGridModeSplitViewListSelectionCollectionView.selectable = YES;
-    _audioLibraryGridModeSplitViewListSelectionCollectionView.allowsMultipleSelection = NO;
+    _audioLibraryGridModeSplitViewListSelectionCollectionView.allowsMultipleSelection = YES;
     _audioLibraryGridModeSplitViewListSelectionCollectionView.allowsEmptySelection = YES;
 
     VLCLibraryCollectionViewFlowLayout * const audioLibraryGridModeListSelectionCollectionViewLayout =
@@ -288,16 +277,15 @@ NSString *VLCLibraryPlaceholderAudioViewIdentifier = @"VLCLibraryPlaceholderAudi
     _audioCollectionSelectionTableViewScrollView.contentInsets = audioScrollViewContentInsets;
     _audioCollectionSelectionTableViewScrollView.scrollerInsets = audioScrollViewScrollerInsets;
     _audioGroupSelectionTableViewScrollView.automaticallyAdjustsContentInsets = NO;
-    NSEdgeInsets adjustedInsets = audioScrollViewContentInsets;
-    adjustedInsets.top -= VLCLibraryUIUnits.largeSpacing;
-    _audioGroupSelectionTableViewScrollView.contentInsets = adjustedInsets;
+    _audioGroupSelectionTableViewScrollView.contentInsets = VLCLibraryUIUnits.libraryViewScrollViewDetailListContentInsets;
     _audioGroupSelectionTableViewScrollView.scrollerInsets = audioScrollViewScrollerInsets;
 
     _audioLibraryGridModeSplitViewListTableViewScrollView.automaticallyAdjustsContentInsets = NO;
     _audioLibraryGridModeSplitViewListTableViewScrollView.contentInsets = audioScrollViewContentInsets;
     _audioLibraryGridModeSplitViewListTableViewScrollView.scrollerInsets = audioScrollViewScrollerInsets;
+
     _audioLibraryGridModeSplitViewListSelectionCollectionViewScrollView.automaticallyAdjustsContentInsets = NO;
-    _audioLibraryGridModeSplitViewListSelectionCollectionViewScrollView.contentInsets = audioScrollViewContentInsets;
+    _audioLibraryGridModeSplitViewListSelectionCollectionViewScrollView.contentInsets = VLCLibraryUIUnits.libraryViewScrollViewDetailGridContentInsets;
     _audioLibraryGridModeSplitViewListSelectionCollectionViewScrollView.scrollerInsets = audioScrollViewScrollerInsets;
 
     // Songs table view needs bottom padding for controls bar

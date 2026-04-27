@@ -524,19 +524,9 @@ static NSString *genreArrayDisplayString(NSArray<VLCMediaLibraryGenre *> * const
 
 - (NSString *)durationString
 {
-    NSString *countMetadataString;
-    if (_numberOfAlbums > 1) {
-        countMetadataString = [NSString stringWithFormat:_NS("%u albums"), _numberOfAlbums];
-    } else {
-        countMetadataString = _NS("1 album");
-    }
-    if (_numberOfTracks > 1) {
-        countMetadataString = [countMetadataString stringByAppendingFormat:@", %@", [NSString stringWithFormat:_NS("%u songs"), _numberOfTracks]];
-    } else {
-        countMetadataString = [countMetadataString stringByAppendingFormat:@", %@", _NS("1 song")];
-    }
-
-    return countMetadataString;
+    NSString * const albumString = _NPS("%u album", "%u albums", _numberOfAlbums);
+    NSString * const songString = _NPS("%u song", "%u songs", _numberOfTracks);
+    return [NSString stringWithFormat:@"%@, %@", albumString, songString];
 }
 
 - (NSString *)genreString
@@ -766,11 +756,7 @@ static NSString *genreArrayDisplayString(NSArray<VLCMediaLibraryGenre *> * const
 
 - (NSString *)durationString
 {
-    if (_numberOfTracks > 1) {
-        return [NSString stringWithFormat:_NS("%u songs"), _numberOfTracks];
-    } else {
-        return _NS("1 song");
-    }
+    return _NPS("%u song", "%u songs", _numberOfTracks);
 }
 
 - (NSArray<VLCMediaLibraryAlbum *> *)albums
@@ -1125,6 +1111,11 @@ static NSString *genreArrayDisplayString(NSArray<VLCMediaLibraryGenre *> * const
 @synthesize secondaryActionableDetailLibraryItem = _secondaryActionableDetailLibraryItem;
 @synthesize favorited = _favorited;
 @synthesize isFileBacked = _isFileBacked;
+
++ (BOOL)supportsSecureCoding
+{
+    return YES;
+}
 
 #pragma mark - initialization
 
@@ -1766,8 +1757,9 @@ static NSString *genreArrayDisplayString(NSArray<VLCMediaLibraryGenre *> * const
         self.smallArtworkMRL = p_show->psz_artwork_mrl ? toNSStr(p_show->psz_artwork_mrl) : @"";
         self.smallArtworkGenerated = self.smallArtworkMRL.length > 0;
         self.displayString = self.name;
-        self.primaryDetailString = 
-            [NSString stringWithFormat:_NS("%u seasons, %u episodes"), _seasonCount, _episodeCount];
+        NSString * const seasonString = _NPS("%u season", "%u seasons", _seasonCount);
+        NSString * const episodeString = _NPS("%u episode", "%u episodes", _episodeCount);
+        self.primaryDetailString = [NSString stringWithFormat:@"%@, %@", seasonString, episodeString];
         self.secondaryDetailString = [NSString stringWithFormat:_NS("Released in %u"), _releaseYear];
         self.durationString = self.secondaryDetailString;
     }
@@ -1782,6 +1774,13 @@ static NSString *genreArrayDisplayString(NSArray<VLCMediaLibraryGenre *> * const
 - (NSArray<VLCMediaLibraryMediaItem *> *)mediaItems
 {
     return self.episodes;
+}
+
+- (void)iterateMediaItemsWithBlock:(void (^)(VLCMediaLibraryMediaItem*))mediaItemBlock
+{
+    for (VLCMediaLibraryMediaItem * const item in self.mediaItems) {
+        mediaItemBlock(item);
+    }
 }
 
 @end
@@ -1896,12 +1895,7 @@ static NSString *genreArrayDisplayString(NSArray<VLCMediaLibraryGenre *> * const
                       withMediaItems:(NSArray<VLCMediaLibraryMediaItem *> *)mediaItems
 {
 
-    NSString *detailString;
-    if (mediaItems.count == 1) {
-        detailString = _NS("1 item");
-    } else {
-        detailString = [NSString stringWithFormat:_NS("%lu items"), (unsigned long)mediaItems.count];
-    }
+    NSString * const detailString = _NPS("%lu item", "%lu items", (unsigned long)mediaItems.count);
 
     self = [self initWithDisplayString:displayString
                withPrimaryDetailString:detailString

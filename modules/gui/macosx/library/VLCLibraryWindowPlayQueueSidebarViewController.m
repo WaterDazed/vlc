@@ -76,6 +76,30 @@
     self.openMediaButton.title = _NS("Open media...");
     self.dragDropImageBackgroundBox.fillColor = NSColor.VLClibrarySeparatorLightColor;
 
+    // Allow the drop zone image to shrink when the sidebar is contracted
+    for (NSView * const subview in self.dragDropView.subviews) {
+        if ([subview isKindOfClass:[VLCDropDisabledImageView class]]) {
+            for (NSLayoutConstraint * const constraint in subview.constraints) {
+                if (constraint.firstAttribute == NSLayoutAttributeWidth ||
+                    constraint.firstAttribute == NSLayoutAttributeHeight) {
+                    constraint.priority = NSLayoutPriorityDefaultLow;
+                }
+            }
+            [subview.widthAnchor constraintEqualToAnchor:subview.heightAnchor].active = YES;
+            [subview setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
+                                             forOrientation:NSLayoutConstraintOrientationHorizontal];
+            [subview setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
+                                             forOrientation:NSLayoutConstraintOrientationVertical];
+            break;
+        }
+    }
+    [self.dragDropImageBackgroundBox.topAnchor
+        constraintGreaterThanOrEqualToAnchor:self.dragDropView.topAnchor
+                                    constant:VLCLibraryUIUnits.smallSpacing].active = YES;
+    [self.dragDropView.bottomAnchor
+        constraintGreaterThanOrEqualToAnchor:self.openMediaButton.bottomAnchor
+                                    constant:VLCLibraryUIUnits.smallSpacing].active = YES;
+
     self.shuffleButton.toolTip = _NS("Shuffle");
     self.repeatButton.toolTip = _NS("Repeat");
     self.sortButton.toolTip = _NS("Sort Play Queue");
@@ -133,6 +157,48 @@
     const CGFloat footerHeight = self.footerContainerView.frame.size.height;
     [self setupScrollViewGradientMask];
 
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000
+    if (@available(macOS 26.0, *)) {
+        [self.bottomButtonsSeparator removeFromSuperview];
+
+        NSGlassEffectView * const glassFooterView = [[NSGlassEffectView alloc] init];
+        glassFooterView.translatesAutoresizingMaskIntoConstraints = NO;
+        glassFooterView.contentView = self.buttonStack;
+        glassFooterView.cornerRadius = CGFLOAT_MAX;
+
+        self.footerContainerView.subviews = @[glassFooterView];
+        self.footerContainerView.clipsToBounds = NO;
+        [glassFooterView applyConstraintsToFillSuperview];
+
+        self.buttonStack.edgeInsets = NSEdgeInsetsMake(
+            VLCLibraryUIUnits.mediumSpacing,
+            VLCLibraryUIUnits.largeSpacing,
+            VLCLibraryUIUnits.mediumSpacing,
+            VLCLibraryUIUnits.largeSpacing
+        );
+
+        self.scrollViewDefaultBottomConstraint.active = NO;
+        self.footerContainerViewDefaultBottomConstraint.active = NO;
+        self.footerContainerViewLeadingConstraint.constant = VLCLibraryUIUnits.largeSpacing;
+        self.footerContainerViewTrailingConstraint.constant = VLCLibraryUIUnits.largeSpacing;
+
+        NSLayoutConstraint * const footerBottomConstraint =
+            [self.buttonStack.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor
+                                                          constant:-VLCLibraryUIUnits.largeSpacing];
+
+        const CGFloat footerTopLine = footerHeight + -footerBottomConstraint.constant + VLCLibraryUIUnits.smallSpacing;
+
+        [NSLayoutConstraint activateConstraints:@[
+            [self.scrollView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+            [self.dragDropView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor
+                                                           constant:-footerTopLine],
+            footerBottomConstraint
+        ]];
+
+        self.scrollView.automaticallyAdjustsContentInsets = NO;
+        self.scrollView.contentInsets = NSEdgeInsetsMake(0, 0, footerTopLine, 0);
+    } else 
+#endif
     if (@available(macOS 10.14, *)) {
         NSVisualEffectView * const footerBlurView = [[NSVisualEffectView alloc] initWithFrame:self.footerContainerView.bounds];
         footerBlurView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -250,8 +316,8 @@
     } else {
         self.shuffleButton.image =
             self.playQueueController.playbackOrder == VLC_PLAYLIST_PLAYBACK_ORDER_NORMAL ?
-                [NSImage imageNamed:@"shuffleOff"] :
-                [[NSImage imageNamed:@"shuffleOn"] imageTintedWithColor:NSColor.VLCAccentColor];
+                NSImage.VLCShuffleOffImage :
+                [NSImage.VLCShuffleOnImage imageTintedWithColor:NSColor.VLCAccentColor];
     }
 }
 
@@ -297,14 +363,14 @@
         switch (repeatState) {
             case VLC_PLAYLIST_PLAYBACK_REPEAT_ALL:
                 self.repeatButton.image =
-                    [[NSImage imageNamed:@"repeatAll"] imageTintedWithColor:NSColor.VLCAccentColor];
+                    [NSImage.VLCRepeatAllImage imageTintedWithColor:NSColor.VLCAccentColor];
                 break;
             case VLC_PLAYLIST_PLAYBACK_REPEAT_CURRENT:
                 self.repeatButton.image =
-                    [[NSImage imageNamed:@"repeatOne"] imageTintedWithColor:NSColor.VLCAccentColor];
+                    [NSImage.VLCRepeatOneImage imageTintedWithColor:NSColor.VLCAccentColor];
                 break;
             default:
-                self.repeatButton.image = [NSImage imageNamed:@"repeatOff"];
+                self.repeatButton.image = NSImage.VLCRepeatOffImage;
                 break;
         }
     }

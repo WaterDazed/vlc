@@ -108,7 +108,6 @@ typedef struct vout_display_sys_t
  * Local prototypes
  *****************************************************************************/
 static void            Display(vout_display_t *, picture_t *);
-static int             Control(vout_display_t *, int);
 static int             SetDisplaySize( vout_display_t *, unsigned width, unsigned height );
 
 static int  OpenDisplay ( vout_display_t *, video_format_t * );
@@ -155,12 +154,45 @@ static void Prepare(vout_display_t *vd, picture_t *pic,
     }
 }
 
+static int PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
+{
+    vout_display_sys_t *sys = vd->sys;
+    sys->kvas.ulAspectWidth  = place->width;
+    sys->kvas.ulAspectHeight = place->height;
+    kvaSetup( &sys->kvas );
+    return VLC_SUCCESS;
+}
+
+static int AspectChanged(vout_display_t *vd, const video_format_t *source)
+{
+    VLC_UNUSED(source);
+    return PlacementChanged(vd, vd->place);
+}
+
+static int CropChanged(vout_display_t *vd, const video_format_t *source)
+{
+    vout_display_sys_t *sys = vd->sys;
+    video_format_t src_rot;
+    video_format_ApplyRotation(&src_rot, source);
+
+    sys->kvas.rclSrcRect.xLeft   = src_rot.i_x_offset;
+    sys->kvas.rclSrcRect.yTop    = src_rot.i_y_offset;
+    sys->kvas.rclSrcRect.xRight  = src_rot.i_x_offset +
+                                   src_rot.i_visible_width;
+    sys->kvas.rclSrcRect.yBottom = src_rot.i_y_offset +
+                                   src_rot.i_visible_height;
+    kvaSetup( &sys->kvas );
+    return VLC_SUCCESS;
+}
+
 static const struct vlc_display_operations ops = {
     .close = Close,
     .prepare = Prepare,
     .display = Display,
     .set_display_size = SetDisplaySize,
-    .control = Control,
+    .video_place_changed = PlacementChanged,
+    .set_source_aspect = AspectChanged,
+    .set_source_crop = CropChanged,
 };
 
 static void PMThread( void *arg )
@@ -398,44 +430,6 @@ static int SetDisplaySize( vout_display_t *vd, unsigned width, unsigned height )
                 MPFROMLONG( width ),
                 MPFROMLONG( height ));
     return VLC_SUCCESS;
-}
-
-/*****************************************************************************
- * Control: control facility for the vout
- *****************************************************************************/
-static int Control( vout_display_t *vd, int query )
-{
-    vout_display_sys_t *sys = vd->sys;
-
-    switch (query)
-    {
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-    case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-    {
-        sys->kvas.ulAspectWidth  = vd->place->width;
-        sys->kvas.ulAspectHeight = vd->place->height;
-        kvaSetup( &sys->kvas );
-        return VLC_SUCCESS;
-    }
-
-    case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-    {
-        video_format_t src_rot;
-        video_format_ApplyRotation(&src_rot, vd->source);
-
-        sys->kvas.rclSrcRect.xLeft   = src_rot.i_x_offset;
-        sys->kvas.rclSrcRect.yTop    = src_rot.i_y_offset;
-        sys->kvas.rclSrcRect.xRight  = src_rot.i_x_offset +
-                                       src_rot.i_visible_width;
-        sys->kvas.rclSrcRect.yBottom = src_rot.i_y_offset +
-                                       src_rot.i_visible_height;
-        kvaSetup( &sys->kvas );
-        return VLC_SUCCESS;
-    }
-    }
-
-    msg_Err(vd, "Unsupported query(=%d) in vout display KVA", query);
-    return VLC_EGENERIC;
 }
 
 /* following functions are local */

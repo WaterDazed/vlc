@@ -95,6 +95,8 @@ static void Destroy( filter_t * );
 #define YUVP_TEXT N_("Use YUVP renderer")
 #define YUVP_LONGTEXT N_("This renders the font using \"paletized YUV\". " \
   "This option is only needed if you want to encode into DVB subtitles" )
+#define BLENDING_MODE_TEXT N_("Blending Mode")
+#define BLENDING_MODE_LONG_TEXT N_("Blending mode for the font, can be transparent or overlay")
 
 static const int pi_color_values[] = {
   0x00000000, 0x00808080, 0x00C0C0C0, 0x00FFFFFF, 0x00800000,
@@ -121,6 +123,14 @@ static const char *const ppsz_text_direction[] = {
     N_("Left to right"), N_("Right to left"), N_("Auto"),
 };
 #endif
+
+static const int pi_blending_mode[] = {
+    0, 1
+};
+static const char *const ppsz_blending_mode[] = {
+    N_("Overlay"), N_("Transparent"),
+};
+
 
 vlc_module_begin ()
     set_shortname( N_("Text renderer"))
@@ -190,6 +200,10 @@ vlc_module_begin ()
 
     add_bool( "freetype-yuvp", false, YUVP_TEXT,
               YUVP_LONGTEXT )
+    add_integer_with_range( "freetype-blending-mode", 0, 0, 1, BLENDING_MODE_TEXT,
+                            BLENDING_MODE_LONG_TEXT )
+        change_integer_list( pi_blending_mode, ppsz_blending_mode )
+        change_safe()
 
 #ifdef HAVE_FRIBIDI
     add_integer_with_range( "freetype-text-direction", 0, 0, 2, TEXT_DIRECTION_TEXT,
@@ -546,11 +560,14 @@ static void RenderCharAXYZ( filter_t *p_filter,
 {
     VLC_UNUSED(p_filter);
     /* Render all glyphs and underline/strikethrough */
+    filter_sys_t *p_sys = p_filter ? p_filter->p_sys : NULL;
     for( int i = p_line->i_first_visible_char_index; i <= p_line->i_last_visible_char_index; i++ )
     {
         const line_character_t *ch = &p_line->p_character[i];
-        const FT_BitmapGlyph p_glyph = g == 0 ? ch->p_shadow : g == 1 ? ch->p_outline : ch->p_glyph;
-        if( !p_glyph )
+        /* select appropriate glyph: shadow(0), outline(1), normal(2) */
+        const FT_BitmapGlyph p_glyph_selected = g == 0 ? ch->p_shadow : g == 1 ? ch->p_outline : ch->p_glyph;
+        const FT_BitmapGlyph p_glyph_main = ch->p_glyph;
+        if( !p_glyph_selected && !p_glyph_main )
             continue;
 
         uint8_t i_a = ch->p_style->i_font_alpha;
@@ -562,7 +579,12 @@ static void RenderCharAXYZ( filter_t *p_filter,
             i_color = ch->p_style->i_shadow_color;
             break;
         case 1:
-            i_a     = i_a * ch->p_style->i_outline_alpha / 255;
+            /* In knockout mode, outline alpha is independent to allow
+             * outline-only rendering when font alpha is 0 */
+            if( ch->p_style->e_blending_mode == STYLE_BLENDING_DEFAULT )
+                i_a = i_a * ch->p_style->i_outline_alpha / 255;
+            else
+                i_a = ch->p_style->i_outline_alpha;
             i_color = ch->p_style->i_outline_color;
             break;
         default:
@@ -583,7 +605,7 @@ static void RenderCharAXYZ( filter_t *p_filter,
         }
 
         /* Don't render if invisible or not wanted */
-        if( i_a == STYLE_ALPHA_TRANSPARENT ||
+        if(
            (g == 0 && 0 == (ch->p_style->i_style_flags & STYLE_SHADOW) ) ||
            (g == 1 && 0 == (ch->p_style->i_style_flags & STYLE_OUTLINE) )
           )
@@ -592,8 +614,33 @@ static void RenderCharAXYZ( filter_t *p_filter,
         uint8_t i_x, i_y, i_z;
         draw->extract( i_color, &i_x, &i_y, &i_z );
 
+        /* Choose glyph to draw and compute its position.
+         * If the shadow glyph was not pre-generated (ch->p_shadow == NULL),
+         * we fallback to using the main glyph bitmap, shifted by the configured
+         * shadow vector (scaled by current default font size). This avoids
+         * requiring glyph creation earlier in the pipeline while still making
+         * the shadow visible when the UI option is enabled.
+         */
+        const FT_BitmapGlyph p_glyph = p_glyph_selected ? p_glyph_selected : p_glyph_main;
+
         int i_glyph_y = i_offset_y - p_glyph->top;
         int i_glyph_x = i_offset_x + p_glyph->left;
+
+        /* If we're rendering the shadow and we need to fallback to main glyph,
+         * apply the configured shadow shift in pixel units.
+         */
+        if( g == 0 && !p_glyph_selected && p_sys )
+        {
+            /* p_sys->f_shadow_vector_{x,y} are fractions of font size.
+             * Use i_font_default_size (set during Render) as a reasonable scale.
+             * Round to nearest int.
+             */
+            int i_font_ref = p_sys->i_font_default_size ? p_sys->i_font_default_size : 1;
+            int sx = (int)lrintf(p_sys->f_shadow_vector_x * (float)i_font_ref);
+            int sy = (int)lrintf(p_sys->f_shadow_vector_y * (float)i_font_ref);
+            i_glyph_x += sx;
+            i_glyph_y += sy;
+        }
 
         draw->blend( p_picture, i_glyph_x, i_glyph_y,
                     i_a, i_x, i_y, i_z, p_glyph );
@@ -706,6 +753,8 @@ static void FillDefaultStyles( filter_t *p_filter )
 
     p_sys->p_default_style->i_shadow_alpha = var_InheritInteger( p_filter, "freetype-shadow-opacity" );
     p_sys->p_default_style->i_shadow_color = var_InheritInteger( p_filter, "freetype-shadow-color" );
+    p_sys->p_default_style->e_blending_mode = var_InheritInteger( p_filter, "freetype-blending-mode" );
+    p_sys->p_default_style->i_features |= STYLE_HAS_BLENDING_MODE;
 
     p_sys->p_default_style->i_font_size = 0;
     p_sys->p_default_style->i_style_flags |= STYLE_SHADOW;
@@ -919,6 +968,63 @@ static size_t SegmentsToTextAndStyles( filter_t *p_filter, const text_segment_t 
 }
 
 /**
+ * Get the appropriate drawing functions based on chroma codec and blending mode
+ */
+static const ft_drawing_functions *GetDrawingFunctions( vlc_fourcc_t chroma,
+                                                        int i_blending_mode )
+{
+    if( chroma == VLC_CODEC_YUVA )
+    {
+        static const ft_drawing_functions DRAW_YUVA =
+            { .extract = YUVFromXRGB,
+              .fill =    FillYUVAPicture,
+              .blend =   BlendGlyphToYUVA };
+        static const ft_drawing_functions DRAW_YUVA_KNOCKOUT =
+            { .extract = YUVFromXRGB,
+              .fill =    FillYUVAPicture,
+              .blend =   BlendGlyphToYUVAKnockout };
+
+        if( i_blending_mode == STYLE_BLENDING_TRANSPARENT )
+            return &DRAW_YUVA_KNOCKOUT;
+        return &DRAW_YUVA;
+    }
+    else if( chroma == VLC_CODEC_RGBA
+          || chroma == VLC_CODEC_BGRA )
+    {
+        static const ft_drawing_functions DRAW_RGBA =
+            { .extract = RGBFromXRGB,
+              .fill =    FillRGBAPicture,
+              .blend =   BlendGlyphToRGBA };
+        static const ft_drawing_functions DRAW_RGBA_KNOCKOUT =
+            { .extract = RGBFromXRGB,
+              .fill =    FillRGBAPicture,
+              .blend =   BlendGlyphToRGBAKnockout };
+
+        if( i_blending_mode == STYLE_BLENDING_TRANSPARENT )
+            return &DRAW_RGBA_KNOCKOUT;
+        return &DRAW_RGBA;
+    }
+    else if( chroma == VLC_CODEC_ARGB
+          || chroma == VLC_CODEC_ABGR )
+    {
+        static const ft_drawing_functions DRAW_ARGB =
+            { .extract = RGBFromXRGB,
+              .fill =    FillARGBPicture,
+              .blend =   BlendGlyphToARGB };
+        static const ft_drawing_functions DRAW_ARGB_KNOCKOUT =
+            { .extract = RGBFromXRGB,
+              .fill =    FillARGBPicture,
+              .blend =   BlendGlyphToARGBKnockout };
+
+        if( i_blending_mode == STYLE_BLENDING_TRANSPARENT )
+            return &DRAW_ARGB_KNOCKOUT;
+        return &DRAW_ARGB;
+    }
+
+    return NULL;
+}
+
+/**
  * This function renders a text subpicture region into another one.
  * It also calculates the size needed for this string, and renders the
  * needed glyphs into memory. It is used as pf_add_string callback in
@@ -1075,6 +1181,7 @@ static subpicture_region_t *Render( filter_t *p_filter,
     fmt.i_height         =
     fmt.i_visible_height = renderbbox.yMax - renderbbox.yMin;
     fmt.i_sar_num = fmt.i_sar_den = 1;
+    int i_blending_mode =  p_sys->p_default_style->e_blending_mode;
 
     for( const vlc_fourcc_t *p_chroma = p_chroma_list; *p_chroma != 0; p_chroma++ )
     {
@@ -1097,34 +1204,8 @@ static subpicture_region_t *Render( filter_t *p_filter,
                                 &renderbbox, &bbox );
         else
         {
-            const ft_drawing_functions *func;
-            if( *p_chroma == VLC_CODEC_YUVA )
-            {
-                static const ft_drawing_functions DRAW_YUVA =
-                    { .extract = YUVFromXRGB,
-                      .fill =    FillYUVAPicture,
-                      .blend =   BlendGlyphToYUVA };
-                func = &DRAW_YUVA;
-            }
-            else if( *p_chroma == VLC_CODEC_RGBA
-                  || *p_chroma == VLC_CODEC_BGRA )
-            {
-                static const ft_drawing_functions DRAW_RGBA =
-                    { .extract = RGBFromXRGB,
-                      .fill =    FillRGBAPicture,
-                      .blend =   BlendGlyphToRGBA };
-                func = &DRAW_RGBA;
-            }
-            else if( *p_chroma == VLC_CODEC_ARGB
-                  || *p_chroma == VLC_CODEC_ABGR)
-            {
-                static const ft_drawing_functions DRAW_ARGB =
-                    { .extract = RGBFromXRGB,
-                      .fill =    FillARGBPicture,
-                      .blend =   BlendGlyphToARGB };
-                func = &DRAW_ARGB;
-            }
-            else
+            const ft_drawing_functions *func = GetDrawingFunctions( *p_chroma, i_blending_mode );
+            if( func == NULL )
             {
                 subpicture_region_Delete(region);
                 region = NULL;
@@ -1230,7 +1311,7 @@ static int Create( filter_t *p_filter )
     /*
      * The following variables should not be cached, as they might be changed on-the-fly:
      * freetype-rel-fontsize, freetype-background-opacity, freetype-background-color,
-     * freetype-outline-thickness, freetype-color
+     * freetype-outline-thickness, freetype-color, freetype-blending-style
      *
      */
 

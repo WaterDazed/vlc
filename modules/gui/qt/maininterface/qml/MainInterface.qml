@@ -16,8 +16,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-// NOTE: All imports used throughout the interface
-//       must be imported here as well:
+// NOTE: All available modules used throughout the interface, at least the ones
+//       that are unconditionally available, must be imported here as well, so
+//       that if they can not be imported the interface can close gracefully:
 import QtQml
 import QtQml.Models
 import QtQuick
@@ -32,6 +33,11 @@ import VLC.Style
 import VLC.Util
 import VLC.Playlist
 import VLC.Player
+import VLC.Dialogs
+// import VLC.MediaLibrary
+import VLC.Menus
+import VLC.Network
+import VLC.PlayerControls
 
 Item {
     id: root
@@ -105,7 +111,7 @@ Item {
         Binding {
             target: MainCtx
             property: "windowExtendedMargin"
-            value: _extendedFrameVisible ? (Qt.platform.pluginName.startsWith("wayland") ? 40 : 20) : 0
+            value: _extendedFrameVisible ? (Qt.platform.pluginName.startsWith("wayland") ? 60 : 30) : 0
         }
 
         Window.onWindowChanged: {
@@ -347,8 +353,11 @@ Item {
         // factor which can lead to visible clipping, or increase the window extended margin:
         blurRadius: (MainCtx.windowExtendedMargin / effect.compensationFactor)
 
-        compensationFactor: MainCtx.intfMainWindow.active ? (defaultCompensationFactor)
-                                                          : (defaultCompensationFactor * 2)
+        // 2.0 (default) compensation factor makes clipping obvious, especially with white background
+        implicitCompensationFactor: 3.0
+
+        compensationFactor: MainCtx.intfMainWindow.active ? (implicitCompensationFactor)
+                                                          : (implicitCompensationFactor * 2)
 
         Behavior on compensationFactor {
             // FIXME: Use UniformAnimator instead

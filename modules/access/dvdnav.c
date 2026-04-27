@@ -168,6 +168,12 @@ typedef struct
     int         i_vobu_index;
     int         i_vobu_flush;
 
+    /* Reference timestamps of the current cell. */
+    struct {
+        vlc_tick_t dvd;
+        vlc_tick_t ps;
+    } cell_ts;
+
     vlc_mouse_t oldmouse;
 } demux_sys_t;
 
@@ -275,6 +281,9 @@ static int CommonOpen( vlc_object_t *p_this,
         free( p_sys );
         return VLC_EGENERIC;
     }
+
+    p_sys->cell_ts.dvd = VLC_TICK_INVALID;
+    p_sys->cell_ts.ps = VLC_TICK_INVALID;
 
     ps_track_init( p_sys->tk );
     p_sys->b_readahead = b_readahead;
@@ -647,7 +656,7 @@ static int Control( demux_t *p_demux, int i_query, va_list args )
             if( p_sys->i_pgc_length > 0 )
             {
                 *va_arg( args, vlc_tick_t * ) =
-                        dvdnav_get_current_time( p_sys->dvdnav ) * 100 / 9;
+                        FROM_SCALE_NZ( dvdnav_get_current_time(p_sys->dvdnav) );
                 return VLC_SUCCESS;
             }
             break;
@@ -656,7 +665,7 @@ static int Control( demux_t *p_demux, int i_query, va_list args )
         {
             vlc_tick_t i_time = va_arg( args, vlc_tick_t );
             if( dvdnav_jump_to_sector_by_time( p_sys->dvdnav,
-                                               i_time * 9 / 100,
+                                               TO_SCALE_NZ(i_time),
                                                SEEK_SET ) == DVDNAV_STATUS_OK )
                 return VLC_SUCCESS;
             msg_Err( p_demux, "can't set time to %" PRId64, i_time );
@@ -1036,9 +1045,6 @@ static int Demux( demux_t *p_demux )
         msg_Dbg( p_demux, "     - vtsN=%d", event->new_vtsN );
         msg_Dbg( p_demux, "     - domain=%d", event->new_domain );
 
-        /* reset PCR */
-        es_out_Control( p_sys->p_tf_out, ES_OUT_RESET_PCR );
-
         for( int i = 0; i < PS_TK_COUNT; i++ )
         {
             ps_track_t *tk = &p_sys->tk[i];
@@ -1060,6 +1066,9 @@ static int Demux( demux_t *p_demux )
             }
             tk->b_configured = false;
         }
+
+        /* reset PCR */
+        es_out_Control( p_sys->p_tf_out, ES_OUT_RESET_PCR );
 
         uint32_t i_width, i_height;
         if( dvdnav_get_video_resolution( p_sys->dvdnav,
@@ -1114,6 +1123,9 @@ static int Demux( demux_t *p_demux )
         p_sys->i_pgc_length = FROM_SCALE_NZ(event->pgc_length);
         p_sys->i_vobu_index = 0;
         p_sys->i_vobu_flush = 0;
+        p_sys->cell_ts.dvd = VLC_TICK_INVALID;
+        p_sys->cell_ts.ps = VLC_TICK_INVALID;
+        es_out_Control( p_sys->p_tf_out, ES_OUT_RESET_PCR );
 
         for( int i=0; i<PS_TK_COUNT; i++ )
             p_sys->tk[i].i_next_block_flags |= BLOCK_FLAG_CELL_DISCONTINUITY;
@@ -1516,7 +1528,21 @@ static int DemuxBlock( demux_t *p_demux, const uint8_t *p, int32_t len )
             if( !ps_pkt_parse_pack( p_pkt->p_buffer, p_pkt->i_buffer,
                                     &i_scr, &i_mux_rate ) )
             {
-                es_out_SetPCR( p_sys->p_tf_out, i_scr );
+                if ( p_sys->cell_ts.dvd == VLC_TICK_INVALID ||
+                     p_sys->cell_ts.ps == VLC_TICK_INVALID )
+                {
+                    p_sys->cell_ts.dvd =
+                        FROM_SCALE( dvdnav_get_current_time(p_sys->dvdnav) );
+                    p_sys->cell_ts.ps = i_scr;
+                }
+
+                /* Shift the cell scr with the dvd playtime to have a
+                 * continuous PCR. */
+                const vlc_tick_t pcr =
+                    p_sys->cell_ts.dvd + (i_scr - p_sys->cell_ts.ps);
+                es_out_SetPCR( p_sys->p_tf_out, pcr );
+
+
                 if( i_mux_rate > 0 ) p_sys->i_mux_rate = i_mux_rate;
             }
             block_Release( p_pkt );
@@ -1546,6 +1572,14 @@ static int DemuxBlock( demux_t *p_demux, const uint8_t *p, int32_t len )
                         else tk->i_next_block_flags = BLOCK_FLAG_CELL_DISCONTINUITY;
                     }
                     p_pkt->i_flags |= i_next_block_flags;
+
+                    const vlc_tick_t shift = p_sys->cell_ts.dvd - p_sys->cell_ts.ps;
+                    /* Shift native timestamp in respect of the DVD current time. */
+                    if( p_pkt->i_dts != VLC_TICK_INVALID )
+                        p_pkt->i_dts += shift;
+                    if( p_pkt->i_pts != VLC_TICK_INVALID )
+                        p_pkt->i_pts += shift;
+
                     es_out_Send( p_sys->p_tf_out, tk->es, p_pkt );
                 }
                 else

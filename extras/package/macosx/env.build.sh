@@ -149,8 +149,9 @@ vlcSetContribEnvironment() {
         SDKROOT="$(xcrun --sdk macosx --show-sdk-path)" && export SDKROOT
     fi
     SDK_VERSION="$(xcrun --sdk $SDKROOT --show-sdk-version)"
+    XCODE_VERSION="$(xcodebuild -version)"
 
-    echo "Setting contrib environment with minimum macOS version $MINIMAL_OSX_VERSION and SDK $SDK_VERSION at $SDKROOT"
+    echo "Setting contrib environment with minimum macOS version $MINIMAL_OSX_VERSION and SDK $SDK_VERSION at $SDKROOT using $XCODE_VERSION"
 
     # Usually, VLCs contrib libraries do not support partial availability at runtime.
     # Forcing those errors has two reasons:
@@ -162,6 +163,7 @@ vlcSetContribEnvironment() {
     export CFLAGS="-Werror=partial-availability"
     export CXXFLAGS="-Werror=partial-availability"
     export OBJCFLAGS="-Werror=partial-availability"
+    export OBJCXXFLAGS="-Werror=partial-availability"
 
     export VLC_DEPLOYMENT_TARGET="$MINIMAL_OSX_VERSION"
     export EXTRA_CFLAGS="-isysroot $SDKROOT -mmacosx-version-min=$MINIMAL_OSX_VERSION -DMACOSX_DEPLOYMENT_TARGET=$MINIMAL_OSX_VERSION -arch $ACTUAL_HOST_ARCH"
@@ -175,6 +177,7 @@ vlcUnsetContribEnvironment() {
     unset CFLAGS
     unset CXXFLAGS
     unset OBJCFLAGS
+    unset OBJCXXFLAGS
 
     unset EXTRA_CFLAGS
     unset EXTRA_LDFLAGS
@@ -188,6 +191,7 @@ vlcSetLibVLCEnvironment() {
     export CFLAGS="-g -arch $ACTUAL_HOST_ARCH -Werror=incompatible-function-pointer-types"
     export CXXFLAGS="-g -arch $ACTUAL_HOST_ARCH -Werror=incompatible-function-pointer-types"
     export OBJCFLAGS="-g -arch $ACTUAL_HOST_ARCH -Werror=incompatible-function-pointer-types"
+    export OBJCXXFLAGS="-g -arch $ACTUAL_HOST_ARCH -Werror=incompatible-function-pointer-types"
     export LDFLAGS="-arch $ACTUAL_HOST_ARCH"
 }
 
@@ -197,6 +201,7 @@ vlcUnsetLibVLCEnvironment() {
     unset CFLAGS
     unset CXXFLAGS
     unset OBJCFLAGS
+    unset OBJCXXFLAGS
     unset LDFLAGS
 }
 

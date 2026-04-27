@@ -113,7 +113,7 @@
         [self.volumeUpButton setImage: [NSImage imageWithSystemSymbolName:@"speaker.plus.fill"
                                                  accessibilityDescription:_NS("Volume up")]];
     } else {
-        _alwaysMuteImage = [NSImage imageNamed:@"VLCVolumeOffTemplate"];
+        _alwaysMuteImage = NSImage.VLCVolumeOffTemplateImage;
 
         [self.stopButton setImage: imageFromRes(@"stop")];
         [self.stopButton setAlternateImage: imageFromRes(@"stop-pressed")];
@@ -125,8 +125,8 @@
     [self playbackStateChanged:nil];
     [self.stopButton setHidden:YES];
 
-    [self.timeField setAlignment: NSCenterTextAlignment];
-    [self.trailingTimeField setAlignment: NSCenterTextAlignment];
+    [self.timeField setAlignment: NSTextAlignmentCenter];
+    [self.trailingTimeField setAlignment: NSTextAlignmentCenter];
 
     [self.thumbnailTrackingView setViewToHide:_openMainVideoViewButtonOverlay];
 

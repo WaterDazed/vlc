@@ -94,7 +94,6 @@ typedef struct vout_display_sys_t
 /* Display callbacks */
 static void PictureRender (vout_display_t *, picture_t *, const vlc_render_subpicture *, vlc_tick_t);
 static void PictureDisplay (vout_display_t *, picture_t *);
-static int Control (vout_display_t *, int);
 
 static int SetViewpoint(vout_display_t *vd, const vlc_viewpoint_t *vp)
 {
@@ -190,16 +189,33 @@ static int SetStereoMode(vout_display_t *vd, vlc_stereoscopic_mode_t mode)
     return VLC_SUCCESS;
 }
 
+static int PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
+{
+    vout_display_sys_t *sys = vd->sys;
+    VLC_UNUSED(place);
+
+    PlacePicture(vd, &sys->place, vd->cfg->display);
+    return VLC_SUCCESS;
+}
+
+static int AspectChanged(vout_display_t *vd, const video_format_t *source)
+{
+    VLC_UNUSED(source);
+    return PlacementChanged(vd, NULL);
+}
+
 static const struct vlc_display_operations ops = {
     .close = Close,
     .prepare = PictureRender,
     .display = PictureDisplay,
     .set_display_size = SetDisplaySize,
-    .control = Control,
     .set_viewpoint = SetViewpoint,
     .update_format = UpdateFormat,
     .change_source_projection = ChangeSourceProjection,
     .set_stereo = SetStereoMode,
+    .video_place_changed = PlacementChanged,
+    .set_source_aspect = AspectChanged,
+    .set_source_crop = AspectChanged,
 };
 
 /**
@@ -359,22 +375,4 @@ static void PictureDisplay (vout_display_t *vd, picture_t *pic)
     /* Present on screen */
     if (sys->is_dirty)
         vlc_gl_Swap(sys->gl);
-}
-
-static int Control (vout_display_t *vd, int query)
-{
-    vout_display_sys_t *sys = vd->sys;
-
-    switch (query)
-    {
-        case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-        case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-            PlacePicture(vd, &sys->place, vd->cfg->display);
-            return VLC_SUCCESS;
-
-        default:
-            msg_Err (vd, "Unknown request %d", query);
-    }
-    return VLC_EGENERIC;
 }

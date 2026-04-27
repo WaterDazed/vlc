@@ -22,6 +22,7 @@
 
 #import "VLCLibraryHomeViewController.h"
 
+#import "extensions/NSImage+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCLibraryController.h"
@@ -72,6 +73,7 @@
             VLCLibraryModelAudioMediaListReset,
             VLCLibraryModelVideoMediaItemDeleted,
             VLCLibraryModelAudioMediaItemDeleted,
+            VLCLibraryModelAllCachesDropped,
         };
 
         for (size_t i = 0; i < ARRAY_SIZE(notificationNames); ++i) @autoreleasepool
@@ -165,7 +167,7 @@
 
 - (void)presentPlaceholderHomeLibraryView
 {
-    [self.libraryWindow displayLibraryPlaceholderViewWithImage:[NSImage imageNamed:@"placeholder-video"]
+    [self.libraryWindow displayLibraryPlaceholderViewWithImage:NSImage.VLCPlaceholderVideoImage
                                               usingConstraints:self.placeholderImageViewSizeConstraints
                                              displayingMessage:_NS("Your media will appear here.\nGo to the Browse section to add media you love.")];
 }

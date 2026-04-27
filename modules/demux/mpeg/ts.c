@@ -1791,11 +1791,12 @@ static bool CheckAndResync( demux_t *p_demux )
     demux_sys_t *p_sys = p_demux->p_sys;
 
     const uint8_t *p_peek;
-    if( vlc_stream_Peek( p_sys->stream, &p_peek, 1 ) != 1 )
+    if( vlc_stream_Peek( p_sys->stream, &p_peek, 1 + p_sys->i_packet_header_size )
+            != 1 + p_sys->i_packet_header_size )
         return true;
 
     /* Check sync byte and re-sync if needed */
-    if( p_peek[0] == 0x47 )
+    if( p_peek[p_sys->i_packet_header_size] == 0x47 )
         return true;
 
     msg_Warn( p_demux, "lost synchro at %" PRIu64, vlc_stream_Tell( p_sys->stream ) );
@@ -2021,7 +2022,7 @@ static int SeekToTime( demux_t *p_demux, const ts_pmt_t *p_pmt, vlc_tick_t i_see
                     i_pktpcr = GetPCR( p_pkt );
 
                 unsigned i_skip = PKTHeaderAndAFSize( p_pkt );
-                if( i_pktpcr == TS_90KHZ_INVALID && p_pid->type == TYPE_STREAM &&
+                if( p_pkt->i_buffer > 4 && p_pkt->i_buffer > i_skip && i_pktpcr == TS_90KHZ_INVALID && p_pid->type == TYPE_STREAM &&
                     ts_stream_Find_es( p_pid->u.p_stream, p_pmt ) &&
                    (p_pkt->p_buffer[1] & 0xC0) == 0x40 && /* Payload start but not corrupt */
                    (p_pkt->p_buffer[3] & 0xD0) == 0x10    /* Has payload but is not encrypted */
@@ -2111,6 +2112,8 @@ static int ProbeChunk( demux_t *p_demux, int i_program, bool b_end, bool *pb_fou
             {
                 b_pcrresult = false;
                 unsigned i_skip = PKTHeaderAndAFSize( p_pkt );
+                if (p_pkt->i_buffer > i_skip)
+                {
                 ts_pes_header_t pesh;
                 ts_pes_header_init( &pesh );
                 if ( VLC_SUCCESS == ParsePESHeader( NULL, &p_pkt->p_buffer[i_skip],
@@ -2120,6 +2123,7 @@ static int ProbeChunk( demux_t *p_demux, int i_program, bool b_end, bool *pb_fou
                         i_pcr = pesh.i_dts;
                     else if( pesh.i_pts != TS_90KHZ_INVALID )
                         i_pcr = pesh.i_pts;
+                }
                 }
             }
 

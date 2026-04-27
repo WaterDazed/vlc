@@ -23,7 +23,6 @@ LUA_MODULES = \
 	lua/modules/simplexml.lua \
 	lua/playlist/anevia_streams.lua \
 	lua/playlist/anevia_xml.lua \
-	lua/playlist/appletrailers.lua \
 	lua/playlist/bbc_co_uk.lua \
 	lua/playlist/break.lua \
 	lua/playlist/cue.lua \
@@ -148,10 +147,12 @@ skins2_default_vlt_FILES = \
 skins2/default.vlt: $(skins2_default_vlt_FILES)
 	$(AM_V_at)$(MKDIR_P) "skins2"
 	$(AM_V_at)rm -f -- skins2/default.vlt.tmp
-	$(AM_V_GEN)GZIP=--no-name \
+	$(AM_V_GEN)tarowner="--owner=root --group=root"; \
+	if test "`uname -s`" = "Darwin"; then tarowner=""; fi; \
+	GZIP=--no-name \
 	tar cvvzf skins2/default.vlt.tmp \
 		--format=ustar $$tarsort \
-		--owner=root --group=root --directory="$(srcdir)/skins2" \
+		$$tarowner --directory="$(srcdir)/skins2" \
 		$$(cd "$(srcdir)/skins2" && find default/ -type f | LC_ALL=C sort)
 	$(AM_V_at)mv -f -- skins2/default.vlt.tmp skins2/default.vlt
 

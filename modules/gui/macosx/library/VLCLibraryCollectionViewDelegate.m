@@ -47,6 +47,10 @@
         return;
     }
 
+    if (collectionView.selectionIndexPaths.count != 1) {
+        return;
+    }
+
     VLCLibraryCollectionViewFlowLayout *collectionViewFlowLayout = (VLCLibraryCollectionViewFlowLayout*)collectionView.collectionViewLayout;
     if(collectionViewFlowLayout) {
         [collectionViewFlowLayout expandDetailSectionAtIndex:indexPath];
@@ -55,6 +59,10 @@
 
 - (void)collectionView:(NSCollectionView *)collectionView didDeselectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
 {
+    if (collectionView.selectionIndexPaths.count > 0) {
+        return;
+    }
+
     VLCLibraryCollectionViewFlowLayout * const collectionViewFlowLayout = 
         (VLCLibraryCollectionViewFlowLayout*)collectionView.collectionViewLayout;
 
@@ -132,7 +140,14 @@ writeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
         }];
     }
 
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:encodedLibraryItemsArray];
+    NSError *archiveError = nil;
+    NSData * const data = [NSKeyedArchiver archivedDataWithRootObject:encodedLibraryItemsArray
+                                                requiringSecureCoding:YES
+                                                                error:&archiveError];
+    if (data == nil) {
+        NSLog(@"Failed to archive MediaLibrary Item drag payload: %@", archiveError);
+        return NO;
+    }
     [pasteboard declareTypes:@[VLCMediaLibraryMediaItemPasteboardType, NSFilenamesPboardType] owner:self];
     [pasteboard setPropertyList:filePathsArray forType:NSFilenamesPboardType];
     [pasteboard setData:data forType:VLCMediaLibraryMediaItemPasteboardType];

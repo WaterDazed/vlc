@@ -259,7 +259,7 @@ static void resolve_callback(
     }
     else if( event == AVAHI_RESOLVER_FOUND )
     {
-        char a[128];
+        char a[AVAHI_ADDRESS_STR_MAX];
         char *psz_uri = NULL;
         char *psz_addr = NULL;
         AvahiStringList *asl = NULL;
@@ -268,7 +268,12 @@ static void resolve_callback(
         msg_Dbg( p_sys->parent, "service '%s' of type '%s' in domain '%s' port %i",
                  name, type, domain, port );
 
-        avahi_address_snprint(a, sizeof(a)-1, address);
+        if( avahi_address_snprint(a, sizeof(a), address) == NULL )
+        {
+            avahi_service_resolver_free( r );
+            return;
+        }
+
         if( protocol == AVAHI_PROTO_INET6 )
             if( asprintf( &psz_addr, "[%s]", a ) == -1 )
             {

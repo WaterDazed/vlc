@@ -173,7 +173,7 @@
     self.topInternalConstraint.active = !self.viewSelector.hidden;
 
     const NSLayoutPriority playQueueCompressionPriority =
-        self.viewSelector.hidden ? NSLayoutPriorityDefaultLow : NSLayoutPriorityRequired;
+        self.viewSelector.hidden ? NSLayoutPriorityDefaultHigh : NSLayoutPriorityRequired;
     self.playQueueHeaderLabel.hidden = chaptersEnabled;
     [self.playQueueHeaderLabel setContentCompressionResistancePriority:playQueueCompressionPriority
                                                         forOrientation:NSLayoutConstraintOrientationVertical];
@@ -239,7 +239,7 @@
 - (void)updateTopConstraints
 {
     CGFloat internalTopConstraintConstant = VLCLibraryUIUnits.smallSpacing;
-    if (!self.mainVideoModeEnabled && self.libraryWindow.styleMask & NSFullSizeContentViewWindowMask) {
+    if (!self.mainVideoModeEnabled && self.libraryWindow.styleMask & NSWindowStyleMaskFullSizeContentView) {
         // Compensate for full content view window's titlebar height, prevent top being cut off
         internalTopConstraintConstant += self.libraryWindow.titlebarHeight;
     }

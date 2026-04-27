@@ -1,7 +1,7 @@
 # FFmpeg
 
 FFMPEG_HASH=ec47a3b95f88fc3f820b900038ac439e4eb3fede
-FFMPEG_MAJVERSION := 8.0
+FFMPEG_MAJVERSION := 8.1
 FFMPEG_REVISION := 0
 # FFMPEG_VERSION := $(FFMPEG_MAJVERSION).$(FFMPEG_REVISION)
 FFMPEG_VERSION := $(FFMPEG_MAJVERSION)
@@ -233,9 +233,7 @@ ffmpeg: ffmpeg-$(FFMPEG_VERSION).tar.xz .sum-ffmpeg
 	$(UNPACK)
 	$(APPLY) $(SRC)/ffmpeg/dxva_vc1_crash.patch
 	$(APPLY) $(SRC)/ffmpeg/h264_early_SAR.patch
-	$(APPLY) $(SRC)/ffmpeg/0001-avcodec-dxva2_hevc-add-support-for-parsing-HEVC-Rang.patch
-	$(APPLY) $(SRC)/ffmpeg/0002-avcodec-hevcdec-allow-HEVC-444-8-10-12-bits-decoding.patch
-	$(APPLY) $(SRC)/ffmpeg/0003-avcodec-hevcdec-allow-HEVC-422-10-12-bits-decoding-w.patch
+	$(APPLY) $(SRC)/ffmpeg/0001-avcodec-dxva2-add-support-for-HEVC-RExt-DXVA-profile.patch
 	$(APPLY) $(SRC)/ffmpeg/0001-avcodec-mpeg12dec-don-t-call-hw-end_frame-when-start.patch
 	$(APPLY) $(SRC)/ffmpeg/0002-avcodec-mpeg12dec-don-t-end-a-slice-without-first_sl.patch
 	$(APPLY) $(SRC)/ffmpeg/0001-fix-mf_utils-compilation-with-mingw64.patch

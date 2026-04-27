@@ -171,6 +171,20 @@ vlc_module_begin()
         add_string(SOUT_CFG_PREFIX "base_url", NULL, BASE_URL_TEXT, BASE_URL_LONGTEXT)
         add_string(SOUT_CFG_PREFIX "url", NULL, URL_TEXT, URL_LONGTEXT)
         add_renderer_opts(SOUT_CFG_PREFIX)
+
+#ifdef ENABLE_UPNP_SERVER
+    add_submodule()
+        set_shortname("UPnP Server");
+        set_description(N_("Universal Plug'n'Play Server"));
+        set_subcategory(SUBCAT_INTERFACE_MAIN);
+        set_capability("interface", 0);
+        set_callbacks(Server::open, Server::close);
+
+        add_string(SERVER_PREFIX "name", SERVER_DEFAULT_NAME, SERVER_NAME_DESC, SERVER_NAME_LONGTEXT)
+        add_bool(SERVER_PREFIX "share-private-media", false, SERVER_SHARE_PRIVATE_MEDIA_TEXT, SERVER_SHARE_PRIVATE_MEDIA_LONGTEXT);
+            change_volatile();
+#endif
+
 vlc_module_end()
 
 /*

@@ -71,6 +71,10 @@ MainViewLoader {
 
     property bool showGroupCountColumn: false
 
+    property real listCoverHeight: VLCStyle.listAlbumCover_height
+    property real listCoverWidth: VLCStyle.listAlbumCover_width
+    property real listCoverRadius: VLCStyle.listAlbumCover_radius
+
     // Aliases
 
     property alias dragItem: dragItem
@@ -201,7 +205,7 @@ MainViewLoader {
 
             dragItem: root.dragItem
 
-            header: root.header
+            preferredHeader: root.header
 
             headerPositioning: root.headerPositioning
 
@@ -240,6 +244,10 @@ MainViewLoader {
             coverLabels: root.listLabels
 
             showGroupCountColumn: root.showGroupCountColumn
+
+            coverWidth: root.listCoverWidth
+            coverHeight: root.listCoverHeight
+            coverRadius: root.listCoverRadius
         }
     }
 

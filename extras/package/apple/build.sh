@@ -74,6 +74,8 @@ VLC_APPLE_SDK_PATH=
 # SDK version
 # Set in the validate_sdk_name function
 VLC_APPLE_SDK_VERSION=
+# XCode version used to build
+VLC_APPLE_XCODE_VERSION=
 # Indicated if prebuilt contribs package
 # should be created
 VLC_MAKE_PREBUILT_CONTRIBS=0
@@ -295,6 +297,7 @@ validate_sdk_name()
 
     VLC_APPLE_SDK_PATH="$(xcrun --sdk "$1" --show-sdk-path)"
     VLC_APPLE_SDK_VERSION="$(xcrun --sdk "$1" --show-sdk-version)"
+    VLC_APPLE_XCODE_VERSION="$(xcodebuild -version)"
     if [ ! -d "$VLC_APPLE_SDK_PATH" ]; then
         abort_err "SDK at '$VLC_APPLE_SDK_PATH' does not exist"
     fi
@@ -378,6 +381,7 @@ set_host_envvars()
     export CFLAGS="$clike_flags"
     export CXXFLAGS="$clike_flags"
     export OBJCFLAGS="$clike_flags"
+    export OBJCXXFLAGS="$clike_flags"
 
     # Vanilla clang doesn't use VLC_DEPLOYMENT_TAGET_LDFLAGS but only the CFLAGS variant
     export LDFLAGS="$VLC_DEPLOYMENT_TARGET_LDFLAG $VLC_DEPLOYMENT_TARGET_CFLAG -arch $VLC_HOST_ARCH ${bitcode_flag}"
@@ -419,6 +423,7 @@ write_config_mak()
     local vlc_cflags="$clike_flags"
     local vlc_cxxflags="$clike_flags"
     local vlc_objcflags="$clike_flags"
+    local vlc_objcxxflags="$clike_flags"
 
     # Vanilla clang doesn't use VLC_DEPLOYMENT_TAGET_LDFLAGS but only the CFLAGS variant
     local vlc_ldflags="\$(VLC_DEPLOYMENT_TARGET_LDFLAG) \$(VLC_DEPLOYMENT_TARGET_CFLAG) -arch $VLC_HOST_ARCH"
@@ -436,6 +441,7 @@ write_config_mak()
     printf '%s := %s\n' "CFLAGS" "${vlc_cflags}" >&3
     printf '%s := %s\n' "CXXFLAGS" "${vlc_cxxflags}" >&3
     printf '%s := %s\n' "OBJCFLAGS" "${vlc_objcflags}" >&3
+    printf '%s := %s\n' "OBJCXXFLAGS" "${vlc_objcxxflags}" >&3
     printf '%s := %s\n' "LDFLAGS" "${vlc_ldflags}" >&3
     printf '%s := %s\n' "CC" "${VLC_HOST_CC}" >&3
     printf '%s := %s\n' "CPP" "${VLC_HOST_CPP}" >&3
@@ -594,6 +600,7 @@ echo "Build configuration"
 echo "  Platform:         $VLC_HOST_PLATFORM"
 echo "  Architecture:     $VLC_HOST_ARCH"
 echo "  SDK Version:      $VLC_APPLE_SDK_VERSION"
+echo "  Xcode Version:    $VLC_APPLE_XCODE_VERSION"
 echo "  Number of Cores:  $VLC_USE_NUMBER_OF_CORES"
 if [ "$VLC_USE_BITCODE" -gt 0 ]; then
 echo "  Bitcode:          enabled"
@@ -823,6 +830,7 @@ hostenv "${VLC_SRC_DIR}/configure" \
     CFLAGS="${CFLAGS}" \
     OBJCFLAGS="${OBJCFLAGS}" \
     CXXFLAGS="${CXXFLAGS}" \
+    OBJCXXFLAGS="${OBJCXXFLAGS}" \
  || abort_err "Configuring VLC failed"
 
 $MAKE || abort_err "Building VLC failed"

@@ -22,6 +22,7 @@
 
 #import "VLCLibraryVideoViewController.h"
 
+#import "extensions/NSImage+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCLibraryCollectionView.h"
@@ -34,7 +35,6 @@
 #import "library/VLCLibraryModel.h"
 #import "library/VLCLibrarySegment.h"
 #import "library/VLCLibraryTableCellView.h"
-#import "library/VLCLibraryTwoPaneSplitViewDelegate.h"
 #import "library/VLCLibraryUIUnits.h"
 #import "library/VLCLibraryWindow.h"
 #import "library/VLCLibraryWindowPersistentPreferences.h"
@@ -58,7 +58,6 @@
 @interface VLCLibraryVideoViewController ()
 {
     VLCLibraryVideoTableViewDelegate *_videoLibraryTableViewDelegate;
-    VLCLibraryTwoPaneSplitViewDelegate *_splitViewDelegate;
     VLCLibraryCollectionViewDelegate *_collectionViewDelegate;
     VLCLibraryCollectionViewFlowLayout *_collectionViewLayout;
 
@@ -76,10 +75,9 @@
 
     if(self) {
         _videoLibraryTableViewDelegate = [[VLCLibraryVideoTableViewDelegate alloc] init];
-        _splitViewDelegate = [[VLCLibraryTwoPaneSplitViewDelegate alloc] init];
 
         [self setupPropertiesFromLibraryWindow:libraryWindow];
-        [self setupTableViews];
+        [self setupTableView];
         [self setupCollectionView];
         [self setupVideoPlaceholderView];
         [self setupVideoLibraryViews];
@@ -88,6 +86,10 @@
         [notificationCenter addObserver:self
                                selector:@selector(libraryModelUpdated:)
                                    name:VLCLibraryModelVideoMediaListReset
+                                 object:nil];
+        [notificationCenter addObserver:self
+                               selector:@selector(libraryModelUpdated:)
+                                   name:VLCLibraryModelAllCachesDropped
                                  object:nil];
         [notificationCenter addObserver:self
                                selector:@selector(libraryModelUpdated:)
@@ -124,35 +126,31 @@
 {
     NSParameterAssert(libraryWindow);
     _videoLibraryView = libraryWindow.videoLibraryView;
-    _videoLibrarySplitView = libraryWindow.videoLibrarySplitView;
     _videoLibraryCollectionViewScrollView = libraryWindow.videoLibraryCollectionViewScrollView;
     _videoLibraryCollectionView = libraryWindow.videoLibraryCollectionView;
-    _videoLibraryGroupSelectionTableViewScrollView = libraryWindow.videoLibraryGroupSelectionTableViewScrollView;
-    _videoLibraryGroupSelectionTableView = libraryWindow.videoLibraryGroupSelectionTableView;
+    _videoLibrarySplitView = libraryWindow.videoLibrarySplitView;
     _videoLibraryGroupsTableViewScrollView = libraryWindow.videoLibraryGroupsTableViewScrollView;
     _videoLibraryGroupsTableView = libraryWindow.videoLibraryGroupsTableView;
+    _videoLibraryGroupSelectionTableViewScrollView = libraryWindow.videoLibraryGroupSelectionTableViewScrollView;
+    _videoLibraryGroupSelectionTableView = libraryWindow.videoLibraryGroupSelectionTableView;
 }
 
-- (void)setupTableViews
+- (void)setupTableView
 {
-    // Split view with table views
-    self.videoLibrarySplitView.delegate = _splitViewDelegate;
-
     NSNib * const tableCellViewNib =
         [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryTableCellView.class)
                                  bundle:nil];
-    [self.videoLibraryGroupsTableView registerNib:tableCellViewNib
-                                    forIdentifier:@"VLCVideoLibraryTableViewCellIdentifier"];
-    [self.videoLibraryGroupSelectionTableView registerNib:tableCellViewNib 
-                                            forIdentifier:@"VLCVideoLibraryTableViewCellIdentifier"];
+    [self.videoLibraryGroupSelectionTableView registerNib:tableCellViewNib
+                                           forIdentifier:@"VLCVideoLibraryTableViewCellIdentifier"];
+    
+    self.videoLibraryGroupSelectionTableView.floatsGroupRows = NO;
 }
 
 - (void)setupVideoDataSource
 {
     _libraryVideoDataSource = [[VLCLibraryVideoDataSource alloc] init];
     self.libraryVideoDataSource.libraryModel = VLCMain.sharedInstance.libraryController.libraryModel;
-    self.libraryVideoDataSource.masterTableView = self.videoLibraryGroupsTableView;
-    self.libraryVideoDataSource.detailTableView = self.videoLibraryGroupSelectionTableView;
+    self.libraryVideoDataSource.tableView = self.videoLibraryGroupSelectionTableView;
     self.libraryVideoDataSource.collectionView = self.videoLibraryCollectionView;
 }
 
@@ -233,7 +231,6 @@
 
 - (void)setupVideoLibraryViews
 {
-    _videoLibraryGroupsTableView.rowHeight = VLCLibraryUIUnits.mediumTableViewRowHeight;
     _videoLibraryGroupSelectionTableView.rowHeight = VLCLibraryUIUnits.mediumTableViewRowHeight;
 
     const NSEdgeInsets defaultInsets = VLCLibraryUIUnits.libraryViewScrollViewContentInsets;
@@ -243,9 +240,6 @@
     _videoLibraryCollectionViewScrollView.contentInsets = defaultInsets;
     _videoLibraryCollectionViewScrollView.scrollerInsets = scrollerInsets;
 
-    _videoLibraryGroupsTableViewScrollView.automaticallyAdjustsContentInsets = NO;
-    _videoLibraryGroupsTableViewScrollView.contentInsets = defaultInsets;
-    _videoLibraryGroupsTableViewScrollView.scrollerInsets = scrollerInsets;
     _videoLibraryGroupSelectionTableViewScrollView.automaticallyAdjustsContentInsets = NO;
     _videoLibraryGroupSelectionTableViewScrollView.contentInsets = defaultInsets;
     _videoLibraryGroupSelectionTableViewScrollView.scrollerInsets = scrollerInsets;
@@ -279,11 +273,6 @@
     [self setupVideoDataSource];
     self.videoLibraryCollectionView.dataSource = self.libraryVideoDataSource;
 
-    self.videoLibraryGroupsTableView.dataSource = self.libraryVideoDataSource;
-    self.videoLibraryGroupsTableView.target = self.libraryVideoDataSource;
-    self.videoLibraryGroupsTableView.delegate = _videoLibraryTableViewDelegate;
-    self.videoLibraryGroupsTableViewScrollView.hidden = NO;
-
     self.videoLibraryGroupSelectionTableView.dataSource = self.libraryVideoDataSource;
     self.videoLibraryGroupSelectionTableView.target = self.libraryVideoDataSource;
     self.videoLibraryGroupSelectionTableView.delegate = _videoLibraryTableViewDelegate;
@@ -308,14 +297,8 @@
     [self setupShowsDataSource];
     self.videoLibraryCollectionView.dataSource = self.libraryShowsDataSource;
 
-    self.videoLibraryGroupsTableView.dataSource = self.libraryShowsDataSource;
-    self.videoLibraryGroupsTableView.target = self.libraryShowsDataSource;
-    self.videoLibraryGroupsTableView.delegate = _videoLibraryTableViewDelegate;
-    self.videoLibraryGroupsTableViewScrollView.hidden = NO;
-
-    self.videoLibraryGroupSelectionTableView.dataSource = self.libraryShowsDataSource;
-    self.videoLibraryGroupSelectionTableView.target = self.libraryShowsDataSource;
-    self.videoLibraryGroupSelectionTableView.delegate = _videoLibraryTableViewDelegate;
+    // Shows uses the master/detail split view, not the single sectioned table.
+    // The master and detail table views are wired in setupShowsDataSource.
 
     [self.libraryShowsDataSource reloadData];
 
@@ -341,11 +324,6 @@
     _libraryShowsDataSource = nil;
     [self setupMoviesDataSource];
     self.videoLibraryCollectionView.dataSource = self.libraryMoviesDataSource;
-
-    self.videoLibraryGroupsTableView.dataSource = nil;
-    self.videoLibraryGroupsTableView.target = nil;
-    self.videoLibraryGroupsTableView.delegate = nil;
-    self.videoLibraryGroupsTableViewScrollView.hidden = YES;
 
     self.videoLibraryGroupSelectionTableView.dataSource = self.libraryMoviesDataSource;
     self.videoLibraryGroupSelectionTableView.target = self.libraryMoviesDataSource;
@@ -376,21 +354,32 @@
 
 - (void)presentPlaceholderVideoLibraryView
 {
-    [self.libraryWindow displayLibraryPlaceholderViewWithImage:[NSImage imageNamed:@"placeholder-video"]
+    [self.libraryWindow displayLibraryPlaceholderViewWithImage:NSImage.VLCPlaceholderVideoImage
                                               usingConstraints:self.placeholderImageViewSizeConstraints
                                              displayingMessage:_NS("Your videos will appear here.\nGo to the Browse section to add videos you love.")];
 }
 
 - (void)presentVideoLibraryView:(VLCLibraryViewModeSegment)viewModeSegment
 {
+    const NSInteger librarySegmentType = self.libraryWindow.librarySegmentType;
+    const BOOL isShowsSegment = (librarySegmentType == VLCLibraryShowsVideoSubSegmentType);
+
     [self.libraryWindow displayLibraryView:self.videoLibraryView];
+
     if (viewModeSegment == VLCLibraryGridViewModeSegment) {
         self.videoLibrarySplitView.hidden = YES;
         self.videoLibraryCollectionViewScrollView.hidden = NO;
     } else if (viewModeSegment == VLCLibraryListViewModeSegment) {
-        self.videoLibrarySplitView.hidden = NO;
         self.videoLibraryCollectionViewScrollView.hidden = YES;
-        [_splitViewDelegate resetDefaultSplitForSplitView:self.videoLibrarySplitView];
+        if (isShowsSegment) {
+            // Shows uses the master/detail split view
+            self.videoLibrarySplitView.hidden = NO;
+            self.videoLibraryGroupsTableViewScrollView.hidden = NO;
+        } else {
+            // Videos and Movies use the single sectioned table
+            self.videoLibrarySplitView.hidden = NO;
+            self.videoLibraryGroupsTableViewScrollView.hidden = YES;
+        }
     } else {
         NSAssert(false, @"View mode must be grid or list mode");
     }
@@ -449,8 +438,8 @@
     const NSInteger rowForLibraryItem = [self.libraryVideoDataSource rowForLibraryItem:_awaitingPresentingLibraryItem];
     if (rowForLibraryItem != NSNotFound) {
         NSIndexSet * const indexSet = [NSIndexSet indexSetWithIndex:rowForLibraryItem];
-        [self.videoLibraryGroupsTableView selectRowIndexes:indexSet byExtendingSelection:NO];
-        [self.videoLibraryGroupsTableView scrollRowToVisible:rowForLibraryItem];
+        [self.videoLibraryGroupSelectionTableView selectRowIndexes:indexSet byExtendingSelection:NO];
+        [self.videoLibraryGroupSelectionTableView scrollRowToVisible:rowForLibraryItem];
     }
 
     _awaitingPresentingLibraryItem = nil;

@@ -148,6 +148,8 @@ FocusScope {
             leftPadding: padding + VLCStyle.dp(4)
             rightPadding: (textField.width - clearButton.x)
 
+            radius: clearButton.radius
+
             selectByMouse: true
 
             placeholderText: qsTr("filter")
@@ -202,7 +204,7 @@ FocusScope {
                 anchors.right: parent.right
                 anchors.rightMargin: VLCStyle.margin_xxsmall
 
-                font.pixelSize: VLCStyle.icon_banner
+                font.pixelSize: VLCStyle.icon_normal
                 text: VLCIcons.close
 
                 description: qsTr("Clear")

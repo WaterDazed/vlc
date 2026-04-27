@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cerrno>
 #include <iomanip>
+#include <string_view>
 
 #include <vlc_fixups.h>
 #include <vlc_stream.h>
@@ -81,6 +82,12 @@ size_t json_read(void *data, void *buf, size_t size)
     return s;
 }
 
+}
+
+static inline std::string_view json_get_str_view(const struct json_object *obj, const char *key)
+{
+    const char *val = json_get_str(obj, key);
+    return val ? val : "";
 }
 
 static int httpd_file_fill_cb( httpd_file_sys_t *data, httpd_file_t *http_file,
@@ -165,9 +172,7 @@ intf_sys_t::intf_sys_t(vlc_object_t * const p_this, int port, std::string device
     if( unlikely(m_ctl_thread_interrupt == NULL) )
         throw std::runtime_error( "error creating interrupt context" );
 
-    std::stringstream ss;
-    ss << "http://" << m_communication->getServerIp() << ":" << port;
-    m_art_http_ip = ss.str();
+    m_art_http_ip = m_communication->getServerBaseURL();
 
     char *device_name = var_GetString(p_this, "sout-chromecast-device-name");
     if (device_name)
@@ -736,8 +741,7 @@ void intf_sys_t::processAuthMessage( const castchannel::CastMessage& msg )
 void intf_sys_t::processHeartBeatMessage( const castchannel::CastMessage& msg , const struct json_object *entry )
 {
     VLC_UNUSED(msg);
-    const char *tmp = json_get_str(entry, "type");
-    std::string type = tmp ? tmp : ""; 
+    const std::string_view type = json_get_str_view(entry, "type");
     if (type == "PING")
     {
         msg_Dbg( m_module, "PING received from the Chromecast");
@@ -745,19 +749,18 @@ void intf_sys_t::processHeartBeatMessage( const castchannel::CastMessage& msg , 
     }
     else if (type == "PONG")
     {
-        msg_Dbg( m_module, "PONG received from the Chromecast");
+        msg_Dbg(m_module, "PONG received from the Chromecast");
         m_pingRetriesLeft = PING_WAIT_RETRIES;
     }
     else
     {
-        msg_Warn( m_module, "Heartbeat command not supported: %s", type.c_str());
+        msg_Warn(m_module, "Heartbeat command not supported: %s", type.data());
     }
 }
 
 bool intf_sys_t::processReceiverMessage( const castchannel::CastMessage& msg , const struct json_object *entry )
 {
-    const char *tmp = json_get_str(entry, "type");
-    std::string type = tmp ? tmp : "";
+    const std::string_view type = json_get_str_view(entry, "type");
 
     bool ret = true;
     if (type == "RECEIVER_STATUS")
@@ -794,8 +797,7 @@ bool intf_sys_t::processReceiverMessage( const castchannel::CastMessage& msg , c
             if ( p_app != NULL )
             {
                 msg_Dbg( m_module, "Media receiver application was already running" );
-                tmp = json_get_str(p_app, "transportId");
-                m_appTransportId = tmp ? tmp: "";
+                m_appTransportId = json_get_str_view(p_app, "transportId");
                 m_communication->msgConnect( m_appTransportId );
                 setState( Ready );
             }
@@ -809,8 +811,7 @@ bool intf_sys_t::processReceiverMessage( const castchannel::CastMessage& msg , c
             if ( p_app != NULL )
             {
                 msg_Dbg( m_module, "Media receiver application has been started." );
-                tmp = json_get_str(p_app, "transportId");
-                m_appTransportId = tmp ? tmp: "";
+                m_appTransportId = json_get_str_view(p_app, "transportId");
                 m_communication->msgConnect( m_appTransportId );
                 setState( Ready );
             }
@@ -868,8 +869,7 @@ bool intf_sys_t::processReceiverMessage( const castchannel::CastMessage& msg , c
 
 void intf_sys_t::processMediaMessage( const castchannel::CastMessage& msg , const struct json_object *entry )
 {
-    const char *tmp = json_get_str(entry, "type");
-    std::string type = tmp ? tmp: "";
+    const std::string_view type = json_get_str_view(entry, "type");
     int64_t requestId = (int64_t) json_get_num(entry,"requestId");
 
     vlc::threads::mutex_locker lock( m_lock );
@@ -889,14 +889,11 @@ void intf_sys_t::processMediaMessage( const castchannel::CastMessage& msg , cons
             return;
         }
         int64_t sessionId = (int64_t) json_get_num(&status->array.entries[0].object,"mediaSessionId");
-        tmp = json_get_str(&status->array.entries[0].object,"playerState");
-        std::string newPlayerState = tmp ? tmp: "";
-        tmp = json_get_str(&status->array.entries[0].object,"idleReason");
-        std::string idleReason = tmp ? tmp: "";
+        const std::string_view newPlayerState = json_get_str_view(&status->array.entries[0].object,"playerState");
+        const std::string_view idleReason = json_get_str_view(&status->array.entries[0].object,"idleReason");
 
-        msg_Dbg( m_module, "Player state: %s sessionId: %" PRId64,
-                 json_get_str(&status->array.entries[0].object,"playerState"),
-                 sessionId );
+        msg_Dbg(m_module, "Player state: %s sessionId: %" PRId64,
+                newPlayerState.data(), sessionId);
 
         if (sessionId != 0 && m_mediaSessionId != 0 && m_mediaSessionId != sessionId)
         {
@@ -995,7 +992,7 @@ void intf_sys_t::processMediaMessage( const castchannel::CastMessage& msg , cons
                 }
             }
             else
-                msg_Warn( m_module, "Unknown Chromecast MEDIA_STATUS state %s", newPlayerState.c_str());
+                msg_Warn(m_module, "Unknown Chromecast MEDIA_STATUS state %s", newPlayerState.data());
         }
     }
     else if (type == "LOAD_FAILED")
@@ -1019,14 +1016,9 @@ void intf_sys_t::processMediaMessage( const castchannel::CastMessage& msg , cons
 
 }
 
-void intf_sys_t::processConnectionMessage( const castchannel::CastMessage& msg , const struct json_object *entry )
+void intf_sys_t::processConnectionMessage( const castchannel::CastMessage& , const struct json_object *entry )
 {
-    const struct json_value *value = json_get(entry, msg.payload_utf8().c_str());
-    if (!value) {
-        msg_Err(m_module, "connection message: bad payload");
-        return;
-    }
-    std::string type = json_get_str(&value->object, "type");
+    const std::string_view type = json_get_str_view(entry, "type");
 
     if ( type == "CLOSE" )
     {
@@ -1040,7 +1032,7 @@ void intf_sys_t::processConnectionMessage( const castchannel::CastMessage& msg ,
     else
     {
         msg_Warn( m_module, "Connection command not supported: %s",
-                type.c_str());
+                  type.data() );
     }
 }
 

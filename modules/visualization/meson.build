@@ -20,16 +20,25 @@ vlc_modules += {
 }
 
 # projectM visualization plugin
-projectm_dep = dependency('libprojectM', required: get_option('projectm'))
-if projectm_dep.found() and projectm_dep.version().version_compare('>= 2.0.0')
-    cdata.set('HAVE_PROJECTM2',1)
+projectm_dep = disabler()
+projectm_cpp_args = []
+if get_option('projectm').allowed()
+    projectm_dep = dependency('projectM-4', required: false)
+    if (projectm_dep.found())
+        projectm_cpp_args += '-DHAVE_PROJECTM4'
+    else
+        projectm_dep = dependency('libprojectM', required: get_option('projectm'))
+        if projectm_dep.found() and projectm_dep.version().version_compare('>= 2.0.0')
+            projectm_cpp_args += ['-DHAVE_PROJECTM2', '-std=gnu++14' ]
+        endif
+    endif
 endif
 
 vlc_modules += {
     'name' : 'projectm',
     'sources' : files('projectm.cpp'),
     'dependencies' : [projectm_dep],
-    'cpp_args' : [ '-std=gnu++14' ],
+    'cpp_args' : projectm_cpp_args,
     'enabled' : projectm_dep.found()
 }
 

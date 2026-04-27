@@ -154,6 +154,15 @@ vaegl_init_fourcc(struct priv *priv, unsigned va_fourcc)
             priv->drm_fourccs[0] = VLC_FOURCC('R', '1', '6', ' ');
             priv->drm_fourccs[1] = VLC_FOURCC('G', 'R', '3', '2');
             break;
+        case VA_FOURCC_Y210:
+        case VA_FOURCC_Y212:
+            priv->drm_fourccs[0] = VLC_FOURCC('A', 'B', '4', '8');
+            break;
+        case VA_FOURCC_XYUV:
+        case VA_FOURCC_Y410:
+        case VA_FOURCC_Y412:
+            priv->drm_fourccs[0] = va_fourcc;
+            break;
         default: return VLC_EGENERIC;
     }
     priv->fourcc = va_fourcc;
@@ -345,8 +354,7 @@ tc_va_check_interop_blacklist(const struct vlc_gl_interop *interop, VADisplay *v
 }
 
 static int
-tc_va_check_derive_image(const struct vlc_gl_interop *interop,
-                         vlc_fourcc_t sw_chroma)
+tc_va_check_derive_image(const struct vlc_gl_interop *interop)
 {
     vlc_object_t *o = VLC_OBJECT(interop->gl);
     struct priv *priv = interop->priv;
@@ -365,11 +373,6 @@ tc_va_check_derive_image(const struct vlc_gl_interop *interop,
         goto done;
     assert(va_image.format.fourcc == priv->fourcc);
 
-    const vlc_chroma_description_t *image_desc =
-        vlc_fourcc_GetChromaDescription(sw_chroma);
-    assert(image_desc != NULL);
-    assert(image_desc->plane_count == va_image.num_planes);
-
     VABufferInfo va_buffer_info = (VABufferInfo) {
         .mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME
     };
@@ -378,14 +381,10 @@ tc_va_check_derive_image(const struct vlc_gl_interop *interop,
     if (ret != VLC_SUCCESS)
         goto done;
 
-    for (unsigned i = 0; i < image_desc->plane_count; ++i)
+    for (unsigned i = 0; i < interop->tex_count; ++i)
     {
-        unsigned w_num = image_desc->p[i].w.num;
-        if (image_desc->plane_count == 2 && i == 1)
-            // for NV12/P010 the second plane uses GL_RG which has a double pitch
-            w_num /= 2;
-        EGLint w = (va_image.width * w_num) / image_desc->p[i].w.den;
-        EGLint h = (va_image.height * image_desc->p[i].h.num) / image_desc->p[i].h.den;
+        EGLint w = (va_image.width * interop->texs[i].w.num) / interop->texs[i].w.den;
+        EGLint h = (va_image.height * interop->texs[i].h.num) / interop->texs[i].h.den;
         EGLImageKHR egl_image =
             vaegl_image_create(interop, w, h, priv->drm_fourccs[i], va_buffer_info.handle,
                                va_image.offsets[i], va_image.pitches[i],
@@ -429,6 +428,26 @@ GetChromaVaFourcc(vlc_fourcc_t opaque_chroma, int *va_fourcc,
         case VLC_CODEC_VAAPI_420_12BPP:
             *va_fourcc = VA_FOURCC_P012;
             *sw_chroma = VLC_CODEC_P012;
+            break;
+        case VLC_CODEC_VAAPI_422_10BPP:
+            *va_fourcc = VA_FOURCC_Y210;
+            *sw_chroma = VLC_CODEC_Y210;
+            break;
+        case VLC_CODEC_VAAPI_422_12BPP:
+            *va_fourcc = VA_FOURCC_Y212;
+            *sw_chroma = VLC_CODEC_Y212;
+            break;
+        case VLC_CODEC_VAAPI_444:
+            *va_fourcc = VA_FOURCC_XYUV;
+            *sw_chroma = VLC_CODEC_VUYX;
+            break;
+        case VLC_CODEC_VAAPI_444_10BPP:
+            *va_fourcc = VA_FOURCC_Y410;
+            *sw_chroma = VLC_CODEC_Y410;
+            break;
+        case VLC_CODEC_VAAPI_444_12BPP:
+            *va_fourcc = VA_FOURCC_Y412;
+            *sw_chroma = VLC_CODEC_Y412;
             break;
         default:
             vlc_assert_unreachable();
@@ -504,7 +523,47 @@ Open(struct vlc_gl_interop *interop)
                 .format = GL_RG,
                 .type = GL_UNSIGNED_SHORT,
             };
-
+            break;
+        case VLC_CODEC_VAAPI_422_10BPP: /* VLC_CODEC_Y210 */
+        case VLC_CODEC_VAAPI_422_12BPP: /* VLC_CODEC_Y212 */
+            interop->tex_count = 1;
+            interop->texs[0] = (struct vlc_gl_tex_cfg) {
+                .w = {1, 2},
+                .h = {1, 1},
+                .internal = GL_RGBA16,
+                .format = GL_RGBA,
+                .type = GL_UNSIGNED_SHORT,
+            };
+            break;
+        case VLC_CODEC_VAAPI_444: /* VLC_CODEC_VUYX */
+            interop->tex_count = 1;
+            interop->texs[0] = (struct vlc_gl_tex_cfg) {
+                .w = {1, 1},
+                .h = {1, 1},
+                .internal = GL_RGBA,
+                .format = GL_RGBA,
+                .type = GL_UNSIGNED_BYTE,
+            };
+            break;
+        case VLC_CODEC_VAAPI_444_10BPP: /* VLC_CODEC_Y410 */
+            interop->tex_count = 1;
+            interop->texs[0] = (struct vlc_gl_tex_cfg) {
+                .w = {1, 1},
+                .h = {1, 1},
+                .internal = GL_RGB10_A2,
+                .format = GL_RGBA,
+                .type = GL_UNSIGNED_INT_2_10_10_10_REV,
+            };
+            break;
+        case VLC_CODEC_VAAPI_444_12BPP: /* VLC_CODEC_Y412 */
+            interop->tex_count = 1;
+            interop->texs[0] = (struct vlc_gl_tex_cfg) {
+                .w = {1, 1},
+                .h = {1, 1},
+                .internal = GL_RGBA16,
+                .format = GL_RGBA,
+                .type = GL_UNSIGNED_SHORT,
+            };
             break;
         default:
             vlc_assert_unreachable();
@@ -556,7 +615,7 @@ Open(struct vlc_gl_interop *interop)
     if (tc_va_check_interop_blacklist(interop, priv->vadpy))
         goto error;
 
-    if (tc_va_check_derive_image(interop, vlc_sw_chroma))
+    if (tc_va_check_derive_image(interop))
         goto error;
 
     /* The pictures are uploaded upside-down */

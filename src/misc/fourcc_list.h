@@ -762,6 +762,8 @@ static const staticentry_t p_list_video[] = {
         A("Hap1"),
         E("Hap5", "Vidvox Hap Alpha"),
         E("HapY", "Vidvox Hap Q"),
+        E("HapA", "Vidvox Hap Alpha-Only"),
+        E("HapM", "Vidvox Hap Q Alpha"),
 
     B(VLC_CODEC_DXV, "Resolume DXV"),
         A("DXDI"),
@@ -911,10 +913,16 @@ static const staticentry_t p_list_video[] = {
 
     B(VLC_CODEC_Y210, "Packed 10-bit YUV 4:2:2"),
         A("Y210"),
+    B(VLC_CODEC_Y212, "Packed 12-bit YUV 4:2:2"),
+        A("Y212"),
     B(VLC_CODEC_VUYA, "Packed YUV 4:4:4, V:U:Y:A"),
         A("VUYA"),
+    B(VLC_CODEC_VUYX, "Packed YUV 4:4:4, V:U:Y:X"),
+        A("VUYX"),
     B(VLC_CODEC_Y410, "Packed 10-bit YUV 4:4:4"),
         A("Y410"),
+    B(VLC_CODEC_Y412, "Packed 12-bit YUV 4:4:4"),
+        A("Y412"),
 
     B(VLC_CODEC_NV12, "Biplanar 4:2:0 Y/UV"),
         A("NV12"),
@@ -1253,6 +1261,21 @@ static const staticentry_t p_list_video[] = {
 
     B(VLC_CODEC_VAAPI_420_12BPP, "4:2:0 12bits VAAPI opaque"),
         A("VAO2"),
+
+    B(VLC_CODEC_VAAPI_422_10BPP, "4:2:2 10bits VAAPI opaque"),
+        A("VA20"),
+
+    B(VLC_CODEC_VAAPI_422_12BPP, "4:2:2 12bits VAAPI opaque"),
+        A("VA22"),
+
+    B(VLC_CODEC_VAAPI_444,       "4:4:4 8bits VAAPI opaque"),
+        A("VA4P"),
+
+    B(VLC_CODEC_VAAPI_444_10BPP, "4:4:4 10bits VAAPI opaque"),
+        A("VA40"),
+
+    B(VLC_CODEC_VAAPI_444_12BPP, "4:4:4 12bits VAAPI opaque"),
+        A("VA42"),
 
     B(VLC_CODEC_ANDROID_OPAQUE, "Android opaque"),
         A("ANOP"),
@@ -1760,6 +1783,8 @@ static const staticentry_t p_list_audio[] = {
     B(VLC_CODEC_DSD_LSBF_PLANAR, "DSD (Direct Stream Digital) LSB first, planar"),
 
     B(VLC_CODEC_DSD_MSBF_PLANAR, "DSD (Direct Stream Digital) MSB first, planar"),
+
+    B(VLC_CODEC_DFPWM, "DFPWM1a audio"),
 };
 
 static const staticentry_t p_list_spu[] = {

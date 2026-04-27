@@ -437,6 +437,7 @@ static const MP4_Box_data_sbgp_entry_t *
         return p_sampleentry;
 
     /* Lookup designated group description */
+    *pp_descentry = NULL;
     const MP4_Box_t *p_sgpd = MP4_GroupDescriptionByType( p_node, i_grouping_type );
     if( p_sgpd )
     {
@@ -456,6 +457,10 @@ static const MP4_Box_data_sbgp_entry_t *
                 p_entries[p_descdata->i_default_sample_description_index - 1];
         }
     }
+
+    /* If caller requested a description but we couldn't find one, report no match */
+    if( *pp_descentry == NULL )
+        return NULL;
 
     return p_sampleentry;
 }
@@ -4258,6 +4263,22 @@ static inline uint32_t MP4_GetAudioFrameInfo( const mp4_track_t *p_track,
         i_samples_per_frame = p_soun->i_constLPCMframesperaudiopacket;
         i_bytes_per_frame = p_soun->i_constbytesperaudiopacket;
     }
+
+    /* handle v0 or v1 MPGA having bytesperssample and samplesize and
+     * compression being 0.
+     * ends up reading samplesperframe instead of the number of
+     * stored samples units */
+    if( p_soun->i_compressionid == 0 && p_soun->i_qt_version <= 1 &&
+        p_track->i_sample_size > 0 &&
+        (
+            p_track->fmt.i_codec == VLC_CODEC_MP3 ||
+            p_track->fmt.i_codec == VLC_CODEC_MP2 ||
+            p_track->fmt.i_codec == VLC_CODEC_MPGA
+        ) )
+    {
+        i_bytes_per_frame = 0;
+    }
+
 #ifdef MP4_DEBUG_AUDIO_SAMPLES
     printf("qtv%d comp%x ss %d chan %d ba %d spp %d bpf %d / %d %d\n",
            p_soun->i_qt_version, p_soun->i_compressionid,
@@ -4344,22 +4365,20 @@ static uint32_t MP4_TrackGetReadSize( mp4_track_t *p_track, uint32_t *pi_nb_samp
             case VLC_CODEC_AMR_WB:
                 i_max_v0_samples = 16;
                 break;
-            case VLC_CODEC_MPGA:
-            case VLC_CODEC_MP2:
-            case VLC_CODEC_MP3:
-            case VLC_CODEC_DTS:
-            case VLC_CODEC_MP4A:
-            case VLC_CODEC_A52:
-            case VLC_CODEC_OPUS:
-                i_max_v0_samples = 1;
-                break;
-                /* fixme, reverse using a list of uncompressed codecs */
             default:
-                /* Read 25ms of samples (uncompressed) */
-                i_max_v0_samples = p_track->fmt.audio.i_rate / 40 *
-                                   p_track->fmt.audio.i_channels;
-                if( i_max_v0_samples < 1 )
+                if( aout_BitsPerSample(p_track->fmt.i_codec) )
+                {
+                    /* Read 25ms of samples (uncompressed) */
+                    i_max_v0_samples = p_track->fmt.audio.i_rate / 40 *
+                                       p_track->fmt.audio.i_channels;
+                    if( i_max_v0_samples < 1 )
+                        i_max_v0_samples = 1;
+                }
+                else
+                {
+                    /* compressed codecs */
                     i_max_v0_samples = 1;
+                }
                 break;
         }
 

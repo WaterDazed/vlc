@@ -1,7 +1,7 @@
 /*****************************************************************************
  * VLCOpenWindowController.m: Open dialogues for VLC's MacOS X port
  *****************************************************************************
- * Copyright (C) 2002-2021 VLC authors and VideoLAN
+ * Copyright (C) 2002-2025 VLC authors and VideoLAN
  *
  * Authors: Jon Lech Johansen <jon-vl@nanocrew.net>
  *          Christophe Massiot <massiot@via.ecp.fr>
@@ -27,6 +27,7 @@
 #import "VLCOpenWindowController.h"
 
 #import <Cocoa/Cocoa.h>
+#import "extensions/NSImage+VLCAdditions.h"
 #import <AVFoundation/AVFoundation.h>
 
 #import <vlc_common.h>
@@ -94,6 +95,8 @@ NSString *const VLCOpenTextFieldWasClicked = @"VLCOpenTextFieldWasClicked";
 
     BOOL b_autoplay;
     BOOL b_nodvdmenus;
+    BOOL b_currentDiscIsDVDA;
+    BOOL b_dvdaPlayingAsVideo;
     NSView *_currentOpticalMediaView;
     NSImageView *_currentOpticalMediaIconView;
     NSMutableArray <VLCOpenBlockDeviceDescription *>*_allMediaDevices;
@@ -205,7 +208,7 @@ NSString *const VLCOpenTextFieldWasClicked = @"VLCOpenTextFieldWasClicked";
     [[_tabView tabViewItemAtIndex: 3] setLabel: _NS("Capture")];
     [_fileNameLabel setStringValue: @""];
     [_fileNameStubLabel setStringValue: _NS("Choose a file")];
-    [_fileIconWell setImage: [NSImage imageNamed:@"generic"]];
+    [_fileIconWell setImage: NSImage.VLCGenericImage];
     [_fileBrowseButton setTitle: _NS("Browse...")];
     _fileBrowseButton.accessibilityLabel = _NS("Select a file for playback");
     [_fileTreatAsPipeButton setTitle: _NS("Treat as a pipe rather than as a file")];
@@ -615,7 +618,7 @@ NSString *const VLCOpenTextFieldWasClicked = @"VLCOpenTextFieldWasClicked";
         [_fileNameLabel setStringValue: @""];
         [_fileNameStubLabel setHidden: NO];
         [_fileTreatAsPipeButton setHidden: YES];
-        [_fileIconWell setImage: [NSImage imageNamed:@"generic"]];
+        [_fileIconWell setImage: NSImage.VLCGenericImage];
         [self setMRL: @""];
     }
 }
@@ -712,6 +715,11 @@ NSString *const VLCOpenTextFieldWasClicked = @"VLCOpenTextFieldWasClicked";
     NSImage *mediaIcon = deviceDescription.mediaIcon;
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
+    b_currentDiscIsDVDA = [diskType isEqualToString:kVLCMediaAudioDVD];
+    b_dvdaPlayingAsVideo = NO;
+    if (!b_currentDiscIsDVDA)
+        [_discDVDDisableMenusButton setTitle:_NS("Disable DVD menus")];
+
     if ([diskType isEqualToString: kVLCMediaDVD] || [diskType isEqualToString: kVLCMediaVideoTSFolder]) {
         [_discDVDLabel setStringValue: [[NSFileManager defaultManager] displayNameAtPath:opticalDevicePath]];
         [_discDVDwomenusLabel setStringValue: [_discDVDLabel stringValue]];
@@ -723,6 +731,11 @@ NSString *const VLCOpenTextFieldWasClicked = @"VLCOpenTextFieldWasClicked";
             [self setMRL: [NSString stringWithFormat: @"dvdread://%@#%i:%i-", devicePath, [_discDVDwomenusTitleTextField intValue], [_discDVDwomenusChapterTextField intValue]]];
             [self showOpticalMediaView: _discDVDwomenusView withIcon:mediaIcon];
         }
+    } else if ([diskType isEqualToString: kVLCMediaAudioDVD]) {
+        [_discDVDLabel setStringValue: [fileManager displayNameAtPath:opticalDevicePath]];
+        [_discDVDDisableMenusButton setTitle:_NS("Play as DVD-Video")];
+        [self setMRL:[NSString stringWithFormat:@"dvda://%@", devicePath]];
+        [self showOpticalMediaView:_discDVDView withIcon:mediaIcon];
     } else if ([diskType isEqualToString: kVLCMediaAudioCD]) {
         [_discAudioCDLabel setStringValue: [fileManager displayNameAtPath: opticalDevicePath]];
         [_discAudioCDTrackCountLabel setStringValue: [NSString stringWithFormat:_NS("%i tracks"), [[fileManager subpathsOfDirectoryAtPath: opticalDevicePath error:NULL] count] - 1]]; // minus .TOC.plist
@@ -891,6 +904,18 @@ NSString *const VLCOpenTextFieldWasClicked = @"VLCOpenTextFieldWasClicked";
 - (IBAction)dvdreadOptionChanged:(id)sender
 {
     NSString *devicePath = [[_allMediaDevices objectAtIndex:[_discSelectorPopup indexOfSelectedItem]] devicePath];
+
+    if (sender == _discDVDDisableMenusButton && b_currentDiscIsDVDA) {
+        b_dvdaPlayingAsVideo = !b_dvdaPlayingAsVideo;
+        if (b_dvdaPlayingAsVideo) {
+            [_discDVDDisableMenusButton setTitle:_NS("Play as DVD-Audio")];
+            [self setMRL:[NSString stringWithFormat:@"dvdnav://%@", devicePath]];
+        } else {
+            [_discDVDDisableMenusButton setTitle:_NS("Play as DVD-Video")];
+            [self setMRL:[NSString stringWithFormat:@"dvda://%@", devicePath]];
+        }
+        return;
+    }
 
     if (sender == _discDVDwomenusEnableMenusButton) {
         b_nodvdmenus = NO;

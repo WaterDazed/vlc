@@ -22,6 +22,7 @@
 
 #import "VLCLibraryHeroView.h"
 
+#import "extensions/NSColor+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 #import "extensions/NSView+VLCAdditions.h"
 
@@ -54,6 +55,10 @@
 - (void)awakeFromNib
 {
     self.largeImageView.contentGravity = VLCImageViewContentGravityResizeAspectFill;
+    self.playButton.bezelColor = NSColor.VLCAccentColor;
+    if (@available(macOS 10.14, *)) {
+        self.playButton.contentTintColor = NSColor.VLCAccentColor;
+    }
     self.titleTextField.maximumNumberOfLines = 3;
     self.detailTextField.maximumNumberOfLines = 1;
     [self connectItemUpdaters];
@@ -160,6 +165,10 @@
                            selector:@selector(newVideosAvailable:)
                                name:VLCLibraryModelRecentsMediaListReset
                              object:nil];
+    [notificationCenter addObserver:self
+                           selector:@selector(newVideosAvailable:)
+                               name:VLCLibraryModelAllCachesDropped
+                             object:nil];
 }
 
 - (void)disconnectForNewVideo
@@ -167,6 +176,7 @@
     NSNotificationCenter * const notificationCenter = NSNotificationCenter.defaultCenter;
     [notificationCenter removeObserver:self name:VLCLibraryModelVideoMediaListReset object:nil];
     [notificationCenter removeObserver:self name:VLCLibraryModelRecentsMediaListReset object:nil];
+    [notificationCenter removeObserver:self name:VLCLibraryModelAllCachesDropped object:nil];
 }
 
 - (void)newVideosAvailable:(NSNotification *)notification

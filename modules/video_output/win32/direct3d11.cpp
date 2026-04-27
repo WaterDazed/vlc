@@ -196,7 +196,7 @@ static void Direct3D11DestroyResources(vout_display_t *);
 static void Direct3D11DeleteRegions(int, picture_t **);
 static int Direct3D11MapSubpicture(vout_display_t *, int *, picture_t ***, const vlc_render_subpicture *);
 
-static int Control(vout_display_t *, int);
+static int UpdateSource(vout_display_t *, bool force_placement);
 static int SetDisplaySize(vout_display_t *, unsigned width, unsigned height);
 
 static int UpdateDisplayFormat(vout_display_t *vd, const video_format_t *fmt)
@@ -553,16 +553,30 @@ error:
     return err;
 }
 
+static int PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
+{
+    VLC_UNUSED(place);
+    return UpdateSource(vd, true);
+}
+
+static int AspectChanged(vout_display_t *vd, const video_format_t *source)
+{
+    VLC_UNUSED(source);
+    return UpdateSource(vd, false);
+}
+
 static constexpr const auto ops = []{
     struct vlc_display_operations ops {};
     ops.close = Close;
     ops.prepare = Prepare;
     ops.display = Display;
     ops.set_display_size = SetDisplaySize;
-    ops.control = Control;
     ops.update_format = UpdateFormat;
     ops.set_viewpoint = SetViewpoint;
     ops.change_source_projection = ChangeSourceProjection;
+    ops.video_place_changed = PlacementChanged;
+    ops.set_source_aspect = AspectChanged;
+    ops.set_source_crop = AspectChanged;
     return ops;
 }();
 
@@ -752,7 +766,7 @@ static int SetDisplaySize(vout_display_t *vd, unsigned width, unsigned height)
     return VLC_SUCCESS;
 }
 
-static int Control(vout_display_t *vd, int query)
+static int UpdateSource(vout_display_t *vd, bool force_placement)
 {
     vout_display_sys_t *sys = static_cast<vout_display_sys_t *>(vd->sys);
 
@@ -790,12 +804,9 @@ static int Control(vout_display_t *vd, int query)
         sys->picQuad.quad_fmt.i_visible_height = vd->source->i_visible_height;
     }
 
-    switch (query) {
-    case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
+    if (force_placement)
         sys->place_changed = true;
-        // fallthrough
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-    case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
+
     if (use_scaler)
     {
         vout_display_place_t before_place = sys->scalePlace;
@@ -804,8 +815,6 @@ static int Control(vout_display_t *vd, int query)
         sys->scalePlace.width = sys->picQuad.quad_fmt.i_width;
         sys->scalePlace.height = sys->picQuad.quad_fmt.i_height;
         sys->place_changed |= !vout_display_PlaceEquals(&before_place, &sys->scalePlace);
-        break;
-    }
     }
 
     if ( sys->place_changed )

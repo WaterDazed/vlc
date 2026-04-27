@@ -143,15 +143,6 @@ MainViewLoader {
         }
     }
 
-    function _getCount(model) {
-        const count = model.count;
-
-        if (count < 100)
-            return count;
-        else
-            return qsTr("99+");
-    }
-
     function _adjustDragAccepted(drag) {
         if (!root.model || root.model.transactionPending)
         {
@@ -327,7 +318,19 @@ MainViewLoader {
                 title: (model.name) ? model.name
                                     : qsTr("Unknown title")
 
-                labels: [ qsTr("%1 Track", "%1 Tracks", _getCount(model)).arg(_getCount(model)) ]
+                labels: [
+                    (function () {
+                        const labels = []
+                        if (model.nb_audio > 0)
+                            labels.push(qsTr("%1 Track", "%1 Tracks", model.nb_audio).arg(model.nb_audio))
+                        if (model.nb_video > 0)
+                            labels.push(qsTr("%1 Video", "%1 Videos", model.nb_video).arg(model.nb_video))
+                        if (model.nb_unknown > 0)
+                            labels.push(qsTr("%1 Other", "%1 Other", model.nb_unknown).arg(model.nb_unknown))
+
+                        return labels.join("\n")
+                    })()
+                ]
 
                 dragItem: dragItemPlaylist
 
@@ -435,7 +438,7 @@ MainViewLoader {
                 model: {
                     criteria: "count",
 
-                    text: qsTr("Tracks"),
+                    text: qsTr("Items"),
 
                     isSortable: false
                 }
@@ -455,7 +458,7 @@ MainViewLoader {
 
             dragItem: dragItemPlaylist
 
-            header: root.header
+            preferredHeader: root.header
 
             rowContextMenu: contextMenu
 
@@ -465,16 +468,16 @@ MainViewLoader {
             fadingEdge.enableBeginningFade: root.enableBeginningFade
             fadingEdge.enableEndFade: root.enableEndFade
 
-            listView.isDropAcceptableFunc: function(drag, index) {
+            isDropAcceptableFunc: function(drag, index) {
                 root._adjustDragAccepted(drag)
                 return drag.accepted
             }
 
-            listView.acceptDropFunc: function(index, drop) {
+            acceptDropFunc: function(index, drop) {
                 return root._dropAction(drop, listView.itemContainsDrag?.index)
             }
 
-            listView.dropIndicator: null
+            dropIndicator: null
 
             Navigation.parentItem: root
 
@@ -515,7 +518,7 @@ MainViewLoader {
 
                 // NOTE: This makes sure we display the playlist count on the item.
                 function titlecoverLabels(model) {
-                    return [ _getCount(model) ];
+                    return [];
                 }
             }
         }

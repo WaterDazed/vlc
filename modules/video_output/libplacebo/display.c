@@ -81,7 +81,6 @@ typedef struct vout_display_sys_t
 // Display callbacks
 static void PictureRender(vout_display_t *, picture_t *, const vlc_render_subpicture *, vlc_tick_t);
 static void PictureDisplay(vout_display_t *, picture_t *);
-static int Control(vout_display_t *, int);
 static int SetDisplaySize(vout_display_t *, unsigned width, unsigned height);
 static void Close(vout_display_t *);
 static void UpdateParams(vout_display_t *);
@@ -93,7 +92,6 @@ static const struct vlc_display_operations ops = {
     .prepare = PictureRender,
     .display = PictureDisplay,
     .set_display_size = SetDisplaySize,
-    .control = Control,
     .set_icc_profile = UpdateIccProfile,
 };
 
@@ -545,22 +543,6 @@ static int SetDisplaySize(vout_display_t *vd, unsigned width_, unsigned height_)
         return VLC_EGENERIC;
     */
     return VLC_SUCCESS;
-}
-
-static int Control(vout_display_t *vd, int query)
-{
-    switch (query)
-    {
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-    case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-    case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-        return VLC_SUCCESS;
-
-    default:
-        msg_Err (vd, "Unknown request %d", query);
-    }
-
-    return VLC_EGENERIC;
 }
 
 static void LoadCustomLUT(vout_display_sys_t *sys, const char *filepath)

@@ -96,19 +96,6 @@ static void vlc_vidsplit_Display(vout_display_t *vd, picture_t *picture)
     (void) picture;
 }
 
-static int vlc_vidsplit_Control(vout_display_t *vd, int query)
-{
-    (void) vd;
-
-    switch (query) {
-        case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-        case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-            return VLC_SUCCESS;
-    }
-    return VLC_EGENERIC;
-}
-
 static void vlc_vidsplit_Close(vout_display_t *vd)
 {
     vout_display_sys_t *sys = vd->sys;
@@ -228,7 +215,6 @@ static const struct vlc_display_operations ops = {
     .close = vlc_vidsplit_Close,
     .prepare = vlc_vidsplit_Prepare,
     .display = vlc_vidsplit_Display,
-    .control = vlc_vidsplit_Control,
 };
 
 static int vlc_vidsplit_Open(vout_display_t *vd,

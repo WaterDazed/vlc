@@ -39,6 +39,8 @@
 #include <limits.h>
 #include <stdckdint.h>
 
+#define MP4_DEPTH_MAX 32
+
 /* Some assumptions:
  * The input method HAS to be seekable
  */
@@ -191,6 +193,14 @@ static inline uint32_t Get24bBE( const uint8_t *p )
 static inline void GetUUID( UUID_t *p_uuid, const uint8_t *p_buff )
 {
     memcpy( p_uuid, p_buff, 16 );
+}
+
+static unsigned GetDepth( const MP4_Box_t *box )
+{
+    unsigned i = 0;
+    for( ; box ; box = box->p_father )
+        i++;
+    return i;
 }
 
 static video_palette_t * ReadQuicktimePalette( uint8_t **pp_peek, uint64_t *pi_read )
@@ -536,6 +546,9 @@ static int MP4_ReadBoxContainerChildrenIndexed( stream_t *p_stream,
         /* there is no box to load */
         return 0;
     }
+
+    if( GetDepth( p_container ) > MP4_DEPTH_MAX ) /* Prevent unbounded recursions */
+        return 1;
 
     uint64_t i_last_pos = 0; /* used to detect read failure loops */
     const uint64_t i_end = p_container->i_pos + p_container->i_size;
@@ -4570,8 +4583,7 @@ static int MP4_ReadBox_Reference( stream_t *p_stream, MP4_Box_t *p_box )
             p_data->i_reference_count )
         MP4_READBOX_EXIT( 0 );
 
-    p_data->p_references = malloc( sizeof(*p_data->p_references) *
-                                   p_data->i_reference_count );
+    p_data->p_references = vlc_alloc( p_data->i_reference_count, sizeof(*p_data->p_references) );
     if( !p_data->p_references )
         MP4_READBOX_EXIT( 0 );
     for( uint16_t i=0; i<p_data->i_reference_count; i++ )
@@ -4669,7 +4681,7 @@ static int MP4_ReadBox_iloc( stream_t *p_stream, MP4_Box_t *p_box )
     if( i_read / 6 < p_data->i_item_count )
         MP4_READBOX_EXIT( 0 );
 
-    p_data->p_items = malloc( p_data->i_item_count * sizeof(p_data->p_items[0]) );
+    p_data->p_items = vlc_alloc( p_data->i_item_count, sizeof(p_data->p_items[0]) );
     if( !p_data->p_items )
         MP4_READBOX_EXIT( 0 );
 
@@ -4712,7 +4724,7 @@ static int MP4_ReadBox_iloc( stream_t *p_stream, MP4_Box_t *p_box )
             MP4_READBOX_EXIT( 0 );
         }
 
-        p_data->p_items[i].p_extents = malloc( p_data->p_items[i].i_extent_count *
+        p_data->p_items[i].p_extents = vlc_alloc( p_data->p_items[i].i_extent_count,
                                                sizeof(p_data->p_items[i].p_extents[0]) );
         if(!p_data->p_items[i].p_extents)
         {
@@ -4915,7 +4927,7 @@ static int MP4_ReadBox_ipma( stream_t *p_stream, MP4_Box_t *p_box )
         MP4_READBOX_EXIT( 0 );
     }
 
-    p_data->p_entries = malloc( sizeof(p_data->p_entries[0]) * p_data->i_entry_count );
+    p_data->p_entries = vlc_alloc( p_data->i_entry_count, sizeof(p_data->p_entries[0]) );
     if( !p_data->p_entries )
     {
         p_data->i_entry_count = 0;
@@ -4943,8 +4955,8 @@ static int MP4_ReadBox_ipma( stream_t *p_stream, MP4_Box_t *p_box )
         }
 
         p_data->p_entries[i].p_assocs =
-                malloc( sizeof(p_data->p_entries[i].p_assocs[0]) *
-                        p_data->p_entries[i].i_association_count );
+                vlc_alloc( p_data->p_entries[i].i_association_count,
+                           sizeof(p_data->p_entries[i].p_assocs[0]) );
         if( !p_data->p_entries[i].p_assocs )
         {
             p_data->p_entries[i].i_association_count = 0;

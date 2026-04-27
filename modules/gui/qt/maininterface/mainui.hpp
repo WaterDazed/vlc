@@ -30,14 +30,14 @@ public:
 
 private:
     void registerQMLTypes();
-    /*static*/ void clearQMLTypes();
+    static void clearQMLTypes();
     static QObject* getMainCtxInstance(QQmlEngine *, QJSEngine *);
 
     qt_intf_t* m_intf = nullptr;
     MainCtx* m_mainCtx = nullptr;
     QWindow*       m_interfaceWindow = nullptr;
 
-    QQmlComponent* m_component = nullptr;
+    QPointer<QQmlComponent> m_component;
     QQuickItem* m_rootItem = nullptr;
 
     QPointer<QQmlEngine> m_engineBound;

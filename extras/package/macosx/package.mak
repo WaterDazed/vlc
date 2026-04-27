@@ -53,6 +53,15 @@ if BUILD_LUA
 endif
 	## HRTFs
 	cp -r "$(srcdir)/share/hrtfs" $@/Contents/Resources/share/
+if ENABLE_UPNP_SERVER
+	## UPnP Server resources
+	cp -r "$(macos_destdir)$(pkgdatadir)/upnp_server" $@/Contents/Resources/share/
+endif
+if BUILD_SKINS
+	## Skins2 data
+	mkdir -p $@/Contents/Resources/share/skins2
+	cp -r "$(macos_destdir)$(pkgdatadir)/skins2" $@/Contents/Resources/share/
+endif
 	## Copy translations
 	-cp -a "$(macos_destdir)$(datadir)/locale" $@/Contents/Resources/share/
 	printf "APPLVLC#" >| $@/Contents/PkgInfo

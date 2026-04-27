@@ -90,10 +90,10 @@ QtObject {
 
     readonly property int listAlbumCover_height: MainCtx.dp(32, scale)
     readonly property int listAlbumCover_width: listAlbumCover_height * 16.0/9
-    readonly property int listAlbumCover_radius: 0
+    readonly property int listAlbumCover_radius: MainCtx.dp(3, scale)
     readonly property int trackListAlbumCover_width: MainCtx.dp(32, scale)
     readonly property int trackListAlbumCover_heigth: MainCtx.dp(32, scale)
-    readonly property int trackListAlbumCover_radius: 0
+    readonly property int trackListAlbumCover_radius: MainCtx.dp(3, scale)
 
     readonly property int tableCoverRow_height: Math.max(listAlbumCover_height, fontHeight_normal) + margin_xsmall * 2
     readonly property int tableRow_height: fontHeight_normal + margin_small * 2
@@ -169,6 +169,8 @@ QtObject {
     readonly property int button_width_small: MainCtx.dp(64, scale)
     readonly property int button_width_normal: MainCtx.dp(96, scale)
     readonly property int button_width_large: MainCtx.dp(128, scale)
+
+    readonly property real button_radius: MainCtx.dp(4, scale)
 
     readonly property int contextButton_width: icon_normal
     readonly property int contextButton_margin: margin_xxsmall

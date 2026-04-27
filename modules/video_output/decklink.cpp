@@ -759,24 +759,10 @@ end:
         pDLVideoFrame->Release();
 }
 
-static int ControlVideo(vout_display_t *vd, int query)
-{
-    (void) vd;
-
-    switch (query) {
-        case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-        case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-            return VLC_SUCCESS;
-    }
-    return VLC_EGENERIC;
-}
-
 static const auto ops = []{
     struct vlc_display_operations ops {};
     ops.close = CloseVideo;
     ops.prepare = PrepareVideo;
-    ops.control = ControlVideo;
     return ops;
 }();
 

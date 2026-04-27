@@ -57,7 +57,34 @@ Item {
 
     // Enable blending if source or the effect is not opaque.
     // This comes with a performance penalty.
+    blending: false
+
     property alias blending: sourceProxy.blending
+
+    // Display scale may be a fractional size, but textures can not. Pixel aligned
+    // aligns the visual size to the nearest multiple of number, depending on
+    // the window/screen fraction, so that the layer texture can be displayed
+    // without stretching. For example, if the display scale is 1.25, the
+    // visual size would be aligned up to the nearest multiple of 4. Note that
+    // using this property is going to make the visual to deviate from the
+    // size intended, which may increase greatly depending on the fraction
+    // of the display scale. Also note that if the QML item size is fractional
+    // itself, it is ceiled regardless of the display scale or this property.
+    // This setting applies to both the source and the effect visuals, but
+    // is only relevant for the source visual if `sourceVisualRect` is
+    // provided.
+    property bool pixelAlignedForDPR: true
+
+    property real _eDPR: MainCtx.effectiveDevicePixelRatio(Window.window) || 1.0
+    readonly property int _alignNumber: pixelAlignedForDPR ? Helpers.denominatorForFloat(_eDPR) : 1
+
+    Connections {
+        target: MainCtx
+
+        function onIntfDevicePixelRatioChanged() {
+            root._eDPR = MainCtx.effectiveDevicePixelRatio(root.Window.window) || 1.0
+        }
+    }
 
     // This item displays the item with the rect denoted by effectRect
     // being transparent (only when blending is set):
@@ -66,12 +93,15 @@ Item {
 
         x: root.sourceVisualRect.x
         y: root.sourceVisualRect.y
-        width: useSubTexture ? root.sourceVisualRect.width : parent.width
-        height: useSubTexture ? root.sourceVisualRect.height : parent.height
+        width: useSubTexture ? Helpers.alignUp(root.sourceVisualRect.width, root._alignNumber) : parent.width
+        height: useSubTexture ? Helpers.alignUp(root.sourceVisualRect.height, root._alignNumber) : parent.height
 
-        blending: false
+        smooth: false
 
-        readonly property Item source: useSubTexture ? sourceVisualTextureProviderIndirection : root.source
+        // WARNING: Switching the source should be fine, but old Qt (Qt 6.2.13) seems to break the interface
+        //          in this case. The indirection does not use sub-rect if it is not relevant, so in this
+        //          case it would act as a dummy indirection to prevent the Qt bug.
+        readonly property Item source: ((MainCtx.qtVersion() < MainCtx.qtVersionCheck(6, 4, 2)) || useSubTexture) ? sourceVisualTextureProviderIndirection : root.source
 
         readonly property rect discardRect: {
             if (blending && !useSubTexture)
@@ -97,10 +127,10 @@ Item {
 
             // If the effect is in a isolated inner area, filtering is necessary. Otherwise, we can simply
             // use sub-texturing for the source itself as well (we already use sub-texture for the effect area).
-            textureSubRect: (sourceProxy.useSubTexture) ? Qt.rect(root.sourceVisualRect.x * textureProviderIndirection.eDPR,
-                                                                  root.sourceVisualRect.y * textureProviderIndirection.eDPR,
-                                                                  root.sourceVisualRect.width * textureProviderIndirection.eDPR,
-                                                                  root.sourceVisualRect.height * textureProviderIndirection.eDPR) : undefined
+            textureSubRect: (sourceProxy.useSubTexture) ? Qt.rect(sourceProxy.x * root._eDPR,
+                                                                  sourceProxy.y * root._eDPR,
+                                                                  sourceProxy.width * root._eDPR,
+                                                                  sourceProxy.height * root._eDPR) : undefined
         }
     }
 
@@ -114,33 +144,36 @@ Item {
 
         x: effectRect.x
         y: effectRect.y
-        width: effectRect.width
-        height: effectRect.height
+        width: Helpers.alignUp(effectRect.width, root._alignNumber)
+        height: Helpers.alignUp(effectRect.height, root._alignNumber)
 
         readonly property Item sourceItem: source?.sourceItem ?? source
 
         property rect effectRect
 
-        property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
+        textureSubRect: Qt.rect(x * root._eDPR,
+                                y * root._eDPR,
+                                width * root._eDPR,
+                                height * root._eDPR)
 
-        textureSubRect: Qt.rect(effectRect.x * textureProviderIndirection.eDPR,
-                                effectRect.y * textureProviderIndirection.eDPR,
-                                effectRect.width * textureProviderIndirection.eDPR,
-                                effectRect.height * textureProviderIndirection.eDPR)
+        readonly property bool effectAcceptsSourceRect: (typeof root.effect?.sourceRect !== "undefined") // typeof `rect` is "object"
 
-        Connections {
-            target: MainCtx
-
-            function onIntfDevicePixelRatioChanged() {
-                textureProviderIndirection.eDPR = MainCtx.effectiveDevicePixelRatio(textureProviderIndirection.Window.window)
-            }
-        }
-
-        // Effect's source is sub-texture through the texture provider:
+        // Effect's source is sub-texture through the texture provider, as long as the effect does not accept setting `sourceRect`.
+        // Unlike Qt's own effects, our `DualKawaseBlur` supports that. Note that we are not using a `Loader` to not load the
+        // indirection in case it is accepted by the effect, since its overhead is minimal. Also note that the texture provider
+        // is only created when `textureProvider()` is called, such that when this indirection is actually used (for example as
+        // a shader effect source).
         Binding {
             target: root.effect
             property: root.samplerName
-            value: textureProviderIndirection
+            value: textureProviderIndirection.effectAcceptsSourceRect ? root.source : textureProviderIndirection
+        }
+
+        Binding {
+            target: root.effect
+            property: "sourceRect"
+            when: textureProviderIndirection.effectAcceptsSourceRect
+            value: textureProviderIndirection.textureSubRect
         }
 
         // Adjust the blending. Currently MultiEffect/FastBlur does not

@@ -24,6 +24,7 @@
 #include "vlc_player.h"
 
 #import <vlc_configuration.h>
+#import <vlc_modules.h>
 #import <vlc_url.h>
 
 #import "extensions/NSString+Helpers.h"
@@ -1972,6 +1973,116 @@ static int BossCallback(vlc_object_t *p_this,
     }
 
     return vlc_player_aout_EnableFilter(_p_player, [name UTF8String], state);
+}
+
+- (int)enableVideoFilterWithName:(NSString *)name state:(BOOL)state
+{
+    if (name == nil || name.length == 0) {
+        return VLC_EINVAL;
+    }
+
+    vout_thread_t * const vout = [self mainVideoOutputThread];
+    if (vout == NULL) {
+        return VLC_EGENERIC;
+    }
+
+    const char * const nameUTF8String = name.UTF8String;
+    module_t * const module_obj = module_find(nameUTF8String);
+    if (module_obj == NULL) {
+        vout_Release(vout);
+        return VLC_EGENERIC;
+    }
+
+    const char *filter_type = NULL;
+    if (module_provides(module_obj, "video splitter")) {
+        filter_type = "video-splitter";
+    } else if (module_provides(module_obj, "video filter")) {
+        filter_type = "video-filter";
+    } else if (module_provides(module_obj, "sub source")) {
+        filter_type = "sub-source";
+    } else if (module_provides(module_obj, "sub filter")) {
+        filter_type = "sub-filter";
+    }
+
+    if (filter_type == NULL) {
+        vout_Release(vout);
+        return VLC_EGENERIC;
+    }
+
+    // Get the current filter string
+    char *modules_string = var_InheritString(vout, filter_type);
+
+    if (state) { // Enable the filter
+        if (modules_string == NULL) { // No current filters
+            modules_string = strdup(nameUTF8String);
+        } else if (strstr(modules_string, nameUTF8String) == NULL) { // Filter not already enabled
+            char *psz_tmp = NULL;
+            // Append the filter to the current filter string
+            if (asprintf(&psz_tmp, "%s:%s", modules_string, nameUTF8String) == -1) {
+                free(modules_string);
+                vout_Release(vout);
+                return VLC_ENOMEM;
+            }
+            free(modules_string);
+            modules_string = psz_tmp;
+        }
+    } else { // Disable the filter
+        if (modules_string == NULL) { // No current filters
+            vout_Release(vout);
+            return VLC_SUCCESS;
+        }
+
+        char * const parser = strstr(modules_string, nameUTF8String);
+        if (parser != NULL) { // Enabled filter found
+            const size_t name_len = strlen(nameUTF8String);
+            // Check the next character to see if it is a colon, if it is...
+            if (parser[name_len] == ':') { // ...filter is not the last one in the list
+                // Remove the filter from the list by moving the rest of the string after the filter left
+                memmove(parser, parser + name_len + 1,
+                        strlen(parser + name_len + 1) + 1);
+            } else { // Filter is the last one in the list
+                // Remove the filter from the list by setting the null terminator to the end of the string
+                *parser = '\0';
+            }
+
+            if (modules_string[0] != '\0' && modules_string[strlen(modules_string) - 1] == ':') {
+                // Remove the trailing colon if it exists
+                modules_string[strlen(modules_string) - 1] = '\0';
+            }
+        } else { // Filter not enabled, nothing needs doing
+            free(modules_string);
+            vout_Release(vout);
+            return VLC_SUCCESS;
+        }
+    }
+
+    var_SetString(vout, filter_type, modules_string);
+    free(modules_string);
+    vout_Release(vout);
+    return VLC_SUCCESS;
+}
+
+- (int)setVideoFilterProperty:(NSString *)property forFilter:(NSString *)filterName withValue:(vlc_value_t)value
+{
+    if (property == nil || property.length == 0 || filterName == nil || filterName.length == 0) {
+        return VLC_EINVAL;
+    }
+
+    vout_thread_t * const vout = [self mainVideoOutputThread];
+    if (vout == NULL) {
+        return VLC_EGENERIC;
+    }
+
+    const char * const propertyUTF8String = property.UTF8String;
+    int i_type = var_Type(vout, propertyUTF8String);
+    if (i_type == 0) {
+        i_type = config_GetType(propertyUTF8String);
+    }
+
+    i_type &= VLC_VAR_CLASS;
+    var_SetChecked(vout, propertyUTF8String, i_type, value);
+    vout_Release(vout);
+    return VLC_SUCCESS;
 }
 
 @end

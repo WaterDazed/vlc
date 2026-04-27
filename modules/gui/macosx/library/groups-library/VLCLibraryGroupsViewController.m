@@ -22,6 +22,7 @@
 
 #import "VLCLibraryGroupsViewController.h"
 
+#import "extensions/NSImage+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCLibraryCollectionView.h"
@@ -163,7 +164,7 @@
     self.selectedGroupTableViewScrollView.hasHorizontalScroller = NO;
     self.selectedGroupTableViewScrollView.borderType = NSNoBorder;
     self.selectedGroupTableViewScrollView.automaticallyAdjustsContentInsets = NO;
-    self.selectedGroupTableViewScrollView.contentInsets = defaultInsets;
+    self.selectedGroupTableViewScrollView.contentInsets = VLCLibraryUIUnits.libraryViewScrollViewDetailListContentInsets;
     self.selectedGroupTableViewScrollView.scrollerInsets = scrollerInsets;
 
     self.groupsTableViewScrollView.documentView = self.groupsTableView;
@@ -190,28 +191,20 @@
     [self.selectedGroupTableView registerNib:tableCellViewNib
                                forIdentifier:@"VLCLibraryTableViewCellIdentifier"];
 
-    CGFloat headerHeight = VLCLibraryAudioGroupTableHeaderViewHeight;
-    if (@available(macOS 26.0, *)) {
-        headerHeight += VLCLibraryUIUnits.largeSpacing * 2;
-    }
-
-    const NSRect headerFrame = NSMakeRect(0.f,
-                                          0.f,
-                                          self.groupsTableView.bounds.size.width,
-                                          headerHeight);
-    _selectedGroupTableHeaderView = [[VLCLibraryAudioGroupTableHeaderView alloc] initWithFrame:headerFrame withInternalPaddingAddedForContentView:YES];
-    self.selectedGroupTableHeaderView.autoresizingMask = NSViewWidthSizable;
+    _selectedGroupTableHeaderView = [VLCLibraryAudioGroupTableHeaderView paddedHeaderView];
 
     self.tableViewDelegate.detailTableHeaderView = self.selectedGroupTableHeaderView;
 
     self.groupsTableView.headerView = nil;
     self.groupsTableView.allowsEmptySelection = NO;
+    self.groupsTableView.allowsMultipleSelection = YES;
     self.selectedGroupTableView.headerView = self.selectedGroupTableHeaderView;
 
     selectedGroupColumn.headerCell = [VLCLibraryAudioGroupTableHeaderCell new];
 
     self.groupsTableView.rowHeight = VLCLibraryUIUnits.mediumTableViewRowHeight;
     self.selectedGroupTableView.rowHeight = VLCLibraryUIUnits.mediumTableViewRowHeight;
+    self.selectedGroupTableView.allowsMultipleSelection = YES;
 
     self.groupsTableView.delegate = self.tableViewDelegate;
     self.selectedGroupTableView.delegate = self.tableViewDelegate;
@@ -255,7 +248,7 @@
 
 - (void)presentPlaceholderGroupsView
 {
-    [self.libraryWindow displayLibraryPlaceholderViewWithImage:[NSImage imageNamed:@"placeholder-video"]
+    [self.libraryWindow displayLibraryPlaceholderViewWithImage:NSImage.VLCPlaceholderVideoImage
                                               usingConstraints:self.placeholderImageViewSizeConstraints
                                              displayingMessage:_NS("Your media groups will appear here.")];
 }

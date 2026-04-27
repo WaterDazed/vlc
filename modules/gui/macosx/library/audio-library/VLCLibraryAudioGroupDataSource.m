@@ -40,6 +40,8 @@
 
 #import "views/VLCSubScrollView.h"
 
+#import "library/VLCLibrarySegment.h"
+
 @interface VLCLibraryAudioGroupDataSource ()
 {
     id<VLCMediaLibraryAudioGroupProtocol> _representedAudioGroup;
@@ -98,6 +100,10 @@
     [notificationCenter addObserver:self
                            selector:@selector(libraryModelAudioMediaItemsReset:)
                                name:VLCLibraryModelAudioMediaListReset
+                             object:nil];
+    [notificationCenter addObserver:self
+                           selector:@selector(libraryModelAudioMediaItemsReset:)
+                               name:VLCLibraryModelAllCachesDropped
                              object:nil];
     [notificationCenter addObserver:self
                            selector:@selector(libraryModelAudioMediaItemUpdated:)
@@ -250,7 +256,9 @@
 {
     NSArray<NSTableView *> * const tableViews = self.tableViews;
     for (NSTableView * const tableView in tableViews) {
-        [tableView reloadData];
+        if (tableView.dataSource == self) {
+            [tableView reloadData];
+        }
     }
 }
 
@@ -258,6 +266,9 @@
 {
     NSArray<NSCollectionView *> * const collectionViews = self.collectionViews;
     for (NSCollectionView * const collectionView in collectionViews) {
+        if (collectionView.dataSource != self) {
+            continue;
+        }
         NSCollectionViewLayout * const collectionViewLayout = collectionView.collectionViewLayout;
         if ([collectionViewLayout isKindOfClass:VLCLibraryCollectionViewFlowLayout.class]) {
             [(VLCLibraryCollectionViewFlowLayout *)collectionViewLayout resetLayout];
@@ -281,7 +292,21 @@
         if (self.representedAudioGroup == nil || self.currentParentType == VLCMediaLibraryParentGroupTypeUnknown) {
             albums = libraryModel.listOfAlbums;
         } else if (self.representedAudioGroup.albums.count == 0) {
-            albums = [libraryModel listAlbumsOfParentType:self.currentParentType forID:self.representedAudioGroup.libraryID];
+            const VLCLibrarySegmentType currentType = VLCMain.sharedInstance.libraryWindow.librarySegmentType;
+            enum vlc_ml_parent_type realParentType = VLC_ML_PARENT_UNKNOWN;
+            switch (currentType) {
+                case VLCLibraryMusicSegmentType:
+                case VLCLibraryArtistsMusicSubSegmentType:
+                    realParentType = VLC_ML_PARENT_ARTIST;
+                    break;
+                case VLCLibraryGenresMusicSubSegmentType:
+                    realParentType = VLC_ML_PARENT_GENRE;
+                    break;
+                default:
+                    realParentType = VLC_ML_PARENT_UNKNOWN;
+                    break;
+            }
+           albums = [libraryModel listAlbumsOfParentType:realParentType forID:self.representedAudioGroup.libraryID];
         } else {
             albums = self.representedAudioGroup.albums;
         }

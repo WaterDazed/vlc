@@ -44,7 +44,10 @@ WindowManager::WindowManager( intf_thread_t *pIntf ):
     m_opacityEnabled = var_InheritBool( getIntf(), "skins2-transparency" );
 
     // opacity overridden by user
-    m_opacity = 255 * var_InheritFloat( getIntf(), "qt-opacity" );
+    if( config_FindConfig( "qt-opacity" ) )
+        m_opacity = 255 * var_InheritFloat( getIntf(), "qt-opacity" );
+    else
+        m_opacity = 255;
 }
 
 WindowManager::~WindowManager() = default;
@@ -631,4 +634,21 @@ void WindowManager::setActiveLayout( TopWindow &rWindow,
     rWindow.setActiveLayout( &rLayout );
     // Rebuild the dependencies
     stopMove();
+}
+
+void WindowManager::onWindowHidden()
+{
+    WinSet_t::const_iterator it;
+    for( it = m_allWindows.begin(); it != m_allWindows.end(); ++it )
+    {
+        if( (*it)->getType() != GenericWindow::TopWindow) {
+            continue;
+        }
+        if( (*it)->getVisibleVar().get() ) {
+            return;
+        }
+    }
+
+    // Last window closed
+    libvlc_Quit( vlc_object_instance(getIntf()) );
 }

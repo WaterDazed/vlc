@@ -1045,25 +1045,6 @@ static void Display(vout_display_t *vd, picture_t *pic)
     // kept as the core is not properly pacing the calls to Prepare without this callback
 }
 
-static int Control (vout_display_t *vd, int query)
-{
-    VLCSampleBufferDisplay *sys;
-    sys = (__bridge VLCSampleBufferDisplay*)vd->sys;
-
-    switch (query)
-    {
-        case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-        case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-            break;
-        default:
-            msg_Err (vd, "Unhandled request %d", query);
-            return VLC_EGENERIC;
-    }
-
-    return VLC_SUCCESS;
-}
-
 static pip_controller_t * CreatePipController( vout_display_t *vd, void *cbs_opaque )
 {
     pip_controller_t *pip_controller = vlc_object_create(vd, sizeof(pip_controller_t));
@@ -1154,7 +1135,6 @@ static int Open (vout_display_t *vd,
             .close = Close,
             .prepare = Prepare,
             .display = Display,
-            .control = Control,
             .update_format = UpdateFormat,
         };
 

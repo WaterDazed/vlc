@@ -91,17 +91,11 @@ static int SetDisplaySize(vout_display_t *vd, unsigned width, unsigned height)
     return VLC_SUCCESS;
 }
 
-static int Control(vout_display_t *vd, int query)
+static int PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
 {
     vout_display_sys_t *sys = vd->sys;
-    switch (query) {
-    case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-        sys->place_changed = true;
-        break;
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-    case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        break;
-    }
+    VLC_UNUSED(place);
+    sys->place_changed = true;
     return VLC_SUCCESS;
 }
 
@@ -154,9 +148,9 @@ static const struct vlc_display_operations ops = {
     .prepare = Prepare,
     .display = Display,
     .set_display_size = SetDisplaySize,
-    .control = Control,
     .set_viewpoint = SetViewpoint,
     .update_format = UpdateFormat,
+    .video_place_changed = PlacementChanged,
 };
 
 /**

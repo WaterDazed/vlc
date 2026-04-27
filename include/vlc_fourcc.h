@@ -330,10 +330,16 @@
 #define VLC_CODEC_R420            VLC_FOURCC('r','4','2','0')
 /* Packed YUV 4:2:2 10-bit V10:U10:Y10:A2 */
 #define VLC_CODEC_Y210            VLC_FOURCC('Y','2','1','0')
+/* Packed YUV 4:2:2 12-bit V12:U12:Y12:A2 */
+#define VLC_CODEC_Y212            VLC_FOURCC('Y','2','1','2')
 /* Packed YUV 4:4:4 10-bit V10:U10:Y10:A2 */
 #define VLC_CODEC_Y410            VLC_FOURCC('Y','4','1','0')
+/* Packed YUV 4:4:4 12-bit V12:U12:Y12:A2 */
+#define VLC_CODEC_Y412            VLC_FOURCC('Y','4','1','2')
 /* Packed YUV 4:4:4 V:U:Y:A */
 #define VLC_CODEC_VUYA            VLC_FOURCC('V','U','Y','A')
+/* Packed YUV 4:4:4 V:U:Y:X, alpha channel undefined */
+#define VLC_CODEC_VUYX            VLC_FOURCC('V','U','Y','X')
 
 /* RGB / RGBA */
 
@@ -458,6 +464,11 @@
 #define VLC_CODEC_VAAPI_420 VLC_FOURCC('V','A','O','P') /* 4:2:0  8 bpc */
 #define VLC_CODEC_VAAPI_420_10BPP VLC_FOURCC('V','A','O','0') /* 4:2:0 10 bpc */
 #define VLC_CODEC_VAAPI_420_12BPP VLC_FOURCC('V','A','O','2') /* 4:2:0 12 bpc */
+#define VLC_CODEC_VAAPI_422_10BPP VLC_FOURCC('V','A','2','0') /* 4:2:2 10 bpc */
+#define VLC_CODEC_VAAPI_422_12BPP VLC_FOURCC('V','A','2','2') /* 4:2:2 12 bpc */
+#define VLC_CODEC_VAAPI_444       VLC_FOURCC('V','A','4','P') /* 4:4:4 8 bpc */
+#define VLC_CODEC_VAAPI_444_10BPP VLC_FOURCC('V','A','4','0') /* 4:4:4 10 bpc */
+#define VLC_CODEC_VAAPI_444_12BPP VLC_FOURCC('V','A','4','2') /* 4:4:4 12 bpc */
 
 /* MediaCodec/IOMX opaque buffer type */
 #define VLC_CODEC_ANDROID_OPAQUE  VLC_FOURCC('A','N','O','P')
@@ -651,6 +662,7 @@
 #define VLC_CODEC_DSD_LSBF_PLANAR            VLC_FOURCC('D','S','F','l')
 #define VLC_CODEC_DSD_MSBF                   VLC_FOURCC('D','S','D',' ')
 #define VLC_CODEC_DSD_MSBF_PLANAR            VLC_FOURCC('D','S','F','m')
+#define VLC_CODEC_DFPWM                      VLC_FOURCC('D','F','P','W')
 
 /* Subtitle */
 #define VLC_CODEC_SPU       VLC_FOURCC('s','p','u',' ')
@@ -771,7 +783,7 @@ VLC_API vlc_fourcc_t vlc_fourcc_GetCodecFromString( int i_cat, const char * );
 VLC_API vlc_fourcc_t vlc_fourcc_GetCodecAudio( vlc_fourcc_t i_fourcc, int i_bits );
 
 /**
- * It returns the description of the given fourcc or NULL if not found.
+ * It returns the description of the given fourcc or an empty string.
  *
  * You may use UNKNOWN_ES for the ES category if you don't have the information.
  */
@@ -892,4 +904,3 @@ static inline unsigned vlc_fourcc_GetChromaBPP( vlc_fourcc_t fourcc )
 }
 
 #endif /* _VLC_FOURCC_H */
-

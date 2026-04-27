@@ -187,25 +187,18 @@ static void PictureDisplay(vout_display_t *vd, picture_t *picture)
     VLC_UNUSED(picture);
 }
 
-/**
- * Control for vout display
- */
-static int Control(vout_display_t *vd, int query)
+static int PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
 {
     vout_display_sys_t *sys = vd->sys;
+    VLC_UNUSED(place);
+    sys->update_dither = true;
+    return VLC_SUCCESS;
+}
 
-    switch (query) {
-    case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-    case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-        sys->update_dither = true;
-        return VLC_SUCCESS;
-    case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-        return VLC_SUCCESS;
-
-    default:
-        msg_Err(vd, "Unsupported query in vout display caca");
-        return VLC_EGENERIC;
-    }
+static int CropChanged(vout_display_t *vd, const video_format_t *source)
+{
+    VLC_UNUSED(source);
+    return PlacementChanged(vd, NULL);
 }
 
 /* */
@@ -389,7 +382,8 @@ static const struct vlc_display_operations ops = {
     .close = Close,
     .prepare = Prepare,
     .display = PictureDisplay,
-    .control = Control,
+    .video_place_changed = PlacementChanged,
+    .set_source_crop = CropChanged,
 };
 
 /**

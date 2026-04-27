@@ -198,21 +198,16 @@ static int SetDisplaySize(vout_display_t *vd, unsigned width, unsigned height)
     return UpdateViewport(vd);
 }
 
-static int Control(vout_display_t *vd, int query)
+static int PlacementChanged(vout_display_t *vd, const vout_display_place_t *place)
 {
-    vout_display_sys_t *sys = vd->sys;
+    VLC_UNUSED(place);
+    return UpdateViewport(vd);
+}
 
-    switch (query)
-    {
-        case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-        case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-            return UpdateViewport(vd);
-        default:
-             msg_Err(vd, "unknown request %d", query);
-             return VLC_EGENERIC;
-    }
-    return VLC_SUCCESS;
+static int AspectChanged(vout_display_t *vd, const video_format_t *source)
+{
+    VLC_UNUSED(source);
+    return PlacementChanged(vd, NULL);
 }
 
 static void shm_format_cb(void *data, struct wl_shm *shm, uint32_t format)
@@ -265,8 +260,10 @@ static const struct vlc_display_operations ops = {
     .prepare = Prepare,
     .display = Display,
     .set_display_size = SetDisplaySize,
-    .control = Control,
     .reset_pictures = ResetPictures,
+    .video_place_changed = PlacementChanged,
+    .set_source_aspect = AspectChanged,
+    .set_source_crop = AspectChanged,
 };
 
 static int Open(vout_display_t *vd,

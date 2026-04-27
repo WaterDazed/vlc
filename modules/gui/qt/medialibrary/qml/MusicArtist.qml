@@ -267,6 +267,7 @@ FocusScope {
 
                             fillMode: Image.PreserveAspectFit
 
+                            radius: VLCStyle.listAlbumCover_radius
                             asynchronous: true
                             cache: true
 
@@ -403,7 +404,7 @@ FocusScope {
         if (initialIndex >= albumModel.count)
             initialIndex = 0
         albumSelectionModel.select(initialIndex, ItemSelectionModel.ClearAndSelect)
-        const albumsListView = MainCtx.gridView ? _currentView : headerItem.albumsListView
+        const albumsListView = MainCtx.gridView ? _currentView : _currentView?.preferredHeaderItem?.albumsListView
         if (albumsListView) {
             albumsListView.currentIndex = initialIndex
             albumsListView.positionViewAtIndex(initialIndex, ItemView.Contain)
@@ -482,7 +483,7 @@ FocusScope {
     Widgets.MLDragItem {
         id: albumDragItem
 
-        view: (root._currentView instanceof Widgets.TableViewExt) ? (root._currentView?.headerItem?.albumsListView ?? null)
+        view: (root._currentView instanceof Widgets.TableViewExt) ? (root._currentView?.preferredHeaderItem?.albumsListView ?? null)
                                                                   : root._currentView
         indexes: indexesFlat ? albumSelectionModel.selectedIndexesFlat
                              : albumSelectionModel.selectedIndexes
@@ -626,7 +627,7 @@ FocusScope {
                 model.addAndPlay(selection)
             }
 
-            header: root.header
+            preferredHeader: root.header
             rowHeight: VLCStyle.tableCoverRow_height
 
             property bool albumSections: true
@@ -646,7 +647,7 @@ FocusScope {
                 }
             }
 
-            Binding on listView.cacheBuffer {
+            Binding on cacheBuffer {
                 // FIXME
                 // https://doc.qt.io/qt-6/qml-qtquick-listview.html#variable-delegate-size-and-section-labels
                 when: tableView_id.albumSections
@@ -719,7 +720,7 @@ FocusScope {
                     }
 
                     Connections {
-                        target: tableView_id.headerItem
+                        target: tableView_id.preferredHeaderItem
 
                         function onChangeToPreviousSectionRequested() {
                             if (tableView_id.currentSection === musicAlbumSectionDelegate.section)
@@ -966,7 +967,7 @@ FocusScope {
 
             onDragItemChanged: console.assert(tableView_id.dragItem === tableDragItem)
 
-            Behavior on listView.contentY {
+            Behavior on contentY {
                 id: contentYBehavior
 
                 enabled: false

@@ -55,9 +55,9 @@
     _numberOfTracks = _mediaItems.count;
 
     const NSUInteger numberOfAlbums = libraryModel.numberOfAlbums;
-    NSString * const primaryDetailString = [NSString stringWithFormat:_NS("%li albums, %li songs"),
-                                                     numberOfAlbums,
-                                                     _numberOfTracks];
+    NSString * const albumString = _NPS("%li album", "%li albums", numberOfAlbums);
+    NSString * const songString = _NPS("%li song", "%li songs", _numberOfTracks);
+    NSString * const primaryDetailString = [NSString stringWithFormat:@"%@, %@", albumString, songString];
 
     return [super initWithDisplayString:displayString
                 withPrimaryDetailString:primaryDetailString

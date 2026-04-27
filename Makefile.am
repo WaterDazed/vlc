@@ -68,9 +68,6 @@ EXTRA_DIST += \
 	extras/tools/libtool-2.5.4-clang-libs.patch \
 	extras/tools/libtool-2.4.7-lpthread.patch \
 	extras/tools/libtool-2.5.4-embed-bitcode.patch \
-	extras/tools/ninja-1.11.1-replace-pipes-quote-with-shlex-quote.patch \
-	extras/tools/0001-CanonicalizePath-Remove-kMaxComponents-limit.patch \
-	extras/tools/0002-CanonicalizePath-fix-a-b-._foo-a-replacement.patch \
 	extras/tools/pkg-config-stdc23-port.patch
 
 ###############################################################################
@@ -219,4 +216,15 @@ update-po:
 include extras/package/macosx/package.mak
 include extras/package/win32/package.mak
 include extras/package/win32/msi.mak
+
+dist-hook:
+	chmod u+w "$(distdir)/configure" "$(distdir)/configure.ac"
+	mtime_ref=$(mktemp)
+#	We keep a copy to have a reference timestamp and restore it,
+#	to avoid triggering automake again
+	cp -p "$(distdir)/configure.ac" "$mtime_ref"
+	sed -i '/^VERSION_DATE=\$$(/,/^)/c\VERSION_DATE='$(VERSION_DATE) \
+		"$(distdir)/configure" "$(distdir)/configure.ac"
+	touch -r "$mtime_ref" "$(distdir)/configure.ac"
+	rm "$mtime_ref"
 

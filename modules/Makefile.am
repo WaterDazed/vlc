@@ -1,5 +1,6 @@
 
 noinst_LTLIBRARIES =
+noinst_PLUGINS =
 check_LTLIBRARIES =
 pkglib_LTLIBRARIES =
 noinst_HEADERS =
@@ -35,7 +36,7 @@ LIBTOOL_CARGO = \
 	LIBTOOL="$(LIBTOOL)" \
 	$(LIBTOOL_CARGO_EXE) $(CARGO) $(CARGO_BUILD_STD) rustc $(CARGO_BUILD_ARGS)
 
-CARGO_PLUGINS_INV = ${LTLIBRARIES:%rs_plugin.la=%rs_plugin}
+CARGO_PLUGINS_INV = ${LTLIBRARIES:%_rs_plugin.la=%_rs_plugin}
 CARGO_PLUGINS_CUT = ${CARGO_PLUGINS_INV:%.la=}
 CARGO_PLUGINS = ${CARGO_PLUGINS_CUT:%=%.la}
 
@@ -52,7 +53,7 @@ mostlyclean-local: mostlyclean-local-rust
 mostlyclean-local-rust:
 	rm -rf $(CARGO_DEPS) ${CARGO_PLUGINS:%_plugin.la=%.la}
 	$(CARGO) clean \
-		--manifest-path "${srcdir}/Cargo.toml" \
+		--manifest-path "$(top_srcdir)/Cargo.toml" \
 		--target "@RUST_TARGET@" \
 		--target-dir "target-rust"
 endif
@@ -126,6 +127,8 @@ SUFFIXES += -client-protocol.h -protocol.c .xml
 .xml-protocol.c:
 	$(AM_V_GEN)$(WAYLAND_SCANNER) private-code < "$^" > "$@.tmp"
 	$(AM_V_at)mv -f -- "$@.tmp" "$@"
+
+noinst_LTLIBRARIES += $(noinst_PLUGINS)
 
 # Generate vlc_modules_list (local plugins + SUBDIRS)
 include modulelist.mk

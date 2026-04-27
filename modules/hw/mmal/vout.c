@@ -645,20 +645,16 @@ static int vd_reset_pictures(vout_display_t *vd, video_format_t *fmt)
     return VLC_SUCCESS;
 }
 
-static int vd_control(vout_display_t *vd, int query)
+static int vd_video_place_changed(vout_display_t *vd, const vout_display_place_t *place)
 {
-    switch (query) {
-        case VOUT_DISPLAY_CHANGE_SOURCE_ASPECT:
-        case VOUT_DISPLAY_CHANGE_SOURCE_CROP:
-        case VOUT_DISPLAY_CHANGE_SOURCE_PLACE:
-            return configure_display(vd);
+    VLC_UNUSED(place);
+    return configure_display(vd);
+}
 
-        default:
-            msg_Warn(vd, "Unknown control query %d", query);
-            break;
-    }
-
-    return VLC_EGENERIC;
+static int vd_aspect_changed(vout_display_t *vd, const video_format_t *source)
+{
+    VLC_UNUSED(source);
+    return vd_video_place_changed(vd, NULL);
 }
 
 static int attach_subpics(vout_display_t * const vd, vout_display_sys_t * const sys,
@@ -986,8 +982,10 @@ static const struct vlc_display_operations ops = {
     .prepare = vd_prepare,
     .display = vd_display,
     .set_display_size = SetDisplaySize,
-    .control = vd_control,
     .reset_pictures = vd_reset_pictures,
+    .video_place_changed = vd_video_place_changed,
+    .set_source_aspect = vd_aspect_changed,
+    .set_source_crop = vd_aspect_changed,
 };
 
 static int OpenMmalVout(vout_display_t *vd,

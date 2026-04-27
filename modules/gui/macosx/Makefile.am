@@ -69,7 +69,7 @@ CLEANFILES += $(libmacosx_plugin_la_METAL_AIR_FILES) $(libmacosx_plugin_la_METAL
 endif
 
 libmacosx_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-exceptions -fobjc-arc -I$(srcdir)/gui/macosx
-libmacosx_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(guidir)' \
+libmacosx_plugin_la_LDFLAGS = $(AM_LDFLAGS) $(gui_RPATH) \
 	-Wl,-framework,AVKit \
 	-Wl,-framework,AVFoundation \
 	-Wl,-framework,Cocoa \
@@ -200,6 +200,7 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryTableView.h \
 	gui/macosx/library/VLCLibraryTableView.m \
 	gui/macosx/library/VLCLibraryTableViewDataSource.h \
+	gui/macosx/library/VLCLibrarySectionedTableViewDataSource.h \
 	gui/macosx/library/VLCLibraryTableViewDelegate.h \
 	gui/macosx/library/VLCLibraryTableViewDelegate.m \
 	gui/macosx/library/VLCLibraryTableCellView.h \
@@ -590,7 +591,7 @@ libmacosx_plugin_la_XIB_SOURCES = \
 libmacosx_plugin_la_SOURCES += $(libmacosx_plugin_la_XIB_SOURCES)
 
 if ENABLE_MACOSX_UI
-gui_LTLIBRARIES += libmacosx_plugin.la
+gui_PLUGINS += libmacosx_plugin.la
 BUILT_SOURCES += $(libmacosx_plugin_la_XIB_SOURCES:.xib=.nib)
 endif
 

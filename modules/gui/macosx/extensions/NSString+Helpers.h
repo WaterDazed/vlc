@@ -1,7 +1,7 @@
 /*****************************************************************************
  * NSString+Helpers.h: Category with helper functions for NSStrings
  *****************************************************************************
- * Copyright (C) 2002-2019 VLC authors and VideoLAN
+ * Copyright (C) 2002-2025 VLC authors and VideoLAN
  *
  * Authors: Jon Lech Johansen <jon-vl@nanocrew.net>
  *          Christophe Massiot <massiot@via.ecp.fr>
@@ -36,6 +36,11 @@
 #define _NS(s) NSTR(s)
 
 /**
+ * Get a pluralized translation string
+ */
+#define _NPS(s, p, n) [NSString stringWithFormat:toNSStr(vlc_ngettext(s, p, n)), (n)]
+
+/**
  * Get a contextualized translation string
  *
  * Sometimes a translations needs to be unique to a specific context
@@ -47,6 +52,7 @@
 
 extern NSString *const kVLCMediaAudioCD;
 extern NSString *const kVLCMediaDVD;
+extern NSString *const kVLCMediaAudioDVD;
 extern NSString *const kVLCMediaVCD;
 extern NSString *const kVLCMediaSVCD;
 extern NSString *const kVLCMediaBD;

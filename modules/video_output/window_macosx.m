@@ -359,7 +359,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)isWindowFullscreen
 {
-    return ((self.window.styleMask & NSFullScreenWindowMask) == NSFullScreenWindowMask);
+    return ((self.window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen);
 }
 
 #pragma mark Module interactions
@@ -491,8 +491,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mouseDown:(NSEvent *)event
 {
     @synchronized(self) {
-        if (event.type == NSLeftMouseDown &&
-            !(event.modifierFlags & NSControlKeyMask) &&
+        if (event.type == NSEventTypeLeftMouseDown &&
+            !(event.modifierFlags & NSEventModifierFlagControl) &&
             event.clickCount == 1) {
             [_moduleDelegate reportMousePressed:MOUSE_BUTTON_LEFT];
         }
@@ -505,7 +505,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mouseUp:(NSEvent *)event
 {
     @synchronized(self) {
-        if (event.type == NSLeftMouseUp) {
+        if (event.type == NSEventTypeLeftMouseUp) {
             [_moduleDelegate reportMouseReleased:MOUSE_BUTTON_LEFT];
         }
     }

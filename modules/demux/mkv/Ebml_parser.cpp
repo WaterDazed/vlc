@@ -34,7 +34,6 @@ EbmlParser::EbmlParser( matroska_iostream_c *es, EbmlElement *el_start, demux_t 
     p_demux( p_demux ),
     m_es( es ),
     mi_level( 1 ),
-    m_got( NULL ),
     mi_user_level( 1 ),
     mb_keep( false ),
     mb_dummy( var_InheritBool( p_demux, "mkv-use-dummy" ) )
@@ -143,10 +142,10 @@ EbmlElement *EbmlParser::Get( bool allow_overshoot )
     {
         return NULL;
     }
-    if( m_got )
+    if( return_previous_parent )
     {
-        EbmlElement *ret = m_got;
-        m_got = NULL;
+        EbmlElement *ret = m_el[mi_level];
+        return_previous_parent = false;
 
         if( mi_level > 0 && m_el[mi_level-1]->IsFiniteSize() && ret->IsFiniteSize() &&
             ret->GetEndPosition() > m_el[mi_level-1]->GetEndPosition() )
@@ -258,8 +257,9 @@ next:
             }
 
             delete m_el[mi_level - 1];
-            m_got = m_el[mi_level -1] = m_el[mi_level];
+            m_el[mi_level -1] = m_el[mi_level];
             m_el[mi_level] = NULL;
+            return_previous_parent = m_el[mi_level - 1] != NULL;
 
             mi_level--;
             i_ulev--;
@@ -293,6 +293,16 @@ next:
             b_bad_position = true;
         }
 
+        if( p_prev )
+        {
+            if( !mb_keep )
+            {
+                delete p_prev;
+                p_prev = NULL;
+            }
+            mb_keep = false;
+        }
+
         if( n_call < M_EL_MAXSIZE && !b_bad_position && m_el[mi_level]->IsFiniteSize() &&
             ( !m_el[mi_level-1]->IsFiniteSize() ||
               m_el[mi_level]->GetEndPosition() <= m_el[mi_level-1]->GetEndPosition() ) )
@@ -300,17 +310,7 @@ next:
             /* The element fits inside its upper element */
             msg_Warn( p_demux, "Dummy element found %" PRIu64 "... skipping it",
                       m_el[mi_level]->GetElementPosition() );
-            if( p_prev )
-            {
-                if( !mb_keep )
-                {
-                    delete p_prev;
-                    p_prev = NULL;
-                }
-                mb_keep = false;
-            }
             n_call++;
-            goto next;
         }
         else
         {
@@ -319,30 +319,21 @@ next:
                      "Dummy element too large or misplaced at %" PRIu64 "... skipping to next upper element",
                      m_el[mi_level]->GetElementPosition() );
 
-            if( mi_level >= 1 &&
-                m_el[mi_level]->IsFiniteSize() && m_el[mi_level-1]->IsFiniteSize() &&
+            if( m_el[mi_level]->IsFiniteSize() && m_el[mi_level-1]->IsFiniteSize() &&
                 m_el[mi_level]->GetElementPosition() >= m_el[mi_level-1]->GetEndPosition() )
             {
                 msg_Err(p_demux, "This element is outside its known parent... upping level");
                 delete m_el[mi_level - 1];
-                m_got = m_el[mi_level -1] = m_el[mi_level];
+                m_el[mi_level -1] = m_el[mi_level];
                 m_el[mi_level] = NULL;
+                return_previous_parent = m_el[mi_level - 1] != NULL;
 
                 mi_level--;
                 return NULL;
             }
-
-            if( p_prev )
-            {
-                if( !mb_keep )
-                {
-                    delete p_prev;
-                    p_prev = NULL;
-                }
-                mb_keep = false;
-            }
-            goto next;
         }
+
+        goto next;
     }
 
     if( p_prev )

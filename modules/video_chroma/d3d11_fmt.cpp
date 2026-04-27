@@ -179,6 +179,9 @@ static LARGE_INTEGER D3D11_GetSystemDriver(vlc_object_t *obj, d3d11_device_t *d3
     if (FAILED(hr))
     {
         msg_Dbg(obj, "Unable to initialize COM library");
+        SysFreeString(bRootNamespace);
+        SysFreeString(bWQL);
+        SysFreeString(bVideoController);
         return {};
     }
 
@@ -248,6 +251,7 @@ static LARGE_INTEGER D3D11_GetSystemDriver(vlc_object_t *obj, d3d11_device_t *d3
     if ( FAILED( hr ) )
     {
         msg_Warn(obj, "failed to read the driver version");
+        pclsObj->Release();
         goto done;
     }
 
@@ -867,7 +871,7 @@ int AllocateTextures( vlc_object_t *obj, d3d11_device_t *d3d_dev,
                       plane_t out_planes[] )
 {
     plane_t planes[PICTURE_PLANE_MAX];
-    unsigned plane, plane_count;
+    unsigned plane = 0, plane_count;
     HRESULT hr;
     ID3D11Texture2D *slicedTexture = NULL;
     D3D11_TEXTURE2D_DESC texDesc;
@@ -963,6 +967,8 @@ int AllocateTextures( vlc_object_t *obj, d3d11_device_t *d3d_dev,
 error:
     if (slicedTexture)
         slicedTexture->Release();
+    for (unsigned j = 0; j < plane; j++)
+        textures[j]->Release();
     return VLC_EGENERIC;
 }
 

@@ -22,6 +22,7 @@
 
 #import "VLCLibraryPlaylistViewController.h"
 
+#import "extensions/NSImage+VLCAdditions.h"
 #import "extensions/NSView+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
@@ -125,7 +126,7 @@
     _collectionView.delegate = _collectionViewDelegate;
     _collectionView.collectionViewLayout = VLCLibraryCollectionViewFlowLayout.standardLayout;
     _collectionView.selectable = YES;
-    _collectionView.allowsMultipleSelection = NO;
+    _collectionView.allowsMultipleSelection = YES;
     _collectionView.allowsEmptySelection = YES;
 
     self.dataSource.collectionViews = @[self.collectionView];
@@ -160,7 +161,7 @@
     self.detailTableViewScrollView.hasHorizontalScroller = NO;
     self.detailTableViewScrollView.borderType = NSNoBorder;
     self.detailTableViewScrollView.automaticallyAdjustsContentInsets = NO;
-    self.detailTableViewScrollView.contentInsets = defaultInsets;
+    self.detailTableViewScrollView.contentInsets = VLCLibraryUIUnits.libraryViewScrollViewDetailListContentInsets;
     self.detailTableViewScrollView.scrollerInsets = scrollerInsets;
 
     self.masterTableViewScrollView.documentView = self.masterTableView;
@@ -187,17 +188,7 @@
     [self.detailTableView registerNib:tableCellViewNib
                         forIdentifier:@"VLCLibraryTableViewCellIdentifier"];
 
-    CGFloat headerHeight = VLCLibraryAudioGroupTableHeaderViewHeight;
-    if (@available(macOS 26.0, *)) {
-        headerHeight += VLCLibraryUIUnits.largeSpacing * 2;
-    }
-
-    const NSRect headerFrame = NSMakeRect(0.f,
-                                          0.f,
-                                          self.masterTableView.bounds.size.width,
-                                          headerHeight);
-    _detailTableHeaderView = [[VLCLibraryAudioGroupTableHeaderView alloc] initWithFrame:headerFrame withInternalPaddingAddedForContentView:YES];
-    self.detailTableHeaderView.autoresizingMask = NSViewWidthSizable;
+    _detailTableHeaderView = [VLCLibraryAudioGroupTableHeaderView paddedHeaderView];
 
     self.tableViewDelegate.detailTableHeaderView = self.detailTableHeaderView;
 
@@ -274,7 +265,7 @@
             break;
     }
 
-    [self.libraryWindow displayLibraryPlaceholderViewWithImage:[NSImage imageNamed:@"placeholder-group2"]
+    [self.libraryWindow displayLibraryPlaceholderViewWithImage:NSImage.VLCPlaceholderGroupImage
                                               usingConstraints:self.placeholderImageViewSizeConstraints
                                              displayingMessage:placeholderPlaylistsString];
 }
