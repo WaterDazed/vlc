@@ -325,7 +325,7 @@ static int Control(stream_t *access, int query, va_list args)
         return VLC_SUCCESS;
     case STREAM_CAN_CONTROL_PACE:
         b = va_arg(args, bool *);
-        *b = true; /* FIXME */
+        *b = false;
         return VLC_SUCCESS;
     case STREAM_GET_SIZE:
         if (sys->size < 0)
