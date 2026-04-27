@@ -13,7 +13,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
@@ -330,6 +330,7 @@ int input_SaveArt( vlc_object_t *obj, input_item_t *p_item,
                    const void *data, size_t length, const char *psz_type )
 {
     char *psz_filename = ArtCacheName( p_item, psz_type );
+    int i_ret = VLC_EGENERIC;
 
     if( !psz_filename )
         return VLC_EGENERIC;
@@ -346,28 +347,42 @@ int input_SaveArt( vlc_object_t *obj, input_item_t *p_item,
     if( !vlc_stat( psz_filename, &s ) )
     {
         input_item_SetArtURL( p_item, psz_uri );
-        free( psz_filename );
-        free( psz_uri );
-        return VLC_SUCCESS;
+        i_ret = VLC_SUCCESS;
+        goto save_uid;
     }
 
     /* Dump it otherwise */
     FILE *f = vlc_fopen( psz_filename, "wb" );
-    if( f )
+    if( !f )
     {
-        if( fwrite( data, 1, length, f ) != length )
-        {
-            msg_Err( obj, "%s: %s", psz_filename, vlc_strerror_c(errno) );
-        }
-        else
-        {
-            msg_Dbg( obj, "album art saved to %s", psz_filename );
-            input_item_SetArtURL( p_item, psz_uri );
-        }
-        fclose( f );
+        msg_Err( obj, "%s: %s", psz_filename, vlc_strerror_c(errno) );
+        goto end;
     }
 
+    if( fwrite( data, 1, length, f ) != length )
+    {
+        msg_Err( obj, "%s: %s", psz_filename, vlc_strerror_c(errno) );
+        fclose( f );
+        vlc_unlink( psz_filename );
+        goto end;
+    }
+
+    if( fclose( f ) )
+    {
+        msg_Err( obj, "%s: %s", psz_filename, vlc_strerror_c(errno) );
+        vlc_unlink( psz_filename );
+        goto end;
+    }
+
+    msg_Dbg( obj, "album art saved to %s", psz_filename );
+    input_item_SetArtURL( p_item, psz_uri );
+    i_ret = VLC_SUCCESS;
+
+save_uid:
     /* save uid info */
+    if( i_ret != VLC_SUCCESS )
+        goto end;
+
     char *uid = input_item_GetInfo( p_item, "uid", "md5" );
     if ( ! *uid )
     {
@@ -390,5 +405,5 @@ int input_SaveArt( vlc_object_t *obj, input_item_t *p_item,
 end:
     free( psz_uri );
     free( psz_filename );
-    return VLC_SUCCESS;
+    return i_ret;
 }
