@@ -181,6 +181,55 @@ static char *ArtCacheFilePath( const char *psz_dir, const char *psz_name )
     return psz_file;
 }
 
+static char *ArtCacheReadUriFromFile( const char *psz_file )
+{
+    if( !psz_file )
+        return NULL;
+
+    FILE *fd = vlc_fopen( psz_file, "rb" );
+    if( !fd )
+        return NULL;
+
+    char *psz_uri = NULL;
+    char sz_cachefile[2049];
+
+    if( fgets( sz_cachefile, sizeof( sz_cachefile ), fd ) != NULL )
+    {
+        size_t i_len = strlen( sz_cachefile );
+        while( i_len > 0 &&
+               ( sz_cachefile[i_len - 1] == '\n' ||
+                 sz_cachefile[i_len - 1] == '\r' ) )
+            sz_cachefile[--i_len] = '\0';
+
+        if( i_len > 0 )
+            psz_uri = strdup( sz_cachefile );
+    }
+
+    fclose( fd );
+    return psz_uri;
+}
+
+static int ArtCacheWriteUriToFile( vlc_object_t *obj, const char *psz_file,
+                                   const char *psz_uri )
+{
+    if( !psz_file || !psz_uri )
+        return VLC_EGENERIC;
+
+    FILE *f = vlc_fopen( psz_file, "wb" );
+    if( !f )
+        return VLC_EGENERIC;
+
+    int ret = VLC_SUCCESS;
+    if( fputs( psz_uri, f ) < 0 )
+    {
+        msg_Err( obj, "Error writing %s: %s", psz_file, vlc_strerror_c(errno) );
+        ret = VLC_EGENERIC;
+    }
+
+    fclose( f );
+    return ret;
+}
+
 static int ArtCacheFindInPath( input_item_t *p_item, char *psz_path )
 {
     if( !psz_path )
@@ -261,17 +310,12 @@ int input_FindArtInCacheUsingItemUID( input_item_t *p_item )
     free( psz_byuiddir );
     if( psz_byuidfile )
     {
-        FILE *fd = vlc_fopen( psz_byuidfile, "rb" );
-        if ( fd )
+        char *psz_uri = ArtCacheReadUriFromFile( psz_byuidfile );
+        if( psz_uri )
         {
-            char sz_cachefile[2049];
-            /* read the cache hash url */
-            if ( fgets( sz_cachefile, 2048, fd ) != NULL )
-            {
-                input_item_SetArtURL( p_item, sz_cachefile );
-                b_done = true;
-            }
-            fclose( fd );
+            input_item_SetArtURL( p_item, psz_uri );
+            free( psz_uri );
+            b_done = true;
         }
         free( psz_byuidfile );
     }
@@ -322,7 +366,6 @@ int input_SaveArt( vlc_object_t *obj, input_item_t *p_item,
         }
         fclose( f );
     }
-    free( psz_uri );
 
     /* save uid info */
     char *uid = input_item_GetInfo( p_item, "uid", "md5" );
@@ -339,19 +382,13 @@ int input_SaveArt( vlc_object_t *obj, input_item_t *p_item,
 
     if ( psz_byuidfile )
     {
-        f = vlc_fopen( psz_byuidfile, "wb" );
-        if ( f )
-        {
-            if( fputs( "file://", f ) < 0 || fputs( psz_filename, f ) < 0 )
-                msg_Err( obj, "Error writing %s: %s", psz_byuidfile,
-                         vlc_strerror_c(errno) );
-            fclose( f );
-        }
+        ArtCacheWriteUriToFile( obj, psz_byuidfile, psz_uri );
         free( psz_byuidfile );
     }
     free( uid );
     /* !save uid info */
 end:
+    free( psz_uri );
     free( psz_filename );
     return VLC_SUCCESS;
 }
