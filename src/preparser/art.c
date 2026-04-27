@@ -415,11 +415,10 @@ static int ArtCacheFindAttachment( input_item_t *p_item )
 /* */
 int input_FindArtInCache( input_item_t *p_item )
 {
-    char *psz_arturl = input_item_GetArtURL( p_item );
-    const bool b_attachment = ArtUrlIsAttachment( psz_arturl );
-    free( psz_arturl );
-
-    if( b_attachment && ArtCacheFindAttachment( p_item ) == VLC_SUCCESS )
+    /* Probe the item-scoped attachment cache even before metadata repopulates
+     * the current art URL. Otherwise cached embedded art is missed until a
+     * later parse re-discovers the attachment:// URL. */
+    if( ArtCacheFindAttachment( p_item ) == VLC_SUCCESS )
         return VLC_SUCCESS;
 
     return ArtCacheFindInPath( p_item, ArtCachePath( p_item ) );
