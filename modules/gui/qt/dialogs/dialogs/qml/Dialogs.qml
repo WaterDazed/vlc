@@ -275,7 +275,7 @@ Item {
 
         contentItem: GridLayout {
             columns: 2
-            rowspacing : VLCStyle.margin_small
+            rowSpacing : VLCStyle.margin_small
             columnSpacing : VLCStyle.margin_small
           
         
