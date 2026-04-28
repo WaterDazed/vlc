@@ -18,10 +18,10 @@ DATE := $(shell date +%Y%m%d)
 VPATH := $(TARBALLS)
 
 # Common download locations
-GNU ?= http://ftpmirror.gnu.org/gnu
+GNU ?= https://ftpmirror.gnu.org/gnu
 SF := https://downloads.sourceforge.net/project
-VIDEOLAN := http://downloads.videolan.org/pub/videolan
-CONTRIB_VIDEOLAN := http://downloads.videolan.org/pub/contrib
+VIDEOLAN := https://downloads.videolan.org/pub/videolan
+CONTRIB_VIDEOLAN := https://downloads.videolan.org/pub/contrib
 GITHUB := https://github.com
 GNUGPG := https://www.gnupg.org/ftp/gcrypt
 XIPH := https://ftp.osuosl.org/pub/xiph/releases
@@ -560,7 +560,7 @@ distclean: clean
 	$(RM) config.mak
 	unlink Makefile
 
-PREBUILT_URL=http://download.videolan.org/pub/videolan/contrib/$(HOST)/vlc-contrib-$(HOST)-latest.tar.bz2
+PREBUILT_URL=https://download.videolan.org/pub/videolan/contrib/$(HOST)/vlc-contrib-$(HOST)-latest.tar.bz2
 
 vlc-contrib-$(HOST)-latest.tar.bz2:
 	$(call download,$(PREBUILT_URL))

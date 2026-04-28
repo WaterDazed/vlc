@@ -1,23 +1,36 @@
 # GSM
-GSM_VERSION := 1.0.13
-GSM_URL := http://libgsm.sourcearchive.com/downloads/$(GSM_VERSION)/libgsm_$(GSM_VERSION).orig.tar.gz
+GSM_MAJVERSION := 1.0
+GSM_MINVERSION := 22
+GSM_URL := https://www.quut.com/gsm/gsm-$(GSM_MAJVERSION).$(GSM_MINVERSION).tar.gz
 
-$(TARBALLS)/libgsm_$(GSM_VERSION).tar.gz:
+$(TARBALLS)/gsm-$(GSM_MAJVERSION)-pl$(GSM_MINVERSION).tar.gz:
 	$(call download_pkg,$(GSM_URL),gsm)
 
-.sum-gsm: libgsm_$(GSM_VERSION).tar.gz
+.sum-gsm: gsm-$(GSM_MAJVERSION)-pl$(GSM_MINVERSION).tar.gz
 
-gsm: libgsm_$(GSM_VERSION).tar.gz .sum-gsm
+gsm: gsm-$(GSM_MAJVERSION)-pl$(GSM_MINVERSION).tar.gz .sum-gsm
 	$(UNPACK)
-	mv gsm-1.0-* libgsm_$(GSM_VERSION)
-	$(APPLY) $(SRC)/gsm/gsm-cross.patch
-	$(APPLY) $(SRC)/gsm/gsm-missing-include.patch
-	sed -e 's/^CFLAGS.*=/CFLAGS+=/' -i.orig libgsm_$(GSM_VERSION)/Makefile
+	# allow overriding hardcoded compiler variables
+	sed -i.orig 's,^CC	,#CC,' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,^LD	,#LD,' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,^AR	,#AR,' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,^RANLIB	,#RANLIB,' "$(UNPACK_DIR)/Makefile"
+	# allow overriding hardcoded install variables
+	sed -i.orig 's,GSM_INSTALL_ROOT =,GSM_INSTALL_ROOT ?=,' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,GSM_INSTALL_INC =,GSM_INSTALL_INC ?=,' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,GSM_INSTALL_MAN =,GSM_INSTALL_MAN ?=,' "$(UNPACK_DIR)/Makefile"
+	# use the default make rules (use CPPFLAGS)
+	sed -i.orig 's,^.c.o:,#.c.o:,' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,^		$$(CC),#		$$(CC),' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,^		@-mv,#		@-mv,' "$(UNPACK_DIR)/Makefile"
+	sed -i.orig 's,make \$$,$$(MAKE) \$$,' "$(UNPACK_DIR)/Makefile"
 	$(MOVE)
 
+GSM_ENV := GSM_INSTALL_ROOT="$(PREFIX)" \
+           GSM_INSTALL_INC="$(PREFIX)/include/gsm" \
+           GSM_INSTALL_MAN="$(PREFIX)/share/man/man3"
+
 .gsm: gsm
-	$(HOSTVARS_PIC) $(MAKE) -C $<
-	mkdir -p "$(PREFIX)/include/gsm" "$(PREFIX)/lib"
-	cp $</inc/gsm.h "$(PREFIX)/include/gsm/"
-	cp $</lib/libgsm.a "$(PREFIX)/lib/"
+	install -d "$(PREFIX)/lib" "$(PREFIX)/include/gsm" "$(PREFIX)/share/man/man3"
+	$(HOSTVARS_PIC) $(GSM_ENV) $(MAKE) -C $< gsminstall
 	touch $@
