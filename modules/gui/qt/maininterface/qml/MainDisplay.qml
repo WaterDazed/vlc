@@ -499,6 +499,9 @@ FocusScope {
                     Widgets.HorizontalResizeHandle {
                         id: resizeHandle
 
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Drag to resize playlist panel")
+
                         property bool _inhibitMainInterfaceUpdate: false
 
                         parent: playlist
