@@ -3534,8 +3534,16 @@ static int input_SlaveSourceAdd( input_thread_t *p_input,
              i_type == SLAVE_TYPE_SPU ? "spu" : "generic", psz_uri, b_forced );
 
     input_source_t *p_source = InputSourceNew( psz_uri );
+
     if( !p_source )
-        return VLC_EGENERIC;
+    {
+       if( b_can_fail )
+        msg_Warn( p_input, "could not create slave source for %s", psz_uri );
+       else
+        msg_Err( p_input, "could not create slave source for %s", psz_uri );
+
+       return VLC_EGENERIC;
+    }
 
     if( b_forced )
         p_source->autoselected = true;
