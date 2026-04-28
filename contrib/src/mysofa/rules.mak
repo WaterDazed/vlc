@@ -23,6 +23,7 @@ mysofa: libmysofa-$(MYSOFA_VERSION).tar.gz .sum-mysofa
 	$(UNPACK)
 	$(APPLY) $(SRC)/mysofa/0001-Only-link-with-MATH-library-if-it-s-found.patch
 	$(APPLY) $(SRC)/mysofa/0002-Only-link-with-ZLib-library-if-it-s-found.patch
+	$(APPLY) $(SRC)/mysofa/Set-PIC-on-for-static-build.patch
 	$(call pkg_static,"libmysofa.pc.cmake")
 	$(MOVE)
 

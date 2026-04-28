@@ -1,0 +1,26 @@
+From 5087300d60aa96e9484942d97844df8d422d992c Mon Sep 17 00:00:00 2001
+From: Lameck Oguta <lamecko.dev@gmail.com>
+Date: Tue, 28 Apr 2026 12:59:06 +0300
+Subject: [PATCH] force PIC for mysofa-static when BUILD_SHARED_LIBS is off
+
+Recent mysofa version does not enable POSITION_INDEPENDENT_CODE for static builds by default.
+---
+ src/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 2d4c80a..00f8b8f 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -81,7 +81,7 @@ endif()
+ set_target_properties(
+   mysofa-static
+   PROPERTIES OUTPUT_NAME mysofa CLEAN_DIRECT_OUTPUT 1 POSITION_INDEPENDENT_CODE
+-                                                      ${BUILD_SHARED_LIBS})
++                                                      ON)
+ set_target_properties( mysofa-static PROPERTIES PUBLIC_HEADER "${public-headers}" )
+ install(TARGETS mysofa-static
+   EXPORT mysofa_exports
+-- 
+2.43.0
+
