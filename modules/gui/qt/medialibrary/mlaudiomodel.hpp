@@ -40,6 +40,7 @@ public:
         AUDIO_ALBUM,
         AUDIO_ALBUM_FIRST_SYMBOL,
         AUDIO_ALBUM_ID,
+        AUDIO_ALBUM_ID_SERIALIZED,
     }
     ;
 
