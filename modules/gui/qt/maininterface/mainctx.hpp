@@ -30,6 +30,7 @@
 #include <QApplication>
 #include <QQuickItem>
 #include <QTimer>
+#include <QRectF>
 
 Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
@@ -67,6 +68,7 @@ class VLCSystray;
 class MediaLib;
 class ColorSchemeModel;
 class VLCVarChoiceModel;
+class QItemSelectionModel;
 #ifdef UPDATE_CHECK
 class UpdateModel;
 #endif
@@ -341,6 +343,33 @@ public:
             func.call(params);
         });
     }
+
+    enum SelectionMode
+    {
+        // Some high number to prevent conflicts with `QItemSelectionModel::SelectionFlag`:
+        Begin = 0x0320,
+        Clear,
+        ClearAndSelect,
+
+        // These modes are temporal and initially require
+        // the begin signal as a reference point, otherwise
+        // they will act like `ClearAndSelect`:
+        Select,
+        Toggle,
+    };
+    Q_ENUM(SelectionMode)
+
+    // This static method updates the selection for child items of the
+    // provided content item based on selection area. It is required for
+    // the child items to provide property `index`, which is usually the
+    // case for item view delegate instances (but we do not mandate item
+    // view here, even though this mostly makes sense for item views).
+    // This algorithm is O(n), but it is still recommended to compress
+    // calls on area size change instead of immediately calling update:
+    Q_INVOKABLE static bool updateSelection(const QQuickItem *contentItem,
+                                            QItemSelectionModel *selectionModel,
+                                            MainCtx::SelectionMode mode,
+                                            const QRectF &area = {});
 
     Q_INVOKABLE virtual bool platformHandlesResizeWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesTitleBarButtonsWithCSD() const { return false; };

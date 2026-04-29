@@ -105,6 +105,13 @@ T.Control {
 
     // Events
 
+    signal contextMenuButtonClicked(Item menuParent, point globalMousePos)
+
+    onContextMenuButtonClicked: (menuParent, globalMousePos) => {
+        if (contextMenu)
+            contextMenu.popup(index, globalMousePos)
+    }
+
     // Functions
 
     // Childs
@@ -370,8 +377,7 @@ T.Control {
             }
 
             onLongPressed: (eventPoint, button) => {
-                if (contextMenu)
-                    contextMenu.popup(index, point.scenePosition)
+                delegate.contextMenuButtonClicked(delegate.index, eventPoint.scenePosition)
             }
         }
     }

@@ -660,6 +660,17 @@ ListView {
         }
     }
 
+    property Component implicitRubberBandSelector: RubberBandSelector {
+        flickable: root
+        selectionModel: root.selectionModel
+    }
+
+    // NOTE: This property can be set to null to disable rubber band selection:
+    property RubberBandSelector rubberBandSelector: {
+        Qt.callLater(gc) // `QJSEngine::GarbageCollectionExtension` is installed by default
+        return implicitRubberBandSelector.createObject(null) // JS Ownership
+    }
+
     // FIXME: This is probably not useful anymore.
     Connections {
         target: root.headerItem
