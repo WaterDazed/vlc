@@ -543,6 +543,8 @@ typedef struct NW_API
     vlc_http_auth_t auth;
     char     *psz_username;
     char     *psz_password;
+
+    vlc_http_cookie_jar_t *jar;
 } access_sys_t NW_API;
 
 /* Forward seeks within this many bytes of the current position are
@@ -644,6 +646,7 @@ static int OpenHTTPStream(stream_t *access, uint64_t offset)
         vlc_http_msg_add_header(req, "Range", "bytes=%llu-",
                                 (unsigned long long)offset);
     vlc_http_msg_add_header(req, "Icy-MetaData", "1");
+    vlc_http_msg_add_cookies(req, sys->jar);
 
     if (sys->psz_username != NULL && sys->psz_password != NULL) {
         char *authhdr = vlc_http_auth_FormatAuthorizationHeader(
@@ -749,6 +752,9 @@ static int OpenHTTPStream(stream_t *access, uint64_t offset)
         (strncasecmp(val, "Icecast", 7) == 0 ||
          strncasecmp(val, "Nanocaster", 10) == 0))
         sys->icecast = true;
+
+    vlc_http_msg_get_cookies(resp, sys->jar, sys->url.psz_host,
+                             sys->url.psz_path ? sys->url.psz_path : "/");
 
     sys->http_resp = resp;
     sys->offset  = offset;
@@ -1022,6 +1028,8 @@ static int TryOpen(vlc_object_t *obj)
         sys->tls = false;
         if (sys->url.i_port == 0) sys->url.i_port = 80;
     }
+
+    sys->jar = var_InheritAddress(access, "http-cookies");
 
     vlc_credential crd;
     vlc_credential_init(&crd, &sys->url);
