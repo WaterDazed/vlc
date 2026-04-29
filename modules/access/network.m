@@ -29,9 +29,11 @@
 #endif
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <vlc_common.h>
 #include <vlc_access.h>
@@ -87,6 +89,8 @@ NW_API
 @interface VLCNetworkTransport : NSObject
 @property (nonatomic, readonly, nullable) const char *negotiatedALPN;
 @property (nonatomic, readonly, nullable) vlc_tls_t *tlsStream;
+/* Read end of the wakeup pipe, used by NWShimGetFD as the pollable fd. */
+@property (nonatomic, readonly) int pipeReadFD;
 
 - (instancetype)initWithAccess:(stream_t *)access
                           host:(NSString *)host
@@ -96,12 +100,26 @@ NW_API
 - (BOOL)waitReadyWithTimeout:(NSTimeInterval)timeout;
 - (BOOL)send:(const void *)buf length:(size_t)len;
 
-- (dispatch_data_t)receive:(size_t)maxLen;
+/* Returns bytes copied (>0), 0 on EOF, -1 if no data is available yet. */
+- (ssize_t)receiveInto:(void *)buf length:(size_t)maxLen;
 - (void)cancel;
 @end
 
 NW_API
 extern const struct vlc_tls_operations nw_tls_ops;
+
+/* Boolean wakeup pipe: signal writes one byte, drain empties the fifo. */
+static inline void pipe_signal(int fd)
+{
+    uint8_t byte = 1;
+    (void)write(fd, &byte, 1);
+}
+
+static inline void pipe_drain(int fd)
+{
+    uint8_t buf[64];
+    while (read(fd, buf, sizeof(buf)) > 0);
+}
 
 NW_API
 @implementation VLCNetworkTransport
@@ -119,6 +137,18 @@ NW_API
 
     nw_tls_t *_shim;
     char *_negotiatedALPN;
+
+    /* Wakeup pipe (pollable fd) and chunk queue. Chunks are kept as
+     * dispatch_data_t with a head offset so receiveInto: copies straight
+     * into the caller's buffer. _receiveInFlight gates on-demand
+     * scheduling: at most one nw_connection_receive is outstanding, which
+     * gives us TCP-level backpressure for free. Protected by _recvLock. */
+    int                                 _pipefds[2];
+    NSMutableArray<dispatch_data_t>    *_recvBufs;
+    size_t                              _recvBufOffset;
+    os_unfair_lock                      _recvLock;
+    BOOL                                _recvEOF;
+    BOOL                                _receiveInFlight;
 }
 
 - (instancetype)initWithAccess:(stream_t *)access
@@ -140,6 +170,20 @@ NW_API
     _access = access;
     _lock = OS_UNFAIR_LOCK_INIT;
     _readySem = dispatch_semaphore_create(0);
+
+    _pipefds[0] = _pipefds[1] = -1;
+    if (pipe(_pipefds) != 0) {
+        free(_shim);
+        return nil;
+    }
+    fcntl(_pipefds[0], F_SETFL, O_NONBLOCK);
+    fcntl(_pipefds[1], F_SETFL, O_NONBLOCK);
+
+    _recvBufs        = [NSMutableArray new];
+    _recvBufOffset   = 0;
+    _recvLock        = OS_UNFAIR_LOCK_INIT;
+    _recvEOF         = NO;
+    _receiveInFlight = NO;
 
     NSString *portStr = [NSString stringWithFormat:@"%u", (unsigned)port];
     nw_endpoint_t endpoint =
@@ -188,8 +232,15 @@ NW_API
         nw_connection_cancel(_connection);
         _connection = nil;
     }
+    if (_pipefds[0] >= 0) close(_pipefds[0]);
+    if (_pipefds[1] >= 0) close(_pipefds[1]);
     free(_shim);
     free(_negotiatedALPN);
+}
+
+- (int)pipeReadFD
+{
+    return _pipefds[0];
 }
 
 - (vlc_tls_t *)tlsStream
@@ -227,6 +278,10 @@ NW_API
             os_unfair_lock_lock(&_lock);
             _failed = YES;
             os_unfair_lock_unlock(&_lock);
+            os_unfair_lock_lock(&_recvLock);
+            _recvEOF = YES;
+            os_unfair_lock_unlock(&_recvLock);
+            pipe_signal(_pipefds[1]);
             dispatch_semaphore_signal(_readySem);
             break;
         }
@@ -235,6 +290,10 @@ NW_API
             os_unfair_lock_lock(&_lock);
             _cancelled = YES;
             os_unfair_lock_unlock(&_lock);
+            os_unfair_lock_lock(&_recvLock);
+            _recvEOF = YES;
+            os_unfair_lock_unlock(&_recvLock);
+            pipe_signal(_pipefds[1]);
             dispatch_semaphore_signal(_readySem);
             break;
         case nw_connection_state_waiting:
@@ -243,6 +302,39 @@ NW_API
         default:
             break;
     }
+}
+
+- (void)scheduleReceive
+{
+    __weak __typeof(self) weakSelf = self;
+    nw_connection_receive(_connection, 1, 65536,
+        ^(dispatch_data_t content, nw_content_context_t __unused ctx,
+          bool is_complete, nw_error_t error) {
+            __strong __typeof(weakSelf) strong = weakSelf;
+            if (!strong)
+                return;
+            [strong handleReceive:content complete:is_complete error:error];
+        });
+}
+
+- (void)handleReceive:(dispatch_data_t)content
+             complete:(bool)is_complete
+                error:(nw_error_t)error
+{
+    BOOL eof = (is_complete || error != NULL);
+    if (error != NULL && _access)
+        msg_Warn(_access, "receive error (%d)",
+                 nw_error_get_error_code(error));
+
+    os_unfair_lock_lock(&_recvLock);
+    if (content != NULL && dispatch_data_get_size(content) > 0)
+        [_recvBufs addObject:content];
+    if (eof)
+        _recvEOF = YES;
+    _receiveInFlight = NO;
+    os_unfair_lock_unlock(&_recvLock);
+
+    pipe_signal(_pipefds[1]);
 }
 
 - (BOOL)waitReadyWithTimeout:(NSTimeInterval)timeout
@@ -276,31 +368,59 @@ NW_API
     return ok;
 }
 
-- (dispatch_data_t)receive:(size_t)maxLen
+- (ssize_t)receiveInto:(void *)dst length:(size_t)maxLen
 {
-    if (maxLen == 0)
-        return dispatch_data_empty;
+    pipe_drain(_pipefds[0]);
 
-    os_unfair_lock_lock(&_lock);
-    BOOL stopped = _cancelled || _failed;
-    os_unfair_lock_unlock(&_lock);
-    if (stopped)
-        return nil;
+    os_unfair_lock_lock(&_recvLock);
 
-    dispatch_semaphore_t done = dispatch_semaphore_create(0);
-    __block dispatch_data_t result = nil;
+    if (_recvBufs.count == 0) {
+        BOOL eof = _recvEOF;
+        BOOL needSchedule = !eof && !_receiveInFlight;
+        if (needSchedule)
+            _receiveInFlight = YES;
+        os_unfair_lock_unlock(&_recvLock);
+        if (needSchedule)
+            [self scheduleReceive];
+        return eof ? 0 : -1;
+    }
 
-    uint32_t want = maxLen > UINT32_MAX ? UINT32_MAX : (uint32_t)maxLen;
-    nw_connection_receive(_connection, 1, want,
-        ^(dispatch_data_t content, nw_content_context_t __unused ctx,
-          bool __unused is_complete, nw_error_t __unused error) {
-            if (content != NULL && dispatch_data_get_size(content) > 0)
-                result = content;
-            dispatch_semaphore_signal(done);
+    dispatch_data_t head = _recvBufs[0];
+    size_t headLen = dispatch_data_get_size(head);
+    size_t avail   = headLen - _recvBufOffset;
+    size_t take    = (avail < maxLen) ? avail : maxLen;
+
+    /* One memcpy: walk the scatter/gather regions of the head chunk,
+     * skip _recvBufOffset bytes, copy `take` bytes into dst. */
+    __block size_t copied = 0;
+    __block size_t skip   = _recvBufOffset;
+    dispatch_data_apply(head,
+        ^bool(dispatch_data_t __unused rgn, size_t __unused o,
+              const void *bytes, size_t size) {
+            if (skip >= size) { skip -= size; return true; }
+            const uint8_t *src = (const uint8_t *)bytes + skip;
+            size_t region = size - skip;
+            skip = 0;
+            size_t want  = take - copied;
+            size_t chunk = (region < want) ? region : want;
+            memcpy((uint8_t *)dst + copied, src, chunk);
+            copied += chunk;
+            return copied < take;
         });
 
-    dispatch_semaphore_wait(done, DISPATCH_TIME_FOREVER);
-    return result;
+    if (copied == avail) {
+        [_recvBufs removeObjectAtIndex:0];
+        _recvBufOffset = 0;
+    } else {
+        _recvBufOffset += copied;
+    }
+
+    if (_recvBufs.count > 0 || _recvEOF)
+        pipe_signal(_pipefds[1]);
+
+    os_unfair_lock_unlock(&_recvLock);
+
+    return (ssize_t)copied;
 }
 
 - (void)cancel
@@ -308,14 +428,20 @@ NW_API
     os_unfair_lock_lock(&_lock);
     _cancelled = YES;
     os_unfair_lock_unlock(&_lock);
+
+    os_unfair_lock_lock(&_recvLock);
+    _recvEOF = YES;
+    os_unfair_lock_unlock(&_recvLock);
+    pipe_signal(_pipefds[1]);
+
     if (_connection)
         nw_connection_cancel(_connection);
     dispatch_semaphore_signal(_readySem);
 }
 @end
 
-/* vlc_tls_t ops. Blocking readv/writev keep vlc_https_recv/_send out of
- * their poll() fallback — no pollable fd is available */
+/* vlc_tls_t ops: non-blocking readv backed by the wakeup pipe; writev stays
+ * synchronous since NW.framework's send queue never returns EAGAIN. */
 
 NW_API
 static VLCNetworkTransport *TransportFromTLS(vlc_tls_t *tls)
@@ -326,8 +452,8 @@ static VLCNetworkTransport *TransportFromTLS(vlc_tls_t *tls)
 NW_API
 static int NWShimGetFD(vlc_tls_t *tls, short *restrict events)
 {
-    (void)tls; (void)events;
-    return -1;
+    (void)events;
+    return TransportFromTLS(tls).pipeReadFD;
 }
 
 NW_API
@@ -336,25 +462,13 @@ static ssize_t NWShimReadv(vlc_tls_t *tls, struct iovec *iov, unsigned niov)
     if (niov == 0 || iov[0].iov_len == 0)
         return 0;
 
-    size_t len = iov[0].iov_len;
-    dispatch_data_t d = [TransportFromTLS(tls) receive:len];
-    if (d == nil)
-        return 0;
-
-    __block size_t copied = 0;
-    uint8_t *buf = iov[0].iov_base;
-    dispatch_data_apply(d,
-        ^bool(dispatch_data_t region, size_t off,
-              const void *bytes, size_t size) {
-            (void)region; (void)off;
-            size_t space = len - copied;
-            if (space == 0) return false;
-            size_t chunk = size < space ? size : space;
-            memcpy(buf + copied, bytes, chunk);
-            copied += chunk;
-            return copied < len;
-        });
-    return (ssize_t)copied;
+    ssize_t r = [TransportFromTLS(tls) receiveInto:iov[0].iov_base
+                                            length:iov[0].iov_len];
+    if (r < 0) {
+        errno = EAGAIN;
+        return -1;
+    }
+    return r;
 }
 
 NW_API
@@ -449,7 +563,7 @@ static void ApplyIcyMeta(stream_t *access, vlc_meta_type_t type, char *value)
 /*****************************************************************************
  * HTTP path (via libvlc_http over the vlc_tls shim; protocol-agnostic:
  * h1 and h2 share the same vlc_http_conn / vlc_http_stream / block_t
- * API — the backend is chosen at conn-creation time based on ALPN).
+ * API - the backend is chosen at conn-creation time based on ALPN).
  *****************************************************************************/
 
 NW_API
@@ -476,7 +590,7 @@ static int OpenHTTPStream(stream_t *access, uint64_t offset)
 {
     access_sys_t *sys = access->p_sys;
 
-    /* Destroy the previous response — its auto-close terminates the
+    /* Destroy the previous response - its auto-close terminates the
      * attached stream (RST_STREAM on h2, socket kill on h1 if body
      * wasn't fully consumed) without touching any other streams on
      * the conn. */
@@ -814,7 +928,7 @@ static int Seek(stream_t *access, uint64_t pos)
             }
             if (gap == 0)
                 return VLC_SUCCESS;
-            /* Partial skip — current stream died. Fall through and
+            /* Partial skip - current stream died. Fall through and
              * open a fresh one at the target position. */
         }
     }
