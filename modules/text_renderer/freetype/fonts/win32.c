@@ -167,13 +167,27 @@ static int GetFileFontByName( const WCHAR * font_name, char **psz_filename, int 
 
 static char* GetWindowsFontPath(void)
 {
-    wchar_t wdir[MAX_PATH];
-    if( S_OK != SHGetFolderPathW( NULL, CSIDL_FONTS, NULL, SHGFP_TYPE_CURRENT, wdir ) )
+    char* res = NULL;
+    PWSTR copath;
+    if( S_OK == SHGetKnownFolderPath( &FOLDERID_Fonts, KF_FLAG_DEFAULT, NULL, &copath) )
     {
-        GetWindowsDirectoryW( wdir, MAX_PATH );
-        wcscat_s( wdir, MAX_PATH, L"\\fonts" );
+        res = FromWide( copath );
+        CoTaskMemFree( copath );
     }
-    return FromWide( wdir );
+    if ( unlikely( res == NULL ) )
+    {
+        wchar_t wdir;
+        DWORD path_len = GetWindowsDirectoryW( &wdir, 1 );
+        wchar_t *pwindir = NULL;
+        if (path_len != 0 && (pwindir = malloc((path_len * sizeof(*pwindir)) + sizeof(L"\\fonts") )))
+        {
+            path_len = GetWindowsDirectoryW( pwindir, path_len );
+            memcpy( &pwindir[path_len], L"\\fonts", sizeof(L"\\fonts") );
+            res = FromWide( pwindir );
+            free( pwindir );
+        }
+    }
+    return res;
 }
 
 /**
