@@ -454,6 +454,12 @@ vlc_modules += {
 subdir('http')
 
 # Network.framework-based HTTP(S) access
+# Auto-enabled on watchOS, opt-in elsewhere on Apple platforms.
+access_network_opt = get_option('access_network') \
+    .require(host_system == 'darwin',
+             error_message: 'access_network requires Darwin')
+access_network_enabled = access_network_opt.allowed() and \
+    (access_network_opt.enabled() or have_watchos)
 vlc_modules += {
     'name' : 'access_network',
     'sources' : files('network.m'),
@@ -463,7 +469,7 @@ vlc_modules += {
         frameworks['Network'],
         frameworks['Security'],
     ],
-    'enabled' : host_system == 'darwin',
+    'enabled' : access_network_enabled,
 }
 
 # Network file sharing
