@@ -93,5 +93,6 @@ endif
 vlc_modules += {
     'name' : 'https',
     'sources' : files('access.c'),
-    'link_with' : [vlc_http_lib]
+    'link_with' : [vlc_http_lib],
+    'enabled' : http_enabled,
 }

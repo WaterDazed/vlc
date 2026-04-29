@@ -443,11 +443,17 @@ vlc_modules += {
     'dependencies' : [socket_libs]
 }
 
+# Portable HTTP(S)
+# Auto-disabled on watchOS, enabled elsewhere.
+http_opt = get_option('http')
+http_enabled = http_opt.allowed() and (http_opt.enabled() or not have_watchos)
+
 # Old HTTP
 vlc_modules += {
     'name' : 'http',
     'sources' : files('http.c'),
-    'dependencies' : [socket_libs]
+    'dependencies' : [socket_libs],
+    'enabled' : http_enabled,
 }
 
 # New HTTP(S)

@@ -365,7 +365,9 @@ access_PLUGINS += libgopher_plugin.la
 
 libhttp_plugin_la_SOURCES = access/http.c
 libhttp_plugin_la_LIBADD = $(SOCKET_LIBS)
+if HAVE_HTTP
 access_PLUGINS += libhttp_plugin.la
+endif
 
 libaccess_network_plugin_la_SOURCES = access/network.m
 libaccess_network_plugin_la_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc \

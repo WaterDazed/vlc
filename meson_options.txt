@@ -659,6 +659,11 @@ option('access_network',
     value: 'auto',
     description: 'Network.framework based HTTP(S) access module for Apple platforms (default enabled on watchOS)')
 
+option('http',
+    type: 'feature',
+    value: 'auto',
+    description: 'Portable HTTP and HTTPS access modules (default enabled, except on watchOS)')
+
 option('udev',
     type: 'feature',
     value: 'auto',
