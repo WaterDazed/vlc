@@ -653,6 +653,11 @@ qml_modules += {
         'medialibrary/qml/VideoListDisplay.qml',
         'medialibrary/qml/VideoGridDisplay.qml',
         'medialibrary/qml/MusicAlbumSectionDelegate.qml',
+        'medialibrary/qml/MLGlobalShortcuts.qml',
+        'medialibrary/qml/Bookmarks.qml',
+        'medialibrary/qml/MLContextMenu.qml',
+        'medialibrary/qml/MLDragItem.qml',
+        'medialibrary/qml/MLTableColumns.qml',
     ),
 }
 
@@ -662,7 +667,6 @@ qml_modules += {
     'outdir' : 'VLC/Menus',
     'sources': files(
         'menus/qml/GlobalShortcuts.qml',
-        'menus/qml/GlobalShortcutsMedialib.qml',
         'menus/qml/Menubar.qml',
         'menus/qml/ShortcutExt.qml'
     ),
@@ -695,7 +699,6 @@ qml_modules += {
    'target' : 'player',
    'outdir' : 'VLC/Player',
    'sources': files(
-       'player/qml/Bookmarks.qml',
        'player/qml/ControlBar.qml',
        'player/qml/PlaybackSpeed.qml',
        'player/qml/MiniPlayer.qml',
@@ -810,7 +813,6 @@ qml_modules += {
         'util/qml/FSMState.qml',
         'util/qml/GridSizeHelper.qml',
         'util/qml/NativeMenu.qml',
-        'util/qml/MLContextMenu.qml',
         'util/qml/FadeControllerStateGroup.qml',
         'util/qml/DelayedBehavior.qml'
     ),
@@ -870,8 +872,6 @@ qml_modules += {
         'widgets/qml/SubtitleLabel.qml',
         'widgets/qml/MenuCaption.qml',
         'widgets/qml/MenuLabel.qml',
-        'widgets/qml/MLDragItem.qml',
-        'widgets/qml/MLTableColumns.qml',
         'widgets/qml/NavigableCol.qml',
         'widgets/qml/NavigableRow.qml',
         'widgets/qml/PlayCover.qml',

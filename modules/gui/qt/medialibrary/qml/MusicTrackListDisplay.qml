@@ -188,7 +188,7 @@ Widgets.TableViewExt {
         contextMenu.popup(selectionModel.selectedIndexes, globalMousePos)
     }
 
-    Widgets.MLDragItem {
+    MLDragItem {
         id: tableDragItem
 
         indexes: indexesFlat ? root.selectionModel.selectedIndexesFlat
@@ -198,7 +198,7 @@ Widgets.TableViewExt {
         view: root
     }
 
-    Widgets.MLTableColumns {
+    MLTableColumns {
         id: tableColumns
 
         showCriterias: (root.sortModel === root._modelSmall)

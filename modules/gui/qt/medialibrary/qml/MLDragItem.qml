@@ -1,5 +1,8 @@
+
 /*****************************************************************************
- * Copyright (C) 2024 VLC authors and VideoLAN
+ * Copyright (C) 2021 VLC authors and VideoLAN
+ *
+ * Author: Prince Gupta <guptaprince8832@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +19,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
+import QtQuick
 
 import VLC.MainInterface
+import VLC.Widgets as Widgets
 import VLC.MediaLibrary
 
+Widgets.DragItem {
+    id: root
 
-TableColumns {
+    // string => role for medialib id, data[id] will be pass to Medialib::mlInputItem for SharedInputItem
+    property string mlIDRole: "id"
 
-    onPlayClicked: function (model) {
-        MediaLib.addAndPlay(model.id)
-        MainCtx.requestShowPlayerView()
+    onRequestData: (indexes, resolve, reject) =>  {
+        console.assert(root.view)
+        console.assert(root.view.model)
+        console.assert(root.view.model.getData)
+        console.assert(root.view.model.getDataFlat)
+        if (indexesFlat)
+            root.view.model.getDataFlat(indexes, resolve)
+        else
+            root.view.model.getData(indexes, resolve)
+    }
+
+    onRequestInputItems: (indexes, data, resolve, reject) => {
+        console.assert(mlIDRole)
+        const inputIdList = data.map(o => o[root.mlIDRole])
+        MediaLib.mlInputItem(inputIdList, resolve)
     }
 }

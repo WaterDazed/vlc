@@ -1062,7 +1062,12 @@ libqml_module_medialibrary_a_QML = \
 	medialibrary/qml/VideoInfoExpandPanel.qml \
 	medialibrary/qml/VideoListDisplay.qml \
 	medialibrary/qml/VideoGridDisplay.qml \
-	medialibrary/qml/MusicAlbumSectionDelegate.qml
+	medialibrary/qml/MusicAlbumSectionDelegate.qml \
+	medialibrary/qml/MLGlobalShortcuts.qml \
+	medialibrary/qml/Bookmarks.qml \
+	medialibrary/qml/MLContextMenu.qml \
+	medialibrary/qml/MLDragItem.qml \
+	medialibrary/qml/MLTableColumns.qml
 nodist_libqml_module_medialibrary_a_SOURCES = medialibrary_qmlassets.cpp
 $(libqml_module_medialibrary_a_QML:.qml=.cpp) : $(builddir)/medialibrary/res.qrc
 $(libqml_module_medialibrary_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/medialibrary/res.qrc
@@ -1073,7 +1078,6 @@ libqml_module_menus_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
 libqml_module_menus_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
 libqml_module_menus_a_QML = \
 	menus/qml/GlobalShortcuts.qml \
-	menus/qml/GlobalShortcutsMedialib.qml \
 	menus/qml/Menubar.qml \
 	menus/qml/ShortcutExt.qml
 nodist_libqml_module_menus_a_SOURCES = menus_qmlassets.cpp
@@ -1108,7 +1112,6 @@ libqml_module_player_a_ModulePath = VLC/Player
 libqml_module_player_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
 libqml_module_player_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
 libqml_module_player_a_QML = \
-	player/qml/Bookmarks.qml \
 	player/qml/ControlBar.qml \
 	player/qml/PlaybackSpeed.qml \
 	player/qml/MiniPlayer.qml \
@@ -1228,7 +1231,6 @@ libqml_module_util_a_QML = \
 	util/qml/FSM.qml \
 	util/qml/FSMState.qml \
 	util/qml/NativeMenu.qml \
-	util/qml/MLContextMenu.qml \
 	util/qml/FadeControllerStateGroup.qml \
 	util/qml/GridSizeHelper.qml \
 	util/qml/DelayedBehavior.qml
@@ -1289,7 +1291,6 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/SubtitleLabel.qml \
 	widgets/qml/MenuCaption.qml \
 	widgets/qml/MenuLabel.qml \
-	widgets/qml/MLDragItem.qml \
 	widgets/qml/NavigableCol.qml \
 	widgets/qml/NavigableRow.qml \
 	widgets/qml/PlayCover.qml \
@@ -1305,7 +1306,6 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/PageLoader.qml \
 	widgets/qml/ButtonExt.qml \
 	widgets/qml/TableColumns.qml \
-	widgets/qml/MLTableColumns.qml \
 	widgets/qml/TextFieldExt.qml \
 	widgets/qml/TextToolButton.qml \
 	widgets/qml/TrackDelayButton.qml \

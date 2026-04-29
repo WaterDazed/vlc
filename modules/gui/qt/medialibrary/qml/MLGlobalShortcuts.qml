@@ -1,8 +1,5 @@
-
 /*****************************************************************************
- * Copyright (C) 2021 VLC authors and VideoLAN
- *
- * Author: Prince Gupta <guptaprince8832@gmail.com>
+ * Copyright (C) 2020 VLC authors and VideoLAN
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,32 +15,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
-
 import QtQuick
 
-import VLC.MainInterface
 import VLC.MediaLibrary
+import VLC.Dialogs
+import VLC.Menus
 
-DragItem {
-    id: root
+Item {
+    ShortcutExt{ sequence:"Ctrl+B"; onActivated: DialogsProvider.bookmarksDialog() }
 
-    // string => role for medialib id, data[id] will be pass to Medialib::mlInputItem for SharedInputItem
-    property string mlIDRole: "id"
-
-    onRequestData: (indexes, resolve, reject) =>  {
-        console.assert(root.view)
-        console.assert(root.view.model)
-        console.assert(root.view.model.getData)
-        console.assert(root.view.model.getDataFlat)
-        if (indexesFlat)
-            root.view.model.getDataFlat(indexes, resolve)
-        else
-            root.view.model.getData(indexes, resolve)
+    MLRecentMediaModel {
+        id: recentModel
+        limit: 10
+        ml: MediaLib
     }
 
-    onRequestInputItems: (indexes, data, resolve, reject) => {
-        console.assert(mlIDRole)
-        const inputIdList = data.map(o => o[root.mlIDRole])
-        MediaLib.mlInputItem(inputIdList, resolve)
+    //build all the shortcuts everytime, it seems that they can't be added/removed dynamically
+    Repeater {
+        model: 10
+
+        Item {
+            ShortcutExt {
+                sequence: "Ctrl+" + ((index + 1) % 10)
+                onActivated:  {
+                    if (index < recentModel.count)
+                    {
+
+                        const trackId = recentModel.data(recentModel.index(index, 0), MLRecentMediaModel.MEDIA_ID)
+                        if (!!trackId)
+                            MediaLib.addAndPlay([trackId])
+                    }
+                }
+            }
+        }
     }
 }
