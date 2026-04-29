@@ -20,6 +20,8 @@
 #ifndef ID3TAG_H
 #define ID3TAG_H
 
+#include <limits.h>
+
 static uint32_t ID3TAG_ReadSize( const uint8_t *p_buffer, bool b_syncsafe )
 {
     if( !b_syncsafe )
@@ -30,9 +32,9 @@ static uint32_t ID3TAG_ReadSize( const uint8_t *p_buffer, bool b_syncsafe )
             (( (uint32_t)p_buffer[0] & 0x7F ) << 21);
 }
 
-static bool ID3TAG_IsTag( const uint8_t *p_buffer, bool b_footer )
+static bool ID3TAG_IsTag( const uint8_t *p_buffer, size_t buffer_len, bool b_footer )
 {
-    return( memcmp(p_buffer, (b_footer) ? "3DI" : "ID3", 3) == 0 &&
+    return( buffer_len >= 10 && memcmp(p_buffer, (b_footer) ? "3DI" : "ID3", 3) == 0 &&
             p_buffer[3] < 0xFF &&
             p_buffer[4] < 0xFF &&
            ((GetDWBE(&p_buffer[6]) & 0x80808080) == 0) );
@@ -41,59 +43,62 @@ static bool ID3TAG_IsTag( const uint8_t *p_buffer, bool b_footer )
 static size_t ID3TAG_Parse( const uint8_t *p_peek, size_t i_peek,
                             int (*pf_callback)(uint32_t, const uint8_t *, size_t, void *), void *p_priv )
 {
-    size_t i_total_size = 0;
-    uint32_t i_ID3size = 0;
-    if( i_peek > 10 && ID3TAG_IsTag( p_peek, false ) )
-    {
-        const uint8_t i_ID3major = p_peek[3];
-        const uint8_t i_ID3flags = p_peek[5];
-        i_ID3size = ID3TAG_ReadSize( &p_peek[6], true );
-        if( i_ID3size > i_peek - 10 )
-            return 0;
-        i_total_size = i_ID3size + 10;
+    if( !ID3TAG_IsTag( p_peek, i_peek, false ) )
+        return 0; /* not an ID3 tag */
 
-        const uint8_t *p_frame = &p_peek[10];
+    const uint32_t i_ID3size = ID3TAG_ReadSize( &p_peek[6], true );
+    if( i_ID3size > i_peek - 10 )
+        return 0; /* not enough peek */
+#if UINT32_MAX >= SIZE_MAX
+    if( i_ID3size > SIZE_MAX - 10 )
+        return 0; /* total size overflow */
+#endif
 
-        if( i_ID3major >= 3 && i_ID3major <= 4 && (i_ID3flags & 0x40) ) /* ext header */
-        {
-            if( i_ID3size < 6 ) /* can't be less than 6 */
-                return 0;
-            uint32_t i_exthdr = ID3TAG_ReadSize( p_frame, true );
-            if( i_ID3major == 3 )
-            {
-                /* 6 or 10 bytes not including size storage */
-                if( i_exthdr != 6 && i_exthdr != 10 )
-                    return 0;
-                i_exthdr += 4;
-            }
-            if( i_ID3size < i_exthdr )
-                return 0;
-            p_frame += i_exthdr;
-            i_ID3size -= i_exthdr;
-        }
-
-        /* Tags */
-        while( i_ID3size > 10 )
-        {
-            uint32_t i_tagname = VLC_FOURCC( p_frame[0], p_frame[1], p_frame[2], p_frame[3] );
-            uint32_t i_framesize = ID3TAG_ReadSize( &p_frame[4], i_ID3major != 3 ) + 10;
-            if( i_framesize > i_ID3size )
-                return 0;
-
-            if( i_framesize > 10 &&
-                pf_callback( i_tagname, &p_frame[10], i_framesize - 10, p_priv ) != VLC_SUCCESS )
-                break;
-
-            p_frame += i_framesize;
-            i_ID3size -= i_framesize;
-        }
-    }
-
+    size_t i_total_size = i_ID3size + 10;
     /* Count footer if any */
-    if( i_total_size && i_peek - i_total_size >= 10 &&
-        ID3TAG_IsTag( &p_peek[i_total_size], true ) )
+    if( i_peek > i_total_size &&
+        ID3TAG_IsTag( &p_peek[i_total_size], i_peek - i_total_size, true ) )
     {
         i_total_size += 10;
+    }
+
+    const uint8_t i_ID3major = p_peek[3];
+    const uint8_t i_ID3flags = p_peek[5];
+    const uint8_t *p_frame = &p_peek[10];
+    size_t frame_length = i_ID3size;
+
+    if( (i_ID3major == 3 || i_ID3major == 4) && (i_ID3flags & 0x40) ) /* ext header */
+    {
+        if( frame_length < 6 ) /* can't be less than 6 */
+            return 0;
+        uint32_t i_exthdr = ID3TAG_ReadSize( p_frame, true );
+        if( i_ID3major == 3 )
+        {
+            /* 6 or 10 bytes not including size storage */
+            if( i_exthdr != 6 && i_exthdr != 10 )
+                return 0;
+            i_exthdr += 4;
+        }
+        if( frame_length < i_exthdr )
+            return 0;
+        p_frame += i_exthdr;
+        frame_length -= i_exthdr;
+    }
+
+    /* Tags */
+    while( frame_length > 10 )
+    {
+        uint32_t i_tagname = VLC_FOURCC( p_frame[0], p_frame[1], p_frame[2], p_frame[3] );
+        uint32_t i_framesize = ID3TAG_ReadSize( &p_frame[4], i_ID3major != 3 );
+        if( i_framesize > frame_length - 10 )
+            break; /* not enough peek */
+
+        if( i_framesize != 0 &&
+            pf_callback( i_tagname, &p_frame[10], i_framesize, p_priv ) != VLC_SUCCESS )
+            break;
+
+        p_frame += i_framesize + 10;
+        frame_length -= i_framesize + 10;
     }
 
     return i_total_size;
