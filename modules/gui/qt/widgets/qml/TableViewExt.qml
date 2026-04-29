@@ -353,8 +353,6 @@ ListViewExt {
         rowModel: model
         sortModel: root.sortModel
 
-        selected: selectionModel.selectedIndexesFlat.includes(index)
-
         onRightClick: (menuParent, menuModel, globalMousePos) => {
             root.rightClick(menuParent, menuModel, globalMousePos)
         }
@@ -375,15 +373,5 @@ ListViewExt {
         }
 
         onContainsDragChanged: root.updateItemContainsDrag(this, containsDrag)
-
-        Connections {
-            target: selectionModel
-
-            function onSelectionChanged() {
-                tableDelegate.selected = Qt.binding(function() {
-                  return root.selectionModel.selectedIndexesFlat.includes(index)
-                })
-            }
-        }
     }
 }
