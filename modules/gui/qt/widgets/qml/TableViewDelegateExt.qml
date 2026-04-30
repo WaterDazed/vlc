@@ -174,7 +174,7 @@ T.Control {
                 }
 
                 if (button === Qt.RightButton)
-                    delegate.rightClick(delegate, delegate.rowModel, parent.mapToGlobal(eventPoint.position.x, eventPoint.position.y))
+                    delegate.rightClick(delegate, delegate.rowModel, eventPoint.globalPosition)
             }
 
             onDoubleTapped: (point, button) => {
@@ -192,17 +192,57 @@ T.Control {
         }
 
         TapHandler {
+            id: touchScreenTapHandler
+
             acceptedDevices: PointerDevice.TouchScreen
 
             grabPermissions: TapHandler.CanTakeOverFromHandlersOfDifferentType | TapHandler.ApprovesTakeOverByAnything
 
-            onTapped: (eventPoint, button) => {
-                delegate.selectAndFocus(Qt.NoModifier, Qt.MouseFocusReason)
+            property bool pendingContextMenu: false
+
+            onSingleTapped: (eventPoint, button) => {
+                initialAction()
+
                 delegate.itemDoubleClicked(delegate.index, delegate.rowModel)
             }
 
+            onDoubleTapped: (eventPoint, button) => {
+                MainCtx.requestShowPlayerView()
+            }
+
             onLongPressed: {
-                delegate.rightClick(delegate, delegate.rowModel, parent.mapToGlobal(point.position.x, point.position.y))
+                initialAction()
+
+                pendingContextMenu = true
+            }
+
+            function invokeContextMenu(point : point) : bool {
+                if (delegate && touchScreenTapHandler?.pendingContextMenu) {
+                    delegate.rightClick(delegate, delegate.rowModel, point)
+                    touchScreenTapHandler.pendingContextMenu = false
+                    return true
+                }
+                return false
+            }
+
+            onPressedChanged: {
+                if (!pressed) {
+                    // We need to do it asynchronously, because if tapping is canceled we need to acknowledge it:
+                    Qt.callLater(touchScreenTapHandler.invokeContextMenu, parent.mapToGlobal(point.position.x,
+                                                                                             point.position.y))
+                }
+            }
+
+            onCanceled: {
+                pendingContextMenu = false
+            }
+
+            function initialAction() {
+                delegate.forceActiveFocus(Qt.MouseFocusReason)
+
+                // NOTE: Selection is not applicable to touch, so we don't want to manipulate the selection.
+                //       That being said, we need to adjust the current index regardless:
+                delegate.ListView.view.currentIndex = delegate.index
             }
         }
     }

@@ -36,7 +36,7 @@ ListView {
 
     // Optional property for drop indicator placement and auto scroll feature:
     property var itemContainsDrag: undefined
-    
+
     // Optional functions for the optional drag accessory footer:
     property var isDropAcceptableFunc
     property var acceptDropFunc
@@ -111,7 +111,7 @@ ListView {
     // the content size appropriately.
     contentWidth: (orientation === ListView.Vertical) ? width - (leftMargin + rightMargin) : -1
     contentHeight: (orientation === ListView.Horizontal) ? height - (topMargin + bottomMargin) : -1
-    
+
     footer: !!root.acceptDropFunc ? footerDragAccessoryComponent : null
 
     onItemContainsDragChanged: {
@@ -354,22 +354,23 @@ ListView {
     // Events
 
     Component.onCompleted: {
-        // Flickable filters child mouse events for flicking (even when
-        // the delegate is grabbed). However, this is not a useful
-        // feature for non-touch cases, so disable it here and enable
-        // it if touch is detected through the hover handler:
-        MainCtx.setFiltersChildMouseEvents(root, false)
+        if (!usingTouch) {
+            // Flickable filters child mouse events for flicking (even when
+            // the delegate is grabbed). However, this is not a useful
+            // feature for non-touch cases, so disable it here and enable
+            // it if touch is detected through the hover handler:
+            MainCtx.setFiltersChildMouseEvents(root, false)
+        }
     }
 
-    HoverHandler {
-        acceptedDevices: PointerDevice.TouchScreen
+    readonly property bool usingTouch: MainCtx.usingTouch
 
-        onHoveredChanged: {
-            if (hovered)
-                MainCtx.setFiltersChildMouseEvents(root, true)
-            else
-                MainCtx.setFiltersChildMouseEvents(root, false)
-        }
+    onUsingTouchChanged: {
+        if (usingTouch)
+            MainCtx.setFiltersChildMouseEvents(root, true)
+        // We do not disable filtering child mouse events
+        // because Qt currently has a bug that the flickable
+        // jumps when it is enabled again later on.
     }
 
     // NOTE: We always want a valid 'currentIndex' by default.
@@ -671,6 +672,8 @@ ListView {
     }
 
     TapHandler {
+        acceptedDevices: PointerDevice.AllDevices & ~(PointerDevice.TouchScreen)
+
         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
         grabPermissions: PointerHandler.TakeOverForbidden
@@ -681,7 +684,7 @@ ListView {
             initialAction()
 
             if (button === Qt.RightButton) {
-                root.showContextMenu(parent.mapToGlobal(eventPoint.position.x, eventPoint.position.y))
+                root.showContextMenu(eventPoint.globalPosition)
             }
         }
 
@@ -698,6 +701,47 @@ ListView {
                 if (selectionModel)
                     selectionModel.clearSelection()
             }
+        }
+    }
+
+    TapHandler {
+        acceptedDevices: PointerDevice.TouchScreen
+
+        grabPermissions: PointerHandler.TakeOverForbidden
+
+        gesturePolicy: TapHandler.ReleaseWithinBounds
+
+        property bool pendingContextMenu: false
+
+        onSingleTapped: (eventPoint, button) => {
+            initialAction()
+        }
+
+        onLongPressed: {
+            initialAction()
+
+            pendingContextMenu = true
+        }
+
+        onPressedChanged: {
+            if (!pressed) {
+                if (pendingContextMenu) {
+                    root.showContextMenu(parent.mapToGlobal(point.position.x, point.position.y))
+                    pendingContextMenu = false
+                }
+            }
+        }
+
+        onCanceled: {
+            pendingContextMenu = false
+        }
+
+        function initialAction() {
+            if (root.currentItem)
+                root.currentItem.focus = false // Grab the focus from delegate
+            root.forceActiveFocus(Qt.MouseFocusReason) // Re-focus the list
+
+            root.currentIndex = -1
         }
     }
 

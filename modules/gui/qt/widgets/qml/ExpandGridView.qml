@@ -529,18 +529,15 @@ FocusScope {
             animateFlickableContentY(newContentY)
     }
 
-    function leftClickOnItem(modifier, index) {
-        selectionModel.updateSelection(modifier, currentIndex, index)
-        if (selectionModel.isSelected(index))
-            currentIndex = index
-        else if (currentIndex === index) {
-            if (_containsItem(currentIndex))
-                _getItem(currentIndex).focus = false
-            currentIndex = -1
-        }
+    function leftClickOnItem(modifier, index, select) {
+        if (select)
+            selectionModel.updateSelection(modifier, currentIndex, index)
+
+        currentIndex = index
 
         // NOTE: We make sure to clear the keyboard focus.
-        flickable.forceActiveFocus();
+        if (currentItem)
+            currentItem.forceActiveFocus(Qt.MouseFocusReason);
     }
 
     function rightClickOnItem(index) {
@@ -670,6 +667,7 @@ FocusScope {
 
     function _createItem(id, x, y) {
         const item = delegate.createObject( flickable.contentItem, {
+                        view: root,
                         selected: selectionModel.isSelected(id),
                         index: id,
                         model: model.getDataAt(id),
@@ -805,25 +803,28 @@ FocusScope {
         }
 
         Component.onCompleted: {
-            // Flickable filters child mouse events for flicking (even when
-            // the delegate is grabbed). However, this is not a useful
-            // feature for non-touch cases, so disable it here and enable
-            // it if touch is detected through the hover handler:
-            MainCtx.setFiltersChildMouseEvents(this, false)
-        }
-
-        HoverHandler {
-            acceptedDevices: PointerDevice.TouchScreen
-
-            onHoveredChanged: {
-                if (hovered)
-                    MainCtx.setFiltersChildMouseEvents(flickable, true)
-                else
-                    MainCtx.setFiltersChildMouseEvents(flickable, false)
+            if (!usingTouch) {
+                // Flickable filters child mouse events for flicking (even when
+                // the delegate is grabbed). However, this is not a useful
+                // feature for non-touch cases, so disable it here and enable
+                // it if touch is detected through the hover handler:
+                MainCtx.setFiltersChildMouseEvents(flickable, false)
             }
         }
 
+        readonly property bool usingTouch: MainCtx.usingTouch
+
+        onUsingTouchChanged: {
+            if (usingTouch)
+                MainCtx.setFiltersChildMouseEvents(flickable, true)
+            // We do not disable filtering child mouse events
+            // because Qt currently has a bug that the flickable
+            // jumps when it is enabled again later on.
+        }
+
         TapHandler {
+            acceptedDevices: PointerDevice.AllDevices & ~(PointerDevice.TouchScreen)
+
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
             grabPermissions: PointerHandler.TakeOverForbidden
@@ -834,7 +835,7 @@ FocusScope {
                 initialAction()
 
                 if (button === Qt.RightButton) {
-                    root.showContextMenu(parent.mapToGlobal(eventPoint.position.x, eventPoint.position.y))
+                    root.showContextMenu(eventPoint.globalPosition)
                 }
             }
 
@@ -849,6 +850,47 @@ FocusScope {
                     if (root.selectionModel)
                         root.selectionModel.clearSelection()
                 }
+            }
+        }
+
+        TapHandler {
+            acceptedDevices: PointerDevice.TouchScreen
+
+            grabPermissions: PointerHandler.TakeOverForbidden
+
+            gesturePolicy: TapHandler.ReleaseWithinBounds
+
+            property bool pendingContextMenu: false
+
+            onSingleTapped: (eventPoint, button) => {
+                initialAction()
+            }
+
+            onLongPressed: {
+                initialAction()
+
+                pendingContextMenu = true
+            }
+
+            onPressedChanged: {
+                if (!pressed) {
+                    if (pendingContextMenu) {
+                        root.showContextMenu(parent.mapToGlobal(point.position.x, point.position.y))
+                        pendingContextMenu = false
+                    }
+                }
+            }
+
+            onCanceled: {
+                pendingContextMenu = false
+            }
+
+            function initialAction() {
+                if (root.currentItem)
+                    root.currentItem.focus = false // Grab the focus from delegate
+                root.forceActiveFocus(Qt.MouseFocusReason) // Re-focus the list
+
+                root.currentIndex = -1
             }
         }
 

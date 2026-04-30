@@ -64,6 +64,8 @@ public slots:
      */
     void qmlWheelEvent(const QObject* wheelEvent);
 
+    void customWheelEvent(const QVariantMap& properties);
+
 private:
     QPoint m_scrollAmount = {};
     Qt::KeyboardModifiers m_modifiers = {};

@@ -31,6 +31,8 @@ T.ItemDelegate {
 
     // Properties
 
+    required property Item view
+
     property real pictureWidth: VLCStyle.colWidth(1)
     property real pictureHeight: pictureWidth
     property int titleTopMargin: VLCStyle.gridItemTitle_topMargin
@@ -76,7 +78,7 @@ T.ItemDelegate {
 
     signal playClicked
     signal addToPlaylistClicked
-    signal itemClicked(int modifier)
+    signal itemClicked(int modifier, bool select)
     signal itemDoubleClicked(int modifier)
     signal contextMenuButtonClicked(Item menuParent, point globalMousePos)
 
@@ -193,7 +195,7 @@ T.ItemDelegate {
             onActiveChanged: {
                 if (dragItem) {
                     if (active && !selected) {
-                        root.itemClicked(root._modifiersOnLastPress)
+                        root.itemClicked(root._modifiersOnLastPress, true)
                     }
 
                     if (active)
@@ -219,9 +221,9 @@ T.ItemDelegate {
                 // FIXME: The signals are messed up in this item.
                 //        Right click does not fire itemClicked?
                 if (button === Qt.RightButton)
-                    contextMenuButtonClicked(picture, parent.mapToGlobal(eventPoint.position.x, eventPoint.position.y));
+                    contextMenuButtonClicked(picture, eventPoint.globalPosition);
                 else
-                    root.itemClicked(point.modifiers);
+                    root.itemClicked(point.modifiers, true);
             }
 
             onDoubleTapped: (eventPoint, button) => {
@@ -241,17 +243,58 @@ T.ItemDelegate {
         }
 
         TapHandler {
+            id: touchScreenTapHandler
+
             acceptedDevices: PointerDevice.TouchScreen
 
             grabPermissions: TapHandler.CanTakeOverFromHandlersOfDifferentType | TapHandler.ApprovesTakeOverByAnything
 
-            onTapped: (eventPoint, button) => {
-                root.itemClicked(Qt.NoModifier)
+            property bool pendingContextMenu: false
+
+            onSingleTapped: (eventPoint, button) => {
+                initialAction()
+
+                root.itemClicked(Qt.NoModifier, false)
                 root.itemDoubleClicked(Qt.NoModifier)
             }
 
+            onDoubleTapped: (eventPoint, button) => {
+                root.playClicked()
+            }
+
             onLongPressed: {
-                contextMenuButtonClicked(picture, parent.mapToGlobal(point.position.x, point.position.y));
+                initialAction()
+
+                pendingContextMenu = true
+            }
+
+            function invokeContextMenu(point : point) : bool {
+                if (root && touchScreenTapHandler?.pendingContextMenu) {
+                    root.contextMenuButtonClicked(picture ?? null, point)
+                    touchScreenTapHandler.pendingContextMenu = false
+                    return true
+                }
+                return false
+            }
+
+            onPressedChanged: {
+                if (!pressed) {
+                    // We need to do it asynchronously, because if tapping is canceled we need to acknowledge it:
+                    Qt.callLater(touchScreenTapHandler.invokeContextMenu, parent.mapToGlobal(point.position.x,
+                                                                                             point.position.y))
+                }
+            }
+
+            onCanceled: {
+                pendingContextMenu = false
+            }
+
+            function initialAction() {
+                root.forceActiveFocus(Qt.MouseFocusReason)
+
+                // NOTE: Selection is not applicable to touch, so we don't want to manipulate the selection.
+                //       That being said, we need to adjust the current index regardless.
+                root.view.currentIndex = root.index
             }
         }
     }
@@ -299,7 +342,7 @@ T.ItemDelegate {
             onPlayIconClicked: (point) => {
                 // emulate a mouse click before delivering the play signal as to select the item
                 // this helps in updating the selection and restore of initial index in the parent views
-                root.itemClicked(point.modifiers)
+                root.itemClicked(point.modifiers, true)
                 root.playClicked()
             }
 
