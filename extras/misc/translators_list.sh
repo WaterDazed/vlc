@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # A script checking the po-files for translators. Final goal is updating AUTHORS.
 

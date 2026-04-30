@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 
 MINIMAL_OSX_VERSION="10.13"

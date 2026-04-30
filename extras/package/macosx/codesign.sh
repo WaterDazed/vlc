@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (C) 2012-2017 VLC authors and VideoLAN
 # Copyright (C) 2012-2014 Felix Paul Kühne <fkuehne at videolan dot org>
 #
