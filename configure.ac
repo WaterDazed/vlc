@@ -1168,6 +1168,22 @@ AS_IF([test "${enable_dbus}" != "no"], [
 ])
 AM_CONDITIONAL([HAVE_DBUS], [test "${have_dbus}" = "yes"])
 
+dnl
+dnl libndi support
+dnl
+AC_ARG_ENABLE([ndi],
+  [AS_HELP_STRING([--enable-ndi], [Build with NDI module (requires libndi)])],
+  [], [enable_ndi=yes]
+)
+AS_IF([test "${enable_ndi}" != "no"], [
+  PKG_CHECK_MODULES([NDI], [libndi >= 0.1.0], [
+    AC_DEFINE([HAVE_NDI], [1], [Define to 1 if you have libndi])
+    VLC_ADD_PLUGIN([ndi])
+  ], [
+    AC_MSG_WARN([libndi not found, NDI module will not be built])
+  ])
+])
+AM_CONDITIONAL([HAVE_NDI], [test "${enable_ndi}" = "yes"])
 
 dnl Check for systemd
 PKG_CHECK_MODULES([SYSTEMD], [libsystemd], [
