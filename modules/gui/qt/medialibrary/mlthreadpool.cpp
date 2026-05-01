@@ -19,10 +19,21 @@
 #include "mlthreadpool.hpp"
 
 #include <QMutexLocker>
+#include <QThread>
+#include <QOperatingSystemVersion>
 
 ThreadRunner::ThreadRunner()
 {
-    m_threadPool.setMaxThreadCount(4);
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 9, 0))
+    // This is currently only applicable on Windows (10 RS3) and Darwin, as of Qt 6.11:
+    m_threadPool.setServiceLevel(QThread::QualityOfService::Eco);
+#endif
+
+    // Even if we use energy efficient cores, we still need to limit the thread count,
+    // because not all processors have energy efficient cores and it is assumed that
+    // in that case all cores would be available:
+
+    m_threadPool.setMaxThreadCount(std::clamp(QThread::idealThreadCount() - 1, 1, 4));
 }
 
 ThreadRunner::~ThreadRunner()
