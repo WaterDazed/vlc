@@ -1,7 +1,10 @@
 # Theora
 
-THEORA_VERSION := 1.1.1
+THEORA_VERSION := 1.2.0
 THEORA_URL := $(XIPH)/theora/libtheora-$(THEORA_VERSION).tar.xz
+THEORA_GITURL := https://gitlab.xiph.org/xiph/theora.git
+THEORA_GITBRANCH := main
+THEORA_GITVERSION := fb92ede9ba5162d0b8134cd1ff57751df6f3dbe6
 
 PKGS += theora
 ifeq ($(call need_pkg,"theora >= 1.0"),)
@@ -13,14 +16,17 @@ $(TARBALLS)/libtheora-$(THEORA_VERSION).tar.xz:
 
 .sum-theora: libtheora-$(THEORA_VERSION).tar.xz
 
-libtheora: libtheora-$(THEORA_VERSION).tar.xz .sum-theora
+$(TARBALLS)/libtheora-$(THEORA_GITVERSION).tar.xz:
+	$(call download_git,$(THEORA_GITURL),$(THEORA_GITBRANCH),$(THEORA_GITVERSION))
+
+.sum-theora: libtheora-$(THEORA_GITVERSION).tar.xz
+	$(call check_githash,$(THEORA_GITVERSION))
+	touch $@
+
+# libtheora: libtheora-$(THEORA_VERSION).tar.xz .sum-theora
+libtheora: libtheora-$(THEORA_GITVERSION).tar.xz
 	$(UNPACK)
-	$(call update_autoconfig,.)
-	$(APPLY) $(SRC)/theora/libtheora-compiler-differentiation.patch
-	$(APPLY) $(SRC)/theora/libtheora-no-forceaddr.patch
-	# Disable the generation of documentation. In 1.2.x it can be replaced by
-	# a --disable-doc parameter.
-	sed -i.orig "/^SUBDIRS =/s/doc//g" "$(UNPACK_DIR)/Makefile.am" "$(UNPACK_DIR)/Makefile.in"
+	# $(call update_autoconfig,.)
 	$(MOVE)
 
 THEORACONF := \
@@ -28,7 +34,8 @@ THEORACONF := \
 	--disable-sdltest \
 	--disable-oggtest \
 	--disable-vorbistest \
-	--disable-examples
+	--disable-examples \
+	--disable-doc
 
 ifndef BUILD_ENCODERS
 THEORACONF += --disable-encode
@@ -36,21 +43,14 @@ endif
 ifndef HAVE_FPU
 THEORACONF += --disable-float
 endif
-ifdef HAVE_MACOSX64
-THEORACONF += --disable-asm
-endif
 ifdef HAVE_IOS
 THEORACONF += --disable-asm
-endif
-ifdef HAVE_WIN32
-ifeq ($(ARCH),x86_64)
-THEORACONF += --disable-asm
-endif
 endif
 
 DEPS_theora = ogg $(DEPS_ogg)
 
 .theora: libtheora
+	$(RECONF)
 	$(MAKEBUILDDIR)
 	$(MAKECONFIGURE) $(THEORACONF)
 	+$(MAKEBUILD)
