@@ -144,12 +144,17 @@ static const struct
     VLC_RGB( VLC_CODEC_RGB15, AV_PIX_FMT_RGB555, AV_PIX_FMT_BGR555, 0x7c00, 0x03e0, 0x001f )
     VLC_RGB( VLC_CODEC_RGB16, AV_PIX_FMT_RGB565, AV_PIX_FMT_BGR565, 0xf800, 0x07e0, 0x001f )
     VLC_RGB( VLC_CODEC_RGB24, AV_PIX_FMT_RGB24, AV_PIX_FMT_BGR24, 0xff0000, 0x00ff00, 0x0000ff )
-    VLC_RGB( VLC_CODEC_RGB32, AV_PIX_FMT_0RGB, AV_PIX_FMT_0BGR, 0x00ff0000, 0x0000ff00, 0x000000ff)
-    VLC_RGB( VLC_CODEC_RGB32, AV_PIX_FMT_RGB0, AV_PIX_FMT_BGR0, 0xff000000, 0x00ff0000, 0x0000ff00)
 
     {VLC_CODEC_RGBA, AV_PIX_FMT_RGBA, 0, 0, 0 },
     {VLC_CODEC_ARGB, AV_PIX_FMT_ARGB, 0, 0, 0 },
     {VLC_CODEC_BGRA, AV_PIX_FMT_BGRA, 0, 0, 0 },
+
+    VLC_RGB( VLC_CODEC_RGB32, AV_PIX_FMT_RGB32, AV_PIX_FMT_BGR32, 0x00ff0000, 0x0000ff00, 0x000000ff )
+    VLC_RGB( VLC_CODEC_RGB32, AV_PIX_FMT_RGB32_1, AV_PIX_FMT_BGR32_1, 0xff000000, 0x00ff0000, 0x0000ff00 )
+
+#ifdef AV_PIX_FMT_0BGR32
+    VLC_RGB( VLC_CODEC_RGB32, AV_PIX_FMT_0BGR32, AV_PIX_FMT_0RGB32, 0x000000ff, 0x0000ff00, 0x00ff0000 )
+#endif
 
 #if (LIBAVUTIL_VERSION_MICRO == 0 || LIBAVUTIL_VERSION_CHECK( 55, 0, 100 ) )
 #ifdef WORDS_BIGENDIAN
@@ -194,14 +199,23 @@ int GetFfmpegChroma( int *restrict i_ffmpeg_chroma, const video_format_t *fmt )
 {
     for( int i = 0; chroma_table[i].i_chroma != 0; i++ )
     {
-        if( chroma_table[i].i_chroma == fmt->i_chroma )
+        if( chroma_table[i].i_chroma == fmt->i_chroma &&
+            chroma_table[i].i_rmask  == fmt->i_rmask &&
+            chroma_table[i].i_gmask  == fmt->i_gmask &&
+            chroma_table[i].i_bmask  == fmt->i_bmask )
         {
-            if( ( chroma_table[i].i_rmask == 0 &&
-                  chroma_table[i].i_gmask == 0 &&
-                  chroma_table[i].i_bmask == 0 ) ||
-                ( chroma_table[i].i_rmask == fmt->i_rmask &&
-                  chroma_table[i].i_gmask == fmt->i_gmask &&
-                  chroma_table[i].i_bmask == fmt->i_bmask ) )
+            return chroma_table[i].i_chroma_id;
+        }
+    }
+    // try again without the mask as they may not correspond exactly
+    if (fmt->i_rmask || fmt->i_gmask || fmt->i_bmask)
+    {
+        for( int i = 0; chroma_table[i].i_chroma != 0; i++ )
+        {
+            if( chroma_table[i].i_chroma == fmt->i_chroma &&
+                chroma_table[i].i_rmask == 0 &&
+                chroma_table[i].i_gmask == 0 &&
+                chroma_table[i].i_bmask == 0 )
             {
                 *i_ffmpeg_chroma = chroma_table[i].i_chroma_id;
                 return VLC_SUCCESS;
