@@ -88,9 +88,12 @@ static const char psz_delim_semicolon[] = ";";
 static int Open( vlc_object_t * );
 static void Close( sout_stream_t * );
 
-static void *Add( sout_stream_t *, const es_format_t *, const char * );
-static void Del( sout_stream_t *, void * );
-static int Send( sout_stream_t *, void *, block_t * );
+static int SinkOpen( vlc_object_t * );
+static void SinkClose( sout_stream_t * );
+
+static void *SinkAdd( sout_stream_t *, const es_format_t *, const char * );
+static void SinkDel( sout_stream_t *, void * );
+static int SinkSend( sout_stream_t *, void *, block_t * );
 
 static int VolumeCallback( vlc_object_t *p_this, char const *psz_cmd,
                            vlc_value_t oldval, vlc_value_t newval,
@@ -113,7 +116,6 @@ typedef struct
 
     /* Plugin status */
     sout_stream_id_sys_t *p_audio_stream;
-    bool b_alac_warning;
     bool b_volume_callback;
 
     /* Connection state */
@@ -192,6 +194,11 @@ vlc_module_begin()
     add_integer_with_range( SOUT_CFG_PREFIX "volume", 100, 0, 255,
                             VOLUME_TEXT, VOLUME_LONGTEXT )
     set_callback( Open )
+
+    add_submodule()
+        add_shortcut( "raop-sink" )
+        set_capability( "sout output", 0 )
+        set_callback( SinkOpen )
 vlc_module_end()
 
 static const char *const ppsz_sout_options[] = {
@@ -1435,84 +1442,32 @@ error:
 }
 
 
-static const struct sout_stream_operations ops = {
-    .add = Add,
-    .del = Del,
-    .send = Send,
-    .close = Close,
+static const struct sout_stream_operations sink_ops = {
+    .add = SinkAdd,
+    .del = SinkDel,
+    .send = SinkSend,
+    .close = SinkClose,
 };
 
 
 /*****************************************************************************
- * Open:
+ * SinkOpen: open the RTSP control connection and run the protocol handshake
  *****************************************************************************/
-static int Open( vlc_object_t *p_this )
+static int SinkOpen( vlc_object_t *p_this )
 {
     sout_stream_t *p_stream = (sout_stream_t*)p_this;
     sout_stream_sys_t *p_sys;
     char psz_local[NI_MAXNUMERICHOST];
-    char *psz_pwfile = NULL;
-    gcry_error_t i_gcrypt_err;
     int i_err = VLC_SUCCESS;
     uint32_t i_session_id;
     uint64_t i_client_instance;
 
-    vlc_gcrypt_init();
-
-    config_ChainParse( p_stream, SOUT_CFG_PREFIX, ppsz_sout_options,
-                       p_stream->p_cfg );
-
-    p_sys = calloc( 1, sizeof( *p_sys ) );
+    p_sys = var_InheritAddress( p_this, SOUT_CFG_PREFIX "sys" );
     if ( p_sys == NULL )
-        return VLC_ENOMEM;
+        return VLC_EGENERIC;
 
-    p_stream->ops = &ops;
     p_stream->p_sys = p_sys;
-
-    p_sys->i_control_fd = -1;
-    p_sys->i_stream_fd = -1;
-    p_sys->i_volume = var_GetInteger( p_stream, SOUT_CFG_PREFIX "volume");
-    p_sys->i_jack_type = JACK_TYPE_NONE;
-
-    vlc_http_auth_Init( &p_sys->auth );
-
-    p_sys->psz_host = var_GetNonEmptyString( p_stream,
-                                             SOUT_CFG_PREFIX "ip" );
-    if ( p_sys->psz_host == NULL )
-    {
-        msg_Err( p_this, "Missing host" );
-        i_err = VLC_EGENERIC;
-        goto error;
-    }
-
-    p_sys->i_port = var_GetInteger( p_stream, SOUT_CFG_PREFIX "port" );
-    if ( p_sys->i_port <= 0 || p_sys->i_port > 65535 )
-        p_sys->i_port = RAOP_PORT;
-
-    p_sys->psz_password = var_GetNonEmptyString( p_stream,
-                                                 SOUT_CFG_PREFIX "password" );
-    if ( p_sys->psz_password == NULL )
-    {
-        /* Try password file instead */
-        psz_pwfile = var_GetNonEmptyString( p_stream,
-                                            SOUT_CFG_PREFIX "password-file" );
-        if ( psz_pwfile != NULL )
-        {
-            p_sys->psz_password = ReadPasswordFile( p_this, psz_pwfile );
-            if ( p_sys->psz_password == NULL )
-            {
-                i_err = VLC_EGENERIC;
-                goto error;
-            }
-        }
-    }
-
-    if ( p_sys->psz_password != NULL )
-        msg_Info( p_this, "Using password authentication" );
-
-    var_AddCallback( p_stream, SOUT_CFG_PREFIX "volume",
-                     VolumeCallback, NULL );
-    p_sys->b_volume_callback = true;
+    p_stream->ops = &sink_ops;
 
     /* Open control connection */
     p_sys->i_control_fd = net_Connect( p_stream, p_sys->psz_host,
@@ -1522,16 +1477,14 @@ static int Open( vlc_object_t *p_this )
     {
         msg_Err( p_this, "Cannot establish control connection to %s:%d (%s)",
                  p_sys->psz_host, p_sys->i_port, vlc_strerror_c(errno) );
-        i_err = VLC_EGENERIC;
-        goto error;
+        return VLC_EGENERIC;
     }
 
     /* Get local IP address */
     if ( net_GetSockAddress( p_sys->i_control_fd, psz_local, NULL ) )
     {
         msg_Err( p_this, "cannot get local IP address" );
-        i_err = VLC_EGENERIC;
-        goto error;
+        return VLC_EGENERIC;
     }
 
     /* Random session ID */
@@ -1541,18 +1494,12 @@ static int Open( vlc_object_t *p_this )
     vlc_rand_bytes( &i_client_instance, sizeof( i_client_instance ) );
     if ( asprintf( &p_sys->psz_client_instance, "%016"PRIX64,
                    i_client_instance ) < 0 )
-    {
-        i_err = VLC_ENOMEM;
-        goto error;
-    }
+        return VLC_ENOMEM;
 
     /* Build session URL */
     if ( asprintf( &p_sys->psz_url, "rtsp://%s/%u",
                    psz_local, i_session_id ) < 0 )
-    {
-        i_err = VLC_ENOMEM;
-        goto error;
-    }
+        return VLC_ENOMEM;
 
     /* Generate AES key and IV */
     gcry_randomize( p_sys->ps_aes_key, sizeof( p_sys->ps_aes_key ),
@@ -1581,19 +1528,19 @@ static int Open( vlc_object_t *p_this )
     /* Protocol handshake */
     i_err = AnnounceSDP( p_this, psz_local, i_session_id );
     if ( i_err != VLC_SUCCESS )
-        goto error;
+        return i_err;
 
     i_err = SendSetup( p_this );
     if ( i_err != VLC_SUCCESS )
-        goto error;
+        return i_err;
 
     i_err = SendRecord( p_this );
     if ( i_err != VLC_SUCCESS )
-        goto error;
+        return i_err;
 
     i_err = UpdateVolume( p_this );
     if ( i_err != VLC_SUCCESS )
-        goto error;
+        return i_err;
 
     LogInfo( p_this );
 
@@ -1606,40 +1553,27 @@ static int Open( vlc_object_t *p_this )
         msg_Err( p_this, "Cannot establish stream connection to %s:%d (%s)",
                  p_sys->psz_host, p_sys->i_server_port,
                  vlc_strerror_c(errno)  );
-        i_err = VLC_EGENERIC;
-        goto error;
+        return VLC_EGENERIC;
     }
 
-error:
-    free( psz_pwfile );
-
-    if ( i_err != VLC_SUCCESS )
-        FreeSys( p_this, p_sys );
-
-    return i_err;
+    return VLC_SUCCESS;
 }
 
 
 /*****************************************************************************
- * Close:
+ * SinkClose: tear down the RTSP session; the wrapper frees the shared sys
  *****************************************************************************/
-static void Close( sout_stream_t *p_stream )
+static void SinkClose( sout_stream_t *p_stream )
 {
     vlc_object_t *p_this = VLC_OBJECT( p_stream );
-    sout_stream_sys_t *p_sys = p_stream->p_sys;
 
     SendFlush( p_this );
     SendTeardown( p_this );
-
-    FreeSys( p_this, p_sys );
 }
 
 
-/*****************************************************************************
- * Add:
- *****************************************************************************/
-static void *Add( sout_stream_t *p_stream, const es_format_t *p_fmt,
-                  const char *es_id )
+static void *SinkAdd( sout_stream_t *p_stream, const es_format_t *p_fmt,
+                      const char *es_id )
 {
     sout_stream_sys_t *p_sys = p_stream->p_sys;
     sout_stream_id_sys_t *id = NULL;
@@ -1648,61 +1582,27 @@ static void *Add( sout_stream_t *p_stream, const es_format_t *p_fmt,
 
     id = calloc( 1, sizeof( *id ) );
     if ( id == NULL )
-        goto error;
+        return NULL;
 
     es_format_Copy( &id->fmt, p_fmt );
 
-    switch ( id->fmt.i_cat )
+    if ( id->fmt.i_cat == AUDIO_ES &&
+         id->fmt.i_codec == VLC_CODEC_ALAC &&
+         id->fmt.audio.i_rate == 44100 &&
+         id->fmt.audio.i_channels == 2 )
     {
-    case AUDIO_ES:
-        if ( id->fmt.i_codec == VLC_CODEC_ALAC )
-        {
-            if ( p_sys->p_audio_stream )
-            {
-                msg_Warn( p_stream, "Only the first Apple Lossless audio "
-                                    "stream is used" );
-            }
-            else if ( id->fmt.audio.i_rate != 44100 ||
-                      id->fmt.audio.i_channels != 2 )
-            {
-                msg_Err( p_stream, "The Apple Lossless audio stream must be "
-                                   "encoded with 44100 Hz and 2 channels" );
-            }
-            else
-            {
-                /* Use this stream */
-                p_sys->p_audio_stream = id;
-            }
-        }
-        else if ( !p_sys->b_alac_warning )
-        {
-            msg_Err( p_stream, "Apple Lossless is the only codec supported. "
-                               "Use the \"transcode\" module for conversion "
-                               "(e.g. \"transcode{acodec=alac,"
-                               "channels=2}\")." );
-            p_sys->b_alac_warning = true;
-        }
-
-        break;
-
-    default:
-        /* Leave other stream types alone */
-        break;
+        if ( p_sys->p_audio_stream )
+            msg_Warn( p_stream,
+                      "Only the first Apple Lossless audio stream is used" );
+        else
+            p_sys->p_audio_stream = id;
     }
 
     return id;
-
-error:
-    FreeId( id );
-
-    return NULL;
 }
 
 
-/*****************************************************************************
- * Del:
- *****************************************************************************/
-static void Del( sout_stream_t *p_stream, void *_id )
+static void SinkDel( sout_stream_t *p_stream, void *_id )
 {
     sout_stream_sys_t *p_sys = p_stream->p_sys;
     sout_stream_id_sys_t *id = _id;
@@ -1714,10 +1614,7 @@ static void Del( sout_stream_t *p_stream, void *_id )
 }
 
 
-/*****************************************************************************
- * Send:
- *****************************************************************************/
-static int Send( sout_stream_t *p_stream, void *_id, block_t *p_buffer )
+static int SinkSend( sout_stream_t *p_stream, void *_id, block_t *p_buffer )
 {
     sout_stream_sys_t *p_sys = p_stream->p_sys;
     sout_stream_id_sys_t *id = _id;
@@ -1737,21 +1634,155 @@ static int Send( sout_stream_t *p_stream, void *_id, block_t *p_buffer )
 
 
 /*****************************************************************************
+ * Wrapper: forwards ES handling through the internal transcode->raop-sink
+ * chain so any audio codec gets normalized to ALAC@44.1k/2ch on the wire.
+ *****************************************************************************/
+typedef struct
+{
+    sout_stream_sys_t *p_shared;
+    sout_stream_t *p_out;
+} raop_wrapper_sys_t;
+
+static void *Add( sout_stream_t *p_stream, const es_format_t *p_fmt,
+                  const char *es_id )
+{
+    raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
+    return sout_StreamIdAdd( p_wrap->p_out, p_fmt, es_id );
+}
+
+static void Del( sout_stream_t *p_stream, void *id )
+{
+    raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
+    sout_StreamIdDel( p_wrap->p_out, id );
+}
+
+static int Send( sout_stream_t *p_stream, void *id, block_t *p_buffer )
+{
+    raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
+    return sout_StreamIdSend( p_wrap->p_out, id, p_buffer );
+}
+
+static void Close( sout_stream_t *p_stream )
+{
+    raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
+    sout_stream_sys_t *p_sys = p_wrap->p_shared;
+
+    sout_StreamChainDelete( p_wrap->p_out, NULL );
+    var_Destroy( p_stream, SOUT_CFG_PREFIX "sys" );
+    FreeSys( VLC_OBJECT( p_stream ), p_sys );
+    free( p_wrap );
+}
+
+static const struct sout_stream_operations wrapper_ops = {
+    .add = Add,
+    .del = Del,
+    .send = Send,
+    .close = Close,
+};
+
+static int Open( vlc_object_t *p_this )
+{
+    sout_stream_t *p_stream = (sout_stream_t*)p_this;
+    raop_wrapper_sys_t *p_wrap = NULL;
+    sout_stream_sys_t *p_sys;
+    char *psz_pwfile = NULL;
+    bool b_sys_var = false;
+    int i_err = VLC_EGENERIC;
+
+    config_ChainParse( p_stream, SOUT_CFG_PREFIX, ppsz_sout_options,
+                       p_stream->p_cfg );
+
+    p_sys = calloc( 1, sizeof( *p_sys ) );
+    if ( p_sys == NULL )
+        return VLC_ENOMEM;
+
+    p_sys->i_control_fd = -1;
+    p_sys->i_stream_fd = -1;
+    p_sys->i_volume = var_GetInteger( p_stream, SOUT_CFG_PREFIX "volume" );
+    p_sys->i_jack_type = JACK_TYPE_NONE;
+    vlc_http_auth_Init( &p_sys->auth );
+
+    p_sys->psz_host = var_GetNonEmptyString( p_stream, SOUT_CFG_PREFIX "ip" );
+    if ( p_sys->psz_host == NULL )
+    {
+        msg_Err( p_this, "Missing host" );
+        goto error;
+    }
+
+    p_sys->i_port = var_GetInteger( p_stream, SOUT_CFG_PREFIX "port" );
+    if ( p_sys->i_port <= 0 || p_sys->i_port > 65535 )
+        p_sys->i_port = RAOP_PORT;
+
+    p_sys->psz_password = var_GetNonEmptyString( p_stream,
+                                                 SOUT_CFG_PREFIX "password" );
+    if ( p_sys->psz_password == NULL )
+    {
+        psz_pwfile = var_GetNonEmptyString( p_stream,
+                                            SOUT_CFG_PREFIX "password-file" );
+        if ( psz_pwfile != NULL )
+        {
+            p_sys->psz_password = ReadPasswordFile( p_this, psz_pwfile );
+            if ( p_sys->psz_password == NULL )
+                goto error;
+        }
+    }
+
+    if ( p_sys->psz_password != NULL )
+        msg_Info( p_this, "Using password authentication" );
+
+    var_Create( p_stream, SOUT_CFG_PREFIX "sys", VLC_VAR_ADDRESS );
+    var_SetAddress( p_stream, SOUT_CFG_PREFIX "sys", p_sys );
+    b_sys_var = true;
+
+    var_AddCallback( p_stream, SOUT_CFG_PREFIX "volume",
+                     VolumeCallback, NULL );
+    p_sys->b_volume_callback = true;
+
+    p_wrap = malloc( sizeof( *p_wrap ) );
+    if ( p_wrap == NULL )
+    {
+        i_err = VLC_ENOMEM;
+        goto error;
+    }
+    p_wrap->p_shared = p_sys;
+
+    p_wrap->p_out = sout_StreamChainNew( p_this,
+        "transcode{acodec=alac,channels=2,samplerate=44100}:raop-sink",
+        NULL );
+    if ( p_wrap->p_out == NULL )
+    {
+        msg_Err( p_this, "Cannot create internal sout chain" );
+        goto error;
+    }
+
+    p_stream->p_sys = p_wrap;
+    p_stream->ops = &wrapper_ops;
+    free( psz_pwfile );
+    return VLC_SUCCESS;
+
+error:
+    free( psz_pwfile );
+    free( p_wrap );
+    if ( b_sys_var )
+        var_Destroy( p_stream, SOUT_CFG_PREFIX "sys" );
+    FreeSys( p_this, p_sys );
+    return i_err;
+}
+
+
+/*****************************************************************************
  * VolumeCallback: called when the volume is changed on the fly.
  *****************************************************************************/
 static int VolumeCallback( vlc_object_t *p_this, char const *psz_cmd,
                            vlc_value_t oldval, vlc_value_t newval,
                            void *p_data )
 {
+    VLC_UNUSED(p_this);
     VLC_UNUSED(psz_cmd);
     VLC_UNUSED(oldval);
-    VLC_UNUSED(p_data);
     VLC_UNUSED(newval);
-    sout_stream_t *p_stream = (sout_stream_t*)p_this;
-    sout_stream_sys_t *p_sys = p_stream->p_sys;
+    VLC_UNUSED(p_data);
 
     /* TODO: Implement volume change */
-    VLC_UNUSED(p_sys);
-
     return VLC_SUCCESS;
 }
