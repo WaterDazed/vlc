@@ -179,7 +179,7 @@ items_add_input( struct discovery_sys *p_sys, services_discovery_t *p_sd,
 
 static int
 items_add_renderer( struct discovery_sys *p_sys, vlc_renderer_discovery_t *p_rd,
-                    const char *psz_name, char *psz_uri,
+                    const char *psz_type, const char *psz_name, char *psz_uri,
                     const char *psz_demux_filter, const char *psz_icon_uri,
                     int i_flags )
 {
@@ -190,7 +190,7 @@ items_add_renderer( struct discovery_sys *p_sys, vlc_renderer_discovery_t *p_rd,
     const char *psz_extra_uri = i_flags & VLC_RENDERER_CAN_VIDEO ? NULL : "no-video";
 
     vlc_renderer_item_t *p_renderer_item =
-        vlc_renderer_item_new( "chromecast", psz_name, psz_uri, psz_extra_uri,
+        vlc_renderer_item_new( psz_type, psz_name, psz_uri, psz_extra_uri,
                                psz_demux_filter, psz_icon_uri, i_flags );
     if( p_renderer_item == NULL )
     {
@@ -539,7 +539,8 @@ new_entries_rd_cb( void *p_this, int i_status, const struct rr_entry *p_entries 
         if( strcmp( p_srv->psz_protocol, "chromecast" ) == 0)
             psz_demux_filter = "cc_demux";
 
-        items_add_renderer( p_sys, p_rd, p_srv->psz_device_name, psz_uri,
+        items_add_renderer( p_sys, p_rd, p_srv->psz_protocol,
+                            p_srv->psz_device_name, psz_uri,
                             psz_demux_filter, psz_icon_uri,
                             p_srv->renderer.i_renderer_flags );
         free(psz_icon_uri);

@@ -339,15 +339,17 @@ static NSString * ipAddressAsStringForData(NSData * data)
     msg_Dbg(_p_this, "service resolved: %s", [aNetService.name UTF8String]);
     if (![_resolvedNetServices containsObject:aNetService]) {
         NSString *serviceType = aNetService.type;
-        NSString *protocol = nil;
+        NSDictionary *protocolDef = nil;
         for (NSDictionary *protocolDefinition in _activeProtocols) {
             if ([serviceType isEqualToString:[protocolDefinition objectForKey:VLCBonjourProtocolServiceName]]) {
-                protocol = [protocolDefinition objectForKey:VLCBonjourProtocolName];
+                protocolDef = protocolDefinition;
+                break;
             }
         }
+        NSString *protocol = [protocolDef objectForKey:VLCBonjourProtocolName];
 
         if (_isRendererDiscovery) {
-            [self addResolvedRendererItem:aNetService withProtocol:protocol];
+            [self addResolvedRendererItem:aNetService withProtocolDef:protocolDef];
         } else {
             [self addResolvedInputItem:aNetService withProtocol:protocol];
         }
@@ -365,10 +367,11 @@ static NSString * ipAddressAsStringForData(NSData * data)
 #pragma mark -
 #pragma mark Helper methods
 
-- (void)addResolvedRendererItem:(NSNetService *)netService withProtocol:(NSString *)protocol
+- (void)addResolvedRendererItem:(NSNetService *)netService withProtocolDef:(NSDictionary *)protocolDef
 {
     vlc_renderer_discovery_t *p_rd = (vlc_renderer_discovery_t *)_p_this;
 
+    NSString *protocol = [protocolDef objectForKey:VLCBonjourProtocolName];
     NSURLComponents *components = [[NSURLComponents alloc] init];
     components.scheme = protocol;
     components.host = netService.hostName;
@@ -376,7 +379,7 @@ static NSString * ipAddressAsStringForData(NSData * data)
     NSString *uri = components.URL.absoluteString;
     NSDictionary *txtDict = [NSNetService dictionaryFromTXTRecordData:[netService TXTRecordData]];
     NSString *displayName = netService.name;
-    int rendererFlags = 0;
+    int rendererFlags = [[protocolDef objectForKey:VLCBonjourRendererFlags] intValue];
 
     if ([netService.type isEqualToString:@"_googlecast._tcp."]) {
         NSData *modelData = [txtDict objectForKey:@"md"];
@@ -406,9 +409,11 @@ static NSString * ipAddressAsStringForData(NSData * data)
 
     const char *extra_uri = rendererFlags & VLC_RENDERER_CAN_VIDEO ? NULL : "no-video";
 
-    // TODO: Adapt to work with not just chromecast!
-    vlc_renderer_item_t *p_renderer_item = vlc_renderer_item_new("chromecast", [displayName UTF8String],
-                                                                 [uri UTF8String], extra_uri, "cc_demux",
+    NSString *demuxFilter = [protocolDef objectForKey:VLCBonjourRendererDemux];
+
+    vlc_renderer_item_t *p_renderer_item = vlc_renderer_item_new([protocol UTF8String], [displayName UTF8String],
+                                                                 [uri UTF8String], extra_uri,
+                                                                 [demuxFilter UTF8String],
                                                                  "", rendererFlags );
     if (p_renderer_item != NULL) {
         vlc_rd_add_item( p_rd, p_renderer_item );
