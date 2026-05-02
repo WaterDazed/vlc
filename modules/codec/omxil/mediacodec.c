@@ -481,6 +481,150 @@ static int UpdateVout(decoder_t *p_dec)
     return VLC_SUCCESS;
 }
 
+static enum mc_media_format_color_range_t
+vlc_to_mc_color_range(bool vlc_range)
+{
+    switch (vlc_range)
+    {
+        case true:
+            return MC_COLOR_RANGE_FULL;
+        case false:
+            return MC_COLOR_RANGE_LIMITED;
+    }
+}
+
+static bool
+mc_to_vlc_color_range(enum mc_media_format_color_range_t mc_range)
+{
+    switch (mc_range)
+    {
+        case MC_COLOR_RANGE_FULL:
+            return true;
+        case MC_COLOR_RANGE_LIMITED:
+            return false;
+    }
+}
+
+static enum mc_media_format_color_standard_t
+vlc_to_mc_color_standard(video_color_primaries_t vlc_primaries, video_color_space_t vlc_colorspace)
+{
+    switch (vlc_primaries)
+    {
+        case COLOR_PRIMARIES_BT601_525:
+            if (vlc_colorspace == COLOR_SPACE_BT601)
+                return MC_COLOR_STANDARD_BT601_525;
+            if (vlc_colorspace == COLOR_SPACE_SMPTE_240)
+                return MC_COLOR_STANDARD_BT601_525_240M;
+            break;
+        case COLOR_PRIMARIES_BT601_625:
+            if (vlc_colorspace == COLOR_SPACE_BT601)
+                return MC_COLOR_STANDARD_BT601_625;
+            // return MC_COLOR_STANDARD_BT601_625_UNADJUSTED;
+            break;
+        case COLOR_PRIMARIES_BT709:
+            if (vlc_colorspace == COLOR_SPACE_BT709)
+                return MC_COLOR_STANDARD_BT709;
+            break;
+        case COLOR_PRIMARIES_BT2020:
+            if (vlc_colorspace == COLOR_SPACE_BT2020)
+                return MC_COLOR_STANDARD_BT2020;
+            break;
+        case COLOR_PRIMARIES_BT470_M:
+            // return MC_COLOR_STANDARD_BT470M;
+        case COLOR_PRIMARIES_DCI_P3:
+            // return MC_COLOR_STANDARD_FILM;
+        default:
+            break;
+    }
+    return MC_COLOR_STANDARD_UNSPECIFIED;
+}
+
+static video_color_primaries_t
+mc_to_vlc_primaries(enum mc_media_format_color_standard_t mc_standard)
+{
+    switch (mc_standard)
+    {
+        case MC_COLOR_STANDARD_BT709:
+            return COLOR_PRIMARIES_BT709;
+        case MC_COLOR_STANDARD_BT601_625:
+        case MC_COLOR_STANDARD_BT601_625_UNADJUSTED:
+            return COLOR_PRIMARIES_BT601_625;
+        case MC_COLOR_STANDARD_BT601_525:
+        case MC_COLOR_STANDARD_BT601_525_240M:
+            return COLOR_PRIMARIES_BT601_525;
+        case MC_COLOR_STANDARD_BT2020:
+            return COLOR_PRIMARIES_BT2020;
+        case MC_COLOR_STANDARD_BT470M:
+            return COLOR_PRIMARIES_BT470_M;
+        case MC_COLOR_STANDARD_FILM:
+            return COLOR_PRIMARIES_DCI_P3;
+        default:
+            return COLOR_PRIMARIES_UNDEF;
+    }
+}
+
+static video_color_space_t
+mc_to_vlc_color_space(enum mc_media_format_color_standard_t mc_standard)
+{
+    switch (mc_standard)
+    {
+        case MC_COLOR_STANDARD_BT709:
+            return COLOR_SPACE_BT709;
+        case MC_COLOR_STANDARD_BT601_625:
+        case MC_COLOR_STANDARD_BT601_525:
+            return COLOR_SPACE_BT601;
+        case MC_COLOR_STANDARD_BT601_525_240M:
+            return COLOR_SPACE_SMPTE_240;
+        case MC_COLOR_STANDARD_BT2020:
+            return COLOR_SPACE_BT2020;
+        case MC_COLOR_STANDARD_BT601_625_UNADJUSTED:
+        case MC_COLOR_STANDARD_BT470M:
+        case MC_COLOR_STANDARD_FILM:
+        default:
+            return COLOR_SPACE_UNDEF;
+    }
+}
+
+static enum mc_media_format_color_transfer_t
+vlc_to_mc_color_transfer(video_transfer_func_t vlc_transfer)
+{
+    switch (vlc_transfer)
+    {
+        case TRANSFER_FUNC_LINEAR:
+            return MC_COLOR_TRANSFER_LINEAR;
+        case TRANSFER_FUNC_SMPTE_ST2084:
+            return MC_COLOR_TRANSFER_ST2084;
+        case TRANSFER_FUNC_HLG:
+            return MC_COLOR_TRANSFER_HLG;
+        case TRANSFER_FUNC_BT709:
+            return MC_COLOR_TRANSFER_BT709;
+        case TRANSFER_FUNC_SRGB:
+            return MC_COLOR_TRANSFER_SRGB;
+        default:
+            return MC_COLOR_TRANSFER_UNSPECIFIED;
+    }
+}
+
+static video_transfer_func_t
+mc_to_vlc_color_transfer(enum mc_media_format_color_transfer_t mc_transfer)
+{
+    switch (mc_transfer)
+    {
+        case MC_COLOR_TRANSFER_LINEAR:
+            return TRANSFER_FUNC_LINEAR;
+        case MC_COLOR_TRANSFER_SRGB:
+            return TRANSFER_FUNC_SRGB;
+        case MC_COLOR_TRANSFER_BT709:
+            return TRANSFER_FUNC_BT709;
+        case MC_COLOR_TRANSFER_ST2084:
+            return TRANSFER_FUNC_SMPTE_ST2084;
+        case MC_COLOR_TRANSFER_HLG:
+            return TRANSFER_FUNC_HLG;
+        default:
+            return TRANSFER_FUNC_UNDEF;
+    }
+}
+
 /*****************************************************************************
  * StartMediaCodec: Create the mediacodec instance
  *****************************************************************************/
@@ -498,48 +642,10 @@ static int StartMediaCodec(decoder_t *p_dec)
         args.video.p_surface = p_sys->video.p_surface;
         args.video.p_jsurface = p_sys->video.p_jsurface;
 
-        if (p_dec->fmt_out.video.b_color_range_full)
-            args.video.color_range = MC_COLOR_RANGE_FULL;
-        else
-            args.video.color_range = MC_COLOR_RANGE_LIMITED;
+        args.video.color.range = vlc_to_mc_color_range(p_dec->fmt_out.video.b_color_range_full);
+        args.video.color.standard = vlc_to_mc_color_standard(p_dec->fmt_out.video.primaries, p_dec->fmt_out.video.space);
+        args.video.color.transfer = vlc_to_mc_color_transfer(p_dec->fmt_out.video.transfer);
 
-        switch (p_dec->fmt_out.video.primaries)
-        {
-            case COLOR_PRIMARIES_BT601_525:
-                args.video.color_standard = MC_COLOR_STANDARD_BT601_NTSC;
-                break;
-            case COLOR_PRIMARIES_BT601_625:
-                args.video.color_standard = MC_COLOR_STANDARD_BT601_PAL;
-                break;
-            case COLOR_PRIMARIES_BT709:
-                args.video.color_standard = MC_COLOR_STANDARD_BT709;
-                break;
-            case COLOR_PRIMARIES_BT2020:
-                args.video.color_standard = MC_COLOR_STANDARD_BT2020;
-                break;
-            default:
-                args.video.color_standard = MC_COLOR_STANDARD_UNSPECIFIED;
-                break;
-        }
-
-        switch (p_dec->fmt_out.video.transfer)
-        {
-            case TRANSFER_FUNC_LINEAR:
-                args.video.color_transfer = MC_COLOR_TRANSFER_LINEAR;
-                break;
-            case TRANSFER_FUNC_SMPTE_ST2084:
-                args.video.color_transfer = MC_COLOR_TRANSFER_ST2084;
-                break;
-            case TRANSFER_FUNC_HLG:
-                args.video.color_transfer = MC_COLOR_TRANSFER_HLG;
-                break;
-            case TRANSFER_FUNC_BT709:
-                args.video.color_transfer = MC_COLOR_TRANSFER_SDR_VIDEO;
-                break;
-            default:
-                args.video.color_transfer = MC_COLOR_TRANSFER_UNSPECIFIED;
-                break;
-        }
 
         args.video.b_tunneled_playback = args.video.p_surface ?
                 var_InheritBool(p_dec, CFG_PREFIX "tunneled-playback") : false;
@@ -1043,6 +1149,22 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
                 p_out->conf.video.stride, p_out->conf.video.slice_height,
                 p_out->conf.video.crop_left, p_out->conf.video.crop_top,
                 p_out->conf.video.crop_right, p_out->conf.video.crop_bottom);
+
+        /* Only use MediaCodec output as fallback when container/input is unspecified */
+        if (p_dec->fmt_out.video.primaries == COLOR_PRIMARIES_UNDEF)
+            p_dec->fmt_out.video.primaries =
+                mc_to_vlc_primaries(p_out->conf.video.color.standard);
+
+        if (p_dec->fmt_out.video.space == COLOR_SPACE_UNDEF)
+            p_dec->fmt_out.video.space =
+                 mc_to_vlc_color_space(p_out->conf.video.color.standard);
+
+        if (p_dec->fmt_out.video.transfer == TRANSFER_FUNC_UNDEF)
+            p_dec->fmt_out.video.transfer =
+                mc_to_vlc_color_transfer(p_out->conf.video.color.transfer);
+
+        p_dec->fmt_out.video.b_color_range_full =
+            mc_to_vlc_color_range(p_out->conf.video.color.range);
 
         int i_width  = p_out->conf.video.crop_right + 1
                      - p_out->conf.video.crop_left;

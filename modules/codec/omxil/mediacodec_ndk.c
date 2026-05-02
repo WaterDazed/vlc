@@ -357,9 +357,9 @@ static int Start(mc_api *api, union mc_api_args *p_args)
         syms.AMediaFormat.setInt32(p_sys->p_format, "height", p_args->video.i_height);
         syms.AMediaFormat.setInt32(p_sys->p_format, "rotation-degrees", p_args->video.i_angle);
 
-        syms.AMediaFormat.setInt32(p_sys->p_format, "color-range", p_args->video.color_range);
-        syms.AMediaFormat.setInt32(p_sys->p_format, "color-standard", p_args->video.color_standard);
-        syms.AMediaFormat.setInt32(p_sys->p_format, "color-transfer", p_args->video.color_transfer);
+        syms.AMediaFormat.setInt32(p_sys->p_format, "color-range", p_args->video.color.range);
+        syms.AMediaFormat.setInt32(p_sys->p_format, "color-standard", p_args->video.color.standard);
+        syms.AMediaFormat.setInt32(p_sys->p_format, "color-transfer", p_args->video.color.transfer);
 
         if (p_args->video.p_surface)
         {
@@ -554,6 +554,11 @@ static int GetOutput(mc_api *api, int i_index, mc_api_out *p_out)
             p_out->conf.video.crop_top      = GetFormatInteger(format, "crop-top");
             p_out->conf.video.crop_right    = GetFormatInteger(format, "crop-right");
             p_out->conf.video.crop_bottom   = GetFormatInteger(format, "crop-bottom");
+
+            /* Extract color info from output format (API 28+) */
+            p_out->conf.video.color.range = GetFormatInteger(format, "color-range");
+            p_out->conf.video.color.standard = GetFormatInteger(format, "color-standard");
+            p_out->conf.video.color.transfer = GetFormatInteger(format, "color-transfer");
         }
         else
         {
