@@ -991,6 +991,28 @@ static int ExecRequest( vlc_object_t *p_this, const char *psz_method,
                 goto error;
         }
 
+        /* Drain any response body so it doesn't bleed into the next reply.
+         * RECORD responses can carry a text/parameters body advertising the
+         * device's audio latency, for example. Goes through the buffered
+         * reader: kernel may have packed body bytes after the header in the
+         * same TCP segment, and those already sit in the buffer. */
+        const char *psz_cl = vlc_dictionary_value_for_key( p_resp_headers,
+                                                           "Content-Length" );
+        if ( psz_cl != NULL )
+        {
+            long i_cl = strtol( psz_cl, NULL, 10 );
+            char ps_drain[256];
+            while ( i_cl > 0 )
+            {
+                size_t i_want = i_cl > (long)sizeof( ps_drain ) ?
+                                sizeof( ps_drain ) : (size_t)i_cl;
+                ssize_t r = RtspRead( p_this, p_sys, ps_drain, i_want );
+                if ( r <= 0 )
+                    break;
+                i_cl -= r;
+            }
+        }
+
         if ( i_status == 200 )
             /* Request successful */
             break;
