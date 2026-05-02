@@ -405,6 +405,13 @@ static NSString * ipAddressAsStringForData(NSData * data)
             NSString *name = [[NSString alloc] initWithData:nameData encoding:NSUTF8StringEncoding];
             displayName = [NSString stringWithFormat:@"%@ (%@)", name, model];
         }
+    } else if ([netService.type isEqualToString:@"_raop._tcp."]) {
+        // RAOP advertises names as <MAC>@<friendly name>; only keep the
+        // friendly part for display.
+        NSRange at = [displayName rangeOfString:@"@"];
+        if (at.location != NSNotFound && at.location + 1 < displayName.length) {
+            displayName = [displayName substringFromIndex:at.location + 1];
+        }
     }
 
     const char *extra_uri = rendererFlags & VLC_RENDERER_CAN_VIDEO ? NULL : "no-video";

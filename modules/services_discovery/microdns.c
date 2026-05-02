@@ -329,6 +329,23 @@ parse_entries( const struct rr_entry *p_entries, bool b_renderer,
                     if( p_srv->psz_device_name == NULL )
                         break;
                     p_srv->psz_protocol = protocols[i].psz_protocol;
+
+                    /* RAOP advertises names as <MAC>@<friendly name>; only
+                     * keep the friendly part for display. */
+                    if( !strcmp( p_srv->psz_protocol, "raop" ) )
+                    {
+                        const char *at = strchr( p_srv->psz_device_name, '@' );
+                        if( at != NULL && at[1] != '\0' )
+                        {
+                            char *friendly = strdup( at + 1 );
+                            if( friendly != NULL )
+                            {
+                                free( p_srv->psz_device_name );
+                                p_srv->psz_device_name = friendly;
+                            }
+                        }
+                    }
+
                     p_srv->i_port = p_entry->data.SRV.port;
                     p_srv->renderer.i_renderer_flags = protocols[i].i_renderer_flags;
                     ++i_nb_srv;
