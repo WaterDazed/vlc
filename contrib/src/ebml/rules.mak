@@ -1,6 +1,6 @@
 # ebml
 
-EBML_VERSION := 1.4.3
+EBML_VERSION := 1.4.5
 EBML_URL := https://dl.matroska.org/downloads/libebml/libebml-$(EBML_VERSION).tar.xz
 
 ifeq ($(call need_pkg,"libebml >= 1.3.8"),)
@@ -17,6 +17,7 @@ ebml: libebml-$(EBML_VERSION).tar.xz .sum-ebml
 	$(APPLY) $(SRC)/ebml/0001-EbmlString-ReadFully-use-automatic-memory-management.patch
 	$(APPLY) $(SRC)/ebml/0002-EbmlUnicodeString-use-std-string-when-reading-instea.patch
 	$(APPLY) $(SRC)/ebml/0001-EbmlMaster-fix-leak-when-reading-upper-level-element.patch
+	$(APPLY) $(SRC)/ebml/0002-EbmlMaster-exit-reading-loop-if-upper-element-found-.patch
 	$(APPLY) $(SRC)/ebml/0001-EbmlHead-do-not-allow-to-have-an-infinite-unknown-si.patch
 	$(MOVE)
 
