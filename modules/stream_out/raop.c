@@ -53,6 +53,7 @@
 #include <vlc_tick.h>
 #include <vlc_rand.h>
 #include <vlc_meta.h>
+#include <vlc_stream.h>
 
 #include "raop_common.h"
 
@@ -1447,6 +1448,76 @@ out:
     return i_err;
 }
 
+static int SendArtwork( vlc_object_t *p_this )
+{
+    sout_stream_t *p_stream = (sout_stream_t *)p_this;
+    sout_stream_sys_t *p_sys = p_stream->p_sys;
+    stream_t *p_art = NULL;
+    block_t *p_block = NULL;
+    int i_err = VLC_SUCCESS;
+    vlc_dictionary_t req_headers;
+    vlc_dictionary_t resp_headers;
+
+    vlc_dictionary_init( &req_headers, 0 );
+    vlc_dictionary_init( &resp_headers, 0 );
+
+    vlc_mutex_lock( &p_sys->lock );
+    if ( p_sys->p_meta != NULL )
+    {
+        const char *p = vlc_meta_Get( p_sys->p_meta, vlc_meta_ArtworkURL );
+        if ( p != NULL )
+            p_art = vlc_stream_NewURL( p_this, p );
+    }
+    vlc_mutex_unlock( &p_sys->lock );
+
+    if ( p_art == NULL )
+        goto out;
+
+    uint64_t i_size;
+    if ( vlc_stream_GetSize( p_art, &i_size ) != VLC_SUCCESS
+      || i_size == 0 || i_size > UINT64_C( 8 * 1024 * 1024 ) )
+        goto out;
+
+    p_block = vlc_stream_Block( p_art, (size_t)i_size );
+    if ( p_block == NULL || p_block->i_buffer != (size_t)i_size )
+        goto out;
+
+    /* Sniff JPEG / PNG; AirPlay 1 receivers reject anything else.
+     *   PNG:  first 4 bytes of the 8-byte signature, "\x89 P N G".
+     *   JPEG: SOI (FFD8) plus the FF that starts the next marker;
+     *         the marker code (E0/E1/DB/...) varies, mask it out. */
+    const uint32_t MAGIC_PNG  = 0x89504E47u;
+    const uint32_t MAGIC_JPEG = 0xFFD8FF00u;
+
+    if ( p_block->i_buffer < 4 )
+        goto out;
+    const uint32_t magic = GetDWBE( p_block->p_buffer );
+    const char *psz_mime;
+    if ( magic == MAGIC_PNG )
+        psz_mime = "image/png";
+    else if ( ( magic & 0xFFFFFF00u ) == MAGIC_JPEG )
+        psz_mime = "image/jpeg";
+    else
+        goto out;
+
+    vlc_dictionary_insert( &req_headers, "Session",
+                           (void *)p_sys->psz_session );
+    vlc_dictionary_insert( &req_headers, "RTP-Info", (void *)"rtptime=0" );
+
+    i_err = ExecRequest( p_this, "SET_PARAMETER", psz_mime,
+                         p_block->p_buffer, p_block->i_buffer,
+                         &req_headers, &resp_headers );
+
+out:
+    vlc_dictionary_clear( &req_headers, NULL, NULL );
+    vlc_dictionary_clear( &resp_headers, FreeHeader, NULL );
+    if ( p_block != NULL )
+        block_Release( p_block );
+    if ( p_art != NULL )
+        vlc_stream_Delete( p_art );
+    return i_err;
+}
+
 static int SendFlush( vlc_object_t *p_this )
 {
     vlc_dictionary_t resp_headers;
@@ -1859,10 +1930,12 @@ static int SinkOpen( vlc_object_t *p_this )
     if ( i_err != VLC_SUCCESS )
         return i_err;
 
-    /* Push title/artist/album to the receiver if the demux filter has
-     * already populated the meta. Failure here is non-fatal. */
+    /* Push title/artist/album/artwork to the receiver if the demux filter
+     * has already populated the meta. Failure here is non-fatal. */
     if ( SendDmapMeta( p_this ) != VLC_SUCCESS )
         msg_Warn( p_this, "Failed to push metadata to receiver" );
+    if ( SendArtwork( p_this ) != VLC_SUCCESS )
+        msg_Warn( p_this, "Failed to push artwork to receiver" );
 
     LogInfo( p_this );
 
