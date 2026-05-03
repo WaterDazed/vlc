@@ -75,6 +75,7 @@
 #include <vlc_plugin.h>
 #include <vlc_codec.h>
 #include <vlc_sout.h>
+#include <vlc_arrays.h>
 
 #include <vlc_bits.h>
 
@@ -858,14 +859,15 @@ static void decode_page_composition( decoder_t *p_dec, bs_t *s, uint16_t i_segme
     p_sys->b_page = true;
 
     /* Number of regions */
-    p_sys->p_page->i_region_defs = (i_segment_length - 2) / 6;
+    uint16_t i_region_defs = (i_segment_length - 2) / 6;
 
-    if( p_sys->p_page->i_region_defs == 0 ) return;
+    if( i_region_defs == 0 ) return;
 
     p_sys->p_page->p_region_defs =
-        vlc_alloc( p_sys->p_page->i_region_defs, sizeof(dvbsub_regiondef_t) );
+        vlc_alloc( i_region_defs, sizeof(dvbsub_regiondef_t) );
     if( p_sys->p_page->p_region_defs )
     {
+        p_sys->p_page->i_region_defs = i_region_defs;
         for( i = 0; i < p_sys->p_page->i_region_defs; i++ )
         {
             p_sys->p_page->p_region_defs[i].i_id = bs_read( s, 8 );
@@ -958,17 +960,17 @@ static void decode_region_composition( decoder_t *p_dec, bs_t *s, uint16_t i_seg
         {
             msg_Dbg( p_dec, "region size changed (%dx%d->%dx%d)",
                      p_region->i_width, p_region->i_height, i_width, i_height );
-            free( p_region->p_pixbuf );
         }
 
         size_t i_alloc;
         if( ckd_mul( &i_alloc, i_width, i_height ) )
         {
+            free( p_region->p_pixbuf );
             p_region->p_pixbuf = NULL;
         }
         else
         {
-            p_region->p_pixbuf = malloc( i_alloc );
+            p_region->p_pixbuf = realloc_or_free( p_region->p_pixbuf, i_alloc );
             p_region->i_depth = 0;
         }
 
@@ -999,17 +1001,25 @@ static void decode_region_composition( decoder_t *p_dec, bs_t *s, uint16_t i_seg
 
     /* List of objects in the region */
     i_processed_length = 10;
+
+    /* Entry can be 6 or 8 bytes */
+    unsigned max_object_defs;
+    if( i_segment_length < 10 )
+        max_object_defs = 0;
+    else
+        max_object_defs = (i_segment_length - i_processed_length) / 6;
+    p_region->i_object_defs = 0;
+    p_region->p_object_defs = realloc_or_free( p_region->p_object_defs,
+                                               max_object_defs * sizeof(dvbsub_objectdef_t) );
+    if( !p_region->p_object_defs )
+        return;
+
     while( i_processed_length < i_segment_length )
     {
         dvbsub_objectdef_t *p_obj;
 
-        /* We create a new object */
-        p_region->i_object_defs++;
-        p_region->p_object_defs = xrealloc( p_region->p_object_defs,
-                     sizeof(dvbsub_objectdef_t) * p_region->i_object_defs );
-
         /* We parse object properties */
-        p_obj = &p_region->p_object_defs[p_region->i_object_defs - 1];
+        p_obj = &p_region->p_object_defs[p_region->i_object_defs++];
         p_obj->i_id         = bs_read( s, 16 );
         p_obj->i_type       = bs_read( s, 2 );
         bs_skip( s, 2 ); /* Provider */
@@ -1341,17 +1351,21 @@ static void decode_object( decoder_t *p_dec, bs_t *s, uint16_t i_segment_length 
 
                 if( p_region->p_object_defs[i].i_id != i_id ) continue;
 
-                p_region->p_object_defs[i].psz_text =
-                    xrealloc( p_region->p_object_defs[i].psz_text,
-                             i_number_of_codes + 1 );
+                char *psz_text = p_region->p_object_defs[i].psz_text;
+
+                p_region->p_object_defs[i].psz_text = psz_text =
+                        realloc_or_free( psz_text, i_number_of_codes + 1 );
+
+                if( !psz_text )
+                    continue;
 
                 /* FIXME 16bits -> char ??? See Preamble */
                 for( j = 0; j < i_number_of_codes; j++ )
                 {
-                    p_region->p_object_defs[i].psz_text[j] = (char)(bs_read( s, 16 ) & 0xFF);
+                    psz_text[j] = (char)(bs_read( s, 16 ) & 0xFF);
                 }
                 /* Null terminate the string */
-                p_region->p_object_defs[i].psz_text[j] = 0;
+                psz_text[j] = 0;
             }
         }
     }
