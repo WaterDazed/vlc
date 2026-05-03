@@ -38,12 +38,6 @@
 #include <vlc_block.h>
 #include <vlc_codec.h>
 
-/*****************************************************************************
- * Local prototypes
- *****************************************************************************/
-static int      OpenDecoder( vlc_object_t * );
-static void     CloseDecoder( vlc_object_t * );
-
 static unsigned int mpg123_refcount = 0;
 static vlc_mutex_t mpg123_mutex = VLC_STATIC_MUTEX;
 
@@ -57,17 +51,6 @@ typedef struct
     block_t       * p_out;
     bool            b_opened;
 } decoder_sys_t;
-
-/*****************************************************************************
- * Module descriptor
- *****************************************************************************/
-vlc_module_begin ()
-    set_subcategory( SUBCAT_INPUT_ACODEC )
-    set_description( N_("MPEG audio decoder using mpg123") )
-    set_capability( "audio decoder", 100 )
-    set_shortname( "mpg123" )
-    set_callbacks( OpenDecoder, CloseDecoder )
-vlc_module_end ()
 
 /*****************************************************************************
  * MPG123Open
@@ -279,17 +262,14 @@ static int DecodeBlock( decoder_t *p_dec, block_t *p_block )
         i_err = mpg123_decode_frame( p_sys->p_handle, NULL, NULL, &i_bytes );
         if( i_err != MPG123_OK && i_err != MPG123_NEED_MORE )
         {
-            if( i_err == MPG123_NEW_FORMAT )
-            {
-                p_dec->fmt_out.audio.i_rate = 0;
-            }
-            else
+            if (i_err != MPG123_NEW_FORMAT)
             {
                 msg_Err( p_dec, "mpg123_decode_frame error: %s",
                          mpg123_plain_strerror( i_err ) );
                 date_Set( &p_sys->end_date, VLC_TICK_INVALID );
                 break;
             }
+            p_dec->fmt_out.audio.i_rate = 0;
         }
 
         if( i_bytes == 0 )
@@ -372,6 +352,22 @@ static void ExitMPG123( void )
 }
 
 /*****************************************************************************
+ * CloseDecoder : deallocate data structures
+ *****************************************************************************/
+static void CloseDecoder(vlc_object_t *p_this)
+{
+    decoder_t *p_dec = (decoder_t *)p_this;
+    decoder_sys_t *p_sys = p_dec->p_sys;
+
+    mpg123_close(p_sys->p_handle);
+    mpg123_delete(p_sys->p_handle);
+    ExitMPG123();
+    if (p_sys->p_out)
+        block_Release(p_sys->p_out);
+    free(p_sys);
+}
+
+/*****************************************************************************
  * OpenDecoder :
  *****************************************************************************/
 static int OpenDecoder( vlc_object_t *p_this )
@@ -418,17 +414,12 @@ error:
 }
 
 /*****************************************************************************
- * CloseDecoder : deallocate data structures
+ * Module descriptor
  *****************************************************************************/
-static void CloseDecoder( vlc_object_t *p_this )
-{
-    decoder_t *p_dec = (decoder_t *)p_this;
-    decoder_sys_t *p_sys = p_dec->p_sys;
-
-    mpg123_close( p_sys->p_handle );
-    mpg123_delete( p_sys->p_handle );
-    ExitMPG123();
-    if( p_sys->p_out )
-        block_Release( p_sys->p_out );
-    free( p_sys );
-}
+vlc_module_begin()
+    set_subcategory(SUBCAT_INPUT_ACODEC)
+    set_description(N_("MPEG audio decoder using mpg123"))
+    set_capability("audio decoder", 100)
+    set_shortname("mpg123")
+    set_callbacks(OpenDecoder, CloseDecoder)
+vlc_module_end()
