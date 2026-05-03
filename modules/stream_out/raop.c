@@ -1571,10 +1571,6 @@ static int SinkOpen( vlc_object_t *p_this )
     if ( i_err != VLC_SUCCESS )
         return i_err;
 
-    i_err = UpdateVolume( p_this );
-    if ( i_err != VLC_SUCCESS )
-        return i_err;
-
     LogInfo( p_this );
 
     /* Open stream connection */
