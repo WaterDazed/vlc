@@ -50,6 +50,7 @@
 #include <vlc_http.h>
 #include <vlc_memstream.h>
 #include <vlc_threads.h>
+#include <vlc_tick.h>
 #include <vlc_rand.h>
 
 #define RAOP_PORT 5000
@@ -187,6 +188,12 @@ typedef struct
     /* Periodic SYNC packet emitter */
     vlc_timer_t sync_timer;
     bool b_sync_timer;
+
+    /* Real-time pacing for audio packets. The sout chain feeds blocks as
+     * fast as the source can be read; without pacing we'd flood the
+     * receiver's UDP buffer in milliseconds and most packets would be
+     * dropped before playback. */
+    vlc_tick_t i_next_packet_tick;
 
     /* PCM accumulator: araw delivers blocks of arbitrary size, but we
      * must emit exactly RAOP_FRAMES_PER_PACKET samples per RTP packet so
@@ -1558,6 +1565,14 @@ static int FlushOnePacket( sout_stream_t *p_stream )
     if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
         return VLC_EGENERIC;
 
+    vlc_tick_t i_now = vlc_tick_now();
+    if ( p_sys->i_next_packet_tick == 0 )
+        p_sys->i_next_packet_tick = i_now;
+    else if ( p_sys->i_next_packet_tick > i_now )
+        vlc_tick_wait( p_sys->i_next_packet_tick );
+    p_sys->i_next_packet_tick +=
+        vlc_tick_from_samples( RAOP_FRAMES_PER_PACKET, RAOP_SAMPLE_RATE );
+
     int rc = net_Write( p_stream, p_sys->i_audio_udp_fd,
                         p_sys->p_sendbuf, i_len );
     if ( rc < 0 )
@@ -1784,6 +1799,7 @@ static int SinkOpen( vlc_object_t *p_this )
     p_sys->i_rtp_ts = 0;
     p_sys->b_first_audio_packet = true;
     p_sys->b_first_sync = true;
+    p_sys->i_next_packet_tick = 0;
     p_sys->i_pcm_acc = 0;
 
     /* Schedule periodic SYNC */
