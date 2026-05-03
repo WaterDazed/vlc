@@ -314,7 +314,7 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     static NSArray<NSString *> *toolbarIdentifiers = nil;
 
     dispatch_once(&onceToken, ^{
-        if (VLCMain.sharedInstance.libraryController.libraryModel) {
+        if (VLCMain.sharedInstance.libraryController.shouldUseMediaLibrary) {
             toolbarIdentifiers = @[VLCIntfSettingToolbarIdentifier,
                                    VLCAudioSettingToolbarIdentifier,
                                    VLCVideoSettingToolbarIdentifier,
@@ -350,6 +350,14 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 - (NSArray *)toolbarSelectableItemIdentifiers:(NSToolbar *)toolbar
 {
     return [self toolbarIdentifiers];
+}
+
+- (BOOL)validateToolbarItem:(NSToolbarItem *)item
+{
+    if ([item.itemIdentifier isEqual:VLCMediaLibrarySettingToolbarIdentifier]) {
+        return VLCMain.sharedInstance.libraryController.libraryModel != nil;
+    }
+    return YES;
 }
 
 - (void)initStrings

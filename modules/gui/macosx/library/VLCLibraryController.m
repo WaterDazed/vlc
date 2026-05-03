@@ -38,6 +38,7 @@
 #import "playqueue/VLCPlayQueueModel.h"
 
 #import <vlc_media_library.h>
+#import <vlc_modules.h>
 
 typedef int (*folder_action_f)(vlc_medialibrary_t*, const char*);
 
@@ -53,8 +54,13 @@ typedef int (*folder_action_f)(vlc_medialibrary_t*, const char*);
 {
     self = [super init];
     if (self) {
-        _p_libraryInstance = vlc_ml_instance_get(getIntf());
-        if (!_p_libraryInstance) {
+        if (self.shouldUseMediaLibrary) {
+            _p_libraryInstance = vlc_ml_instance_get(getIntf());
+        } else {
+            return self;
+        }
+
+        if (!_p_libraryInstance && self.shouldUseMediaLibrary) {
             msg_Info(getIntf(), "VLC runs without media library support");
 
             NSUserDefaults * const defaults = NSUserDefaults.standardUserDefaults;
@@ -401,6 +407,11 @@ typedef int (*folder_action_f)(vlc_medialibrary_t*, const char*);
 - (void)filterByString:(NSString*)filterString
 {
     self.libraryModel.filterString = filterString;
+}
+
+- (BOOL)shouldUseMediaLibrary
+{
+    return module_exists("medialibrary") && var_InheritBool(getIntf(), "media-library");
 }
 
 @end
