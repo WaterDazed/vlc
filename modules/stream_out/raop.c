@@ -49,6 +49,7 @@
 #include <vlc_es.h>
 #include <vlc_http.h>
 #include <vlc_memstream.h>
+#include <vlc_threads.h>
 #include <vlc_rand.h>
 
 #define RAOP_PORT 5000
@@ -120,7 +121,15 @@ typedef struct
 
     /* Connection state */
     int i_control_fd;
-    int i_stream_fd;
+    int i_audio_udp_fd;
+    int i_control_udp_fd;
+    int i_timing_udp_fd;
+
+    int i_local_control_port;
+    int i_local_timing_port;
+    int i_server_audio_port;
+    int i_server_control_port;
+    int i_server_timing_port;
 
     uint8_t ps_aes_key[16];
     uint8_t ps_aes_iv[16];
@@ -132,7 +141,6 @@ typedef struct
     char *psz_last_status_line;
 
     int i_cseq;
-    int i_server_port;
     int i_audio_latency;
     int i_jack_type;
 
@@ -144,6 +152,13 @@ typedef struct
     uint8_t rtsp_buf[4096];
     size_t i_rtsp_buf_pos;
     size_t i_rtsp_buf_fill;
+
+    /* RTP audio state, protected by lock. */
+    vlc_mutex_t lock;
+    uint16_t i_seq;
+    uint32_t i_rtp_ts;
+    uint32_t i_ssrc;
+    bool b_first_audio_packet;
 
     /* Send buffer */
     size_t i_sendbuf_len;
@@ -220,8 +235,12 @@ static void FreeSys( vlc_object_t *p_this, sout_stream_sys_t *p_sys )
 
     if ( p_sys->i_control_fd >= 0 )
         net_Close( p_sys->i_control_fd );
-    if ( p_sys->i_stream_fd >= 0 )
-        net_Close( p_sys->i_stream_fd );
+    if ( p_sys->i_audio_udp_fd >= 0 )
+        net_Close( p_sys->i_audio_udp_fd );
+    if ( p_sys->i_control_udp_fd >= 0 )
+        net_Close( p_sys->i_control_udp_fd );
+    if ( p_sys->i_timing_udp_fd >= 0 )
+        net_Close( p_sys->i_timing_udp_fd );
     if ( p_sys->b_volume_callback )
         var_DelCallback( p_stream, SOUT_CFG_PREFIX "volume",
                          VolumeCallback, NULL );
@@ -1157,6 +1176,7 @@ static int SendSetup( vlc_object_t *p_this )
     sout_stream_sys_t *p_sys = p_stream->p_sys;
     vlc_dictionary_t req_headers;
     vlc_dictionary_t resp_headers;
+    char *psz_transport = NULL;
     int i_err = VLC_SUCCESS;
     char *psz_tmp;
     char *psz_next;
@@ -1166,9 +1186,16 @@ static int SendSetup( vlc_object_t *p_this )
     vlc_dictionary_init( &req_headers, 0 );
     vlc_dictionary_init( &resp_headers, 0 );
 
-    vlc_dictionary_insert( &req_headers, "Transport",
-                           ((void*)"RTP/AVP/TCP;unicast;interleaved=0-1;"
-                            "mode=record") );
+    if ( asprintf( &psz_transport,
+                   "RTP/AVP/UDP;unicast;interleaved=0-1;mode=record;"
+                   "control_port=%d;timing_port=%d",
+                   p_sys->i_local_control_port,
+                   p_sys->i_local_timing_port ) < 0 )
+    {
+        i_err = VLC_ENOMEM;
+        goto error;
+    }
+    vlc_dictionary_insert( &req_headers, "Transport", psz_transport );
 
     i_err = ExecRequest( p_this, "SETUP", NULL, NULL,
                          &req_headers, &resp_headers );
@@ -1186,18 +1213,22 @@ static int SendSetup( vlc_object_t *p_this )
     free( p_sys->psz_session );
     p_sys->psz_session = strdup( psz_tmp );
 
-    /* Get server_port */
+    /* Parse remote audio / control / timing ports out of Transport */
     psz_next = vlc_dictionary_value_for_key( &resp_headers, "Transport" );
     while ( SplitHeader( &psz_next, &psz_name, &psz_value ) )
     {
-        if ( psz_value && strcmp( psz_name, "server_port" ) == 0 )
-        {
-            p_sys->i_server_port = atoi( psz_value );
-            break;
-        }
+        if ( psz_value == NULL )
+            continue;
+
+        if ( strcmp( psz_name, "server_port" ) == 0 )
+            p_sys->i_server_audio_port = atoi( psz_value );
+        else if ( strcmp( psz_name, "control_port" ) == 0 )
+            p_sys->i_server_control_port = atoi( psz_value );
+        else if ( strcmp( psz_name, "timing_port" ) == 0 )
+            p_sys->i_server_timing_port = atoi( psz_value );
     }
 
-    if ( !p_sys->i_server_port )
+    if ( !p_sys->i_server_audio_port )
     {
         msg_Err( p_this, "Missing 'server_port' during setup" );
         i_err = VLC_EGENERIC;
@@ -1224,6 +1255,7 @@ static int SendSetup( vlc_object_t *p_this )
 error:
     vlc_dictionary_clear( &req_headers, NULL, NULL );
     vlc_dictionary_clear( &resp_headers, FreeHeader, NULL );
+    free( psz_transport );
 
     return i_err;
 }
@@ -1391,77 +1423,67 @@ static void SendAudio( sout_stream_t *p_stream, block_t *p_buffer )
     gcry_error_t i_gcrypt_err;
     block_t *p_next;
     size_t i_len;
-    size_t i_payload_len;
     size_t i_realloc_len;
     int rc;
 
-    const uint8_t header[16] = {
-        0x24, 0x00, 0x00, 0x00,
-        0xf0, 0xff, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-    };
-
     while ( p_buffer )
     {
-        i_len = sizeof( header ) + p_buffer->i_buffer;
+        /* 12 = RTP header (V/P/X/CC, M/PT, seq, timestamp, SSRC). */
+        if ( p_buffer->i_buffer > SIZE_MAX - 12 )
+            goto error;
+        i_len = 12 + p_buffer->i_buffer;
 
-        /* Buffer resize needed? */
         if ( i_len > p_sys->i_sendbuf_len || p_sys->p_sendbuf == NULL )
         {
-            /* Grow in blocks of 4K */
             i_realloc_len = (1 + (i_len / 4096)) * 4096;
-
             p_sys->p_sendbuf = realloc_or_free( p_sys->p_sendbuf, i_realloc_len );
             if ( p_sys->p_sendbuf == NULL )
                 goto error;
-
             p_sys->i_sendbuf_len = i_realloc_len;
         }
 
-        /* Fill buffer */
-        memcpy( p_sys->p_sendbuf, header, sizeof( header ) );
-        memcpy( p_sys->p_sendbuf + sizeof( header ),
-                p_buffer->p_buffer, p_buffer->i_buffer );
+        vlc_mutex_lock( &p_sys->lock );
+        bool b_marker = p_sys->b_first_audio_packet;
+        uint16_t i_seq = p_sys->i_seq;
+        uint32_t i_rtp_ts = p_sys->i_rtp_ts;
+        uint32_t i_ssrc = p_sys->i_ssrc;
+        vlc_mutex_unlock( &p_sys->lock );
 
-        /* Calculate payload length and update header */
-        i_payload_len = i_len - 4;
-        if ( i_payload_len > 0xffff )
-        {
-            msg_Err( p_stream, "Buffer is too long (%u bytes)",
-                     (unsigned int)i_payload_len );
-            goto error;
-        }
+        p_sys->p_sendbuf[0] = 0x80;
+        p_sys->p_sendbuf[1] = b_marker ? 0xe0 : 0x60;
+        SetWBE(  p_sys->p_sendbuf + 2, i_seq );
+        SetDWBE( p_sys->p_sendbuf + 4, i_rtp_ts );
+        SetDWBE( p_sys->p_sendbuf + 8, i_ssrc );
 
-        p_sys->p_sendbuf[2] = ( i_payload_len >> 8 ) & 0xff;
-        p_sys->p_sendbuf[3] = i_payload_len & 0xff;
+        memcpy( p_sys->p_sendbuf + 12, p_buffer->p_buffer, p_buffer->i_buffer );
 
-        /* Reset cipher */
         i_gcrypt_err = gcry_cipher_reset( p_sys->aes_ctx );
         if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
             goto error;
 
-        /* Set IV */
         i_gcrypt_err = gcry_cipher_setiv( p_sys->aes_ctx, p_sys->ps_aes_iv,
                                           sizeof( p_sys->ps_aes_iv ) );
         if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
             goto error;
 
-        /* Encrypt in place. Only full blocks of 16 bytes are encrypted,
-         * the rest (0-15 bytes) is left unencrypted.
-         */
         i_gcrypt_err =
             gcry_cipher_encrypt( p_sys->aes_ctx,
-                                 p_sys->p_sendbuf + sizeof( header ),
+                                 p_sys->p_sendbuf + 12,
                                  ( p_buffer->i_buffer / 16 ) * 16,
                                  NULL, 0 );
         if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
             goto error;
 
-        /* Send data */
-        rc = net_Write( p_stream, p_sys->i_stream_fd, p_sys->p_sendbuf, i_len );
+        rc = net_Write( p_stream, p_sys->i_audio_udp_fd,
+                        p_sys->p_sendbuf, i_len );
         if ( rc < 0 )
             goto error;
+
+        vlc_mutex_lock( &p_sys->lock );
+        p_sys->i_seq++;
+        p_sys->i_rtp_ts += p_buffer->i_buffer;
+        p_sys->b_first_audio_packet = false;
+        vlc_mutex_unlock( &p_sys->lock );
 
         p_next = p_buffer->p_next;
         block_Release( p_buffer );
@@ -1491,9 +1513,12 @@ static int SinkOpen( vlc_object_t *p_this )
     sout_stream_t *p_stream = (sout_stream_t*)p_this;
     sout_stream_sys_t *p_sys;
     char psz_local[NI_MAXNUMERICHOST];
+    gcry_error_t i_gcrypt_err;
     int i_err = VLC_SUCCESS;
     uint32_t i_session_id;
     uint64_t i_client_instance;
+
+    vlc_gcrypt_init();
 
     p_sys = var_InheritAddress( p_this, SOUT_CFG_PREFIX "sys" );
     if ( p_sys == NULL )
@@ -1544,18 +1569,42 @@ static int SinkOpen( vlc_object_t *p_this )
     i_gcrypt_err = gcry_cipher_open( &p_sys->aes_ctx, GCRY_CIPHER_AES,
                                      GCRY_CIPHER_MODE_CBC, 0 );
     if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-    {
-        i_err = VLC_EGENERIC;
-        goto error;
-    }
+        return VLC_EGENERIC;
 
     /* Set key */
     i_gcrypt_err = gcry_cipher_setkey( p_sys->aes_ctx, p_sys->ps_aes_key,
                                        sizeof( p_sys->ps_aes_key ) );
     if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
+        return VLC_EGENERIC;
+
+    /* Open local control + timing UDP sockets so we can advertise their
+     * ports in SETUP. The audio socket is opened later, once the receiver
+     * has told us its server_port. macOS' getaddrinfo() rejects NULL host
+     * with port 0, so bind on the local IP from the RTSP connection. */
+    p_sys->i_timing_udp_fd = net_ListenUDP1( p_this, psz_local, 0 );
+    if ( p_sys->i_timing_udp_fd < 0 )
     {
-        i_err = VLC_EGENERIC;
-        goto error;
+        msg_Err( p_this, "Cannot open local timing UDP socket" );
+        return VLC_EGENERIC;
+    }
+    if ( net_GetSockAddress( p_sys->i_timing_udp_fd, NULL,
+                             &p_sys->i_local_timing_port ) )
+    {
+        msg_Err( p_this, "Cannot read local timing port" );
+        return VLC_EGENERIC;
+    }
+
+    p_sys->i_control_udp_fd = net_ListenUDP1( p_this, psz_local, 0 );
+    if ( p_sys->i_control_udp_fd < 0 )
+    {
+        msg_Err( p_this, "Cannot open local control UDP socket" );
+        return VLC_EGENERIC;
+    }
+    if ( net_GetSockAddress( p_sys->i_control_udp_fd, NULL,
+                             &p_sys->i_local_control_port ) )
+    {
+        msg_Err( p_this, "Cannot read local control port" );
+        return VLC_EGENERIC;
     }
 
     /* Protocol handshake */
@@ -1573,17 +1622,52 @@ static int SinkOpen( vlc_object_t *p_this )
 
     LogInfo( p_this );
 
-    /* Open stream connection */
-    p_sys->i_stream_fd = net_Connect( p_stream, p_sys->psz_host,
-                                      p_sys->i_server_port, SOCK_STREAM,
-                                      IPPROTO_TCP );
-    if ( p_sys->i_stream_fd < 0 )
+    /* Audio UDP socket: connected to the receiver's server_port */
+    p_sys->i_audio_udp_fd = net_ConnectDgram( p_this, p_sys->psz_host,
+                                              p_sys->i_server_audio_port,
+                                              -1, IPPROTO_UDP );
+    if ( p_sys->i_audio_udp_fd < 0 )
     {
-        msg_Err( p_this, "Cannot establish stream connection to %s:%d (%s)",
-                 p_sys->psz_host, p_sys->i_server_port,
-                 vlc_strerror_c(errno)  );
+        msg_Err( p_this, "Cannot establish audio UDP connection to %s:%d (%s)",
+                 p_sys->psz_host, p_sys->i_server_audio_port,
+                 vlc_strerror_c(errno) );
         return VLC_EGENERIC;
     }
+
+    /* If the receiver advertised a control port, connect() the bound local
+     * control socket to it so we can send via net_Write. connect() on
+     * an already-bound UDP socket sets the default peer without releasing
+     * the local port we advertised in SETUP. */
+    if ( p_sys->i_server_control_port > 0 )
+    {
+        struct addrinfo hints = { .ai_socktype = SOCK_DGRAM,
+                                  .ai_protocol = IPPROTO_UDP };
+        struct addrinfo *res = NULL;
+        if ( vlc_getaddrinfo( p_sys->psz_host,
+                              p_sys->i_server_control_port,
+                              &hints, &res ) != 0 || res == NULL )
+        {
+            msg_Err( p_this, "Cannot resolve control peer %s:%d",
+                     p_sys->psz_host, p_sys->i_server_control_port );
+            return VLC_EGENERIC;
+        }
+        if ( connect( p_sys->i_control_udp_fd,
+                      res->ai_addr, res->ai_addrlen ) != 0 )
+        {
+            msg_Err( p_this, "Cannot connect control UDP socket to %s:%d (%s)",
+                     p_sys->psz_host, p_sys->i_server_control_port,
+                     vlc_strerror_c(errno) );
+            freeaddrinfo( res );
+            return VLC_EGENERIC;
+        }
+        freeaddrinfo( res );
+    }
+
+    /* Initialize RTP state */
+    vlc_rand_bytes( &p_sys->i_ssrc, sizeof( p_sys->i_ssrc ) );
+    p_sys->i_seq = 0;
+    p_sys->i_rtp_ts = 0;
+    p_sys->b_first_audio_packet = true;
 
     return VLC_SUCCESS;
 }
@@ -1726,9 +1810,12 @@ static int Open( vlc_object_t *p_this )
         return VLC_ENOMEM;
 
     p_sys->i_control_fd = -1;
-    p_sys->i_stream_fd = -1;
+    p_sys->i_audio_udp_fd = -1;
+    p_sys->i_control_udp_fd = -1;
+    p_sys->i_timing_udp_fd = -1;
     p_sys->i_volume = var_GetInteger( p_stream, SOUT_CFG_PREFIX "volume" );
     p_sys->i_jack_type = JACK_TYPE_NONE;
+    vlc_mutex_init( &p_sys->lock );
     vlc_http_auth_Init( &p_sys->auth );
 
     p_sys->psz_host = var_GetNonEmptyString( p_stream, SOUT_CFG_PREFIX "ip" );
