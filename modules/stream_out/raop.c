@@ -1371,6 +1371,82 @@ error:
     return i_err;
 }
 
+/* DMAP framing: 4-byte ASCII tag + 4-byte big-endian length + payload.
+ * AirPlay 1 receivers want all per-field tags wrapped in one outer mlit. */
+static void DmapWriteString( struct vlc_memstream *ms, const char tag[4],
+                             const char *str )
+{
+    uint32_t i_len = strlen( str );
+    uint8_t be[4];
+    SetDWBE( be, i_len );
+    vlc_memstream_write( ms, tag, 4 );
+    vlc_memstream_write( ms, be, 4 );
+    vlc_memstream_write( ms, str, i_len );
+}
+
+static int SendDmapMeta( vlc_object_t *p_this )
+{
+    sout_stream_t *p_stream = (sout_stream_t *)p_this;
+    sout_stream_sys_t *p_sys = p_stream->p_sys;
+    int i_err = VLC_SUCCESS;
+    vlc_dictionary_t req_headers;
+    vlc_dictionary_t resp_headers;
+    struct vlc_memstream inner = { 0 };
+    struct vlc_memstream outer = { 0 };
+
+    vlc_dictionary_init( &req_headers, 0 );
+    vlc_dictionary_init( &resp_headers, 0 );
+
+    vlc_memstream_open( &inner );
+    vlc_mutex_lock( &p_sys->lock );
+    if ( p_sys->p_meta != NULL )
+    {
+        const char *p;
+        if ( ( p = vlc_meta_Get( p_sys->p_meta, vlc_meta_Title ) ) != NULL )
+            DmapWriteString( &inner, "minm", p );
+        if ( ( p = vlc_meta_Get( p_sys->p_meta, vlc_meta_Artist ) ) != NULL )
+            DmapWriteString( &inner, "asar", p );
+        if ( ( p = vlc_meta_Get( p_sys->p_meta, vlc_meta_Album ) ) != NULL )
+            DmapWriteString( &inner, "asal", p );
+    }
+    vlc_mutex_unlock( &p_sys->lock );
+    if ( vlc_memstream_close( &inner ) != 0 )
+    {
+        i_err = VLC_ENOMEM;
+        goto out;
+    }
+    if ( inner.length == 0 )
+        goto out;
+
+    vlc_memstream_open( &outer );
+    uint8_t outer_len_be[4];
+    SetDWBE( outer_len_be, (uint32_t)inner.length );
+    vlc_memstream_write( &outer, "mlit", 4 );
+    vlc_memstream_write( &outer, outer_len_be, 4 );
+    vlc_memstream_write( &outer, inner.ptr, inner.length );
+    if ( vlc_memstream_close( &outer ) != 0 )
+    {
+        i_err = VLC_ENOMEM;
+        goto out;
+    }
+
+    vlc_dictionary_insert( &req_headers, "Session",
+                           (void *)p_sys->psz_session );
+    vlc_dictionary_insert( &req_headers, "RTP-Info", (void *)"rtptime=0" );
+
+    i_err = ExecRequest( p_this, "SET_PARAMETER",
+                         "application/x-dmap-tagged",
+                         outer.ptr, outer.length,
+                         &req_headers, &resp_headers );
+
+out:
+    vlc_dictionary_clear( &req_headers, NULL, NULL );
+    vlc_dictionary_clear( &resp_headers, FreeHeader, NULL );
+    free( inner.ptr );
+    free( outer.ptr );
+    return i_err;
+}
+
 static int SendFlush( vlc_object_t *p_this )
 {
     vlc_dictionary_t resp_headers;
@@ -1782,6 +1858,11 @@ static int SinkOpen( vlc_object_t *p_this )
     i_err = SendRecord( p_this );
     if ( i_err != VLC_SUCCESS )
         return i_err;
+
+    /* Push title/artist/album to the receiver if the demux filter has
+     * already populated the meta. Failure here is non-fatal. */
+    if ( SendDmapMeta( p_this ) != VLC_SUCCESS )
+        msg_Warn( p_this, "Failed to push metadata to receiver" );
 
     LogInfo( p_this );
 
