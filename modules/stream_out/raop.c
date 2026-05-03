@@ -54,6 +54,27 @@
 
 #define RAOP_PORT 5000
 #define RAOP_USER_AGENT "VLC " VERSION
+/* 352 samples / packet keeps the verbatim ALAC payload at ~1408 bytes,
+ * fitting one IP MTU. Larger chunks (e.g. 4096) work for compressed ALAC
+ * but force IP fragmentation that many embedded receivers drop. */
+#define RAOP_FRAMES_PER_PACKET 352
+#define RAOP_SAMPLE_RATE 44100
+
+/* Verbatim (uncompressed) ALAC frame, stereo 16-bit:
+ *   3 bits  channels        = 1  (CPE / stereo)
+ *   4 bits  unused          = 0
+ *  12 bits  unused          = 0
+ *   1 bit   hassize         = 0
+ *   2 bits  uncompressed    = 0
+ *   1 bit   isnotcompressed = 1
+ *   For each sample frame: 16 bits L (BE), 16 bits R (BE)
+ * Total: 23 header bits + N*32 sample bits, packed MSB-first.
+ * For RAOP_FRAMES_PER_PACKET=352 stereo s16: ceil((23 + 352*32) / 8) = 1411 bytes.
+ */
+#define RAOP_ALAC_HEADER_BITS 23
+#define RAOP_PCM_FRAME_BYTES (RAOP_FRAMES_PER_PACKET * 2 * sizeof(int16_t))
+#define RAOP_ALAC_FRAME_BYTES \
+    ((RAOP_ALAC_HEADER_BITS + RAOP_FRAMES_PER_PACKET * 32 + 7) / 8)
 
 typedef struct sout_stream_id_sys_t sout_stream_id_sys_t;
 
@@ -160,8 +181,13 @@ typedef struct
     uint32_t i_ssrc;
     bool b_first_audio_packet;
 
-    /* Send buffer */
-    size_t i_sendbuf_len;
+    /* PCM accumulator: araw delivers blocks of arbitrary size, but we
+     * must emit exactly RAOP_FRAMES_PER_PACKET samples per RTP packet so
+     * the verbatim ALAC frame size is constant. */
+    uint8_t pcm_acc[RAOP_FRAMES_PER_PACKET * 2 * sizeof(int16_t)];
+    size_t i_pcm_acc;
+
+    /* Pre-allocated RTP send buffer: 12-byte header + fixed ALAC payload. */
     uint8_t *p_sendbuf;
 } sout_stream_sys_t;
 
@@ -1138,7 +1164,7 @@ static int AnnounceSDP( vlc_object_t *p_this, char *psz_local,
                      "t=0 0\r\n"
                      "m=audio 0 RTP/AVP 96\r\n"
                      "a=rtpmap:96 AppleLossless\r\n"
-                     "a=fmtp:96 4096 0 16 40 10 14 2 255 0 0 44100\r\n"
+                     "a=fmtp:96 352 0 16 40 10 14 2 255 0 0 44100\r\n"
                      "a=rsaaeskey:%s\r\n"
                      "a=aesiv:%s\r\n",
                      i_session_id, psz_local, p_sys->psz_host,
@@ -1417,83 +1443,116 @@ static void LogInfo( vlc_object_t *p_this )
     msg_Info( p_this, "Jack type: %s", psz_jack_name );
 }
 
-static void SendAudio( sout_stream_t *p_stream, block_t *p_buffer )
+/* Pack RAOP_FRAMES_PER_PACKET stereo s16-BE samples into a verbatim ALAC
+ * frame of RAOP_ALAC_FRAME_BYTES bytes, MSB-first bit-packed.
+ *
+ * The 23-bit header lives in bits 0..22 of the output bitstream: byte 0
+ * holds header bits 0..7, byte 1 holds bits 8..15, byte 2's top 7 bits
+ * hold the rest of the header. The PCM payload starts at bitstream bit
+ * 23 (i.e. byte 2's LSB) — so every subsequent output byte takes the low
+ * 7 bits of one input byte and the high 1 bit of the next. */
+static void PackVerbatimAlac( uint8_t *out, const uint8_t *pcm_be )
+{
+    const size_t n = RAOP_PCM_FRAME_BYTES;
+    out[0] = 0x20;
+    out[1] = 0x00;
+    out[2] = 0x02 | ( pcm_be[0] >> 7 );
+    for ( size_t i = 1; i < n; i++ )
+    {
+        out[2 + i] = (uint8_t)( ( ( pcm_be[i - 1] & 0x7F ) << 1 ) |
+                                ( pcm_be[i] >> 7 ) );
+    }
+    out[2 + n] = (uint8_t)( ( pcm_be[n - 1] & 0x7F ) << 1 );
+}
+
+/* Build, encrypt, and send one verbatim ALAC packet from the PCM frame
+ * currently sitting at the start of p_sys->pcm_acc. */
+static int FlushOnePacket( sout_stream_t *p_stream )
 {
     sout_stream_sys_t *p_sys = p_stream->p_sys;
     gcry_error_t i_gcrypt_err;
-    block_t *p_next;
-    size_t i_len;
-    size_t i_realloc_len;
-    int rc;
+    const size_t i_payload = RAOP_ALAC_FRAME_BYTES;
+    /* 12-byte RTP header (V/P/X/CC, M/PT, seq, timestamp, SSRC). */
+    const size_t i_len = 12 + i_payload;
+
+    /* Only i_rtp_ts is shared with another thread (the SYNC timer);
+     * the rest is touched only on the input thread. */
+    bool b_marker = p_sys->b_first_audio_packet;
+    uint16_t i_seq = p_sys->i_seq;
+    uint32_t i_ssrc = p_sys->i_ssrc;
+    vlc_mutex_lock( &p_sys->lock );
+    uint32_t i_rtp_ts = p_sys->i_rtp_ts;
+    vlc_mutex_unlock( &p_sys->lock );
+
+    p_sys->p_sendbuf[0] = 0x80;
+    p_sys->p_sendbuf[1] = b_marker ? 0xe0 : 0x60;
+    SetWBE(  p_sys->p_sendbuf + 2, i_seq );
+    SetDWBE( p_sys->p_sendbuf + 4, i_rtp_ts );
+    SetDWBE( p_sys->p_sendbuf + 8, i_ssrc );
+
+    PackVerbatimAlac( p_sys->p_sendbuf + 12, p_sys->pcm_acc );
+
+    i_gcrypt_err = gcry_cipher_reset( p_sys->aes_ctx );
+    if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
+        return VLC_EGENERIC;
+    i_gcrypt_err = gcry_cipher_setiv( p_sys->aes_ctx, p_sys->ps_aes_iv,
+                                      sizeof( p_sys->ps_aes_iv ) );
+    if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
+        return VLC_EGENERIC;
+    i_gcrypt_err = gcry_cipher_encrypt( p_sys->aes_ctx,
+                                        p_sys->p_sendbuf + 12,
+                                        ( i_payload / 16 ) * 16,
+                                        NULL, 0 );
+    if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
+        return VLC_EGENERIC;
+
+    int rc = net_Write( p_stream, p_sys->i_audio_udp_fd,
+                        p_sys->p_sendbuf, i_len );
+    if ( rc < 0 )
+        return VLC_EGENERIC;
+
+    p_sys->i_seq++;
+    vlc_mutex_lock( &p_sys->lock );
+    p_sys->i_rtp_ts += RAOP_FRAMES_PER_PACKET;
+    vlc_mutex_unlock( &p_sys->lock );
+    p_sys->b_first_audio_packet = false;
+
+    return VLC_SUCCESS;
+}
+
+static void SendAudio( sout_stream_t *p_stream, block_t *p_buffer )
+{
+    sout_stream_sys_t *p_sys = p_stream->p_sys;
 
     while ( p_buffer )
     {
-        /* 12 = RTP header (V/P/X/CC, M/PT, seq, timestamp, SSRC). */
-        if ( p_buffer->i_buffer > SIZE_MAX - 12 )
-            goto error;
-        i_len = 12 + p_buffer->i_buffer;
+        const uint8_t *p = p_buffer->p_buffer;
+        size_t left = p_buffer->i_buffer;
 
-        if ( i_len > p_sys->i_sendbuf_len || p_sys->p_sendbuf == NULL )
+        while ( left > 0 )
         {
-            i_realloc_len = (1 + (i_len / 4096)) * 4096;
-            p_sys->p_sendbuf = realloc_or_free( p_sys->p_sendbuf, i_realloc_len );
-            if ( p_sys->p_sendbuf == NULL )
-                goto error;
-            p_sys->i_sendbuf_len = i_realloc_len;
+            size_t avail = sizeof( p_sys->pcm_acc ) - p_sys->i_pcm_acc;
+            size_t take = ( left < avail ) ? left : avail;
+            memcpy( p_sys->pcm_acc + p_sys->i_pcm_acc, p, take );
+            p_sys->i_pcm_acc += take;
+            p += take;
+            left -= take;
+
+            if ( p_sys->i_pcm_acc == sizeof( p_sys->pcm_acc ) )
+            {
+                if ( FlushOnePacket( p_stream ) != VLC_SUCCESS )
+                {
+                    block_ChainRelease( p_buffer );
+                    return;
+                }
+                p_sys->i_pcm_acc = 0;
+            }
         }
 
-        vlc_mutex_lock( &p_sys->lock );
-        bool b_marker = p_sys->b_first_audio_packet;
-        uint16_t i_seq = p_sys->i_seq;
-        uint32_t i_rtp_ts = p_sys->i_rtp_ts;
-        uint32_t i_ssrc = p_sys->i_ssrc;
-        vlc_mutex_unlock( &p_sys->lock );
-
-        p_sys->p_sendbuf[0] = 0x80;
-        p_sys->p_sendbuf[1] = b_marker ? 0xe0 : 0x60;
-        SetWBE(  p_sys->p_sendbuf + 2, i_seq );
-        SetDWBE( p_sys->p_sendbuf + 4, i_rtp_ts );
-        SetDWBE( p_sys->p_sendbuf + 8, i_ssrc );
-
-        memcpy( p_sys->p_sendbuf + 12, p_buffer->p_buffer, p_buffer->i_buffer );
-
-        i_gcrypt_err = gcry_cipher_reset( p_sys->aes_ctx );
-        if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-            goto error;
-
-        i_gcrypt_err = gcry_cipher_setiv( p_sys->aes_ctx, p_sys->ps_aes_iv,
-                                          sizeof( p_sys->ps_aes_iv ) );
-        if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-            goto error;
-
-        i_gcrypt_err =
-            gcry_cipher_encrypt( p_sys->aes_ctx,
-                                 p_sys->p_sendbuf + 12,
-                                 ( p_buffer->i_buffer / 16 ) * 16,
-                                 NULL, 0 );
-        if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-            goto error;
-
-        rc = net_Write( p_stream, p_sys->i_audio_udp_fd,
-                        p_sys->p_sendbuf, i_len );
-        if ( rc < 0 )
-            goto error;
-
-        vlc_mutex_lock( &p_sys->lock );
-        p_sys->i_seq++;
-        p_sys->i_rtp_ts += p_buffer->i_buffer;
-        p_sys->b_first_audio_packet = false;
-        vlc_mutex_unlock( &p_sys->lock );
-
-        p_next = p_buffer->p_next;
+        block_t *p_next = p_buffer->p_next;
         block_Release( p_buffer );
         p_buffer = p_next;
     }
-
-    return;
-
-error:
-    block_ChainRelease( p_buffer );
 }
 
 
@@ -1576,6 +1635,10 @@ static int SinkOpen( vlc_object_t *p_this )
                                        sizeof( p_sys->ps_aes_key ) );
     if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
         return VLC_EGENERIC;
+
+    p_sys->p_sendbuf = malloc( 12 + RAOP_ALAC_FRAME_BYTES );
+    if ( p_sys->p_sendbuf == NULL )
+        return VLC_ENOMEM;
 
     /* Open local control + timing UDP sockets so we can advertise their
      * ports in SETUP. The audio socket is opened later, once the receiver
@@ -1668,6 +1731,7 @@ static int SinkOpen( vlc_object_t *p_this )
     p_sys->i_seq = 0;
     p_sys->i_rtp_ts = 0;
     p_sys->b_first_audio_packet = true;
+    p_sys->i_pcm_acc = 0;
 
     return VLC_SUCCESS;
 }
@@ -1700,15 +1764,21 @@ static void *SinkAdd( sout_stream_t *p_stream, const es_format_t *p_fmt,
     es_format_Copy( &id->fmt, p_fmt );
 
     if ( id->fmt.i_cat == AUDIO_ES &&
-         id->fmt.i_codec == VLC_CODEC_ALAC &&
+         id->fmt.i_codec == VLC_CODEC_S16B &&
          id->fmt.audio.i_rate == 44100 &&
          id->fmt.audio.i_channels == 2 )
     {
         if ( p_sys->p_audio_stream )
-            msg_Warn( p_stream,
-                      "Only the first Apple Lossless audio stream is used" );
+            msg_Warn( p_stream, "ignoring extra audio stream" );
         else
             p_sys->p_audio_stream = id;
+    }
+    else
+    {
+        msg_Warn( p_stream, "ignoring stream: need s16b/44100/2ch, "
+                            "got %4.4s/%u/%u",
+                  (const char *)&id->fmt.i_codec,
+                  id->fmt.audio.i_rate, id->fmt.audio.i_channels );
     }
 
     return id;
@@ -1747,8 +1817,13 @@ static int SinkSend( sout_stream_t *p_stream, void *_id, block_t *p_buffer )
 
 
 /*****************************************************************************
- * Wrapper: forwards ES handling through the internal transcode->raop-sink
- * chain so any audio codec gets normalized to ALAC@44.1k/2ch on the wire.
+ * Wrapper: forwards ES handling through an internal transcode->raop-sink
+ * chain. We always transcode to signed 16-bit big-endian PCM at 44.1 kHz
+ * stereo: the sink then bit-packs each chunk into a verbatim (uncompressed)
+ * ALAC frame, which is what RAOP receivers expect on the wire. We can't
+ * passthrough the source's ALAC because the rice params buried in the
+ * source's magic cookie may not match the standard fmtp we advertise; and
+ * we can't re-encode via FFmpeg because its ALAC params don't match either.
  *****************************************************************************/
 typedef struct
 {
@@ -1760,18 +1835,37 @@ static void *Add( sout_stream_t *p_stream, const es_format_t *p_fmt,
                   const char *es_id )
 {
     raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
+
+    if ( p_wrap->p_out == NULL )
+    {
+        p_wrap->p_out = sout_StreamChainNew( VLC_OBJECT( p_stream ),
+            "transcode{acodec=s16b,channels=2,samplerate=44100}:raop-sink",
+            NULL );
+        if ( p_wrap->p_out == NULL )
+        {
+            msg_Err( p_stream, "Cannot create internal sout chain" );
+            return NULL;
+        }
+    }
+
     return sout_StreamIdAdd( p_wrap->p_out, p_fmt, es_id );
 }
 
 static void Del( sout_stream_t *p_stream, void *id )
 {
     raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
-    sout_StreamIdDel( p_wrap->p_out, id );
+    if ( p_wrap->p_out != NULL )
+        sout_StreamIdDel( p_wrap->p_out, id );
 }
 
 static int Send( sout_stream_t *p_stream, void *id, block_t *p_buffer )
 {
     raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
+    if ( p_wrap->p_out == NULL )
+    {
+        block_ChainRelease( p_buffer );
+        return VLC_SUCCESS;
+    }
     return sout_StreamIdSend( p_wrap->p_out, id, p_buffer );
 }
 
@@ -1780,7 +1874,8 @@ static void Close( sout_stream_t *p_stream )
     raop_wrapper_sys_t *p_wrap = p_stream->p_sys;
     sout_stream_sys_t *p_sys = p_wrap->p_shared;
 
-    sout_StreamChainDelete( p_wrap->p_out, NULL );
+    if ( p_wrap->p_out != NULL )
+        sout_StreamChainDelete( p_wrap->p_out, NULL );
     var_Destroy( p_stream, SOUT_CFG_PREFIX "sys" );
     FreeSys( VLC_OBJECT( p_stream ), p_sys );
     free( p_wrap );
@@ -1861,15 +1956,7 @@ static int Open( vlc_object_t *p_this )
         goto error;
     }
     p_wrap->p_shared = p_sys;
-
-    p_wrap->p_out = sout_StreamChainNew( p_this,
-        "transcode{acodec=alac,channels=2,samplerate=44100}:raop-sink",
-        NULL );
-    if ( p_wrap->p_out == NULL )
-    {
-        msg_Err( p_this, "Cannot create internal sout chain" );
-        goto error;
-    }
+    p_wrap->p_out = NULL;   /* built lazily on first Add() */
 
     p_stream->p_sys = p_wrap;
     p_stream->ops = &wrapper_ops;
