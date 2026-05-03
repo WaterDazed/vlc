@@ -15,8 +15,20 @@ libaudiobargraph_a_plugin_la_SOURCES = audio_filter/audiobargraph_a.c
 libaudiobargraph_a_plugin_la_LIBADD = $(LIBM)
 libchorus_flanger_plugin_la_SOURCES = audio_filter/chorus_flanger.c
 libchorus_flanger_plugin_la_LIBADD = $(LIBM)
-libcompressor_plugin_la_SOURCES = audio_filter/compressor.c
-libcompressor_plugin_la_LIBADD = $(LIBM)
+# Shared dynamics core
+libdynamics_common_la_SOURCES = audio_filter/dynamics.c \
+	audio_filter/dynamics.h
+libdynamics_common_la_LDFLAGS = -static
+noinst_LTLIBRARIES += libdynamics_common.la
+libcompressor_plugin_la_SOURCES = audio_filter/compressor.c \
+	audio_filter/dynamics.h
+libcompressor_plugin_la_LIBADD = libdynamics_common.la $(LIBM)
+libexpander_plugin_la_SOURCES = audio_filter/expander.c \
+	audio_filter/dynamics.h
+libexpander_plugin_la_LIBADD = libdynamics_common.la $(LIBM)
+liblimiter_plugin_la_SOURCES = audio_filter/limiter.c \
+	audio_filter/dynamics.h
+liblimiter_plugin_la_LIBADD = libdynamics_common.la $(LIBM)
 libequalizer_plugin_la_SOURCES = audio_filter/equalizer.c \
 	audio_filter/equalizer_presets.h
 libequalizer_plugin_la_LIBADD = $(LIBM)
@@ -55,6 +67,8 @@ audio_filter_PLUGINS += \
 	libaudiobargraph_a_plugin.la \
 	libchorus_flanger_plugin.la \
 	libcompressor_plugin.la \
+	libexpander_plugin.la \
+	liblimiter_plugin.la \
 	libequalizer_plugin.la \
 	libgate_plugin.la \
 	libkaraoke_plugin.la \

@@ -19,11 +19,36 @@ vlc_modules += {
     'dependencies' : [m_lib]
 }
 
+# Shared dynamics core
+libdynamics = static_library('dynamics',
+    files('dynamics.c'),
+    dependencies: [m_lib],
+    include_directories: [vlc_include_dirs],
+    install: false,
+)
+
 # Compressor module
 vlc_modules += {
     'name' : 'compressor',
     'sources' : files('compressor.c'),
-    'dependencies' : [m_lib]
+    'dependencies' : [m_lib],
+    'link_with' : [libdynamics],
+}
+
+# Expander module
+vlc_modules += {
+    'name' : 'expander',
+    'sources' : files('expander.c'),
+    'dependencies' : [m_lib],
+    'link_with' : [libdynamics],
+}
+
+# Limiter module
+vlc_modules += {
+    'name' : 'limiter',
+    'sources' : files('limiter.c'),
+    'dependencies' : [m_lib],
+    'link_with' : [libdynamics],
 }
 
 # Equalizer filter module
