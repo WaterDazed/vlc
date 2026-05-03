@@ -220,7 +220,8 @@ static NSString * ipAddressAsStringForData(NSData * data)
     NSDictionary *VLCRaopProtocol = @{ VLCBonjourProtocolName       : @"raop",
                                        VLCBonjourProtocolServiceName: @"_raop._tcp.",
                                        VLCBonjourIsRenderer         : @(YES),
-                                       VLCBonjourRendererFlags      : @(VLC_RENDERER_CAN_AUDIO)
+                                       VLCBonjourRendererFlags      : @(VLC_RENDERER_CAN_AUDIO),
+                                       VLCBonjourRendererDemux      : @"raop_demux"
                                        };
 
     NSArray *VLCSupportedProtocols = @[VLCFtpProtocol,

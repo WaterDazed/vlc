@@ -555,6 +555,8 @@ new_entries_rd_cb( void *p_this, int i_status, const struct rr_entry *p_entries 
 
         if( strcmp( p_srv->psz_protocol, "chromecast" ) == 0)
             psz_demux_filter = "cc_demux";
+        else if( strcmp( p_srv->psz_protocol, "raop" ) == 0)
+            psz_demux_filter = "raop_demux";
 
         items_add_renderer( p_sys, p_rd, p_srv->psz_protocol,
                             p_srv->psz_device_name, psz_uri,

@@ -52,6 +52,9 @@
 #include <vlc_threads.h>
 #include <vlc_tick.h>
 #include <vlc_rand.h>
+#include <vlc_meta.h>
+
+#include "raop_common.h"
 
 #define RAOP_PORT 5000
 #define RAOP_USER_AGENT "VLC " VERSION
@@ -203,6 +206,17 @@ typedef struct
 
     /* Pre-allocated RTP send buffer: 12-byte header + fixed ALAC payload. */
     uint8_t *p_sendbuf;
+
+    /* Pushed in by the raop_demux filter; under lock. b_session_ready
+     * gates whether p_meta has already been flushed to the receiver. */
+    vlc_meta_t *p_meta;
+    bool b_session_ready;
+
+    /* Shared interface exposed to the raop_demux filter via a vlc_object
+     * variable on the input_thread ancestor. */
+    raop_common common;
+    vlc_object_t *p_common_owner;
+    bool b_common_var;
 } sout_stream_sys_t;
 
 struct sout_stream_id_sys_t
@@ -298,7 +312,24 @@ static void FreeSys( vlc_object_t *p_this, sout_stream_sys_t *p_sys )
     free( p_sys->psz_client_instance );
     free( p_sys->psz_last_status_line );
     vlc_http_auth_Deinit( &p_sys->auth );
+
+    if ( p_sys->b_common_var && p_sys->p_common_owner != NULL )
+        var_Destroy( p_sys->p_common_owner, RAOP_SHARED_VAR_NAME );
+    if ( p_sys->p_meta != NULL )
+        vlc_meta_Delete( p_sys->p_meta );
+
     free( p_sys );
+}
+
+static void SetMetaCb( void *opaque, vlc_meta_t *p_meta )
+{
+    sout_stream_sys_t *p_sys = opaque;
+
+    vlc_mutex_lock( &p_sys->lock );
+    if ( p_sys->p_meta != NULL )
+        vlc_meta_Delete( p_sys->p_meta );
+    p_sys->p_meta = p_meta;
+    vlc_mutex_unlock( &p_sys->lock );
 }
 
 static void FreeId( sout_stream_id_sys_t *id )
@@ -2039,6 +2070,22 @@ static int Open( vlc_object_t *p_this )
     var_AddCallback( p_stream, SOUT_CFG_PREFIX "volume",
                      VolumeCallback, NULL );
     p_sys->b_volume_callback = true;
+
+    /* Expose the metadata-push interface so the matching raop_demux filter
+     * can find it via var_InheritAddress. The variable lives two levels up
+     * (typically the input_thread) so the demux side, which is in a sibling
+     * subtree, can still inherit it. */
+    p_sys->common.p_opaque = p_sys;
+    p_sys->common.pf_set_meta = SetMetaCb;
+    p_sys->p_common_owner = vlc_object_parent( vlc_object_parent( p_stream ) );
+    if ( p_sys->p_common_owner != NULL
+      && var_Create( p_sys->p_common_owner, RAOP_SHARED_VAR_NAME,
+                     VLC_VAR_ADDRESS ) == VLC_SUCCESS )
+    {
+        var_SetAddress( p_sys->p_common_owner, RAOP_SHARED_VAR_NAME,
+                        &p_sys->common );
+        p_sys->b_common_var = true;
+    }
 
     p_wrap = malloc( sizeof( *p_wrap ) );
     if ( p_wrap == NULL )
