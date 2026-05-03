@@ -1050,8 +1050,16 @@ static int Video_ProcessOutput(decoder_t *p_dec, mc_api_out *p_out,
                      - p_out->conf.video.crop_top;
         if (i_width <= 1 || i_height <= 1)
         {
-            i_width = p_out->conf.video.width;
-            i_height = p_out->conf.video.height;
+	   if (p_sys->video.i_input_width > 0 && p_sys->video.i_input_height > 0)
+	   {
+               i_width = p_sys->video.i_input_width;
+               i_height = p_sys->video.i_input_height;
+           }
+           else
+           {
+               i_width = p_out->conf.video.width;
+               i_height = p_out->conf.video.height;
+           }
         }
 
         if (!(p_sys->api.i_quirks & MC_API_VIDEO_QUIRKS_IGNORE_SIZE))
