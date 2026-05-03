@@ -957,7 +957,8 @@ static void WriteAuxHeaders( struct vlc_memstream *restrict stream,
 }
 
 static int SendRequest( vlc_object_t *p_this, const char *psz_method,
-                        const char *psz_content_type, const char *psz_body,
+                        const char *psz_content_type,
+                        const void *p_body, size_t i_body_length,
                         vlc_dictionary_t *p_req_headers )
 {
     sout_stream_t *p_stream = (sout_stream_t*)p_this;
@@ -980,14 +981,12 @@ static int SendRequest( vlc_object_t *p_this, const char *psz_method,
 
     WriteAuxHeaders( &stream, p_req_headers );
 
-    if( psz_body != NULL )
+    if( p_body != NULL && i_body_length > 0 )
     {
-        size_t i_body_length = strlen( psz_body );
-
         vlc_memstream_printf( &stream, "Content-Length: %zu\r\n",
                               i_body_length );
         vlc_memstream_puts( &stream, "\r\n" );
-        vlc_memstream_write( &stream, psz_body, i_body_length );
+        vlc_memstream_write( &stream, p_body, i_body_length );
     }
     else
         vlc_memstream_puts( &stream, "\r\n" );
@@ -1028,7 +1027,8 @@ error:
 }
 
 static int ExecRequest( vlc_object_t *p_this, const char *psz_method,
-                        const char *psz_content_type, const char *psz_body,
+                        const char *psz_content_type,
+                        const void *p_body, size_t i_body_length,
                         vlc_dictionary_t *p_req_headers,
                         vlc_dictionary_t *p_resp_headers )
 {
@@ -1071,8 +1071,8 @@ static int ExecRequest( vlc_object_t *p_this, const char *psz_method,
         }
 
         /* Send request */
-        i_err = SendRequest( p_this, psz_method, psz_content_type, psz_body,
-                             p_req_headers);
+        i_err = SendRequest( p_this, psz_method, psz_content_type,
+                             p_body, i_body_length, p_req_headers );
         if ( i_err != VLC_SUCCESS )
             goto error;
 
@@ -1227,8 +1227,9 @@ static int AnnounceSDP( vlc_object_t *p_this, char *psz_local,
     /* Build and send request */
     vlc_dictionary_insert( &req_headers, "Apple-Challenge", psz_sac_base64 );
 
-    i_err = ExecRequest( p_this, "ANNOUNCE", "application/sdp", psz_sdp,
-                         &req_headers, &resp_headers);
+    i_err = ExecRequest( p_this, "ANNOUNCE", "application/sdp",
+                         psz_sdp, strlen( psz_sdp ),
+                         &req_headers, &resp_headers );
     if ( i_err != VLC_SUCCESS )
         goto error;
 
@@ -1271,7 +1272,7 @@ static int SendSetup( vlc_object_t *p_this )
     }
     vlc_dictionary_insert( &req_headers, "Transport", psz_transport );
 
-    i_err = ExecRequest( p_this, "SETUP", NULL, NULL,
+    i_err = ExecRequest( p_this, "SETUP", NULL, NULL, 0,
                          &req_headers, &resp_headers );
     if ( i_err != VLC_SUCCESS )
         goto error;
@@ -1352,7 +1353,7 @@ static int SendRecord( vlc_object_t *p_this )
     vlc_dictionary_insert( &req_headers, "Session",
                            (void *)p_sys->psz_session );
 
-    i_err = ExecRequest( p_this, "RECORD", NULL, NULL,
+    i_err = ExecRequest( p_this, "RECORD", NULL, NULL, 0,
                          &req_headers, &resp_headers );
     if ( i_err != VLC_SUCCESS )
         goto error;
@@ -1382,7 +1383,7 @@ static int SendFlush( vlc_object_t *p_this )
     vlc_dictionary_insert( &req_headers, "RTP-Info",
                            (void *)"seq=0;rtptime=0" );
 
-    i_err = ExecRequest( p_this, "FLUSH", NULL, NULL,
+    i_err = ExecRequest( p_this, "FLUSH", NULL, NULL, 0,
                          &req_headers, &resp_headers );
     if ( i_err != VLC_SUCCESS )
         goto error;
@@ -1403,7 +1404,7 @@ static int SendTeardown( vlc_object_t *p_this )
     vlc_dictionary_init( &req_headers, 0 );
     vlc_dictionary_init( &resp_headers, 0 );
 
-    i_err = ExecRequest( p_this, "TEARDOWN", NULL, NULL,
+    i_err = ExecRequest( p_this, "TEARDOWN", NULL, NULL, 0,
                          &req_headers, &resp_headers );
     if ( i_err != VLC_SUCCESS )
         goto error;
@@ -1451,7 +1452,8 @@ static int UpdateVolume( vlc_object_t *p_this )
                            (void *)p_sys->psz_session );
 
     i_err = ExecRequest( p_this, "SET_PARAMETER",
-                         "text/parameters", psz_parameters,
+                         "text/parameters",
+                         psz_parameters, strlen( psz_parameters ),
                          &req_headers, &resp_headers );
     if ( i_err != VLC_SUCCESS )
         goto error;
