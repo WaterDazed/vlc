@@ -133,7 +133,9 @@ EXTRA_LTLIBRARIES += libstream_out_chromaprint_plugin.la
 sout_PLUGINS += $(LTLIBstream_out_chromaprint)
 
 # RAOP plugin
-libstream_out_raop_plugin_la_SOURCES = stream_out/raop.c stream_out/raop_common.h
+libstream_out_raop_plugin_la_SOURCES = stream_out/raop.c \
+	stream_out/raop_alac.c stream_out/raop_alac.h \
+	stream_out/raop_common.h
 libstream_out_raop_plugin_la_CFLAGS = $(AM_CFLAGS) $(GCRYPT_CFLAGS)
 libstream_out_raop_plugin_la_LIBADD = $(GCRYPT_LIBS) $(SOCKET_LIBS)
 if HAVE_GCRYPT

@@ -170,7 +170,7 @@ vlc_modules += {
 # RAOP module (Remote Audio Output Protocol — AirPlay 1 audio)
 vlc_modules += {
     'name' : 'stream_out_raop',
-    'sources' : files('raop.c', 'raop_common.h'),
+    'sources' : files('raop.c', 'raop_alac.c', 'raop_alac.h', 'raop_common.h'),
     'dependencies' : [gcrypt_dep, socket_libs],
     'enabled' : gcrypt_dep.found(),
     'shortname' : 's_o_raop',

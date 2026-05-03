@@ -55,33 +55,14 @@
 #include <vlc_meta.h>
 #include <vlc_stream.h>
 
+#include "raop_alac.h"
 #include "raop_common.h"
 
 #define RAOP_PORT 5000
 #define RAOP_USER_AGENT "VLC " VERSION
-/* 352 samples / packet keeps the verbatim ALAC payload at ~1408 bytes,
- * fitting one IP MTU. Larger chunks (e.g. 4096) work for compressed ALAC
- * but force IP fragmentation that many embedded receivers drop. */
-#define RAOP_FRAMES_PER_PACKET 352
 #define RAOP_SAMPLE_RATE 44100
 #define RAOP_LATENCY_FRAMES 88200
 #define NTP_EPOCH_OFFSET UINT64_C(2208988800)
-
-/* Verbatim (uncompressed) ALAC frame, stereo 16-bit:
- *   3 bits  channels        = 1  (CPE / stereo)
- *   4 bits  unused          = 0
- *  12 bits  unused          = 0
- *   1 bit   hassize         = 0
- *   2 bits  uncompressed    = 0
- *   1 bit   isnotcompressed = 1
- *   For each sample frame: 16 bits L (BE), 16 bits R (BE)
- * Total: 23 header bits + N*32 sample bits, packed MSB-first.
- * For RAOP_FRAMES_PER_PACKET=352 stereo s16: ceil((23 + 352*32) / 8) = 1411 bytes.
- */
-#define RAOP_ALAC_HEADER_BITS 23
-#define RAOP_PCM_FRAME_BYTES (RAOP_FRAMES_PER_PACKET * 2 * sizeof(int16_t))
-#define RAOP_ALAC_FRAME_BYTES \
-    ((RAOP_ALAC_HEADER_BITS + RAOP_FRAMES_PER_PACKET * 32 + 7) / 8)
 
 typedef struct sout_stream_id_sys_t sout_stream_id_sys_t;
 
@@ -1682,28 +1663,6 @@ static void SyncTimerCallback( void *opaque )
         net_Write( p_stream, p_sys->i_control_udp_fd, pkt, sizeof( pkt ) );
 }
 
-/* Pack RAOP_FRAMES_PER_PACKET stereo s16-BE samples into a verbatim ALAC
- * frame of RAOP_ALAC_FRAME_BYTES bytes, MSB-first bit-packed.
- *
- * The 23-bit header lives in bits 0..22 of the output bitstream: byte 0
- * holds header bits 0..7, byte 1 holds bits 8..15, byte 2's top 7 bits
- * hold the rest of the header. The PCM payload starts at bitstream bit
- * 23 (i.e. byte 2's LSB) — so every subsequent output byte takes the low
- * 7 bits of one input byte and the high 1 bit of the next. */
-static void PackVerbatimAlac( uint8_t *out, const uint8_t *pcm_be )
-{
-    const size_t n = RAOP_PCM_FRAME_BYTES;
-    out[0] = 0x20;
-    out[1] = 0x00;
-    out[2] = 0x02 | ( pcm_be[0] >> 7 );
-    for ( size_t i = 1; i < n; i++ )
-    {
-        out[2 + i] = (uint8_t)( ( ( pcm_be[i - 1] & 0x7F ) << 1 ) |
-                                ( pcm_be[i] >> 7 ) );
-    }
-    out[2 + n] = (uint8_t)( ( pcm_be[n - 1] & 0x7F ) << 1 );
-}
-
 /* Build, encrypt, and send one verbatim ALAC packet from the PCM frame
  * currently sitting at the start of p_sys->pcm_acc. */
 static int FlushOnePacket( sout_stream_t *p_stream )
@@ -1729,19 +1688,10 @@ static int FlushOnePacket( sout_stream_t *p_stream )
     SetDWBE( p_sys->p_sendbuf + 4, i_rtp_ts );
     SetDWBE( p_sys->p_sendbuf + 8, i_ssrc );
 
-    PackVerbatimAlac( p_sys->p_sendbuf + 12, p_sys->pcm_acc );
+    raop_alac_pack_verbatim( p_sys->p_sendbuf + 12, p_sys->pcm_acc );
 
-    i_gcrypt_err = gcry_cipher_reset( p_sys->aes_ctx );
-    if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-        return VLC_EGENERIC;
-    i_gcrypt_err = gcry_cipher_setiv( p_sys->aes_ctx, p_sys->ps_aes_iv,
-                                      sizeof( p_sys->ps_aes_iv ) );
-    if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-        return VLC_EGENERIC;
-    i_gcrypt_err = gcry_cipher_encrypt( p_sys->aes_ctx,
-                                        p_sys->p_sendbuf + 12,
-                                        ( i_payload / 16 ) * 16,
-                                        NULL, 0 );
+    i_gcrypt_err = raop_alac_encrypt( p_sys->aes_ctx, p_sys->ps_aes_iv,
+                                      p_sys->p_sendbuf + 12, i_payload );
     if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
         return VLC_EGENERIC;
 
