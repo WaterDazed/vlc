@@ -561,7 +561,6 @@ static int EncryptAesKeyBase64( vlc_object_t *p_this, char **result )
     gcry_mpi_t mpi_input = NULL;
     gcry_mpi_t mpi_output = NULL;
     unsigned char ps_padded_key[256];
-    unsigned char *ps_value;
     size_t i_value_size;
     int i_err;
 
@@ -632,16 +631,28 @@ static int EncryptAesKeyBase64( vlc_object_t *p_this, char **result )
         goto error;
     }
 
-    /* Copy encrypted data into char array */
-    i_gcrypt_err = gcry_mpi_aprint( GCRYMPI_FMT_USG, &ps_value, &i_value_size,
-                                    mpi_output );
-    if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
+    /* Copy encrypted data into char array. Use FMT_STD with a fixed-size
+     * buffer so the ciphertext is left-padded to the full 256-byte RSA
+     * modulus length: gcry_mpi_aprint(USG) would strip leading zero bytes,
+     * leaving the receiver to misalign the AES key on decrypt and produce
+     * garbage. */
     {
-        goto error;
-    }
+        unsigned char ps_fixed[256];
+        i_gcrypt_err = gcry_mpi_print( GCRYMPI_FMT_USG, ps_fixed,
+                                       sizeof( ps_fixed ),
+                                       &i_value_size, mpi_output );
+        if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
+            goto error;
 
-    /* Encode in Base64 */
-    *result = vlc_b64_encode_binary( ps_value, i_value_size );
+        if ( i_value_size < sizeof( ps_fixed ) )
+        {
+            size_t i_pad = sizeof( ps_fixed ) - i_value_size;
+            memmove( ps_fixed + i_pad, ps_fixed, i_value_size );
+            memset( ps_fixed, 0, i_pad );
+        }
+
+        *result = vlc_b64_encode_binary( ps_fixed, sizeof( ps_fixed ) );
+    }
     i_err = VLC_SUCCESS;
 
 error:
