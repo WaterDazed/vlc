@@ -59,6 +59,8 @@
  * but force IP fragmentation that many embedded receivers drop. */
 #define RAOP_FRAMES_PER_PACKET 352
 #define RAOP_SAMPLE_RATE 44100
+#define RAOP_LATENCY_FRAMES 88200
+#define NTP_EPOCH_OFFSET UINT64_C(2208988800)
 
 /* Verbatim (uncompressed) ALAC frame, stereo 16-bit:
  *   3 bits  channels        = 1  (CPE / stereo)
@@ -180,6 +182,11 @@ typedef struct
     uint32_t i_rtp_ts;
     uint32_t i_ssrc;
     bool b_first_audio_packet;
+    bool b_first_sync;
+
+    /* Periodic SYNC packet emitter */
+    vlc_timer_t sync_timer;
+    bool b_sync_timer;
 
     /* PCM accumulator: araw delivers blocks of arbitrary size, but we
      * must emit exactly RAOP_FRAMES_PER_PACKET samples per RTP packet so
@@ -258,6 +265,9 @@ static const char *const ppsz_sout_options[] = {
 static void FreeSys( vlc_object_t *p_this, sout_stream_sys_t *p_sys )
 {
     sout_stream_t *p_stream = (sout_stream_t*)p_this;
+
+    if ( p_sys->b_sync_timer )
+        vlc_timer_destroy( p_sys->sync_timer );
 
     if ( p_sys->i_control_fd >= 0 )
         net_Close( p_sys->i_control_fd );
@@ -1443,6 +1453,48 @@ static void LogInfo( vlc_object_t *p_this )
     msg_Info( p_this, "Jack type: %s", psz_jack_name );
 }
 
+static uint64_t NtpNow( void )
+{
+    struct timespec ts;
+    clock_gettime( CLOCK_REALTIME, &ts );
+
+    uint64_t sec = (uint64_t)ts.tv_sec + NTP_EPOCH_OFFSET;
+    uint64_t frac = ((uint64_t)ts.tv_nsec << 32) / 1000000000ULL;
+    return ( sec << 32 ) | frac;
+}
+
+static void SyncTimerCallback( void *opaque )
+{
+    sout_stream_t *p_stream = opaque;
+    sout_stream_sys_t *p_sys = p_stream->p_sys;
+    uint8_t pkt[20];
+
+    /* Only i_rtp_ts is shared with the input thread (FlushOnePacket);
+     * b_first_sync is touched only here. */
+    vlc_mutex_lock( &p_sys->lock );
+    uint32_t i_rtp_now = p_sys->i_rtp_ts;
+    vlc_mutex_unlock( &p_sys->lock );
+    bool b_first = p_sys->b_first_sync;
+    p_sys->b_first_sync = false;
+
+    /* The receiver advertises its buffering latency in the RECORD response;
+     * fall back to the standard 2-second buffer if it didn't. */
+    uint32_t i_latency = p_sys->i_audio_latency > 0
+                       ? (uint32_t)p_sys->i_audio_latency : RAOP_LATENCY_FRAMES;
+    uint32_t i_rtp_at_ntp = i_rtp_now - i_latency;
+    uint64_t i_ntp = NtpNow();
+
+    pkt[0] = b_first ? 0x90 : 0x80;
+    pkt[1] = 0x80 | 0x54;
+    SetWBE(  pkt + 2, 0x0007 );
+    SetDWBE( pkt + 4, i_rtp_at_ntp );
+    SetQWBE( pkt + 8, i_ntp );
+    SetDWBE( pkt + 16, i_rtp_now );
+
+    if ( p_sys->i_control_udp_fd >= 0 )
+        net_Write( p_stream, p_sys->i_control_udp_fd, pkt, sizeof( pkt ) );
+}
+
 /* Pack RAOP_FRAMES_PER_PACKET stereo s16-BE samples into a verbatim ALAC
  * frame of RAOP_ALAC_FRAME_BYTES bytes, MSB-first bit-packed.
  *
@@ -1731,7 +1783,23 @@ static int SinkOpen( vlc_object_t *p_this )
     p_sys->i_seq = 0;
     p_sys->i_rtp_ts = 0;
     p_sys->b_first_audio_packet = true;
+    p_sys->b_first_sync = true;
     p_sys->i_pcm_acc = 0;
+
+    /* Schedule periodic SYNC */
+    if ( p_sys->i_server_control_port > 0 )
+    {
+        if ( vlc_timer_create( &p_sys->sync_timer, SyncTimerCallback,
+                               p_stream ) == 0 )
+        {
+            p_sys->b_sync_timer = true;
+            vlc_timer_schedule( p_sys->sync_timer, false,
+                                VLC_TICK_FROM_MS( 100 ),
+                                VLC_TICK_FROM_MS( 1000 ) );
+        }
+        else
+            msg_Warn( p_this, "Cannot create SYNC timer; continuing without" );
+    }
 
     return VLC_SUCCESS;
 }
@@ -1742,7 +1810,14 @@ static int SinkOpen( vlc_object_t *p_this )
  *****************************************************************************/
 static void SinkClose( sout_stream_t *p_stream )
 {
+    sout_stream_sys_t *p_sys = p_stream->p_sys;
     vlc_object_t *p_this = VLC_OBJECT( p_stream );
+
+    if ( p_sys->b_sync_timer )
+    {
+        vlc_timer_destroy( p_sys->sync_timer );
+        p_sys->b_sync_timer = false;
+    }
 
     SendFlush( p_this );
     SendTeardown( p_this );
