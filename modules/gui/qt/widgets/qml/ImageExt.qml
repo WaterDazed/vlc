@@ -47,7 +47,7 @@ Item {
     property url source
     property alias sourceSize: image.sourceSize
     property alias sourceClipRect: image.sourceClipRect
-    readonly property int status: shaderEffect.source.status
+    readonly property int status: shaderEffect.source?.status ?? Image.Error
     property alias shaderStatus: shaderEffect.status
     property alias cache: image.cache
 
@@ -148,13 +148,13 @@ Item {
         anchors.alignWhenCentered: true
         anchors.centerIn: parent
 
-        implicitWidth: (source.status === Image.Ready) ? source.implicitWidth : 64
-        implicitHeight: (source.status === Image.Ready) ? source.implicitHeight : 64
+        implicitWidth: (source?.status === Image.Ready) ? source.implicitWidth : 64
+        implicitHeight: (source?.status === Image.Ready) ? source.implicitHeight : 64
 
         width: paintedSize.width
         height: paintedSize.height
 
-        visible: (source.status === Image.Ready) &&
+        visible: (source?.status === Image.Ready) &&
                  (GraphicsInfo.shaderType === GraphicsInfo.RhiShader) &&
                  (root.radius > 0.0 ||
                   root.borderWidth > 0 ||
@@ -194,7 +194,7 @@ Item {
                 return ret
 
             // No need to calculate if image is not ready
-            if (source.status !== Image.Ready)
+            if (source?.status !== Image.Ready)
                 return ret
 
             const implicitRatio = implicitWidth / implicitHeight
@@ -212,7 +212,7 @@ Item {
             let ret = Qt.size(0.0, 0.0)
 
             // No need to calculate if the texture is not ready:
-            if (source.status !== Image.Ready)
+            if (source?.status !== Image.Ready)
                 return ret
 
             // NOTE: Calculations are based on `QQuickImage`,
@@ -255,13 +255,36 @@ Item {
         }
 
         // (2 / width) seems to be a good coefficient to make it similar to `Rectangle.border`:
-        readonly property double borderRange: (source.status === Image.Ready) ? (root.borderWidth / width * 2.) : 0.0 // no need for outlining if there is no image (nothing to outline)
+        readonly property double borderRange: (source?.status === Image.Ready) ? (root.borderWidth / width * 2.) : 0.0 // no need for outlining if there is no image (nothing to outline)
         readonly property color borderColor: root.borderColor
 
         // QQuickImage as texture provider, no need for ShaderEffectSource.
         // In this case, we simply ask the Image to provide its texture,
         // so that we can make use of our custom shader.
-        readonly property Item source: root.textureProviderItem ?? image
+        readonly property Item source: {
+            if (root.textureProviderItem && root.textureProviderItem !== image) {
+                const status = root.textureProviderItem.status
+                if (status !== undefined) {
+                    // If the texture provider explicitly tells us that
+                    // it is not ready, we should not use it, even if it
+                    // is a texture provider and has a valid texture.
+                    switch (status) {
+                        case Image.Error:
+                        case Image.Null:
+                            return image
+                        case Image.Loading:
+                            return null // Just wait, this may provide a warning, but it is okay.
+                        case Image.Ready:
+                        default:
+                            return root.textureProviderItem
+                    }
+                } else {
+                    return root.textureProviderItem
+                }
+            }
+
+            return image
+        }
 
         fragmentShader: (cropRate.width > 0.0 || cropRate.height > 0.0) || (root.borderWidth > 0) ? "qrc:///shaders/SDFAARoundedTexture_cropsupport_bordersupport.frag.qsb"
                                                                                                   : "qrc:///shaders/SDFAARoundedTexture.frag.qsb"

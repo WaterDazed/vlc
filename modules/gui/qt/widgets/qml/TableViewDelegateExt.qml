@@ -64,6 +64,7 @@ T.Control {
     property int _contextMenuRequestID: -1
 
     property Item artworkTextureProvider
+    property Item customTextureProvider
 
     signal rightClick(Item menuParent, var menuModel, point globalMousePos)
     signal itemDoubleClicked(var index, var model)
@@ -259,6 +260,9 @@ T.Control {
                     )
                     if (item.artworkTextureProvider) {
                         delegate.artworkTextureProvider = Qt.binding(() => item.artworkTextureProvider)
+                    }
+                    if (item.customTextureProvider !== undefined) {
+                        item.customTextureProvider = Qt.binding(() => delegate.customTextureProvider)
                     }
                 }
                 Component.onDestruction: {

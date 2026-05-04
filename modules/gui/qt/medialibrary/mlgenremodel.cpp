@@ -35,8 +35,6 @@ static const int MLGENREMODEL_COVER_HEIGHT = 130 * 3;
 static const int MLGENREMODEL_COVER_COUNTX = 4;
 static const int MLGENREMODEL_COVER_COUNTY = 2;
 
-static const int MLGENREMODEL_COVER_BLUR = 4;
-
 //-------------------------------------------------------------------------------------------------
 
 MLGenreModel::MLGenreModel(QObject *parent)
@@ -131,7 +129,6 @@ QString MLGenreModel::getCover(const MLGenre * genre) const
                             , m_coverDefault
                             , MLGENREMODEL_COVER_COUNTX
                             , MLGENREMODEL_COVER_COUNTY
-                            , MLGENREMODEL_COVER_BLUR
                             , true);
 }
 
