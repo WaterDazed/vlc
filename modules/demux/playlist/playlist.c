@@ -197,6 +197,15 @@ char *ProcessMRL(const char *str, const char *base)
         }
     }
 
+    if (likely(abs) && unlikely(!strcmp(abs, base)))
+    {
+        /* Consider the location invalid if the resolved URL is the same as
+         * the playlist's URL
+         */
+        free(abs);
+        return NULL;
+    }
+
     return abs;
 }
 
