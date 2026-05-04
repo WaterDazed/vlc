@@ -35,7 +35,7 @@ FocusScope {
     }
 
     Accessible.role: Accessible.Client
-    Accessible.name: qsTr("Home View")
+    Accessible.name: qsTr("VLC Home Screen")
 
 
     component ConeNButtons: FocusScope {
