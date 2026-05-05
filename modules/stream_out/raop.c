@@ -1020,12 +1020,20 @@ static int ExecRequest( vlc_object_t *p_this, const char *psz_method,
         /* Send header only when Digest authentication is used */
         if ( p_sys->psz_password != NULL && p_sys->auth.psz_nonce != NULL )
         {
+            /* AirPort Express expects "iTunes" as the digest username
+             * under the legacy "raop" realm; non-RAOP realms use "AirPlay". */
+            const char *psz_user =
+                ( p_sys->auth.psz_realm != NULL
+                  && strcasecmp( p_sys->auth.psz_realm, "raop" ) != 0 )
+                ? "AirPlay" : "iTunes";
+
             FREENULL( psz_authorization );
 
             psz_authorization =
                 vlc_http_auth_FormatAuthorizationHeader( p_this, &p_sys->auth,
                                                          psz_method,
-                                                         p_sys->psz_url, "",
+                                                         p_sys->psz_url,
+                                                         psz_user,
                                                          p_sys->psz_password );
             if ( psz_authorization == NULL )
             {
