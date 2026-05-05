@@ -116,14 +116,24 @@ MLVideo::MLVideo(const vlc_ml_media_t* data)
         m_channel = "5.1";
 
     m_resolution = "";
-    if ( maxWidth >= 7680 && maxHeight >= 4320 )
-        m_resolution = "8K";
-    else if ( maxWidth >= 3840 && maxHeight >= 2160 )
-        m_resolution = "4K";
-    else if ( maxWidth >= 1440 && maxHeight >= 1080 )
-        m_resolution = "HD";
-    else if ( maxWidth >= 720 && maxHeight >= 1280 )
-        m_resolution = "720p";
+    if ( maxWidth > 0 && maxHeight > 0 )
+    {
+        const unsigned int realHeight = ( maxHeight < maxWidth ) ? maxHeight : maxWidth;
+        const unsigned int realWidth = ( maxHeight < maxWidth ) ? maxWidth : maxHeight;
+
+        if ( realHeight >= 4320 || realWidth >= 4320.0 * ( 16.0 / 9.0 ) )
+            m_resolution = "8K";
+        else if ( realHeight >= 2160 || realWidth >= 2160.0 * ( 16.0 / 9.0 ) )
+            m_resolution = "4K";
+        else if ( realHeight >= 1440 || realWidth >= 1440.0 * ( 16.0 / 9.0 ) )
+            m_resolution = "1440p";
+        else if ( realHeight >= 1080 || realWidth >= 1080.0 * ( 16.0 / 9.0 ) )
+            m_resolution = "1080p";
+        else if ( realHeight >= 720 || realWidth >= 720.0 * ( 16.0 / 9.0 ) )
+            m_resolution = "720p";
+        else
+            m_resolution = "SD";
+    }
 }
 
 bool MLVideo::isNew() const
