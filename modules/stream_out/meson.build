@@ -168,11 +168,12 @@ vlc_modules += {
 }
 
 # RAOP module (Remote Audio Output Protocol — AirPlay 1 audio)
+gpg_error_dep = cc.find_library('gpg-error', dirs: contrib_libdir, required: false)
 vlc_modules += {
     'name' : 'stream_out_raop',
     'sources' : files('raop.c', 'raop_alac.c', 'raop_alac.h', 'raop_common.h'),
-    'dependencies' : [gcrypt_dep, socket_libs],
-    'enabled' : gcrypt_dep.found(),
+    'dependencies' : [gcrypt_dep, gpg_error_dep, socket_libs],
+    'enabled' : gcrypt_dep.found() and gpg_error_dep.found(),
     'shortname' : 's_o_raop',
 }
 
