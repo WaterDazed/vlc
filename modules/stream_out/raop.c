@@ -1,9 +1,11 @@
 /*****************************************************************************
  * raop.c: Remote Audio Output Protocol streaming support
  *****************************************************************************
- * Copyright (C) 2008 VLC authors and VideoLAN
+ * Copyright (C) 2008, 2018, 2026 VLC authors and VideoLAN
  *
  * Author: Michael Hanselmann
+ *         Alexander Lyon <arlyon -at- me.com>
+ *         Felix Paul Kühne <fkuehne -at- videolan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -65,6 +67,7 @@
 #define NTP_EPOCH_OFFSET UINT64_C(2208988800)
 
 typedef struct sout_stream_id_sys_t sout_stream_id_sys_t;
+typedef struct sout_stream_sys_t sout_stream_sys_t;
 
 static const char ps_raop_rsa_pubkey[] =
     "\xe7\xd7\x44\xf2\xa2\xe2\x78\x8b\x6c\x1f\x55\xa0\x8e\xb7\x05\x44"
@@ -91,7 +94,6 @@ static const char psz_delim_colon[] = ":";
 static const char psz_delim_equal[] = "=";
 static const char psz_delim_semicolon[] = ";";
 
-
 /*****************************************************************************
  * Prototypes
  *****************************************************************************/
@@ -100,6 +102,7 @@ static void Close( sout_stream_t * );
 
 static int SinkOpen( vlc_object_t * );
 static void SinkClose( sout_stream_t * );
+static void SinkCleanup( sout_stream_sys_t * );
 
 static void *SinkAdd( sout_stream_t *, const es_format_t *, const char * );
 static void SinkDel( sout_stream_t *, void * );
@@ -116,7 +119,7 @@ typedef enum
     JACK_TYPE_DIGITAL,
 } jack_type_t;
 
-typedef struct
+struct sout_stream_sys_t
 {
     /* Input parameters */
     char *psz_host;
@@ -199,13 +202,12 @@ typedef struct
     raop_common common;
     vlc_object_t *p_common_owner;
     bool b_common_var;
-} sout_stream_sys_t;
+};
 
 struct sout_stream_id_sys_t
 {
     es_format_t fmt;
 };
-
 
 /*****************************************************************************
  * Module descriptor
@@ -261,7 +263,6 @@ static const char *const ppsz_sout_options[] = {
     NULL
 };
 
-
 /*****************************************************************************
  * Utilities:
  *****************************************************************************/
@@ -269,30 +270,14 @@ static void FreeSys( vlc_object_t *p_this, sout_stream_sys_t *p_sys )
 {
     sout_stream_t *p_stream = (sout_stream_t*)p_this;
 
-    if ( p_sys->b_sync_timer )
-        vlc_timer_destroy( p_sys->sync_timer );
+    SinkCleanup( p_sys );
 
-    if ( p_sys->i_control_fd >= 0 )
-        net_Close( p_sys->i_control_fd );
-    if ( p_sys->i_audio_udp_fd >= 0 )
-        net_Close( p_sys->i_audio_udp_fd );
-    if ( p_sys->i_control_udp_fd >= 0 )
-        net_Close( p_sys->i_control_udp_fd );
-    if ( p_sys->i_timing_udp_fd >= 0 )
-        net_Close( p_sys->i_timing_udp_fd );
     if ( p_sys->b_volume_callback )
         var_DelCallback( p_stream, SOUT_CFG_PREFIX "volume",
                          VolumeCallback, NULL );
 
-    gcry_cipher_close( p_sys->aes_ctx );
-
-    free( p_sys->p_sendbuf );
     free( p_sys->psz_host );
     free( p_sys->psz_password );
-    free( p_sys->psz_url );
-    free( p_sys->psz_session );
-    free( p_sys->psz_client_instance );
-    free( p_sys->psz_last_status_line );
     vlc_http_auth_Deinit( &p_sys->auth );
 
     if ( p_sys->b_common_var && p_sys->p_common_owner != NULL )
@@ -1752,7 +1737,6 @@ static void SendAudio( sout_stream_t *p_stream, block_t *p_buffer )
     }
 }
 
-
 static const struct sout_stream_operations sink_ops = {
     .add = SinkAdd,
     .del = SinkDel,
@@ -1760,6 +1744,48 @@ static const struct sout_stream_operations sink_ops = {
     .close = SinkClose,
 };
 
+static void SinkCleanup( sout_stream_sys_t *p_sys )
+{
+    if ( p_sys->b_sync_timer )
+    {
+        vlc_timer_destroy( p_sys->sync_timer );
+        p_sys->b_sync_timer = false;
+    }
+
+    if ( p_sys->i_control_fd >= 0 )
+    {
+        net_Close( p_sys->i_control_fd );
+        p_sys->i_control_fd = -1;
+    }
+    if ( p_sys->i_audio_udp_fd >= 0 )
+    {
+        net_Close( p_sys->i_audio_udp_fd );
+        p_sys->i_audio_udp_fd = -1;
+    }
+    if ( p_sys->i_control_udp_fd >= 0 )
+    {
+        net_Close( p_sys->i_control_udp_fd );
+        p_sys->i_control_udp_fd = -1;
+    }
+    if ( p_sys->i_timing_udp_fd >= 0 )
+    {
+        net_Close( p_sys->i_timing_udp_fd );
+        p_sys->i_timing_udp_fd = -1;
+    }
+
+    if ( p_sys->aes_ctx != NULL )
+    {
+        gcry_cipher_close( p_sys->aes_ctx );
+        p_sys->aes_ctx = NULL;
+    }
+
+    FREENULL( p_sys->p_sendbuf );
+
+    FREENULL( p_sys->psz_url );
+    FREENULL( p_sys->psz_session );
+    FREENULL( p_sys->psz_client_instance );
+    FREENULL( p_sys->psz_last_status_line );
+}
 
 /*****************************************************************************
  * SinkOpen: open the RTSP control connection and run the protocol handshake
@@ -1770,7 +1796,7 @@ static int SinkOpen( vlc_object_t *p_this )
     sout_stream_sys_t *p_sys;
     char psz_local[NI_MAXNUMERICHOST];
     gcry_error_t i_gcrypt_err;
-    int i_err = VLC_SUCCESS;
+    int i_err = VLC_EGENERIC;
     uint32_t i_session_id;
     uint64_t i_client_instance;
 
@@ -1791,14 +1817,14 @@ static int SinkOpen( vlc_object_t *p_this )
     {
         msg_Err( p_this, "Cannot establish control connection to %s:%d (%s)",
                  p_sys->psz_host, p_sys->i_port, vlc_strerror_c(errno) );
-        return VLC_EGENERIC;
+        goto error;
     }
 
     /* Get local IP address */
     if ( net_GetSockAddress( p_sys->i_control_fd, psz_local, NULL ) )
     {
         msg_Err( p_this, "cannot get local IP address" );
-        return VLC_EGENERIC;
+        goto error;
     }
 
     /* Random session ID */
@@ -1808,12 +1834,20 @@ static int SinkOpen( vlc_object_t *p_this )
     vlc_rand_bytes( &i_client_instance, sizeof( i_client_instance ) );
     if ( asprintf( &p_sys->psz_client_instance, "%016"PRIX64,
                    i_client_instance ) < 0 )
-        return VLC_ENOMEM;
+    {
+        p_sys->psz_client_instance = NULL;
+        i_err = VLC_ENOMEM;
+        goto error;
+    }
 
     /* Build session URL */
     if ( asprintf( &p_sys->psz_url, "rtsp://%s/%u",
                    psz_local, i_session_id ) < 0 )
-        return VLC_ENOMEM;
+    {
+        p_sys->psz_url = NULL;
+        i_err = VLC_ENOMEM;
+        goto error;
+    }
 
     /* Generate AES key and IV */
     gcry_randomize( p_sys->ps_aes_key, sizeof( p_sys->ps_aes_key ),
@@ -1825,13 +1859,16 @@ static int SinkOpen( vlc_object_t *p_this )
     i_gcrypt_err = gcry_cipher_open( &p_sys->aes_ctx, GCRY_CIPHER_AES,
                                      GCRY_CIPHER_MODE_CBC, 0 );
     if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-        return VLC_EGENERIC;
+    {
+        p_sys->aes_ctx = NULL;
+        goto error;
+    }
 
     /* Set key */
     i_gcrypt_err = gcry_cipher_setkey( p_sys->aes_ctx, p_sys->ps_aes_key,
                                        sizeof( p_sys->ps_aes_key ) );
     if ( CheckForGcryptError( p_stream, i_gcrypt_err ) )
-        return VLC_EGENERIC;
+        goto error;
 
     p_sys->p_sendbuf = malloc( 12 + RAOP_ALAC_FRAME_BYTES );
     if ( p_sys->p_sendbuf == NULL )
@@ -1845,40 +1882,40 @@ static int SinkOpen( vlc_object_t *p_this )
     if ( p_sys->i_timing_udp_fd < 0 )
     {
         msg_Err( p_this, "Cannot open local timing UDP socket" );
-        return VLC_EGENERIC;
+        goto error;
     }
     if ( net_GetSockAddress( p_sys->i_timing_udp_fd, NULL,
                              &p_sys->i_local_timing_port ) )
     {
         msg_Err( p_this, "Cannot read local timing port" );
-        return VLC_EGENERIC;
+        goto error;
     }
 
     p_sys->i_control_udp_fd = net_ListenUDP1( p_this, psz_local, 0 );
     if ( p_sys->i_control_udp_fd < 0 )
     {
         msg_Err( p_this, "Cannot open local control UDP socket" );
-        return VLC_EGENERIC;
+        goto error;
     }
     if ( net_GetSockAddress( p_sys->i_control_udp_fd, NULL,
                              &p_sys->i_local_control_port ) )
     {
         msg_Err( p_this, "Cannot read local control port" );
-        return VLC_EGENERIC;
+        goto error;
     }
 
     /* Protocol handshake */
     i_err = AnnounceSDP( p_this, psz_local, i_session_id );
     if ( i_err != VLC_SUCCESS )
-        return i_err;
+        goto error;
 
     i_err = SendSetup( p_this );
     if ( i_err != VLC_SUCCESS )
-        return i_err;
+        goto error;
 
     i_err = SendRecord( p_this );
     if ( i_err != VLC_SUCCESS )
-        return i_err;
+        goto error;
 
     /* Push title/artist/album/artwork to the receiver if the demux filter
      * has already populated the meta. Failure here is non-fatal. */
@@ -1898,7 +1935,8 @@ static int SinkOpen( vlc_object_t *p_this )
         msg_Err( p_this, "Cannot establish audio UDP connection to %s:%d (%s)",
                  p_sys->psz_host, p_sys->i_server_audio_port,
                  vlc_strerror_c(errno) );
-        return VLC_EGENERIC;
+        i_err = VLC_EGENERIC;
+        goto error;
     }
 
     /* If the receiver advertised a control port, connect() the bound local
@@ -1916,7 +1954,8 @@ static int SinkOpen( vlc_object_t *p_this )
         {
             msg_Err( p_this, "Cannot resolve control peer %s:%d",
                      p_sys->psz_host, p_sys->i_server_control_port );
-            return VLC_EGENERIC;
+            i_err = VLC_EGENERIC;
+            goto error;
         }
         if ( connect( p_sys->i_control_udp_fd,
                       res->ai_addr, res->ai_addrlen ) != 0 )
@@ -1925,7 +1964,8 @@ static int SinkOpen( vlc_object_t *p_this )
                      p_sys->psz_host, p_sys->i_server_control_port,
                      vlc_strerror_c(errno) );
             freeaddrinfo( res );
-            return VLC_EGENERIC;
+            i_err = VLC_EGENERIC;
+            goto error;
         }
         freeaddrinfo( res );
     }
@@ -1955,8 +1995,11 @@ static int SinkOpen( vlc_object_t *p_this )
     }
 
     return VLC_SUCCESS;
-}
 
+error:
+    SinkCleanup( p_sys );
+    return i_err;
+}
 
 /*****************************************************************************
  * SinkClose: tear down the RTSP session; the wrapper frees the shared sys
@@ -1966,16 +2009,11 @@ static void SinkClose( sout_stream_t *p_stream )
     sout_stream_sys_t *p_sys = p_stream->p_sys;
     vlc_object_t *p_this = VLC_OBJECT( p_stream );
 
-    if ( p_sys->b_sync_timer )
-    {
-        vlc_timer_destroy( p_sys->sync_timer );
-        p_sys->b_sync_timer = false;
-    }
-
     SendFlush( p_this );
     SendTeardown( p_this );
-}
 
+    SinkCleanup( p_sys );
+}
 
 static void *SinkAdd( sout_stream_t *p_stream, const es_format_t *p_fmt,
                       const char *es_id )
@@ -2012,7 +2050,6 @@ static void *SinkAdd( sout_stream_t *p_stream, const es_format_t *p_fmt,
     return id;
 }
 
-
 static void SinkDel( sout_stream_t *p_stream, void *_id )
 {
     sout_stream_sys_t *p_sys = p_stream->p_sys;
@@ -2023,7 +2060,6 @@ static void SinkDel( sout_stream_t *p_stream, void *_id )
 
     FreeId( id );
 }
-
 
 static int SinkSend( sout_stream_t *p_stream, void *_id, block_t *p_buffer )
 {
@@ -2042,7 +2078,6 @@ static int SinkSend( sout_stream_t *p_stream, void *_id, block_t *p_buffer )
 
     return VLC_SUCCESS;
 }
-
 
 /*****************************************************************************
  * Wrapper: forwards ES handling through an internal transcode->raop-sink
@@ -2215,7 +2250,6 @@ error:
     FreeSys( p_this, p_sys );
     return i_err;
 }
-
 
 /*****************************************************************************
  * VolumeCallback: called when the volume is changed on the fly.
