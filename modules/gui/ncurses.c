@@ -81,6 +81,8 @@ static void Close          (vlc_object_t *);
   add_string("ncurses-" #element "-fg-color", #defaultfg, #element " foreground", "sets a color for the " #element "foreground") \
   add_string("ncurses-" #element "-bg-color", #defaultbg, #element " background", "sets a color for the " #element "background")
 
+#define MAX_PLAYLIST_COLORS (config_GetInt("ncurses-playlist-colors") > 32 ? 32 : config_GetInt("ncurses-playlist-colors"))
+
 #define add_color(color, default)\
     add_rgb("ncurses-color-" #color, default, #color, "sets the" #color "color for ncurses")
 vlc_module_begin ()
@@ -103,11 +105,6 @@ vlc_module_begin ()
 
     add_element_color_id(title, yellow, black)
 
-    /* jamaican playlist, for rastafari sisters & brothers! */
-    add_element_color_id(playlist_1, green, black)
-    add_element_color_id(playlist_2, yellow, black)
-    add_element_color_id(playlist_3, red, black)
-
     /* used in DrawBox() */
     add_element_color_id(box, cyan, black)
     /* Source: State, Position, Volume, Chapters, etc...*/
@@ -125,6 +122,40 @@ vlc_module_begin ()
     add_element_color_id(folder, red, black)
 
     add_element_color_id(progress, white, white)
+
+    add_element_color_id(playlist_1, green, black)
+    add_element_color_id(playlist_2, yellow, black)
+    add_element_color_id(playlist_3, red, black)
+    add_element_color_id(playlist_4, white, black)
+    add_element_color_id(playlist_5, white, black)
+    add_element_color_id(playlist_6, white, black)
+    add_element_color_id(playlist_7, white, black)
+    add_element_color_id(playlist_8, white, black)
+    add_element_color_id(playlist_9, white, black)
+    add_element_color_id(playlist_10, white, black)
+    add_element_color_id(playlist_11, white, black)
+    add_element_color_id(playlist_12, white, black)
+    add_element_color_id(playlist_13, white, black)
+    add_element_color_id(playlist_14, white, black)
+    add_element_color_id(playlist_15, white, black)
+    add_element_color_id(playlist_16, white, black)
+    add_element_color_id(playlist_17, white, black)
+    add_element_color_id(playlist_18, white, black)
+    add_element_color_id(playlist_19, white, black)
+    add_element_color_id(playlist_20, white, black)
+    add_element_color_id(playlist_21, white, black)
+    add_element_color_id(playlist_22, white, black)
+    add_element_color_id(playlist_23, white, black)
+    add_element_color_id(playlist_24, white, black)
+    add_element_color_id(playlist_25, white, black)
+    add_element_color_id(playlist_26, white, black)
+    add_element_color_id(playlist_27, white, black)
+    add_element_color_id(playlist_28, white, black)
+    add_element_color_id(playlist_29, white, black)
+    add_element_color_id(playlist_30, white, black)
+    add_element_color_id(playlist_31, white, black)
+    add_element_color_id(playlist_32, white, black)
+    add_integer("ncurses-playlist-colors", 3, "playlist colors num", "amount of different playlist colors (must be smaller than 32)")
 vlc_module_end ()
 
 #include "eject.c"
@@ -163,9 +194,6 @@ enum
 {
     C_DEFAULT = 0,
     C_TITLE,
-    C_PLAYLIST_1,
-    C_PLAYLIST_2,
-    C_PLAYLIST_3,
     C_BOX,
     C_STATUS,
     C_INFO,
@@ -177,7 +205,8 @@ enum
     C_PROGRESS,
     /* XXX: new elements here ! */
 
-    C_MAX
+    C_MAX,
+    C_PLAYLIST = 100,
 };
 
 struct dir_entry_t
@@ -465,10 +494,6 @@ static int get_color_id_from_string(const char * string) {
 static const char * element_names[] = {
   [C_TITLE] = "title",
 
-  [C_PLAYLIST_1] = "playlist_1",
-  [C_PLAYLIST_2] = "playlist_2",
-  [C_PLAYLIST_3] = "playlist_3",
-
   [C_BOX] = "box",
   [C_STATUS] = "status",
 
@@ -502,6 +527,16 @@ static void load_pairs_config() {
     char * fg = config_GetPsz(buf);
 
     sprintf(buf, "ncurses-%s-bg-color", element_names[i]);
+    char * bg = config_GetPsz(buf);
+    init_pair(i, get_color_id_from_string(fg), get_color_id_from_string(bg));
+  }
+
+  for (int i = C_PLAYLIST; i < C_PLAYLIST + MAX_PLAYLIST_COLORS; i++) {
+    char buf[64] = {0,};
+    sprintf(buf, "ncurses-playlist_%d-fg-color", i - C_PLAYLIST + 1);
+    char * fg = config_GetPsz(buf);
+
+    sprintf(buf, "ncurses-playlist_%d-bg-color", i - C_PLAYLIST + 1);
     char * bg = config_GetPsz(buf);
     init_pair(i, get_color_id_from_string(fg), get_color_id_from_string(bg));
   }
@@ -937,7 +972,7 @@ static int DrawPlaylist(intf_thread_t *intf)
     for (size_t i = 0; i < sys->pl_item_names.size; i++)
     {
         if (sys->color)
-            color_set(i%3 + C_PLAYLIST_1, NULL);
+            color_set(i%config_GetInt("ncurses-playlist-colors") + C_PLAYLIST, NULL);
 
         MainBoxWrite(sys, i, "%c %s",
                 (ssize_t)i == cur_idx ? '>' : ' ',
