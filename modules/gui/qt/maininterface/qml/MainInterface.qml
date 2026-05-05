@@ -96,6 +96,74 @@ Item {
         anchors.rightMargin: MainCtx.windowExtendedMargin
         anchors.bottomMargin: MainCtx.windowExtendedMargin
 
+        property real _eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
+
+        Connections {
+            target: MainCtx
+
+            function onIntfDevicePixelRatioChanged() {
+                // Update the DPR:
+                // Normally, this is not done, as we display the images at the size we
+                // want, and we don't want to re-load all images on DPR change. But in
+                // this case it is necessary as we need to update the csd window radius.
+                g_mainInterface._eDPR = MainCtx.effectiveDevicePixelRatio(g_mainInterface.Window.window)
+            }
+        }
+
+        // There are several ways to achieve make interface window rounded:
+        // - Make the interface window layered, and use `ImageExt` which can display
+        //   any arbitrary texture rounded through SDF. This method has the advantage
+        //   of proper anti-aliasing, but the cost is higher video memory consumption.
+        //   It also has the advantage of displaying properly anti-aliased border.
+        // - Use rounded rectangular hollow mode in the CSD shadow with depth
+        //   buffer enabled. Thanks to depth test, it will make the round corners
+        //   not rendered (implicit rounded clipping). This is still required with
+        //   the layering method, but if anti aliasing is not wanted can be used
+        //   solely. This has the advantage of not using video memory (since layering
+        //   is not used), but has the disadvantage of not having anti aliasing. It
+        //   also has the disadvantage of not having border at all.
+        // - Make use of system compositor, such as with Direct Composition effects
+        //   for the interface visual. Rounding is not necessary on Windows, since
+        //   it is already handled by the system compositor because we do not use
+        //   pure CSD on Windows. With Wayland, I have not found a way to achieve
+        //   this besides the "Chromium surface augmenter" protocol which is not
+        //   supported by KWin or Mutter. So this way is not really applicable to
+        //   us at the moment, however, if possible, this should be favored.
+
+        // For rounded corners (and implicit clipping):
+        property int radius: MainCtx.windowRadius
+        antialiasing: !MainCtx.favorLowerVideoMemoryConsumption // Only used for whether to enable layering or not
+
+        layer.enabled: antialiasing && (MainCtx.windowRadius > 0) &&
+                       (GraphicsInfo.shaderType === GraphicsInfo.RhiShader)
+        layer.samplerName: "unboundTextureProviderItem"
+
+        property Item _layerEffect
+
+        // We use EnhancedImageExt instead of `ImageExt` because it provides `status`
+        // for arbitrary texture providers, which is necessary for `ImageExt`
+        layer.effect: Widgets.EnhancedImageExt {
+            radius: g_mainInterface.radius
+
+            borderWidth: (0.5 * g_mainInterface._eDPR)
+            borderColor: theme.border
+
+            // Blending must be false to keep `ViewBlockingRectangle` working,
+            // which is necessary for punching hole to reveal inter-window backdrop
+            // blur or the video window. It is also a good thing to do regardless.
+            blending: false
+
+            Component.onCompleted: {
+                console.assert(g_mainInterface._layerEffect === null)
+                g_mainInterface._layerEffect = this
+            }
+
+            Component.onDestruction: {
+                console.assert(g_mainInterface._layerEffect === this)
+                g_mainInterface._layerEffect = null
+            }
+        }
+
         Binding {
             target: VLCStyle
             property: "appWidth"
@@ -112,6 +180,17 @@ Item {
             target: MainCtx
             property: "windowExtendedMargin"
             value: _extendedFrameVisible ? (Qt.platform.pluginName.startsWith("wayland") ? 60 : 30) : 0
+        }
+
+        Binding {
+            target: MainCtx
+            property: "windowRadius"
+            value: (MainCtx.clientSideDecoration &&
+                    !MainCtx.platformHandlesRoundingWithCSD() &&
+                    (MainCtx.intfMainWindow?.visibility === Window.Windowed) &&
+                    (!History.match(History.viewPath, ["player"]) || MainCtx.pinVideoControls) &&
+                    (g_mainInterface.GraphicsInfo.shaderType === GraphicsInfo.RhiShader)) ? (VLCStyle.csdWindowRadius * g_mainInterface._eDPR)
+                                                                                          : 0
         }
 
         Window.onWindowChanged: {
@@ -283,7 +362,8 @@ Item {
             anchors.fill: parent
             focus: true
             // If there is depth buffer, clipping is not necessary:
-            clip: _extendedFrameVisible && !effect.hasDepthBuffer
+            // If layering is enabled, there is implicit clipping, so clipping here is not necessary:
+            clip: _extendedFrameVisible && !effect.hasDepthBuffer && !g_mainInterface.layer.enabled
 
             pageModel: _pageModel
 
@@ -332,7 +412,7 @@ Item {
     //provide them but support extended frame
     Widgets.RoundedRectangleShadow {
         id: effect
-        parent: g_mainInterface
+        parent: g_mainInterface._layerEffect ?? g_mainInterface
         hollow: (z >= 0) || (Window.window && (Window.window.color.a < 1.0)) // the interface may be translucent if the window has backdrop blur
         // No need for blending, even if this is above everything (when there is depth buffer). This item does not need to be blended in the scene
         // graph. The system compositor is still going to respect the transparency when compositing the window. By disabling blending, this is treated
@@ -344,7 +424,7 @@ Item {
         color: Qt.rgba(0.0, 0.0, 0.0, 0.5) // sg opacity < 1.0 force enables blending, so we adjust the color instead
 
         // If there is depth buffer, we enable hollow mode. The inner area is discarded, so we can do this:
-        z: hasDepthBuffer ? 99 : -1
+        z: (hasDepthBuffer || g_mainInterface.layer.enabled) ? 99 : -1
 
         readonly property bool hasDepthBuffer: (Window.window && MainCtx.windowHasDepthBuffer(Window.window))
 

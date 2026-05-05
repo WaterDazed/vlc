@@ -97,6 +97,7 @@ class MainCtx : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(bool favorLowerVideoMemoryConsumption READ favorLowerVideoMemoryConsumption CONSTANT FINAL)
     Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
     Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
     Q_PROPERTY(double playlistWidthFactor READ getPlaylistWidthFactor WRITE setPlaylistWidthFactor NOTIFY playlistWidthFactorChanged FINAL)
@@ -151,6 +152,7 @@ class MainCtx : public QObject
     Q_PROPERTY(bool bgCone READ isbgCone WRITE setbgCone NOTIFY bgConeToggled FINAL)
     Q_PROPERTY(bool windowSuportExtendedFrame READ windowSuportExtendedFrame NOTIFY windowSuportExtendedFrameChanged)
     Q_PROPERTY(unsigned windowExtendedMargin READ windowExtendedMargin WRITE setWindowExtendedMargin NOTIFY windowExtendedMarginChanged)
+    Q_PROPERTY(int windowRadius READ windowRadius MEMBER m_windowRadius NOTIFY windowRadiusChanged FINAL)
     Q_PROPERTY(SearchCtx* search MEMBER m_search CONSTANT FINAL)
     Q_PROPERTY(SortCtx* sort MEMBER m_sort CONSTANT FINAL)
 
@@ -204,6 +206,8 @@ public:
     };
     Q_ENUM(OsType)
 
+    constexpr bool favorLowerVideoMemoryConsumption() { return false; }
+
     inline QWindow::Visibility interfaceVisibility() const { return m_windowVisibility; }
     bool isPlaylistDocked() { return b_playlistDocked; }
     bool isPlaylistVisible() { return m_playlistVisible; }
@@ -252,6 +256,7 @@ public:
 
     inline bool windowSuportExtendedFrame() const { return m_windowSuportExtendedFrame; }
     inline unsigned windowExtendedMargin() const { return m_windowExtendedMargin; }
+    int windowRadius() const { return m_windowRadius; }
     void setWindowSuportExtendedFrame(bool support);
     void setWindowExtendedMargin(unsigned margin);
 
@@ -342,6 +347,7 @@ public:
         });
     }
 
+    Q_INVOKABLE virtual bool platformHandlesRoundingWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesResizeWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesTitleBarButtonsWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesShadowsWithCSD() const { return false; };
@@ -461,6 +467,7 @@ protected:
     bool m_bgCone = true;
     bool m_windowSuportExtendedFrame = false;
     unsigned m_windowExtendedMargin = 0;
+    int m_windowRadius = 0;
 
     std::unique_ptr<CSDButtonModel> m_csdButtonModel;
 
@@ -577,6 +584,7 @@ signals:
     void bgConeToggled();
     void windowSuportExtendedFrameChanged();
     void windowExtendedMarginChanged(unsigned margin);
+    void windowRadiusChanged(int radius);
 
     void requestShowMainView();
     void requestShowPlayerView();

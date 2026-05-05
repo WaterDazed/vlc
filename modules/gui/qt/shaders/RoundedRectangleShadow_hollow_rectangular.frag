@@ -2,7 +2,7 @@
 
 // WARNING: This file must be in sync with RoundedRectangleShadow.frag
 // TODO: Generate this shader at build time.
-#define HOLLOW
+#define HOLLOW_RECTANGULAR
 
 // TODO: Dithering is not necessary with light colors. It is pretty much
 //       necessary with dark colors due to premultiplied alpha to prevent
@@ -33,6 +33,11 @@
 
 #include "Common.glsl"
 
+#ifdef HOLLOW_ROUNDED_RECTANGULAR
+#include "SDF.glsl"
+#define BREATHING_ROOM 0.00275
+#endif
+
 // This is provided by the default vertex shader even when there is no texture:
 layout(location = 0) in vec2 qt_TexCoord0;
 
@@ -44,6 +49,9 @@ layout(std140, binding = 0) uniform buf {
 
   float blurRadius;
   float radius;
+#ifdef HOLLOW_ROUNDED_RECTANGULAR
+  float normalRadius;
+#endif
   float compensationFactor;
 
   vec2 size;
@@ -109,11 +117,24 @@ void main()
     vec2 compensatedOffset = vec2(blurRadius, blurRadius) * compensationFactor;
     vec2 denormalCoord = size * qt_TexCoord0;
 
-#ifdef HOLLOW
-    if (denormalCoord.x >= compensatedOffset.x && denormalCoord.x <= (size.x - compensatedOffset.x) &&
-        denormalCoord.y >= compensatedOffset.y && denormalCoord.y <= (size.y - compensatedOffset.y))
+#ifdef HOLLOW_RECTANGULAR
+   if (denormalCoord.x >= compensatedOffset.x && denormalCoord.x <= (size.x - compensatedOffset.x) &&
+       denormalCoord.y >= compensatedOffset.y && denormalCoord.y <= (size.y - compensatedOffset.y))
+     discard;
+#endif
+
+#ifdef HOLLOW_ROUNDED_RECTANGULAR
+    vec4 subRect = vec4(compensatedOffset.x / size.x, compensatedOffset.y / size.y, 1.0 - 2.0 * compensatedOffset.x / size.x, 1.0 - 2.0 * compensatedOffset.y / size.y);
+    vec2 normalCoord = vec2(1.0, 1.0) / (subRect.zw) * (qt_TexCoord0 - (subRect.zw + subRect.xy)) + vec2(1.0, 1.0);
+
+    vec2 p = (size.xy * ((2.0 * normalCoord) - 1)) / size.y;
+
+    float dist = sdRoundBox(p, vec2(size.x / size.y, 1.0), vec4(normalRadius, normalRadius, normalRadius, normalRadius));
+
+    if (dist < (0.0 + BREATHING_ROOM)) // 0.0 is the border, used to mark that
       discard;
 #endif
+
 
     float shadow = roundedBoxShadow(compensatedOffset,
                                     size - compensatedOffset,

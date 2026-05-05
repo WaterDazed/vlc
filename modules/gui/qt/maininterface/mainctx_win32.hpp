@@ -88,6 +88,7 @@ public:
 public:
     bool getDisableVolumeKeys() const;
 
+    Q_INVOKABLE bool platformHandlesRoundingWithCSD() const override { return (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8); };
     Q_INVOKABLE bool platformHandlesShadowsWithCSD() const override { return (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8); };
     Q_INVOKABLE bool platformHandlesResizeWithCSD() const override { return (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8); };
 

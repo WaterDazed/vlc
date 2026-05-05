@@ -1377,7 +1377,8 @@ libqt_plugin_la_SHADER_FRAG = shaders/FadingEdge.frag \
                               shaders/FastBlend_multiply.frag \
                               shaders/FastBlend_screen.frag \
                               shaders/RoundedRectangleShadow.frag \
-                              shaders/RoundedRectangleShadow_hollow.frag \
+                              shaders/RoundedRectangleShadow_hollow_rectangular.frag \
+                              shaders/RoundedRectangleShadow_hollow_roundedrectangular.frag \
                               shaders/VoronoiSnow.frag \
                               shaders/DualKawaseBlur_upsample.frag \
                               shaders/DualKawaseBlur_downsample.frag \
@@ -1442,12 +1443,12 @@ QSB_PARAMS_VERBOSE_ = $(QSB_PARAMS_VERBOSE__$(AM_DEFAULT_VERBOSITY))
 QSB_PARAMS_VERBOSE_0 = -s
 QSB_PARAMS_VERBOSE__0 = $(QSB_PARAMS_VERBOSE_0)
 
-EXTRA_DIST += shaders/Common.glsl
+EXTRA_DIST += shaders/Common.glsl shaders/SDF.glsl
 
-%.frag.qsb: %.frag shaders/Common.glsl
+%.frag.qsb: %.frag shaders/Common.glsl shaders/SDF.glsl
 	$(qsb_verbose)PATH="$(QSB_EXTRA_PATH)$$PATH" $(QSB) $(QSB_PARAMS) $(QSB_PARAMS_VERBOSE) -o $@ $<
 
-%.vert.qsb: %.vert shaders/Common.glsl
+%.vert.qsb: %.vert shaders/Common.glsl shaders/SDF.glsl
 	$(qsb_verbose)PATH="$(QSB_EXTRA_PATH)$$PATH" $(QSB) $(QSB_PARAMS) $(QSB_PARAMS_VERBOSE) -o $@ $<
 
 shaders/shaders.cpp: $(srcdir)/shaders/shaders.qrc $(libqt_plugin_la_SHADER_FRAG:.frag=.frag.qsb) $(libqt_plugin_la_SHADER_VERT:.vert=.vert.qsb)

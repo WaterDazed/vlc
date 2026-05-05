@@ -21,7 +21,8 @@ shader_sources = [
     'FastBlend_multiply.frag',
     'FastBlend_screen.frag',
     'RoundedRectangleShadow.frag',
-    'RoundedRectangleShadow_hollow.frag',
+    'RoundedRectangleShadow_hollow_rectangular.frag',
+    'RoundedRectangleShadow_hollow_roundedrectangular.frag',
     'VoronoiSnow.frag',
     'DualKawaseBlur_downsample.frag',
     'DualKawaseBlur_upsample.frag',
@@ -45,7 +46,7 @@ foreach shader: shader_sources
     shader_target_name = shader + '.qsb'
 
     target = custom_target(shader_target_name,
-      depend_files: ['Common.glsl'],
+      depend_files: ['Common.glsl', 'SDF.glsl'],
       input: shader,
       output: shader_target_name,
       command: [qsb, qsb_params, '--output', '@OUTPUT@', '@INPUT@']

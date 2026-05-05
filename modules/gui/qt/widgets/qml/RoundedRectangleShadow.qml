@@ -65,12 +65,19 @@ ShaderEffect {
     // Do not paint in the non-compensated inner area - only makes sense if there is compensation:
     property bool hollow: false
 
+    function _normalizeRadius(radius: real) : real {
+        return Math.min(1.0, Math.max(radius / (Math.min(width, height) / 2), 0.0))
+    }
+
+    readonly property real normalRadius: (radius > 0.0) ? _normalizeRadius(radius) : 0.0
+
     blending: true
 
     supportsAtlasTextures: true // irrelevant, but nevertheless...
 
     // cullMode: ShaderEffect.BackFaceCulling // QTBUG-136611 (Layering breaks culling with OpenGL)
 
-    fragmentShader: hollow ? "qrc:///shaders/RoundedRectangleShadow_hollow.frag.qsb"
+    fragmentShader: hollow ? ((radius > 0.0) ? "qrc:///shaders/RoundedRectangleShadow_hollow_roundedrectangular.frag.qsb"
+                                             : "qrc:///shaders/RoundedRectangleShadow_hollow_rectangular.frag.qsb")
                            : "qrc:///shaders/RoundedRectangleShadow.frag.qsb"
 }
