@@ -31,7 +31,7 @@
         <file alias="network.svg">pixmaps/menu/network.svg</file>
         <file alias="ic_fluent_next.svg">pixmaps/menu/ic_fluent_next.svg</file>
         <file alias="ic_pause_filled.svg">pixmaps/menu/ic_pause_filled.svg</file>
-        <file alias="ic_playlist.svg">pixmaps/menu/ic_playlist.svg</file>
+        <file alias="ic_playqueue.svg">pixmaps/menu/ic_playqueue.svg</file>
         <file alias="ic_fluent_play_filled.svg">pixmaps/menu/ic_fluent_play_filled.svg</file>
         <file alias="preferences.svg">pixmaps/menu/preferences.svg</file>
         <file alias="ic_fluent_previous.svg">pixmaps/menu/ic_fluent_previous.svg</file>
@@ -74,7 +74,7 @@
         <file alias="directory.svg">pixmaps/sd/directory.svg</file>
         <file alias="stream.svg">pixmaps/sd/stream.svg</file>
         <file alias="node.svg">pixmaps/sd/node.svg</file>
-        <file alias="playlist.svg">pixmaps/sd/playlist.svg</file>
+        <file alias="playqueue.svg">pixmaps/sd/playqueue.svg</file>
         <file alias="icecast.svg">pixmaps/sd/icecast.svg</file>
         <file alias="assembleenationale.svg">pixmaps/sd/assembleenationale.svg</file>
         <file alias="fmc.svg">pixmaps/sd/fmc.svg</file>
@@ -102,7 +102,7 @@
         <file alias="advprefs_codec.svg">pixmaps/prefs/advprefs_codec.svg</file>
         <file alias="advprefs_extended.svg">pixmaps/prefs/advprefs_extended.svg</file>
         <file alias="advprefs_intf.svg">pixmaps/prefs/advprefs_intf.svg</file>
-        <file alias="advprefs_playlist.svg">pixmaps/prefs/advprefs_playlist.svg</file>
+        <file alias="advprefs_playqueue.svg">pixmaps/prefs/advprefs_playqueue.svg</file>
         <file alias="advprefs_sout.svg">pixmaps/prefs/advprefs_sout.svg</file>
         <file alias="advprefs_video.svg">pixmaps/prefs/advprefs_video.svg</file>
         <file alias="spref_audio.png">pixmaps/prefs/spref_audio.png</file>

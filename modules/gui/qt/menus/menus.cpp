@@ -314,7 +314,7 @@ void VLCMenuBar::ViewMenu(qt_intf_t *p_intf, QMenu *menu, std::optional<bool> pl
 
     action = menu->addAction(
 #ifndef __APPLE__
-            ColorizedSvgIcon::colorizedIconForWidget( ":/menu/ic_playlist.svg", menu ),
+            ColorizedSvgIcon::colorizedIconForWidget( ":/menu/ic_playqueue.svg", menu ),
 #endif
             qtr( "Play&list" ));
     action->setShortcut(QString( "Ctrl+L" ));

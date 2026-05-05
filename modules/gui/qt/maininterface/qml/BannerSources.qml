@@ -410,7 +410,7 @@ T.ToolBar {
                             checked: MainCtx.playlistVisible
 
                             font.pixelSize: VLCStyle.icon_banner
-                            text: VLCIcons.playlist
+                            text: VLCIcons.playqueue
                             description: qsTr("Playlist")
                             width: VLCStyle.bannerButton_width
                             height: VLCStyle.bannerButton_height

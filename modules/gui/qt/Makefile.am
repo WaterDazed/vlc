@@ -812,7 +812,7 @@ libqt_plugin_la_RES = \
 	pixmaps/icons/dvd_prev.svg \
 	pixmaps/icons/ic_fluent_arrow_eject.svg \
 	pixmaps/icons/ellipsis.svg \
-	pixmaps/icons/ic_playlist_add.svg \
+	pixmaps/icons/ic_playqueue_add.svg \
 	pixmaps/icons/expand_inverted.svg \
 	pixmaps/icons/expand.svg \
 	pixmaps/icons/ic_fluent_options.svg \
@@ -830,8 +830,8 @@ libqt_plugin_la_RES = \
 	pixmaps/icons/ic_fluent_next.svg \
 	pixmaps/icons/ic_pause_filled.svg \
 	pixmaps/icons/pip.svg \
-	pixmaps/icons/ic_playlist_clear.svg \
-	pixmaps/icons/ic_playlist.svg \
+	pixmaps/icons/ic_playqueue_clear.svg \
+	pixmaps/icons/ic_playqueue.svg \
 	pixmaps/icons/ic_fluent_play.svg \
 	pixmaps/icons/play_reverse.svg \
 	pixmaps/icons/ic_fluent_arrow_move.svg \
@@ -896,7 +896,7 @@ libqt_plugin_la_RES = \
 	pixmaps/menu/movie.svg \
 	pixmaps/menu/music.svg \
 	pixmaps/menu/network.svg \
-	pixmaps/menu/ic_playlist.svg \
+	pixmaps/menu/ic_playqueue.svg \
 	pixmaps/menu/ic_fluent_next.svg \
 	pixmaps/menu/ic_pause_filled.svg \
 	pixmaps/menu/ic_fluent_play_filled.svg \
@@ -942,7 +942,7 @@ libqt_plugin_la_RES = \
 	pixmaps/prefs/advprefs_codec.svg \
 	pixmaps/prefs/advprefs_extended.svg \
 	pixmaps/prefs/advprefs_intf.svg \
-	pixmaps/prefs/advprefs_playlist.svg \
+	pixmaps/prefs/advprefs_playqueue.svg \
 	pixmaps/prefs/advprefs_sout.svg \
 	pixmaps/prefs/advprefs_video.svg \
 	pixmaps/prefs/sample_complete.png \
@@ -973,7 +973,7 @@ libqt_plugin_la_RES = \
 	pixmaps/sd/network.svg \
 	pixmaps/sd/node.svg \
 	pixmaps/sd/pictures.svg \
-	pixmaps/sd/playlist.svg \
+	pixmaps/sd/playqueue.svg \
 	pixmaps/sd/podcast.svg \
 	pixmaps/sd/radio.svg \
 	pixmaps/sd/screen.svg \

@@ -372,7 +372,7 @@ T.Pane {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
 
-                    text: VLCIcons.playlist
+                    text: VLCIcons.playqueue
 
                     color: theme.fg.primary
 
