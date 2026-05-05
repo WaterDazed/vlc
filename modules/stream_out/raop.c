@@ -32,8 +32,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 #include <gcrypt.h>
 
