@@ -879,6 +879,17 @@ vlc_modules += {
     'enabled' : dav1d_dep.found(),
 }
 
+# libuavs3d AVS3 decoder
+uavs3d_dep = dependency('uavs3d', required: get_option('uavs3d'))
+vlc_modules += {
+    'name' : 'uavs3d',
+    'sources' : files(
+            'uavs3d.c',
+        ),
+    'dependencies' : [uavs3d_dep],
+    'enabled' : uavs3d_dep.found(),
+}
+
 # tests
 vlc_modules += {
     'name': 'hxxxhelper_testdec',

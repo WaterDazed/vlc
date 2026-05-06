@@ -3152,6 +3152,12 @@ PKG_ENABLE_MODULES_VLC([DAVS2], [davs2], [davs2], [AVS2 video decoder with libda
 
 
 dnl
+dnl  AVS3 decoder module (uavs3d)
+dnl
+PKG_ENABLE_MODULES_VLC([UAVS3D], [uavs3d], [uavs3d], [AVS3 video decoder with libuavs3d], [auto])
+
+
+dnl
 dnl libfluidsynth (MIDI synthetizer) plugin
 dnl
 PKG_ENABLE_MODULES_VLC([FLUIDSYNTH], [], [fluidsynth >= 1.1.2], [MIDI synthetiser with libfluidsynth], [auto])

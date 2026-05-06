@@ -349,6 +349,11 @@ option('dav1d',
     value : 'auto',
     description : 'libdav1d AV1 decoder support')
 
+option('uavs3d',
+    type : 'feature',
+    value : 'auto',
+    description : 'libuavs3d AVS3 decoder support')
+
 option('twolame',
     type : 'feature',
     value : 'auto',

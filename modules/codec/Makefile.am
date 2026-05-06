@@ -114,6 +114,13 @@ codec_PLUGINS += $(LTLIBopenapv)
 librtp_rawvid_plugin_la_SOURCES = codec/rtp-rawvid.c
 codec_PLUGINS += librtp_rawvid_plugin.la
 
+libuavs3d_plugin_la_SOURCES = codec/uavs3d.c
+libuavs3d_plugin_la_CFLAGS = $(AM_CFLAGS) $(UAVS3D_CFLAGS)
+libuavs3d_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(codecdir)'
+libuavs3d_plugin_la_LIBADD = $(UAVS3D_LIBS) # $(LIBM)
+EXTRA_LTLIBRARIES += libuavs3d_plugin.la
+codec_LTLIBRARIES += $(LTLIBuavs3d)
+
 
 ### Image codecs ###
 
