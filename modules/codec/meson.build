@@ -879,6 +879,18 @@ vlc_modules += {
     'enabled' : dav1d_dep.found(),
 }
 
+# edge264 H.264/MVC decoder
+edge264_dep = dependency('edge264', required: get_option('edge264'))
+vlc_modules += {
+    'name' : 'edge264',
+    'sources' : files(
+            'edge264.c',
+        ),
+    'dependencies' : [edge264_dep],
+    'link_with' : [hxxxhelper_lib],
+    'enabled' : edge264_dep.found(),
+}
+
 # tests
 vlc_modules += {
     'name': 'hxxxhelper_testdec',

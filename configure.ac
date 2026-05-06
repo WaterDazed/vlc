@@ -2918,6 +2918,11 @@ dnl
 PKG_ENABLE_MODULES_VLC([DAV1D], [], [dav1d >= 0.5.0], [AV1 decoder (default auto)])
 
 dnl
+dnl  edge264 decoder plugin
+dnl
+PKG_ENABLE_MODULES_VLC([EDGE264], [], [edge264], [edge264 H264/MVC decoder (default auto)])
+
+dnl
 dnl libvpx decoder plugin
 dnl
 AC_ARG_ENABLE([vpx],

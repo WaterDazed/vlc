@@ -622,6 +622,13 @@ libdav1d_plugin_la_LIBADD = $(DAV1D_LIBS)
 EXTRA_LTLIBRARIES += libdav1d_plugin.la
 codec_PLUGINS += $(LTLIBdav1d)
 
+libedge264_plugin_la_SOURCES = codec/edge264.c
+libedge264_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) $(EDGE264_CFLAGS)
+libedge264_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(codecdir)'
+libedge264_plugin_la_LIBADD = $(EDGE264_LIBS) libvlc_hxxxhelper.la
+EXTRA_LTLIBRARIES += libedge264_plugin.la
+codec_LTLIBRARIES += $(LTLIBedge264)
+
 
 ### Hardware encoders ###
 
