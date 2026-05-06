@@ -717,8 +717,9 @@ static int MuxStream(sout_mux_t *p_mux, sout_input_t *p_input, mp4_stream_t *p_s
 
     if (mp4mux_track_GetFmt(p_stream->tinfo)->i_cat != SPU_ES)
     {
+        block_FifoLock(p_input->p_fifo);
         /* Fix length of the sample */
-        if (block_FifoCount(p_input->p_fifo) > 0)
+        if (vlc_fifo_GetCount(p_input->p_fifo) > 0)
         {
             block_t *p_next = block_FifoShow(p_input->p_fifo);
             if ( p_next->i_flags & BLOCK_FLAG_DISCONTINUITY )
@@ -759,6 +760,8 @@ static int MuxStream(sout_mux_t *p_mux, sout_input_t *p_input, mp4_stream_t *p_s
                     p_data->i_length = i_diff;
             }
         }
+        block_FifoUnlock(p_input->p_fifo);
+
         if (p_data->i_length <= 0) {
             msg_Warn(p_mux, "i_length <= 0");
             p_stream->i_length_neg += p_data->i_length - 1;
@@ -902,7 +905,7 @@ static int Mux(sout_mux_t *p_mux)
 
     do
     {
-        int i_stream = sout_MuxGetStream(p_mux, 2, NULL);
+        int i_stream = sout_MuxGetStream(p_mux, true, NULL);
         if (i_stream < 0)
             break;
 
@@ -1495,7 +1498,7 @@ static int MuxFrag(sout_mux_t *p_mux)
 {
     sout_mux_sys_t *p_sys = (sout_mux_sys_t*) p_mux->p_sys;
 
-    int i_stream = sout_MuxGetStream(p_mux, 1, NULL);
+    int i_stream = sout_MuxGetStream(p_mux, false, NULL);
     if (i_stream < 0)
         return VLC_SUCCESS;
 

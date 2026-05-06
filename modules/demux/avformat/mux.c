@@ -483,7 +483,7 @@ static int Mux( sout_mux_t *p_mux )
     {
         vlc_tick_t i_dts;
 
-        int i_stream = sout_MuxGetStream( p_mux, 1, &i_dts );
+        int i_stream = sout_MuxGetStream( p_mux, false, &i_dts );
         if( i_stream < 0 )
             return VLC_SUCCESS;
 

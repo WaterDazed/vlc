@@ -872,17 +872,6 @@ static inline size_t vlc_fifo_Size (vlc_fifo_t *fifo)
     return size;
 }
 
-/* FIXME: not (really) thread-safe */
-VLC_USED VLC_DEPRECATED
-static inline size_t vlc_fifo_Count (vlc_fifo_t *fifo)
-{
-    size_t depth;
-
-    vlc_fifo_Lock(fifo);
-    depth = vlc_fifo_GetCount(fifo);
-    vlc_fifo_Unlock(fifo);
-    return depth;
-}
 
 /** @} */
 

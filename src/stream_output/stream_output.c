@@ -505,25 +505,27 @@ void sout_MuxFlush( sout_mux_t *p_mux, sout_input_t *p_input )
 /*****************************************************************************
  * sout_MuxGetStream: find stream to be muxed
  *****************************************************************************/
-int sout_MuxGetStream( sout_mux_t *p_mux, unsigned i_blocks, vlc_tick_t *pi_dts )
+int sout_MuxGetStream( sout_mux_t *p_mux, bool has_multiple_blocks, vlc_tick_t *pi_dts )
 {
     vlc_tick_t i_dts = VLC_TICK_MAX;
     int     i_stream = -1;
-
-    assert( i_blocks > 0 );
 
     for( int i = 0; i < p_mux->i_nb_inputs; i++ )
     {
         sout_input_t *p_input = p_mux->pp_inputs[i];
         block_t *p_data;
 
-        if( block_FifoCount( p_input->p_fifo ) < i_blocks )
+        block_FifoLock( p_input->p_fifo );
+        if( vlc_fifo_GetCount( p_input->p_fifo ) < 1 ||
+            ( has_multiple_blocks && vlc_fifo_GetCount( p_input->p_fifo ) < 2 ) )
         {
             if( (!p_mux->b_add_stream_any_time) &&
                 (p_input->p_fmt->i_cat != SPU_ES ) )
             {
+                block_FifoUnlock( p_input->p_fifo );
                 return -1;
             }
+            block_FifoUnlock( p_input->p_fifo );
             /* FIXME: SPU muxing */
             continue;
         }
@@ -534,6 +536,7 @@ int sout_MuxGetStream( sout_mux_t *p_mux, unsigned i_blocks, vlc_tick_t *pi_dts 
             i_stream = i;
             i_dts    = p_data->i_dts;
         }
+        block_FifoUnlock( p_input->p_fifo );
     }
 
     if( pi_dts ) *pi_dts = i_dts;

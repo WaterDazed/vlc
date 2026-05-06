@@ -1549,7 +1549,7 @@ static int Mux( sout_mux_t *p_mux )
         }
 
         /* Open new ogg stream */
-        if( sout_MuxGetStream( p_mux, 1, &i_dts) < 0 )
+        if( sout_MuxGetStream( p_mux, false, &i_dts) < 0 )
         {
             msg_Dbg( p_mux, "waiting for data..." );
             return VLC_SUCCESS;
@@ -1579,7 +1579,7 @@ static int Mux( sout_mux_t *p_mux )
     /* Do the regular data mux thing */
     for( ;; )
     {
-        int i_stream = sout_MuxGetStream( p_mux, 1, NULL );
+        int i_stream = sout_MuxGetStream( p_mux, false, NULL );
         if( i_stream < 0 )
             return VLC_SUCCESS;
 
