@@ -601,7 +601,7 @@ void *lfind( const void *key, const void *base, size_t *nmemb,
 #endif
 #endif /* HAVE_TFIND */
 
-#ifndef HAVE_TDESTROY
+#if !defined(HAVE_TDESTROY) || !defined(HAVE_TDESTROY_DECL)
 void tdestroy( void *root, void (*free_node)(void *nodep) );
 #endif
 
