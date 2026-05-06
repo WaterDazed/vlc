@@ -82,6 +82,10 @@ NSString *VLCPlayerWallpaperModeChanged = @"VLCPlayerWallpaperModeChanged";
 NSString *VLCPlayerListOfVideoOutputThreadsChanged = @"VLCPlayerListOfVideoOutputThreadsChanged";
 NSString *VLCPlayerVolumeChanged = @"VLCPlayerVolumeChanged";
 NSString *VLCPlayerMuteChanged = @"VLCPlayerMuteChanged";
+NSString * const VLCPlayerLyricsAvailableChanged = @"VLCPlayerLyricsAvailableChanged";
+NSString * const VLCPlayerShowLyricsChanged = @"VLCPlayerShowLyricsChanged";
+
+NSString * const VLCPlayerShowLyricsKey = @"VLCPlayerShowLyricsKey";
 
 const CGFloat VLCVolumeMaximum = 2.;
 const CGFloat VLCVolumeDefault = 1.;
@@ -673,6 +677,8 @@ static int BossCallback(vlc_object_t *p_this,
 
         _playbackRate = 1.0;
 
+        _showLyrics = [NSUserDefaults.standardUserDefaults boolForKey:VLCPlayerShowLyricsKey];
+
         libvlc_int_t *libvlc = vlc_object_instance(getIntf());
         var_AddCallback(libvlc, "intf-boss", BossCallback, (__bridge void *)self);
     }
@@ -735,6 +741,19 @@ static int BossCallback(vlc_object_t *p_this,
 - (void)dealloc
 {
     [_defaultNotificationCenter removeObserver:self];
+}
+
+- (void)setShowLyrics:(BOOL)showLyrics
+{
+    if (_showLyrics == showLyrics) {
+        return;
+    }
+
+    _showLyrics = showLyrics;
+    [NSUserDefaults.standardUserDefaults setBool:showLyrics forKey:VLCPlayerShowLyricsKey];
+
+    [_defaultNotificationCenter postNotificationName:VLCPlayerShowLyricsChanged
+                                              object:self];
 }
 
 - (VLCInputItem *)currentMedia
@@ -818,6 +837,18 @@ static int BossCallback(vlc_object_t *p_this,
 
 - (void)metaDataChangedForInput:(input_item_t *)inputItem
 {
+    NSString *syltData = nil;
+    if (_currentMedia) {
+        syltData = [_currentMedia extraMetaForKey:@"sylt-data"];
+    }
+
+    const BOOL lyricsAvailable = (syltData && syltData.length > 0);
+    if (_lyricsAvailable != lyricsAvailable) {
+        _lyricsAvailable = lyricsAvailable;
+        [_defaultNotificationCenter postNotificationName:VLCPlayerLyricsAvailableChanged
+                                                  object:self];
+    }
+
     [_defaultNotificationCenter postNotificationName:VLCPlayerMetadataChangedForCurrentMedia
                                               object:self];
 }
@@ -834,6 +865,19 @@ static int BossCallback(vlc_object_t *p_this,
 - (void)currentMediaItemChanged:(input_item_t *)newMediaItem
 {
     _currentMedia = [[VLCInputItem alloc] initWithInputItem:newMediaItem];
+
+    NSString *syltData = nil;
+    if (_currentMedia) {
+        syltData = [_currentMedia extraMetaForKey:@"sylt-data"];
+    }
+
+    const BOOL lyricsAvailable = (syltData && syltData.length > 0);
+    if (_lyricsAvailable != lyricsAvailable) {
+        _lyricsAvailable = lyricsAvailable;
+        [_defaultNotificationCenter postNotificationName:VLCPlayerLyricsAvailableChanged
+                                                  object:self];
+    }
+
     [_defaultNotificationCenter postNotificationName:VLCPlayerCurrentMediaItemChanged object:self];
 }
 
