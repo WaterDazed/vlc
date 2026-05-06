@@ -27,6 +27,11 @@
 
 @implementation NSView (VLCAdditions)
 
++ (NSNib *)nib
+{
+    return [[NSNib alloc] initWithNibNamed:NSStringFromClass(self) bundle:nil];
+}
+
 + (instancetype)fromNibWithOwner:(id)owner
 {
     return [self fromNibNamed:NSStringFromClass(self) withClass:self withOwner:owner];

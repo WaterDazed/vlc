@@ -155,7 +155,7 @@ NSString * const VLCMediaSourceBaseDataSourceNodeChanged = @"VLCMediaSourceBaseD
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
 
-    NSNib * const tableCellViewNib = [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryTableCellView.class) bundle:nil];
+    NSNib * const tableCellViewNib = VLCLibraryTableCellView.nib;
     [self.tableView registerNib:tableCellViewNib forIdentifier:VLCLibraryTableCellViewIdentifier];
 
     [self reloadViews];

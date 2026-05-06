@@ -415,14 +415,12 @@ NSString * const VLCLibraryAudioDataSourceDisplayedCollectionChangedNotification
 {
     [collectionView registerClass:[VLCLibraryCollectionViewItem class] forItemWithIdentifier:VLCLibraryCellIdentifier];
 
-    NSNib * const albumSupplementaryDetailView =
-        [[NSNib alloc] initWithNibNamed:@"VLCLibraryCollectionViewMediaItemListSupplementaryDetailView" bundle:nil];
+    NSNib * const albumSupplementaryDetailView = VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.nib;
     [collectionView registerNib:albumSupplementaryDetailView
       forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemListSupplementaryDetailViewKind
                   withIdentifier:VLCLibraryCollectionViewMediaItemListSupplementaryDetailViewIdentifier];
 
-    NSNib * const mediaItemSupplementaryDetailView = 
-        [[NSNib alloc] initWithNibNamed:@"VLCLibraryCollectionViewMediaItemSupplementaryDetailView" bundle:nil];
+    NSNib * const mediaItemSupplementaryDetailView = VLCLibraryCollectionViewMediaItemSupplementaryDetailView.nib;
     [collectionView registerNib:mediaItemSupplementaryDetailView
       forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind
                   withIdentifier:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewIdentifier];
