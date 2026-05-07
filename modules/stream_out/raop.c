@@ -44,16 +44,17 @@
 #include <vlc_network.h>
 #include <vlc_strings.h>
 #include <vlc_charset.h>
-#include <vlc_fs.h>
 #include <vlc_gcrypt.h>
 #include <vlc_es.h>
 #include <vlc_http.h>
+#include <vlc_keystore.h>
 #include <vlc_memstream.h>
 #include <vlc_threads.h>
 #include <vlc_tick.h>
 #include <vlc_rand.h>
 #include <vlc_meta.h>
 #include <vlc_stream.h>
+#include <vlc_url.h>
 
 #include "raop_alac.h"
 #include "raop_common.h"
@@ -156,6 +157,13 @@ struct sout_stream_sys_t
 
     vlc_http_auth_t auth;
 
+    /* Keystore-backed credential lookup. Initialized in Open() so the
+     * URL/credential survive across the lazy SinkOpen handshake; populated
+     * lazily on the first 401 response from the receiver. */
+    vlc_url_t cred_url;
+    vlc_credential cred;
+    bool b_cred_init;
+
     /* Buffered reader for the RTSP control connection: net_Read'ing one byte
      * per call would mean ~10 syscalls per RTSP response header line. Pull
      * up to 4 KiB at a time and serve from the buffer. */
@@ -222,12 +230,6 @@ struct sout_stream_id_sys_t
 #define VOLUME_LONGTEXT N_("Output volume for analog output: 0 for silence, " \
                            "1..255 from almost silent to very loud.")
 
-#define PASSWORD_TEXT N_("Password")
-#define PASSWORD_LONGTEXT N_("Password for target device.")
-
-#define PASSWORD_FILE_TEXT N_("Password file")
-#define PASSWORD_FILE_LONGTEXT N_("Read password for target device from file.")
-
 vlc_module_begin()
     set_shortname( N_("RAOP") )
     set_description( N_("Remote Audio Output Protocol stream output") )
@@ -238,10 +240,6 @@ vlc_module_begin()
                 IP_TEXT, IP_LONGTEXT )
     add_integer( SOUT_CFG_PREFIX "port", RAOP_PORT,
                  PORT_TEXT, PORT_LONGTEXT )
-    add_password( SOUT_CFG_PREFIX "password", NULL,
-                  PASSWORD_TEXT, PASSWORD_LONGTEXT )
-    add_loadfile( SOUT_CFG_PREFIX "password-file", NULL,
-                  PASSWORD_FILE_TEXT, PASSWORD_FILE_LONGTEXT )
     add_integer_with_range( SOUT_CFG_PREFIX "volume", 100, 0, 255,
                             VOLUME_TEXT, VOLUME_LONGTEXT )
     set_callback( Open )
@@ -255,8 +253,6 @@ vlc_module_end()
 static const char *const ppsz_sout_options[] = {
     "ip",
     "port",
-    "password",
-    "password-file",
     "volume",
     NULL
 };
@@ -277,6 +273,12 @@ static void FreeSys( vlc_object_t *p_this, sout_stream_sys_t *p_sys )
     free( p_sys->psz_host );
     free( p_sys->psz_password );
     vlc_http_auth_Deinit( &p_sys->auth );
+
+    if ( p_sys->b_cred_init )
+    {
+        vlc_credential_clean( &p_sys->cred );
+        vlc_UrlClean( &p_sys->cred_url );
+    }
 
     if ( p_sys->b_common_var && p_sys->p_common_owner != NULL )
         var_Destroy( p_sys->p_common_owner, RAOP_SHARED_VAR_NAME );
@@ -726,58 +728,6 @@ error:
     return i_err;
 }
 
-static char *ReadPasswordFile( vlc_object_t *p_this, const char *psz_path )
-{
-    FILE *p_file = NULL;
-    char *psz_password = NULL;
-    char *psz_newline;
-    char ps_buffer[256];
-
-    p_file = vlc_fopen( psz_path, "rt" );
-    if ( p_file == NULL )
-    {
-        msg_Err( p_this, "Unable to open password file '%s': %s", psz_path,
-                 vlc_strerror_c(errno) );
-        goto error;
-    }
-
-    /* Read one line only */
-    if ( fgets( ps_buffer, sizeof( ps_buffer ), p_file ) == NULL )
-    {
-        if ( ferror( p_file ) )
-        {
-            msg_Err( p_this, "Error reading '%s': %s", psz_path,
-                     vlc_strerror_c(errno) );
-            goto error;
-        }
-
-        /* Nothing was read, but there was no error either. Maybe the file is
-         * empty. Not all implementations of fgets(3) write \0 to the output
-         * buffer in this case.
-         */
-        ps_buffer[0] = '\0';
-
-    } else {
-        /* Replace first newline with '\0' */
-        psz_newline = strchr( ps_buffer, '\n' );
-        if ( psz_newline != NULL )
-            *psz_newline = '\0';
-    }
-
-    if ( *ps_buffer == '\0' ) {
-        msg_Err( p_this, "No password could be read from '%s'", psz_path );
-        goto error;
-    }
-
-    psz_password = strdup( ps_buffer );
-
-error:
-    if ( p_file != NULL )
-        fclose( p_file );
-
-    return psz_password;
-}
-
 /* Splits the value of a received header.
  *
  * Example: "Transport: RTP/AVP/TCP;unicast;mode=record;server_port=6000"
@@ -991,6 +941,29 @@ error:
     return i_err;
 }
 
+/* Pull a password from the keystore, or prompt the user when nothing is
+ * stored. Called only after a 401, so the realm parsed from the challenge
+ * keys both the keystore lookup and the dialog text. */
+static int AcquirePassword( vlc_object_t *p_this )
+{
+    sout_stream_t *p_stream = (sout_stream_t*)p_this;
+    sout_stream_sys_t *p_sys = p_stream->p_sys;
+
+    p_sys->cred.psz_realm = p_sys->auth.psz_realm;
+    p_sys->cred.psz_authtype = "Digest";
+
+    int i_ret = vlc_credential_get( &p_sys->cred, p_this, NULL, NULL,
+                                    _("AirPlay authentication"),
+                                    _("The receiver \"%s\" requires a "
+                                      "password."), p_sys->psz_host );
+    if ( i_ret != 0 )
+        return VLC_EGENERIC;
+
+    free( p_sys->psz_password );
+    p_sys->psz_password = strdup( p_sys->cred.psz_password );
+    return p_sys->psz_password != NULL ? VLC_SUCCESS : VLC_ENOMEM;
+}
+
 static int ExecRequest( vlc_object_t *p_this, const char *psz_method,
                         const char *psz_content_type,
                         const void *p_body, size_t i_body_length,
@@ -1096,7 +1069,7 @@ static int ExecRequest( vlc_object_t *p_this, const char *psz_method,
         else if ( i_status == 401 )
         {
             /* Authorization required */
-            if ( i_auth_state == 1 || p_sys->psz_password == NULL )
+            if ( i_auth_state == 1 )
             {
                 msg_Err( p_this, "Access denied, password invalid" );
                 i_err = VLC_EGENERIC;
@@ -1106,6 +1079,13 @@ static int ExecRequest( vlc_object_t *p_this, const char *psz_method,
             i_err = ParseAuthenticateHeader( p_this, p_resp_headers );
             if ( i_err != VLC_SUCCESS )
                 goto error;
+
+            if ( p_sys->psz_password == NULL )
+            {
+                i_err = AcquirePassword( p_this );
+                if ( i_err != VLC_SUCCESS )
+                    goto error;
+            }
 
             i_auth_state = 1;
         }
@@ -1915,6 +1895,10 @@ static int SinkOpen( vlc_object_t *p_this )
     if ( i_err != VLC_SUCCESS )
         goto error;
 
+    /* ANNOUNCE accepted means any password we acquired was correct. */
+    if ( p_sys->psz_password != NULL )
+        vlc_credential_store( &p_sys->cred, p_this );
+
     i_err = SendSetup( p_this );
     if ( i_err != VLC_SUCCESS )
         goto error;
@@ -2162,7 +2146,6 @@ static int Open( vlc_object_t *p_this )
     sout_stream_t *p_stream = (sout_stream_t*)p_this;
     raop_wrapper_sys_t *p_wrap = NULL;
     sout_stream_sys_t *p_sys;
-    char *psz_pwfile = NULL;
     bool b_sys_var = false;
     int i_err = VLC_EGENERIC;
 
@@ -2193,22 +2176,22 @@ static int Open( vlc_object_t *p_this )
     if ( p_sys->i_port <= 0 || p_sys->i_port > 65535 )
         p_sys->i_port = RAOP_PORT;
 
-    p_sys->psz_password = var_GetNonEmptyString( p_stream,
-                                                 SOUT_CFG_PREFIX "password" );
-    if ( p_sys->psz_password == NULL )
+    /* Credential URL keys keystore lookups by host+port. The "iTunes"
+     * username matches what we send in the Digest header for the legacy
+     * "raop" realm and gives the dialog a sensible default. */
+    char *psz_cred_url;
+    if ( asprintf( &psz_cred_url, "raop://iTunes@%s:%d/",
+                   p_sys->psz_host, p_sys->i_port ) < 0 )
     {
-        psz_pwfile = var_GetNonEmptyString( p_stream,
-                                            SOUT_CFG_PREFIX "password-file" );
-        if ( psz_pwfile != NULL )
-        {
-            p_sys->psz_password = ReadPasswordFile( p_this, psz_pwfile );
-            if ( p_sys->psz_password == NULL )
-                goto error;
-        }
+        i_err = VLC_ENOMEM;
+        goto error;
     }
-
-    if ( p_sys->psz_password != NULL )
-        msg_Info( p_this, "Using password authentication" );
+    int i_url_ret = vlc_UrlParse( &p_sys->cred_url, psz_cred_url );
+    free( psz_cred_url );
+    if ( i_url_ret != 0 )
+        goto error;
+    vlc_credential_init( &p_sys->cred, &p_sys->cred_url );
+    p_sys->b_cred_init = true;
 
     var_Create( p_stream, SOUT_CFG_PREFIX "sys", VLC_VAR_ADDRESS );
     var_SetAddress( p_stream, SOUT_CFG_PREFIX "sys", p_sys );
@@ -2245,11 +2228,9 @@ static int Open( vlc_object_t *p_this )
 
     p_stream->p_sys = p_wrap;
     p_stream->ops = &wrapper_ops;
-    free( psz_pwfile );
     return VLC_SUCCESS;
 
 error:
-    free( psz_pwfile );
     free( p_wrap );
     if ( b_sys_var )
         var_Destroy( p_stream, SOUT_CFG_PREFIX "sys" );
