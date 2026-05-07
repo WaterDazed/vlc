@@ -11,6 +11,7 @@ Contrib:
  * Update dav1d to 1.5.3
  * Update faad to 2.11.2
  * Update FFmpeg to 8.1
+ * Update gpg-error to 1.56
  * Update libxml2 to 2.15.1
  * Update png to 1.6.53
  * Update opus to 1.6.1
