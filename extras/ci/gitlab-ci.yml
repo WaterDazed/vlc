@@ -241,6 +241,8 @@ nightly-win64-llvm:
 
 nightly-win64-llvm-meson:
     extends: .nightly-win-common
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     image:
         name: $VLC_WIN_LLVM_MSVCRT_IMAGE
     variables:
