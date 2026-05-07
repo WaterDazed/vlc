@@ -249,6 +249,7 @@ libvlc_InternalPlay
 libvlc_InternalCleanup
 libvlc_InternalCreate
 libvlc_InternalDestroy
+libvlc_InternalHttpBearerStore
 libvlc_InternalInit
 libvlc_Quit
 libvlc_SetExitHandler

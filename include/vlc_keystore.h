@@ -284,6 +284,22 @@ vlc_credential_get_bearer(vlc_credential *p_credential, vlc_object_t *p_parent);
     vlc_credential_get_bearer(a, VLC_OBJECT(b))
 
 /**
+ * Store a bearer token for an origin in the per-libvlc memory keystore.
+ *
+ * @param psz_realm optional RFC 6750 realm the token is valid for
+ * @param psz_scope optional space-separated list of RFC 6750 scopes
+ *
+ * If psz_token is NULL, any matching token for the origin/realm/scope tuple
+ * is removed.
+ */
+VLC_API int
+libvlc_InternalHttpBearerStore(libvlc_int_t *p_libvlc,
+                               const char *psz_protocol,
+                               const char *psz_host, uint16_t i_port,
+                               const char *psz_realm, const char *psz_scope,
+                               const char *psz_token);
+
+/**
  * @}
  * @defgroup keystore_implementation Implemented by keystore modules
  * @{

@@ -655,6 +655,45 @@ vlc_credential_get_bearer(vlc_credential *p_credential, vlc_object_t *p_parent)
     return 0;
 }
 
+int
+libvlc_InternalHttpBearerStore(libvlc_int_t *p_libvlc,
+                               const char *psz_protocol,
+                               const char *psz_host, uint16_t i_port,
+                               const char *psz_realm, const char *psz_scope,
+                               const char *psz_token)
+{
+    assert(p_libvlc && psz_protocol && psz_host);
+
+    vlc_keystore *p_keystore = libvlc_priv(p_libvlc)->p_memory_keystore;
+    if (p_keystore == NULL)
+        return VLC_EGENERIC;
+
+    char psz_port[21];
+    sprintf(psz_port, "%" PRIu16, i_port);
+
+    const char *ppsz_values[KEY_MAX] = { 0 };
+    ppsz_values[KEY_PROTOCOL] = psz_protocol;
+    ppsz_values[KEY_SERVER] = psz_host;
+    ppsz_values[KEY_PORT] = psz_port;
+    ppsz_values[KEY_REALM] = psz_realm;
+    ppsz_values[KEY_SCOPE] = psz_scope;
+    ppsz_values[KEY_AUTHTYPE] = "Bearer";
+
+    vlc_keystore_remove(p_keystore, ppsz_values);
+
+    if (psz_token == NULL)
+        return VLC_SUCCESS;
+
+    char *psz_label;
+    if (asprintf(&psz_label, "LibVLC bearer for %s://%s:%s",
+                 psz_protocol, psz_host, psz_port) == -1)
+        return VLC_ENOMEM;
+    int i_ret = vlc_keystore_store(p_keystore, ppsz_values,
+                                   (const uint8_t *)psz_token, -1, psz_label);
+    free(psz_label);
+    return i_ret;
+}
+
 #undef vlc_credential_store
 bool
 vlc_credential_store(vlc_credential *p_credential, vlc_object_t *p_parent)
