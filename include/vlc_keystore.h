@@ -56,6 +56,7 @@ enum vlc_keystore_key {
     KEY_PORT,
     KEY_REALM,
     KEY_AUTHTYPE,
+    KEY_SCOPE,
     KEY_MAX,
 };
 #define VLC_KEYSTORE_VALUES_INIT(ppsz_values) memset(ppsz_values, 0, sizeof(const char *) * KEY_MAX)
@@ -177,6 +178,11 @@ struct vlc_credential
     const char *psz_username;
     /** valid only if vlc_credential_get() returned true */
     const char *psz_password;
+    /** valid only if vlc_credential_get_bearer() returned 0 */
+    const char *psz_token;
+    /** RFC 6750 scope to match. Optional. May be a space-separated list;
+     * the looked up token must cover all requested scopes. */
+    const char *psz_scope;
 
     /* internal */
     enum {
@@ -263,6 +269,19 @@ VLC_API bool
 vlc_credential_store(vlc_credential *p_credential, vlc_object_t *p_parent);
 #define vlc_credential_store(a, b) \
     vlc_credential_store(a, VLC_OBJECT(b))
+
+/**
+ * Look up a bearer token for the URL set on p_credential.
+ *
+ * Queries the per-libvlc memory keystore first, then the configured
+ * persistent keystore.
+ *
+ * @return 0 if p_credential->psz_token is valid, -ENOENT otherwise.
+ */
+VLC_API int
+vlc_credential_get_bearer(vlc_credential *p_credential, vlc_object_t *p_parent);
+#define vlc_credential_get_bearer(a, b) \
+    vlc_credential_get_bearer(a, VLC_OBJECT(b))
 
 /**
  * @}
