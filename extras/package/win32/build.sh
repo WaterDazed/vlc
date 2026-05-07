@@ -548,6 +548,10 @@ if [ -n "$BUILD_MESON" ]; then
     fi
 
     BUILD_PATH="$( pwd -P )"
+
+    # we don't want to install in <destdir>/usr/local, just <destdir>
+    MCONFIGFLAGS="$MCONFIGFLAGS --prefix=/"
+
     # generate the crossfile.meson
     test -e $SHORTARCH-meson/crossfile.meson && unlink $SHORTARCH-meson/crossfile.meson
     exec 3>$SHORTARCH-meson/crossfile.meson || return $?
@@ -593,6 +597,19 @@ if [ -n "$BUILD_MESON" ]; then
 
     info "Compiling"
     meson compile -j $JOBS -C ${BUILD_PATH}/$SHORTARCH-meson ${MCOMPILEFLAGS}
+
+    if [ -n "$INSTALL_PATH" ]; then
+        MINSTALLFLAGS="--destdir=$INSTALL_PATH $MINSTALLFLAGS"
+    else
+        MINSTALLFLAGS="--destdir=${BUILD_PATH}/$SHORTARCH-meson/vlc-$SHORTARCH $MINSTALLFLAGS"
+    fi
+
+    if [ "$INSTALLER" = "n" ]; then
+        meson install -C ${BUILD_PATH}/$SHORTARCH-meson ${MINSTALLFLAGS}
+        cd ${BUILD_PATH}/$SHORTARCH-meson && \
+            rm vlc-$SHORTARCH-dev-0123456789abcdef-debug.7z && \
+            7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on vlc-$SHORTARCH-dev-0123456789abcdef-debug.7z vlc-$SHORTARCH
+    fi
 else
     info "Bootstrapping"
     ${VLC_ROOT_PATH}/bootstrap
