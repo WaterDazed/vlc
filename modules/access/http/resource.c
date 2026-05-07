@@ -363,10 +363,17 @@ char *vlc_http_res_get_basic_realm(struct vlc_http_resource *res)
     return vlc_http_msg_get_basic_realm(res->response);
 }
 
-bool vlc_http_res_has_bearer_challenge(struct vlc_http_resource *res)
+/* RFC 6750 section 3: a Bearer challenge can come on 401 (Unauthorized) or
+ * 403 (Forbidden, e.g. insufficient_scope). */
+static bool has_bearer_status(struct vlc_http_resource *res)
 {
     int status = vlc_http_res_get_status(res);
-    if (status != 401)
+    return status == 401 || status == 403;
+}
+
+bool vlc_http_res_has_bearer_challenge(struct vlc_http_resource *res)
+{
+    if (!has_bearer_status(res))
         return false;
     return vlc_http_msg_get_token(res->response, "WWW-Authenticate",
                                   "Bearer") != NULL;
@@ -374,24 +381,21 @@ bool vlc_http_res_has_bearer_challenge(struct vlc_http_resource *res)
 
 char *vlc_http_res_get_bearer_realm(struct vlc_http_resource *res)
 {
-    int status = vlc_http_res_get_status(res);
-    if (status != 401)
+    if (!has_bearer_status(res))
         return NULL;
     return vlc_http_msg_get_bearer_realm(res->response);
 }
 
 char *vlc_http_res_get_bearer_scope(struct vlc_http_resource *res)
 {
-    int status = vlc_http_res_get_status(res);
-    if (status != 401)
+    if (!has_bearer_status(res))
         return NULL;
     return vlc_http_msg_get_bearer_scope(res->response);
 }
 
 char *vlc_http_res_get_bearer_error(struct vlc_http_resource *res)
 {
-    int status = vlc_http_res_get_status(res);
-    if (status != 401)
+    if (!has_bearer_status(res))
         return NULL;
     return vlc_http_msg_get_bearer_error(res->response);
 }
@@ -410,10 +414,14 @@ int vlc_http_res_set_bearer(struct vlc_http_resource *res, const char *token)
     free(res->bearer);
     res->bearer = copy;
 
-    if (res->response != NULL && vlc_http_msg_get_status(res->response) == 401)
+    if (res->response != NULL)
     {
-        vlc_http_msg_destroy(res->response);
-        res->response = NULL;
+        const int status = vlc_http_msg_get_status(res->response);
+        if (status == 401 || status == 403)
+        {
+            vlc_http_msg_destroy(res->response);
+            res->response = NULL;
+        }
     }
     return 0;
 }
