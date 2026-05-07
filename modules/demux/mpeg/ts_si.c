@@ -238,36 +238,36 @@ static void SDTCallBack( void *opaque, dvbpsi_sdt_t *p_sdt )
 
                 if (p_sys->forced_charset == NULL)
                 {
-                /* Workarounds for broadcasters with broken EPG */
+                    /* Workarounds for broadcasters with broken EPG */
 
-                bool b_broken_charset = false;
-                if( p_sdt->i_network_id == 133 )
-                    b_broken_charset = true;  /* SKY DE & BetaDigital use ISO8859-1 */
+                    bool b_broken_charset = false;
+                    if( p_sdt->i_network_id == 133 )
+                        b_broken_charset = true;  /* SKY DE & BetaDigital use ISO8859-1 */
 
-                /* List of providers using ISO8859-1 */
-                static const char ppsz_broken_providers[][8] = {
-                    "CSAT",     /* CanalSat FR */
-                    "GR1",      /* France televisions */
-                    "MULTI4",   /* NT1 */
-                    "MR5",      /* France 2/M6 HD */
-                    ""
-                };
-                for( int i = 0; *ppsz_broken_providers[i]; i++ )
-                {
-                    const size_t i_length = strlen(ppsz_broken_providers[i]);
-                    if( pD->i_service_provider_name_length == i_length &&
-                        !strncmp( (char *)pD->i_service_provider_name, ppsz_broken_providers[i], i_length ) )
+                    /* List of providers using ISO8859-1 */
+                    static const char ppsz_broken_providers[][8] = {
+                        "CSAT",     /* CanalSat FR */
+                        "GR1",      /* France televisions */
+                        "MULTI4",   /* NT1 */
+                        "MR5",      /* France 2/M6 HD */
+                        ""
+                    };
+                    for( int i = 0; *ppsz_broken_providers[i]; i++ )
                     {
-                        b_broken_charset = true;
-                        break;
+                        const size_t i_length = strlen(ppsz_broken_providers[i]);
+                        if( pD->i_service_provider_name_length == i_length &&
+                            !strncmp( (char *)pD->i_service_provider_name, ppsz_broken_providers[i], i_length ) )
+                        {
+                            b_broken_charset = true;
+                            break;
+                        }
                     }
-                }
 
-                if (b_broken_charset)
-                {
-                    free(p_sys->forced_charset);
-                    p_sys->forced_charset = strdup("ISO_8859-1");
-                }
+                    if (b_broken_charset)
+                    {
+                        free(p_sys->forced_charset);
+                        p_sys->forced_charset = strdup("ISO_8859-1");
+                    }
                 }
 
                 /* FIXME: Digital+ ES also uses ISO8859-1 */
