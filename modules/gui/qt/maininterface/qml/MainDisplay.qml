@@ -336,7 +336,7 @@ FocusScope {
             focus: true
 
             anchors.fill: parent
-            anchors.leftMargin: (sidebar.visible && !VLCStyle.isScreenSmall) ? sidebar.width : 0
+            anchors.leftMargin: sidebar.width
             anchors.rightMargin: (playlistLoader.shown && !VLCStyle.isScreenSmall)
                                  ? playlistLoader.width
                                  : 0
