@@ -219,40 +219,57 @@ static int Open(vlc_object_t *obj)
 
     char *psz_bearer_realm = NULL;
     char *psz_bearer_scope = NULL;
-    bool b_bearer_retried = false;
+    char *psz_last_scope = NULL;
 
-    while (status == 401) /* authentication */
+    /* 401 -> Basic and/or Bearer challenge.
+     * 403 -> Bearer challenge only (insufficient_scope, RFC 6750 section 3.1). */
+    while (status == 401 || status == 403)
     {
-        free(psz_realm);
-        psz_realm = vlc_http_res_get_basic_realm(sys->resource);
         const bool b_bearer_challenge =
             vlc_http_res_has_bearer_challenge(sys->resource);
+        if (status == 403 && !b_bearer_challenge)
+            break;
+
+        free(psz_realm);
+        psz_realm = (status == 401)
+            ? vlc_http_res_get_basic_realm(sys->resource) : NULL;
 
         bool b_progress = false;
 
-        /* Bearer: if advertised, look up a token matching its realm/scope.
-         * Try once per Open() -- re-querying on each 401 just loops. */
-        if (b_bearer_challenge && !b_bearer_retried)
+        /* Bearer: re-query the keystore only when the challenge advertises
+         * a scope we haven't tried yet. The same scope on a subsequent
+         * challenge means the keystore would just hand us the same token. */
+        if (b_bearer_challenge)
         {
             free(psz_bearer_realm);
             free(psz_bearer_scope);
             psz_bearer_realm = vlc_http_res_get_bearer_realm(sys->resource);
             psz_bearer_scope = vlc_http_res_get_bearer_scope(sys->resource);
 
-            crd.psz_authtype = "Bearer";
-            crd.psz_realm = psz_bearer_realm;
-            crd.psz_scope = psz_bearer_scope;
-            if (vlc_credential_get_bearer(&crd, obj) == 0)
+            const bool b_same_scope =
+                (psz_last_scope == NULL && psz_bearer_scope == NULL)
+             || (psz_last_scope != NULL && psz_bearer_scope != NULL
+              && strcmp(psz_last_scope, psz_bearer_scope) == 0);
+
+            if (!b_same_scope)
             {
-                vlc_http_res_set_bearer(sys->resource, crd.psz_token);
-                b_progress = true;
+                crd.psz_authtype = "Bearer";
+                crd.psz_realm = psz_bearer_realm;
+                crd.psz_scope = psz_bearer_scope;
+                if (vlc_credential_get_bearer(&crd, obj) == 0)
+                {
+                    vlc_http_res_set_bearer(sys->resource, crd.psz_token);
+                    b_progress = true;
+                }
+                else
+                {
+                    /* No matching token; drop any stale bearer we sent. */
+                    vlc_http_res_set_bearer(sys->resource, NULL);
+                }
+                free(psz_last_scope);
+                psz_last_scope = psz_bearer_scope != NULL
+                    ? strdup(psz_bearer_scope) : NULL;
             }
-            else
-            {
-                /* No matching token; drop any stale bearer we sent. */
-                vlc_http_res_set_bearer(sys->resource, NULL);
-            }
-            b_bearer_retried = true;
         }
 
         /* Basic: prompt for username/password if challenged. */
@@ -281,6 +298,7 @@ static int Open(vlc_object_t *obj)
 
     free(psz_bearer_realm);
     free(psz_bearer_scope);
+    free(psz_last_scope);
 
     if (status < 0)
     {
