@@ -31,6 +31,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 
 #include <gcrypt.h>
@@ -758,6 +759,22 @@ static void FreeHeader( void *p_value, void *p_data )
     free( p_value );
 }
 
+/* Strict TCP/UDP port parser for receiver-supplied values: rejects empty
+ * input, trailing garbage, overflow, and out-of-range numbers. Returns -1
+ * on any failure. */
+static int ParsePort( const char *psz_value )
+{
+    if ( psz_value == NULL || *psz_value == '\0' )
+        return -1;
+
+    char *psz_end;
+    errno = 0;
+    long val = strtol( psz_value, &psz_end, 10 );
+    if ( errno != 0 || *psz_end != '\0' || val <= 0 || val > 65535 )
+        return -1;
+    return (int)val;
+}
+
 static int ReadStatusLine( vlc_object_t *p_this )
 {
     sout_stream_t *p_stream = (sout_stream_t*)p_this;
@@ -793,7 +810,17 @@ static int ReadStatusLine( vlc_object_t *p_this )
         goto error;
     }
 
-    i_result = atoi( psz_token );
+    char *psz_end;
+    errno = 0;
+    long i_status = strtol( psz_token, &psz_end, 10 );
+    if ( errno != 0 || psz_end == psz_token
+      || i_status < 100 || i_status > 999 )
+    {
+        msg_Err( p_this, "Malformed status code (%s)",
+                 p_sys->psz_last_status_line );
+        goto error;
+    }
+    i_result = (int)i_status;
 
 error:
     free( psz_line );
@@ -1248,15 +1275,28 @@ static int SendSetup( vlc_object_t *p_this )
         if ( psz_value == NULL )
             continue;
 
+        int *pi_port;
         if ( strcmp( psz_name, "server_port" ) == 0 )
-            p_sys->i_server_audio_port = atoi( psz_value );
+            pi_port = &p_sys->i_server_audio_port;
         else if ( strcmp( psz_name, "control_port" ) == 0 )
-            p_sys->i_server_control_port = atoi( psz_value );
+            pi_port = &p_sys->i_server_control_port;
         else if ( strcmp( psz_name, "timing_port" ) == 0 )
-            p_sys->i_server_timing_port = atoi( psz_value );
+            pi_port = &p_sys->i_server_timing_port;
+        else
+            continue;
+
+        int i_port = ParsePort( psz_value );
+        if ( i_port < 0 )
+        {
+            msg_Err( p_this, "Invalid '%s' value '%s' from receiver",
+                     psz_name, psz_value );
+            i_err = VLC_EGENERIC;
+            goto error;
+        }
+        *pi_port = i_port;
     }
 
-    if ( !p_sys->i_server_audio_port )
+    if ( p_sys->i_server_audio_port <= 0 )
     {
         msg_Err( p_this, "Missing 'server_port' during setup" );
         i_err = VLC_EGENERIC;
@@ -1312,10 +1352,19 @@ static int SendRecord( vlc_object_t *p_this )
         goto error;
 
     psz_value = vlc_dictionary_value_for_key( &resp_headers, "Audio-Latency" );
-    if ( psz_value )
-        p_sys->i_audio_latency = atoi( psz_value );
-    else
-        p_sys->i_audio_latency = 0;
+    p_sys->i_audio_latency = 0;
+    if ( psz_value != NULL && *psz_value != '\0' )
+    {
+        char *psz_end;
+        errno = 0;
+        long i_latency = strtol( psz_value, &psz_end, 10 );
+        if ( errno == 0 && *psz_end == '\0'
+          && i_latency >= 0 && i_latency <= INT_MAX )
+            p_sys->i_audio_latency = (int)i_latency;
+        else
+            msg_Warn( p_this, "Ignoring malformed Audio-Latency value '%s'",
+                      psz_value );
+    }
 
 error:
     vlc_dictionary_clear( &req_headers, NULL, NULL );
