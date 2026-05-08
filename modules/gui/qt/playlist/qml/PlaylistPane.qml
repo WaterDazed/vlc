@@ -99,6 +99,9 @@ T.Pane {
         ctx: MainCtx
 
         onJumpToCurrentPlaying: listView.positionViewAtIndex( MainPlaylistController.currentIndex, ItemView.Center)
+        onRequestOpenSortMenu: {
+            toolbar.showSortMenu()
+        }
     }
 
     background: Widgets.AcrylicBackground {

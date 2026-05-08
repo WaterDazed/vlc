@@ -33,6 +33,10 @@ RowLayout {
 
     spacing: VLCStyle.margin_normal
 
+    function showSortMenu() {
+        sort.show()
+    }
+
     Accessible.role: Accessible.ToolBar
 
     Item {
