@@ -202,4 +202,10 @@ vlc_tick_t DVDVRGetTitleLength( pgc_gi_t *, ud_pgcit_t *, int );
 const char *ParseTxtEncoding( uint8_t );
 #endif
 
+
+#ifdef DVDREAD_HAS_DVDAUDIO
+int        DvdAudioReadSetArea( demux_t *, int, int, int );
+int        DvdAudioReadSeek( demux_t *, uint32_t );
+#endif
+
 #endif /* VLC_ACCESS_DVDREAD_H */

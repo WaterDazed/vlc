@@ -71,9 +71,7 @@ typedef struct demux_sys_t demux_sys_t;
 static int  Open ( vlc_object_t * );
 static void Close( vlc_object_t * );
 int OpenVideoRecording( vlc_object_t * );
-
-/* Sets DVD-audio behavior for Open function*/
-static int  OpenAudio ( vlc_object_t * );
+int OpenAudio( vlc_object_t * );
 
 vlc_module_begin ()
     set_shortname( N_("DVD without menus") )
@@ -110,10 +108,6 @@ static void ESNew( demux_t *, int, int );
 
 static int  DvdReadSetArea  ( demux_t *, int, int, int );
 static int  DvdReadSeek     ( demux_t *, uint32_t );
-#ifdef DVDREAD_HAS_DVDAUDIO
-static int  DvdAudioReadSetArea  ( demux_t *, int, int, int );
-static int  DvdAudioReadSeek( demux_t *, uint32_t );
-#endif
 static void DvdReadHandleDSI( demux_t *, uint8_t * );
 static void DvdReadFindCell ( demux_t * );
 
@@ -313,11 +307,6 @@ static int Open( vlc_object_t *p_this )
         return OpenCommon( p_this, DVD_A );
     }
     return VLC_SUCCESS;
-}
-
-static int OpenAudio( vlc_object_t *p_this )
-{
-    return OpenCommon( p_this, DVD_A );
 }
 
 /*****************************************************************************
@@ -1536,188 +1525,6 @@ static int DvdReadSetArea( demux_t *p_demux, int i_title, int i_chapter,
     return VLC_SUCCESS;
 }
 
-#ifdef DVDREAD_HAS_DVDAUDIO
-/* function different enough to warrant a seperate implementation*/
-static int DvdAudioReadSetArea( demux_t *p_demux, int i_title, int i_track,
-                                int i_angle )
-{
-    VLC_UNUSED( i_angle );
-
-    demux_sys_t *p_sys = p_demux->p_sys;
-
-    if( i_title >= 0 && i_title < p_sys->i_titles &&
-        i_title != p_sys->i_title )
-    {
-        if( p_sys->p_title != NULL )
-        {
-            DVDCloseFile( p_sys->p_title );
-            p_sys->p_title = NULL;
-        }
-        p_sys->i_title = i_title;
-        DvdReadResetCellTs( p_sys );
-
-        /* reusing p_vmg variable for p_amg */
-        const ifo_handle_t *p_vmg = p_sys->p_vmg_file;
-
-        /*
-         *  We have to load all title information
-         */
-        msg_Dbg( p_demux, "open ATS %d, for group %d",
-                 p_vmg->info_table_second_sector->tracks_info[i_title].group_property, i_title+ 1 );
-
-        /* Ifo ats */
-        /* reusing p_vts variable for p_ats */
-        if( p_sys->p_vts_file != NULL )
-            ifoClose( p_sys->p_vts_file );
-        if( !( p_sys->p_vts_file = ifoOpen( p_sys->p_dvdread,
-               p_vmg->info_table_second_sector->tracks_info[i_title].group_property ) ) )
-        {
-            msg_Err( p_demux, "fatal error in ats ifo" );
-            return VLC_EGENERIC;
-        }
-
-        const ifo_handle_t *p_vts = p_sys->p_vts_file;
-
-        /* Title position inside the selected ats, i_title is the overall title number */
-        p_sys->i_ttn = p_vmg->info_table_second_sector->tracks_info[i_title].title_property;
-
-        const atsi_title_record_t *atsi_title_table=
-            p_sys->p_title_table = &p_vts->atsi_title_table->atsi_title_row_tables[p_sys->i_ttn-1];
-
-        p_sys->i_chapter = 0;
-        p_sys->i_chapters =
-            p_vts->atsi_title_table->atsi_title_row_tables[p_sys->i_ttn - 1].nr_pointer_records;
-
-        /* there are no cells in dvd audio, bellow the start and end sectors of the title set. */
-        p_sys->i_title_start_block = atsi_title_table->atsi_track_pointer_rows[0].start_sector;
-        p_sys->i_title_end_block = atsi_title_table->atsi_track_pointer_rows[p_sys->i_chapters - 1].end_sector;
-
-        p_sys->i_title_blocks = p_sys->i_title_end_block - p_sys->i_title_start_block + 1;
-        msg_Dbg( p_demux, "title %d ttn %d start %d end %d blocks: %u",
-                 i_title, p_sys->i_ttn,
-                 p_sys->i_title_start_block, p_sys->i_title_end_block,
-                 p_sys->i_title_blocks );
-
-        if( p_sys->i_chapters > 0 )
-        {
-            input_title_t *p_title = p_sys->titles[i_title];
-            if( p_title->seekpoint && p_sys->i_title_blocks > 0 )
-            {
-                const vlc_tick_t title_length = FROM_SCALE_NZ(
-                    p_sys->p_title_table->length_pts );
-                const uint32_t first_sector =
-                    p_sys->p_title_table->atsi_track_pointer_rows[0].start_sector;
-
-                p_title->i_length = title_length;
-
-                const int max_sp = __MIN( p_title->i_seekpoint,
-                                            p_sys->i_chapters );
-                /* offset relative to title start */
-                for( int sj = 0; sj < max_sp; sj++ )
-                {
-                    const uint32_t sj_sector =
-                        p_sys->p_title_table->atsi_track_pointer_rows[sj].start_sector;
-                    const uint32_t offset = sj_sector > first_sector
-                        ? sj_sector - first_sector : 0;
-                    if( title_length > 0 &&
-                        offset > UINT64_MAX / (uint64_t)title_length )
-                    {
-                        msg_Err( p_demux, "chapter offset multiply overflow" );
-                        return VLC_EGENERIC;
-                    }
-                    /* widen for the multiply, product fits uint64_t */
-                    p_title->seekpoint[sj]->i_time_offset =
-                        (vlc_tick_t)( (uint64_t)offset * title_length /
-                                      p_sys->i_title_blocks );
-                }
-            }
-        }
-
-        /* The structure of DVD-A discs seems to be the following
-         * each ATS IFO-> is a GROUP -> Contains multiple titles, Span across one or more AOBs -> each title contains multiple tracks or "Trackpoints",
-         *
-         * trackpoints are counted as tracks. They have records in the pointer table, and nr_pointer_records will include trackpoints. this is why it is different to nr_tracks*/
-
-        /*
-         * Set properties for current track, consider i_chapter as tracks/trackpoints
-         */
-       /*
-         * We've got enough info, time to open the ATS AOB, indexed by "group_property"
-         */
-        if( !( p_sys->p_title = DVDOpenFile( p_sys->p_dvdread,
-               p_vmg->info_table_second_sector->tracks_info[i_title].group_property,
-               DVD_READ_TITLE_VOBS ) ) )
-        {
-            msg_Err( p_demux, "cannot open title (ATS_%02d_1.AOB)",
-                     p_vmg->info_table_second_sector->tracks_info[i_title].group_property );
-            return VLC_EGENERIC;
-        }
-
-        /* for now we are using the "second table, which includes no VOB tracks, assuming that if a user wants to open the video side he will select the standard DVD option"*/
-
-        /*
-         * Destroy obsolete ES by reinitializing program 0
-         * and find all ES in title with ifo data
-         */
-
-        for( int i = 0; i < PS_TK_COUNT; i++ )
-        {
-            ps_track_t *tk = &p_sys->tk[i];
-            if( tk->b_configured )
-            {
-                es_format_Clean( &tk->fmt );
-                if( tk->es ) es_out_Del( p_demux->out, tk->es );
-            }
-            tk->b_configured = false;
-        }
-
-        es_out_Control( p_demux->out, ES_OUT_RESET_PCR );
-
-        if( p_sys->cur_title != i_title)
-        {
-            p_sys->updates |= INPUT_UPDATE_TITLE | INPUT_UPDATE_SEEKPOINT;
-            p_sys->cur_title = i_title;
-            p_sys->cur_chapter = 0;
-        }
-    }
-    else if( i_title != -1 && i_title != p_sys->i_title )
-
-    {
-        return VLC_EGENERIC; /* Couldn't set title */
-    }
-
-    /*
-     * Chapter selection
-     */
-    if( i_track >= 0 && i_track < p_sys->i_chapters )
-    {
-        p_sys->i_chapter = i_track;
-
-        p_sys->i_title_offset =  p_sys->p_title_table->atsi_track_pointer_rows[i_track].start_sector
-            - p_sys->p_title_table->atsi_track_pointer_rows[0].start_sector;
-
-        msg_Dbg(p_demux, "Title Offset: %d", p_sys->i_title_offset);
-
-        p_sys->i_pack_len = 0;
-        /* current block relative to start of title*/
-        p_sys->i_cur_block=p_sys->p_title_table->atsi_track_pointer_rows[i_track].start_sector;
-        DvdReadResetCellTs( p_sys );
-
-        if( p_sys->cur_chapter != i_track)
-        {
-            p_sys->updates |= INPUT_UPDATE_SEEKPOINT;
-            p_sys->cur_chapter = i_track;
-        }
-    }
-    else if( i_track != -1 )
-    {
-
-        msg_Dbg( p_demux, "Couldn't set chapter" );
-        return VLC_EGENERIC;
-    }
-    return VLC_SUCCESS;
-}
-#endif
 
 /*****************************************************************************
  * DvdReadSeek : Goes to a given position on the stream.
@@ -1837,55 +1644,6 @@ static int DvdReadSeek( demux_t *p_demux, uint32_t i_block_offset )
 }
 
 
-#ifdef DVDREAD_HAS_DVDAUDIO
-static int DvdAudioReadSeek( demux_t *p_demux, uint32_t i_block_offset )
-{
-    demux_sys_t *p_sys = p_demux->p_sys;
-    int i_chapter;
-    uint32_t i_seek_blocks = 0;
-
-    /* set pack length */
-    /* set current block*/
-
-    /* find current chapter */
-    for ( i_chapter = 0 ; i_chapter < p_sys->i_chapters; i_chapter++ ) {
-        uint32_t start = p_sys->p_title_table->atsi_track_pointer_rows[i_chapter].start_sector;
-        uint32_t end = p_sys->p_title_table->atsi_track_pointer_rows[i_chapter].end_sector;
-        uint32_t chapter_len = end - start + 1;
-
-        if ( i_block_offset < i_seek_blocks + chapter_len )
-            break;
-
-        i_seek_blocks += chapter_len;
-    }
-
-    /* exit if i_chapter is invalid */
-    if( i_chapter >= p_sys->i_chapters )
-        return VLC_EGENERIC;
-
-    if( p_sys->cur_chapter != i_chapter )
-    {
-        p_sys->updates |= INPUT_UPDATE_SEEKPOINT;
-        p_sys->cur_chapter = i_chapter;
-    }
-
-    const uint32_t start_sector =
-        p_sys->p_title_table->atsi_track_pointer_rows[i_chapter].start_sector;
-    /* i_block_offset title-relative, i_seek_blocks is chapter start */
-    const uint32_t within_chapter = i_block_offset - i_seek_blocks;
-    p_sys->i_cur_block = start_sector + within_chapter;
-
-    if( p_sys->i_cur_block <= p_sys->i_title_end_block )
-        p_sys->i_pack_len = p_sys->i_title_end_block - p_sys->i_cur_block + 1;
-    else
-        p_sys->i_pack_len = 0;
-    p_sys->i_title_offset = i_block_offset;
-    p_sys->i_chapter = i_chapter;
-    DvdReadResetCellTs( p_sys );
-
-    return VLC_SUCCESS;
-}
-#endif
 
 /*****************************************************************************
  * DvdReadHandleDSI
