@@ -1,18 +1,16 @@
 # OpenCV 4
 
-OPENCV4_VERSION := 4.10.0
+OPENCV4_VERSION := 4.4.0
 OPENCV4_URL := $(GITHUB)/opencv/opencv/archive/$(OPENCV4_VERSION).tar.gz
 
-ifdef GNUV3
 ifneq ($(findstring opencv4,$(PKGS_ENABLE)),)
 PKGS += opencv4
 ifeq ($(call need_pkg,"opencv4 >= 4.0.0"),)
 PKGS_FOUND += opencv4
 endif
 endif
-endif
 
-DEPS_opencv4 = sam3 $(DEPS_sam3)
+DEPS_opencv4 = zlib $(DEPS_zlib) jpeg $(DEPS_jpeg) png $(DEPS_png)
 
 $(TARBALLS)/opencv-$(OPENCV4_VERSION).tar.gz:
 	$(call download_pkg,$(OPENCV4_URL),opencv4)
@@ -21,9 +19,6 @@ $(TARBALLS)/opencv-$(OPENCV4_VERSION).tar.gz:
 
 opencv4: opencv-$(OPENCV4_VERSION).tar.gz .sum-opencv4
 	$(UNPACK)
-# macosx_conversions.mm uses macOS-only API. Guard so it's not used on other Apple platforms
-	sed -i.orig '1s/^/#include <TargetConditionals.h>\n#if TARGET_OS_OSX\n/' $(UNPACK_DIR)/modules/imgcodecs/src/macosx_conversions.mm
-	echo '#endif /* TARGET_OS_OSX */' >> $(UNPACK_DIR)/modules/imgcodecs/src/macosx_conversions.mm
 	$(MOVE)
 
 # only enable necessary pkgs
@@ -53,7 +48,8 @@ OPENCV4_CONF := \
 	-DWITH_OPENJPEG=OFF \
 	-DWITH_JASPER=OFF \
 	-DWITH_TIFF=OFF \
-	-DWITH_COCOA=OFF
+	-DWITH_COCOA=OFF \
+	-DBUILD_PROTOBUF=OFF
 
 # NEON mandatory on aarch64
 ifneq ($(findstring aarch64,$(HOST)),)
@@ -69,9 +65,9 @@ OPENCV4_CONF += -DCV_ENABLE_INTRINSICS=OFF
 endif
 
 .opencv4: opencv4 toolchain.cmake
-	$(REQUIRE_GNUV3)
 	$(CMAKECLEAN)
 	$(HOSTVARS_CMAKE) $(CMAKE) $(OPENCV4_CONF)
 	+$(CMAKEBUILD)
 	$(CMAKEINSTALL)
+	install $(BUILD_DIR)/unix-install/opencv4.pc $(PREFIX)/lib/pkgconfig
 	touch $@
