@@ -87,6 +87,73 @@ static bool CheckClientExt(const char *name)
     return vlc_gl_StrHasToken(clientExts, name);
 }
 
+static bool CheckDisplayExt(EGLDisplay display, const char *name)
+{
+    const char *exts = eglQueryString(display, EGL_EXTENSIONS);
+    return vlc_gl_StrHasToken(exts, name);
+}
+
+static void DisplayAvailableDevices(vlc_gl_t *gl)
+{
+    PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
+        (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
+    PFNEGLQUERYDEVICESTRINGEXTPROC eglQueryDeviceStringEXT =
+        (PFNEGLQUERYDEVICESTRINGEXTPROC)eglGetProcAddress("eglQueryDeviceStringEXT");
+
+    bool has_device_query_name = CheckClientExt("EGL_EXT_device_query_name");
+
+    EGLint device_count = 0;
+    eglQueryDevicesEXT(0, NULL, &device_count);
+
+    EGLDeviceEXT *devices = malloc(sizeof(*devices) * device_count);
+    eglQueryDevicesEXT(device_count, devices, &device_count);
+    msg_Dbg(gl, "EGL has %d devices:", device_count);
+
+    for (EGLint i=0; i<device_count; ++i)
+    {
+        const char *vendor;
+        const char *renderer;
+        const char *device_ext =
+            eglQueryDeviceStringEXT(devices[i], EGL_EXTENSIONS);
+
+        if (has_device_query_name)
+        {
+            vendor = eglQueryDeviceStringEXT(devices[i], EGL_VENDOR);
+            renderer = eglQueryDeviceStringEXT(devices[i], EGL_RENDERER_EXT);
+            msg_Dbg(gl, " - device %d: vendor='%s' renderer='%s'",
+                    i, vendor, renderer);
+        }
+        else
+            msg_Dbg(gl, " - device %d: EGL_EXT_device_query_name not available", i);
+
+        const char *space = device_ext;
+        while (*space != '\0')
+        {
+            space = strchr(device_ext, ' ');
+            if (space == NULL)
+                space = device_ext + strlen(device_ext);
+            size_t length = space - device_ext;
+
+            const char *additional_info = NULL;
+
+#define DEVICE_EXTENSION_MATCH(ext) \
+            (sizeof(ext) - 1 == length && strncmp(device_ext, ext, length) == 0)
+
+            if (DEVICE_EXTENSION_MATCH("EGL_EXT_device_drm_render_node"))
+                additional_info = eglQueryDeviceStringEXT(devices[i], EGL_DRM_RENDER_NODE_FILE_EXT);
+            else if (DEVICE_EXTENSION_MATCH("EGL_EXT_device_drm"))
+                additional_info = eglQueryDeviceStringEXT(devices[i], EGL_DRM_DEVICE_FILE_EXT);
+
+            msg_Dbg(gl, "   + extension: type='%.*s'%s%s", (int)length, device_ext,
+                    additional_info ? ": " : "",
+                    additional_info ? additional_info : "");
+            device_ext = space + 1;
+        }
+    }
+
+    free(devices);
+}
+
 struct gl_api
 {
    const char name[10];
@@ -689,6 +756,40 @@ static int Open(vlc_gl_t *gl, const struct gl_api *api,
         msg_Err(obj, "cannot select %s API", api->name);
         goto error;
     }
+
+    bool has_device_enum = CheckClientExt("EGL_EXT_device_enumeration");
+    bool has_device_query = CheckClientExt("EGL_EXT_device_query");
+
+    if (has_device_query && has_device_enum)
+    {
+        DisplayAvailableDevices(gl);
+        PFNEGLQUERYDISPLAYATTRIBEXTPROC eglQueryDisplayAttribEXT =
+            (PFNEGLQUERYDISPLAYATTRIBEXTPROC)eglGetProcAddress("eglQueryDisplayAttribEXT");
+        PFNEGLQUERYDEVICESTRINGEXTPROC eglQueryDeviceStringEXT =
+            (PFNEGLQUERYDEVICESTRINGEXTPROC)eglGetProcAddress("eglQueryDeviceStringEXT");
+
+        EGLAttrib device_attr;
+        eglQueryDisplayAttribEXT(sys->display, EGL_DEVICE_EXT, &device_attr);
+        EGLDeviceEXT device = (EGLDeviceEXT)device_attr;
+
+        const char *extensions =
+            eglQueryDeviceStringEXT(device, EGL_EXTENSIONS);
+
+        msg_Dbg(gl, "Using EGL device: %s", extensions);
+    }
+
+    bool has_query_driver =
+        CheckDisplayExt(sys->display, "EGL_MESA_query_driver");
+
+    if (has_query_driver)
+    {
+        PFNEGLGETDISPLAYDRIVERNAMEPROC eglGetDisplayDriverName =
+            (PFNEGLGETDISPLAYDRIVERNAMEPROC) eglGetProcAddress("eglGetDisplayDriverName");
+
+        msg_Dbg(gl, "Using EGL driver: %s", eglGetDisplayDriverName(sys->display));
+    }
+    else msg_Dbg(gl, "EGL_MESA_query_driver is unavailable");
+
 
     const EGLint conf_attr[] = {
         EGL_RED_SIZE, 5,
