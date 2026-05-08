@@ -30,7 +30,7 @@
 typedef struct demux_sys_t demux_sys_t;
 
 /* function different enough to warrant a seperate implementation*/
-int DvdAudioReadSetArea( demux_t *p_demux, int i_title, int i_track,
+static int DvdAudioReadSetArea( demux_t *p_demux, int i_title, int i_track,
                          int i_angle )
 {
     VLC_UNUSED( i_angle );
@@ -214,7 +214,7 @@ int DvdAudioReadSetArea( demux_t *p_demux, int i_title, int i_track,
     return VLC_SUCCESS;
 }
 
-int DvdAudioReadSeek( demux_t *p_demux, uint32_t i_block_offset )
+static int DvdAudioReadSeek( demux_t *p_demux, uint32_t i_block_offset )
 {
     demux_sys_t *p_sys = p_demux->p_sys;
     int i_chapter;

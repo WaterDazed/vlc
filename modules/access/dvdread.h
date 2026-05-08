@@ -183,7 +183,7 @@ struct demux_sys_t
     const dvdread_ops_t *ops;
 };
 
-static inline void DvdReadResetCellTs( demux_sys_t *p_sys )
+static inline void DvdReadResetCellTs( struct demux_sys_t *p_sys )
 {
     p_sys->cell_ts.dvd = VLC_TICK_INVALID;
     p_sys->cell_ts.ps = VLC_TICK_INVALID;
@@ -192,20 +192,12 @@ static inline void DvdReadResetCellTs( demux_sys_t *p_sys )
 int OpenCommon( vlc_object_t *, dvd_type_t );
 
 #ifdef DVDREAD_HAS_DVDVIDEORECORDING
-uint32_t   DvdVRGetProgramSectorSpan( const demux_sys_t *, const vobu_map_t * );
-vlc_tick_t DvdVRProgramDuration( const pgi_t * );
-uint32_t   DvdVRReadTimeToVobuOffset( const demux_sys_t *, vlc_tick_t );
-int        DvdVRReadSetArea( demux_t *, int, int, int );
-int        DvdVRReadSeek( demux_t *, uint32_t );
-void       DvdVRFindCell( demux_t * );
-vlc_tick_t DVDVRGetTitleLength( pgc_gi_t *, ud_pgcit_t *, int );
-const char *ParseTxtEncoding( uint8_t );
+uint32_t   DvdVRGetProgramSectorSpan( const struct demux_sys_t *, const vobu_map_t * );
+extern const dvdread_ops_t DvdVRReadOps;
 #endif
 
-
 #ifdef DVDREAD_HAS_DVDAUDIO
-int        DvdAudioReadSetArea( demux_t *, int, int, int );
-int        DvdAudioReadSeek( demux_t *, uint32_t );
+extern const dvdread_ops_t DvdAudioReadOps;
 #endif
 
 #endif /* VLC_ACCESS_DVDREAD_H */
