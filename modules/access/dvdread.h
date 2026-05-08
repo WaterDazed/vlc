@@ -73,6 +73,21 @@ typedef enum
 
 struct demux_sys_t;
 
+typedef struct
+{
+    /* format-specific hooks used by shared Control()/Demux() paths */
+    int        (*set_area)( demux_t *, int, int, int );
+    int        (*seek)( demux_t *, uint32_t );
+    void       (*find_cell)( demux_t * );
+    vlc_tick_t (*title_length)( const struct demux_sys_t * );
+    void       (*demux_titles)( demux_t *, int * );
+    bool       (*timeline_base)( const struct demux_sys_t *, vlc_tick_t * );
+    uint32_t   (*time_to_seek_offset)( const struct demux_sys_t *, vlc_tick_t, uint32_t );
+    int        (*ps_source)( void );
+    void       (*adjust_anchor)( struct demux_sys_t *, block_t * );
+    bool       requires_vts;
+} dvdread_ops_t;
+
 struct demux_sys_t
 {
     /* DVDRead state */
@@ -165,6 +180,7 @@ struct demux_sys_t
 
     /* SPU */
     uint32_t clut[VIDEO_PALETTE_CLUT_COUNT];
+    const dvdread_ops_t *ops;
 };
 
 static inline void DvdReadResetCellTs( demux_sys_t *p_sys )
