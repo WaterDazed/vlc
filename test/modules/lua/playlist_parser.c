@@ -59,7 +59,7 @@ static int OpenIntf(vlc_object_t *root) {
   char sample_test[100];
   snprintf(sample_test, sizeof(sample_test), sample_test_markup,
            test_parsed_value);
-  stream_t *p_s = vlc_stream_MemoryNew(VLC_OBJECT(root), (uint8_t *)sample_test,
+  stream_t *p_s = vlc_stream_MemoryNew(root, (uint8_t *)sample_test,
                                        strlen(sample_test), true);
 
   assert(p_s != NULL);
@@ -68,7 +68,7 @@ static int OpenIntf(vlc_object_t *root) {
   setenv("VLC_USERDATA_PATH", TOP_SRCDIR "/test/modules/", 1);
 
   // exercise
-  module_t *p_m = module_need(VLC_OBJECT(p_s), "demux", "luaplaylist", true);
+  module_t *p_m = module_need(p_s, "demux", "luaplaylist", true);
 
   // verification
   assert(p_m != NULL);
@@ -92,7 +92,7 @@ static int OpenIntf(vlc_object_t *root) {
   input_item_node_Delete(p_node);
 
   // cleanup
-  module_unneed(VLC_OBJECT(p_s), p_m);
+  module_unneed(p_s, p_m);
   vlc_stream_Delete(p_s);
   return VLC_SUCCESS;
 }
