@@ -767,6 +767,9 @@ FunctionEnd
 
 Function .OnInstSuccess
     ${MementoSectionSave}
+    ${If} ${AtLeastWin10}
+      nsExec::ExecToLog '"$SYSDIR\compact.exe" /C /S "$INSTDIR"'
+    ${EndIf}
 FunctionEnd
 
 ;; End function
