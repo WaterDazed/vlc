@@ -37,6 +37,7 @@
 #include <vlc/vlc.h>
 
 #include <vlc_common.h>
+#include <vlc_demux.h>
 #include <vlc_extensions.h>
 #include <vlc_input_item.h>
 #include <vlc_interface.h>
@@ -59,29 +60,25 @@ static int OpenIntf(vlc_object_t *root) {
   char sample_test[100];
   snprintf(sample_test, sizeof(sample_test), sample_test_markup,
            test_parsed_value);
+
   stream_t *p_s = vlc_stream_MemoryNew(root, (uint8_t *)sample_test,
                                        strlen(sample_test), true);
-
   assert(p_s != NULL);
 
   p_s->psz_url = strdup("mock://length=100");
   setenv("VLC_USERDATA_PATH", TOP_SRCDIR "/test/modules/", 1);
 
   // exercise
-  module_t *p_m = module_need(p_s, "demux", "luaplaylist", true);
+  demux_t *p_d = demux_New(root, "luaplaylist", p_s->psz_url, p_s, NULL);
 
   // verification
-  assert(p_m != NULL);
+  assert(p_d != NULL);
 
   // next behavior is parse() execution
-  // s->pf_readdir = ReadDir; ReadDir is the callback set that has parse()
-  // but first we need to fullfill the requirmenet from readline and read from
-  // module that takes stream_t.s
-  p_s->s = p_s;
   input_item_t *p_item = input_item_New(INPUT_ITEM_URI_NOP, NULL);
   input_item_node_t *p_node = input_item_node_Create(p_item);
 
-  int probe_ret = vlc_stream_ReadDir(p_s, p_node);
+  int probe_ret = vlc_stream_ReadDir(p_d, p_node);
 
   assert(probe_ret == 0);
   assert(p_node->i_children == 1);
@@ -92,8 +89,9 @@ static int OpenIntf(vlc_object_t *root) {
   input_item_node_Delete(p_node);
 
   // cleanup
-  module_unneed(p_s, p_m);
-  vlc_stream_Delete(p_s);
+  // this calls demux_DestroyDemux(p_d) callback unloading the module and
+  // deleting the stream as well
+  demux_Delete(p_d);
   return VLC_SUCCESS;
 }
 
