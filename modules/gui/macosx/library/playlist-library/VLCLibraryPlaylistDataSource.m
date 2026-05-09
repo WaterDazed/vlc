@@ -23,6 +23,7 @@
 #import "VLCLibraryPlaylistDataSource.h"
 
 #import "extensions/NSString+Helpers.h"
+#import "extensions/NSView+VLCAdditions.h"
 
 #import "library/VLCLibraryCollectionViewFlowLayout.h"
 #import "library/VLCLibraryCollectionViewItem.h"

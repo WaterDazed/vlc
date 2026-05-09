@@ -23,6 +23,7 @@
 #import "VLCMediaSourceBaseDataSource.h"
 #include <AppKit/AppKit.h>
 #import "extensions/NSImage+VLCAdditions.h"
+#import "extensions/NSView+VLCAdditions.h"
 
 #import "VLCLibraryMediaSourceViewNavigationStack.h"
 #import "VLCMediaSourceProvider.h"

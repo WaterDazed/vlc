@@ -23,6 +23,7 @@
 #import "VLCLibraryVideoViewController.h"
 
 #import "extensions/NSImage+VLCAdditions.h"
+#import "extensions/NSView+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCLibraryCollectionView.h"
