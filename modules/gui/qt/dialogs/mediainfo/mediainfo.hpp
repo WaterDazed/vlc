@@ -34,8 +34,8 @@ class MediaInfoDialog : public QVLCFrame
 {
     Q_OBJECT
 public:
-    MediaInfoDialog( qt_intf_t *,
-                     SharedInputItem input = {} );
+    MediaInfoDialog( qt_intf_t*,
+                 const QList<SharedInputItem>& inputList = {} );
     virtual ~MediaInfoDialog();
 
     enum panel

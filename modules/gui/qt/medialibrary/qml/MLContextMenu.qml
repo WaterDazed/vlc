@@ -114,11 +114,7 @@ NativeMenu {
         },{
             "text": qsTr("Media Information"),
             "action": function(dataList, options, indexes) {
-                DialogsProvider.mediaInfoDialog(dataList[0][idDataRole])
-            },
-            "visible": function(dataList, options, indexes) {
-                return (dataList.length === 1)
-                        && !(dataList[0][idDataRole].hasParent())
+                DialogsProvider.mediaInfoDialog(_mlIDList(dataList))
             }
         }
     ]

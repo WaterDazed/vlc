@@ -174,6 +174,7 @@ public slots:
     void bookmarksDialog();
     void mediaInfoDialog( void );
     void mediaInfoDialog( const SharedInputItem& inputItem );
+    void mediaInfoDialog( const QVariantList& itemIdList );
     void mediaInfoDialog( const PlaylistItem& pItem );
     void mediaInfoDialog( const MLItemId& itemId );
     void mediaCodecDialog();

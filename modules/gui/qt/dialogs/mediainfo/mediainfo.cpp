@@ -42,9 +42,12 @@
    Please be Careful of not breaking one the modes behaviour... */
 
 MediaInfoDialog::MediaInfoDialog(qt_intf_t *_p_intf,
-                                 SharedInputItem p_item )
+                                 const QList<SharedInputItem>& inputList )
     : QVLCFrame( _p_intf )
 {
+    //for testing rn
+    SharedInputItem p_item = inputList.isEmpty() ? nullptr : inputList.at(1);
+
     isMainInputInfo = ( p_item == NULL );
 
     if ( isMainInputInfo )
@@ -132,6 +135,7 @@ MediaInfoDialog::MediaInfoDialog(qt_intf_t *_p_intf,
         updateAllTabs( p_item );
 
     restoreWidgetPosition( "Mediainfo", QSize( 600 , 480 ) );
+
 }
 
 MediaInfoDialog::~MediaInfoDialog()
