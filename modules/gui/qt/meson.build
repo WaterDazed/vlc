@@ -609,6 +609,7 @@ qml_modules += {
     'sources': files(
         'maininterface/qml/BannerSources.qml',
         'maininterface/qml/MainInterface.qml',
+        'maininterface/qml/MainInterfaceLayerShell.qml',
         'maininterface/qml/MainViewLoader.qml',
         'maininterface/qml/MainDisplay.qml',
         'maininterface/qml/NoMedialibHome.qml'

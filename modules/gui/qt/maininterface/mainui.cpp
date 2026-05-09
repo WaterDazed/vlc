@@ -155,7 +155,28 @@ bool MainUI::setup(QQmlEngine* engine)
     engine->addImageProvider(QStringLiteral("svgcolor"), new SVGColorImageImageProvider());
     engine->addImageProvider(QStringLiteral("vlcaccess"), new VLCAccessImageProvider());
 
-    m_component  = new QQmlComponent(engine, QStringLiteral("qrc:/qt/qml/VLC/MainInterface/MainInterface.qml"), QQmlComponent::PreferSynchronous, engine);
+    // NOTE: Starting with Qt 6.5, `QQmlComponent` accepts `QAnyStringView`.
+    constexpr QLatin1String mainInterface {"qrc:/qt/qml/VLC/MainInterface/MainInterface.qml"};
+    constexpr QLatin1String mainInterfaceLayerShell {"qrc:/qt/qml/VLC/MainInterface/MainInterfaceLayerShell.qml"};
+
+    const bool useLayerShell = [this]() {
+        assert(qGuiApp);
+        if (qGuiApp->platformName().startsWith(QLatin1String("wayland")) &&
+            m_mainCtx->isInterfaceAlwaysOnTop() &&
+            var_InheritBool(m_intf, "embedded-video"))
+            return true;
+        return false;
+    }();
+
+    m_component  = new QQmlComponent(engine, useLayerShell ? mainInterfaceLayerShell : mainInterface, QQmlComponent::PreferSynchronous, engine);
+
+    if (useLayerShell && m_component->isError())
+    {
+        // fallback for missing org.kde.layershell or other errors
+        delete m_component; // `QQmlComponent` does not seem to allow changing the source URL.
+        m_component = new QQmlComponent(engine, mainInterface, QQmlComponent::PreferSynchronous, engine);
+    }
+
     if (m_component->isLoading())
     {
         msg_Warn(m_intf, "component is still loading");

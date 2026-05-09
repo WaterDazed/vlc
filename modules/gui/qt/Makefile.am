@@ -1017,6 +1017,7 @@ libqml_module_maininterface_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
 libqml_module_maininterface_a_QML = \
 	maininterface/qml/BannerSources.qml \
 	maininterface/qml/MainInterface.qml \
+	maininterface/qml/MainInterfaceLayerShell.qml \
 	maininterface/qml/MainViewLoader.qml \
 	maininterface/qml/MainDisplay.qml \
 	maininterface/qml/NoMedialibHome.qml
