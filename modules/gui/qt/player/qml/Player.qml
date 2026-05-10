@@ -50,6 +50,10 @@ FocusScope {
             return VLCStyle.noArtAlbumCover
     }
 
+    // Only applicable in video mode:
+    property bool displayFadeRectangles: !_controlsUnderVideo && (height > (implicitFadeRectangleHeight * 3))
+    property real implicitFadeRectangleHeight: VLCStyle.dp(206, VLCStyle.scale)
+
     // Private
 
     property bool _controlsUnderVideo: (MainCtx.pinVideoControls
@@ -233,7 +237,7 @@ FocusScope {
                 }
 
                 component FadeRectangle : Rectangle {
-                    implicitHeight: VLCStyle.dp(206, VLCStyle.scale)
+                    implicitHeight: rootPlayer.implicitFadeRectangleHeight
 
                     SGManipulator {
                         // The rectangle is the bottom-most item in the interface,
@@ -249,10 +253,8 @@ FocusScope {
                     anchors.left: parent.left
                     anchors.right: parent.right
 
-                    implicitHeight: VLCStyle.dp(206, VLCStyle.scale)
-
                     opacity: topBar.opacity
-                    visible: !topBarAcrylicBg.visible
+                    visible: rootPlayer.displayFadeRectangles && !topBarAcrylicBg.visible
 
                     gradient: Gradient {
                         GradientStop { position: 0; color: Qt.rgba(0, 0, 0, .8) }
@@ -265,8 +267,6 @@ FocusScope {
                     anchors.left: parent.left
                     anchors.right: parent.right
 
-                    implicitHeight: VLCStyle.dp(206, VLCStyle.scale)
-
                     opacity: controlBar.opacity
 
                     gradient: Gradient {
@@ -275,7 +275,7 @@ FocusScope {
                         GradientStop { position: 1; color: "black" }
                     }
 
-                    visible: !(controlBar.background && controlBar.background.visible)
+                    visible: rootPlayer.displayFadeRectangles && !(controlBar.background && controlBar.background.visible)
                 }
             }
         }
@@ -291,6 +291,26 @@ FocusScope {
 
                 property real topPadding: playerSpecializationLoader.topPadding
                 property real bottomPadding: playerSpecializationLoader.bottomPadding
+
+                // Whether the Spotify-style full lyrics view is active
+                property bool lyricsMode: false
+                // Whether auto-scroll follows playback position
+                property bool lyricsSyncToPlayback: true
+
+                // Auto-dismiss lyrics view when the current track has no lyrics
+                Connections {
+                    target: Player
+                    function onHasLyricsChanged(hasLyrics) {
+                        if (!hasLyrics)
+                            audioFocusScope.lyricsMode = false
+                    }
+                }
+
+                // Reset sync when entering lyrics mode
+                onLyricsModeChanged: {
+                    if (lyricsMode)
+                        lyricsSyncToPlayback = true
+                }
 
                 // background image
                 Widgets.DualKawaseBlur {
@@ -322,6 +342,8 @@ FocusScope {
                     // The window naturally clips the content, but having this saves some
                     // video memory, depending on the excess content in the last layer:
                     viewportRect: Qt.rect((width - parent.width) / 2, (height - parent.height) / 2, parent.width, parent.height)
+
+                    funcOnNextEffectureTextureChange: liveTimer.transientTurnOnLive
 
                     TextureProviderIndirection {
                         id: textureProviderIndirection
@@ -387,7 +409,152 @@ FocusScope {
                         onVlcWheelKey: (key) => MainCtx.sendVLCHotkey(key)
                     }
 
+                    // ── Two-panel lyrics layout ────────────────────────
+                    Item {
+                        id: lyricsLayout
+
+                        visible: audioFocusScope.lyricsMode
+
+                        anchors.fill: parent
+
+                        Item {
+                            id: leftSideParent
+
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+
+                            width: parent.width * 0.6
+
+                            Loader {
+                                id: lyricsLoader
+
+                                active: audioFocusScope.lyricsMode
+                                anchors.fill: parent
+
+                                sourceComponent: Flickable {
+                                    id: lyricsFlickable
+
+                                    contentWidth: width
+                                    contentHeight: lyricsColumn.height
+
+                                    ScrollBar.vertical: Widgets.ScrollBarExt {}
+
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    clip: true
+
+                                    // Disable auto-scroll when user manually flicks
+                                    onFlickStarted: audioFocusScope.lyricsSyncToPlayback = false
+                                    onDragStarted: audioFocusScope.lyricsSyncToPlayback = false
+
+                                    Behavior on contentY {
+                                        enabled: audioFocusScope.lyricsSyncToPlayback
+                                        SmoothedAnimation {
+                                            velocity: VLCStyle.dp(300, VLCStyle.scale)
+                                            duration: VLCStyle.duration_veryLong
+                                        }
+                                    }
+
+                                    Connections {
+                                        target: Player
+                                        function onCurrentLyricIndexChanged(idx) {
+                                            if (!audioFocusScope.lyricsSyncToPlayback)
+                                                return
+                                            if (idx < 0)
+                                                return
+                                            const item = lyricsRepeater.itemAt(idx)
+                                            if (!item)
+                                                return
+                                            const targetY = item.y + item.height / 2
+                                                            - lyricsFlickable.height / 2
+                                            lyricsFlickable.contentY = Math.max(0, Math.min(
+                                                targetY, lyricsFlickable.contentHeight - lyricsFlickable.height))
+                                        }
+                                    }
+
+                                    Column {
+                                        id: lyricsColumn
+
+                                        width: lyricsFlickable.width
+
+                                        Repeater {
+                                            id: lyricsRepeater
+
+                                            model: Player.syltLyrics
+
+                                            delegate: Text {
+                                                required property int index
+                                                required property var modelData
+
+                                                readonly property bool isCurrent: index === Player.currentLyricIndex
+
+                                                width: lyricsColumn.width
+                                                padding: VLCStyle.margin_small
+
+                                                text: modelData.text
+
+                                                horizontalAlignment: Text.AlignHCenter
+                                                wrapMode: Text.WordWrap
+
+                                                font.family: VLCStyle.fontFamily_normal
+                                                font.pixelSize: isCurrent
+                                                                ? VLCStyle.fontSize_xlarge
+                                                                : VLCStyle.fontSize_large
+                                                font.weight: isCurrent ? Font.Bold : Font.Normal
+
+                                                color: isCurrent
+                                                       ? centerTheme.fg.primary
+                                                       : Qt.rgba(centerTheme.fg.primary.r,
+                                                                 centerTheme.fg.primary.g,
+                                                                 centerTheme.fg.primary.b,
+                                                                 0.45)
+
+                                                Behavior on font.pixelSize {
+                                                    NumberAnimation { duration: VLCStyle.duration_long }
+                                                }
+                                                Behavior on color {
+                                                    ColorAnimation { duration: VLCStyle.duration_long }
+                                                }
+                                            }
+                                        }
+
+                                        // Footer: lets the last lyric scroll up to centre
+                                        Item {
+                                            width: 1
+                                            height: lyricsLoader.height / 2
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Item {
+                            id: rightSideParent
+
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.left: leftSideParent.right
+
+                            // "Sync to Playback" checkbox pinned to bottom of right panel
+                            Widgets.CheckBoxExt {
+                                anchors.bottom: parent.bottom
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.bottomMargin: VLCStyle.margin_normal
+
+                                text: qsTr("Sync to playback")
+                                checked: audioFocusScope.lyricsSyncToPlayback
+                                onClicked: audioFocusScope.lyricsSyncToPlayback = checked
+
+                                Accessible.role: Accessible.CheckBox
+                                Accessible.name: qsTr("Sync lyrics to playback position")
+                            }
+                        }
+                    }
+
                     ColumnLayout {
+                        parent: audioFocusScope.lyricsMode ? rightSideParent : centerContent
+
                         anchors.centerIn: parent
                         spacing: 0
 
@@ -523,6 +690,31 @@ FocusScope {
                             }
                         }
 
+                        Widgets.SubtitleLabel {
+                            id: lyricsLabel
+
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.topMargin: VLCStyle.margin_large
+                            Layout.maximumWidth: centerContent.width - VLCStyle.margin_xlarge * 2
+                            // Reserve two wrapped lines so lyric length changes do
+                            // not cause the surrounding layout to jump.
+                            Layout.preferredHeight: VLCStyle.fontHeight_xlarge * 2 + VLCStyle.margin_xxsmall
+
+                            visible: text !== "" && !audioFocusScope.lyricsMode
+                            clip: true
+
+                            text: Player.currentLyricText
+                            font.pixelSize: VLCStyle.fontSize_xlarge
+                            font.weight: Font.DemiBold
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
+                            color: centerTheme.fg.primary
+
+                            Accessible.role: Accessible.StaticText
+                            Accessible.name: qsTr("Lyrics")
+                            Accessible.description: text
+                        }
+
                         Widgets.NavigableRow {
                             id: audioControls
 
@@ -567,6 +759,18 @@ FocusScope {
                                 onClicked: Player.jumpFwd()
                                 description: qsTr("Step forward")
                             }
+
+                            Widgets.IconToolButton {
+                                text: VLCIcons.topbar_music
+                                font.pixelSize: VLCStyle.icon_audioPlayerButton
+                                visible: Player.hasLyrics
+                                checked: audioFocusScope.lyricsMode
+                                onClicked: audioFocusScope.lyricsMode = !audioFocusScope.lyricsMode
+                                description: qsTr("Lyrics")
+
+                                Accessible.role: Accessible.Button
+                                Accessible.name: qsTr("Toggle lyrics view")
+                            }
                         }
                     }
 
@@ -605,6 +809,7 @@ FocusScope {
                             PropertyAction { target: labelVolume; property: "visible"; value: false }
                         }
                     }
+
                 }
             }
         }
@@ -685,12 +890,19 @@ FocusScope {
 
             anchors.fill: parent
 
-            opacity: (MainCtx.intfMainWindow.visibility === Window.FullScreen && MainCtx.hasEmbededVideo) ? MainCtx.pinOpacity
-                                                                                                          : 1.0
+            opacity: {
+                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
+                    return 0.6
+                } else if (MainCtx.intfMainWindow.visibility === Window.FullScreen && MainCtx.hasEmbededVideo) {
+                    return MainCtx.pinOpacity
+                } else {
+                    return 1.0
+                }
+            }
 
             tintColor: windowTheme.bg.primary
 
-            visible: MainCtx.pinVideoControls
+            visible: MainCtx.pinVideoControls || !rootPlayer.displayFadeRectangles
         }
     }
 
@@ -953,10 +1165,19 @@ FocusScope {
         background: Rectangle {
             id: controlBarBackground
 
-            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls
+            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls || !rootPlayer.displayFadeRectangles
 
-            opacity: (Window.visibility === Window.FullScreen && MainCtx.hasEmbededVideo) ? MainCtx.pinOpacity
-                                                                                          : ((AcrylicController.enabled || !MainCtx.hasEmbededVideo) ? 0.7 : 1.0)
+            opacity: {
+                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
+                    return 0.6
+                } else if ((Window.visibility === Window.FullScreen) && MainCtx.hasEmbededVideo) {
+                    return MainCtx.pinOpacity
+                } else if (AcrylicController.enabled || !MainCtx.hasEmbededVideo) {
+                    return 0.7
+                } else {
+                    return 1.0
+                }
+            }
 
             color: windowTheme.bg.primary
         }

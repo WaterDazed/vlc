@@ -195,6 +195,9 @@ public:
     QString m_album;
     QUrl m_artwork;
     QUrl m_url;
+    QString m_currentLyricText;
+    QList<QPair<vlc_tick_t, QString>> m_syltLyrics;
+    int m_currentLyricIndex = -1;
 };
 
 #endif /* QVLC_INPUT_MANAGER_P_H_ */
