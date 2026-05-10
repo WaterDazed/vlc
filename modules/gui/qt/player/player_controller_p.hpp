@@ -26,7 +26,6 @@
 #include "util/shared_input_item.hpp"
 #include "util/renderer_manager.hpp"
 
-#include <QTimer>
 #include <QUrl>
 
 #ifndef QT_HAS_LIBATOMIC
@@ -93,18 +92,27 @@ public:
     PlayerController::PlayingState m_playing_status = PlayerController::PLAYING_STATE_STOPPED;
     QString         m_name;
     float           m_buffering = 0.f;
-    float           m_rate = 1.f;
 
-    VLCTime      m_time;
-    VLCDuration  m_remainingTime;
-    double       m_position = 0.f;
-    VLCDuration  m_length;
+    // The reason we are storing these independently because the atomic timer point structure is
+    // most likely not be lock-less as with the independent trivial atomic types here. We still
+    // need to have an atomic (or protected with an explicit lock) timer point structure for
+    // sampling to have consistent values when necessary, and to guarantee that at most one
+    // locking is required (if multiple properties need to be read):
+    std::atomic<vlc_tick_t> m_time = 0;
+    std::atomic<vlc_tick_t> m_remainingTime = 0;
+    std::atomic<double>     m_position = 0.f;
+    std::atomic<vlc_tick_t> m_length = 0;
+    std::atomic<float> m_rate = 1.f;
 
 #ifdef QT_HAS_LIBATOMIC
     std::atomic<vlc_player_timer_smpte_timecode> m_highResolutionTime {{}};
+    std::atomic<vlc_player_timer_point> m_timerPoint {{}};
 #else
     vlc_player_timer_smpte_timecode m_highResolutionTime {};
     mutable QReadWriteLock m_highResolutionTimeLock;
+
+    vlc_player_timer_point m_timerPoint {};
+    mutable QReadWriteLock m_timerPointLock;
 #endif
     mutable QPair<vlc_player_timer_smpte_timecode, QString> m_highResolutionTimeSample;
 
@@ -131,9 +139,6 @@ public:
     vlc_player_timer_id* m_player_timer = nullptr;
     vlc_player_timer_id* m_player_timer_smpte = nullptr;
     struct vlc_player_timer_point m_player_time;
-    bool seeking = false;
-    QTimer m_position_timer;
-    QTimer m_time_timer;
 
     //title/chapters/menu
     TitleListModel m_titleList;
