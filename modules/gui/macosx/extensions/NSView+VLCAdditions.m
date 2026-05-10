@@ -27,6 +27,11 @@
 
 @implementation NSView (VLCAdditions)
 
++ (NSNib *)nib
+{
+    return [[NSNib alloc] initWithNibNamed:NSStringFromClass(self) bundle:nil];
+}
+
 + (instancetype)fromNibWithOwner:(id)owner
 {
     return [self fromNibNamed:NSStringFromClass(self) withClass:self withOwner:owner];
@@ -35,9 +40,8 @@
 + (instancetype)fromNibNamed:(NSString *)nibName withClass:(Class)viewClass withOwner:(id)owner
 {
     /* the following code saves us an instance of NSViewController which we don't need */
-    NSNib *nib = [[NSNib alloc] initWithNibNamed:nibName bundle:nil];
     NSArray *topLevelObjects;
-    if (![nib instantiateWithOwner:owner topLevelObjects:&topLevelObjects]) {
+    if (![[self nib] instantiateWithOwner:owner topLevelObjects:&topLevelObjects]) {
         NSAssert(1, @"Failed to load nib file to show view");
         return nil;
     }

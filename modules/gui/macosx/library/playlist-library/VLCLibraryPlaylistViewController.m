@@ -180,9 +180,7 @@
     [self.masterTableView addTableColumn:masterColumn];
     [self.detailTableView addTableColumn:detailColumn];
 
-    NSNib * const tableCellViewNib =
-        [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryTableCellView.class)
-                                 bundle:nil];
+    NSNib * const tableCellViewNib = VLCLibraryTableCellView.nib;
     [self.masterTableView registerNib:tableCellViewNib
                         forIdentifier:@"VLCLibraryTableViewCellIdentifier"];
     [self.detailTableView registerNib:tableCellViewNib

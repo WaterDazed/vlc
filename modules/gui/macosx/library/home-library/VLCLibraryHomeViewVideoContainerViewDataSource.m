@@ -274,7 +274,7 @@ NSString * const VLCLibraryVideoCollectionViewDataSourceDisplayedCollectionChang
         forSupplementaryViewOfKind:NSCollectionElementKindSectionHeader
                     withIdentifier:VLCLibrarySupplementaryElementViewIdentifier];
 
-    NSNib * const mediaItemSupplementaryDetailView = [[NSNib alloc] initWithNibNamed:@"VLCLibraryCollectionViewMediaItemSupplementaryDetailView" bundle:nil];
+    NSNib * const mediaItemSupplementaryDetailView = VLCLibraryCollectionViewMediaItemSupplementaryDetailView.nib;
     [self.collectionView registerNib:mediaItemSupplementaryDetailView
           forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind
                       withIdentifier:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewIdentifier];

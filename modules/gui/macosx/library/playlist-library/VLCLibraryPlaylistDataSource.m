@@ -23,6 +23,7 @@
 #import "VLCLibraryPlaylistDataSource.h"
 
 #import "extensions/NSString+Helpers.h"
+#import "extensions/NSView+VLCAdditions.h"
 
 #import "library/VLCLibraryCollectionViewFlowLayout.h"
 #import "library/VLCLibraryCollectionViewItem.h"
@@ -256,8 +257,7 @@ typedef NS_ENUM(NSInteger, VLCLibraryDataSourceCacheAction) {
        forSupplementaryViewOfKind:NSCollectionElementKindSectionHeader
                    withIdentifier:VLCLibrarySupplementaryElementViewIdentifier];
 
-    NSNib * const supplementaryDetailView =
-        [[NSNib alloc] initWithNibNamed:@"VLCLibraryCollectionViewMediaItemListSupplementaryDetailView" bundle:nil];
+    NSNib * const supplementaryDetailView = VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.nib;
     [collectionView registerNib:supplementaryDetailView
       forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemListSupplementaryDetailViewKind
                   withIdentifier:VLCLibraryCollectionViewMediaItemListSupplementaryDetailViewIdentifier];

@@ -22,6 +22,8 @@
 
 #import "VLCLibraryHomeViewStackViewController.h"
 
+#import "extensions/NSView+VLCAdditions.h"
+
 #import "library/VLCLibraryCollectionViewDelegate.h"
 #import "library/VLCLibraryCollectionViewFlowLayout.h"
 #import "library/VLCLibraryCollectionViewSupplementaryElementView.h"

@@ -23,6 +23,7 @@
 #import "VLCLibraryVideoViewController.h"
 
 #import "extensions/NSImage+VLCAdditions.h"
+#import "extensions/NSView+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCLibraryCollectionView.h"
@@ -137,9 +138,7 @@
 
 - (void)setupTableView
 {
-    NSNib * const tableCellViewNib =
-        [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryTableCellView.class)
-                                 bundle:nil];
+    NSNib * const tableCellViewNib = VLCLibraryTableCellView.nib;
     [self.videoLibraryGroupSelectionTableView registerNib:tableCellViewNib
                                            forIdentifier:@"VLCVideoLibraryTableViewCellIdentifier"];
     [self.videoLibraryGroupsTableView registerNib:tableCellViewNib
@@ -201,11 +200,7 @@
        forSupplementaryViewOfKind:NSCollectionElementKindSectionHeader
                    withIdentifier:VLCLibrarySupplementaryElementViewIdentifier];
 
-    NSString * const mediaItemSupplementaryDetailViewString =
-        NSStringFromClass(VLCLibraryCollectionViewMediaItemSupplementaryDetailView.class);
-    NSNib * const mediaItemSupplementaryDetailViewNib =
-        [[NSNib alloc] initWithNibNamed:mediaItemSupplementaryDetailViewString bundle:nil];
-    
+    NSNib * const mediaItemSupplementaryDetailViewNib = VLCLibraryCollectionViewMediaItemSupplementaryDetailView.nib;
     [collectionView registerNib:mediaItemSupplementaryDetailViewNib
      forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind
                  withIdentifier:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewIdentifier];

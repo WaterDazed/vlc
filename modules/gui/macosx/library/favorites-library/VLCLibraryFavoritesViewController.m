@@ -120,18 +120,14 @@
     [self.favoritesLibraryGroupsTableView addTableColumn:groupsColumn];
     [self.favoritesLibraryGroupSelectionTableView addTableColumn:selectedGroupColumn];
 
-    NSNib * const tableCellViewNib =
-        [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryTableCellView.class)
-                                 bundle:nil];
+    NSNib * const tableCellViewNib = VLCLibraryTableCellView.nib;
     [self.favoritesLibraryGroupsTableView registerNib:tableCellViewNib
                                         forIdentifier:VLCLibraryTableCellViewIdentifier];
     [self.favoritesLibraryGroupSelectionTableView registerNib:tableCellViewNib 
                                                 forIdentifier:VLCLibraryTableCellViewIdentifier];
     
     // Register album cell view for artist/genre sections
-    NSNib * const albumCellViewNib =
-        [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryAlbumTableCellView.class)
-                                 bundle:nil];
+    NSNib * const albumCellViewNib = VLCLibraryAlbumTableCellView.nib;
     [self.favoritesLibraryGroupSelectionTableView registerNib:albumCellViewNib
                                                 forIdentifier:VLCAudioLibraryCellIdentifier];
     
@@ -183,28 +179,17 @@
        forSupplementaryViewOfKind:NSCollectionElementKindSectionHeader
                    withIdentifier:VLCLibrarySupplementaryElementViewIdentifier];
     
-    NSString * const mediaItemSupplementaryDetailViewString =
-        NSStringFromClass(VLCLibraryCollectionViewMediaItemSupplementaryDetailView.class);
-    NSNib * const mediaItemSupplementaryDetailViewNib =
-        [[NSNib alloc] initWithNibNamed:mediaItemSupplementaryDetailViewString bundle:nil];
-    
+    NSNib * const mediaItemSupplementaryDetailViewNib = VLCLibraryCollectionViewMediaItemSupplementaryDetailView.nib;
     [collectionView registerNib:mediaItemSupplementaryDetailViewNib
      forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind
                  withIdentifier:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewIdentifier];
-    
-    NSString * const audioGroupSupplementaryDetailViewString =
-        NSStringFromClass(VLCLibraryCollectionViewAudioGroupSupplementaryDetailView.class);
-    NSNib * const audioGroupSupplementaryDetailViewNib =
-        [[NSNib alloc] initWithNibNamed:audioGroupSupplementaryDetailViewString bundle:nil];
-    
+
+    NSNib * const audioGroupSupplementaryDetailViewNib = VLCLibraryCollectionViewAudioGroupSupplementaryDetailView.nib;
     [collectionView registerNib:audioGroupSupplementaryDetailViewNib
      forSupplementaryViewOfKind:VLCLibraryCollectionViewAudioGroupSupplementaryDetailViewKind
                  withIdentifier:VLCLibraryCollectionViewAudioGroupSupplementaryDetailViewIdentifier];
-    
-    NSString * const mediaListSupplementaryDetailViewString =
-        NSStringFromClass(VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.class);
-    NSNib * const mediaListSupplementaryDetailViewNib =
-        [[NSNib alloc] initWithNibNamed:mediaListSupplementaryDetailViewString bundle:nil];
+
+    NSNib * const mediaListSupplementaryDetailViewNib = VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.nib;
     
     [collectionView registerNib:mediaListSupplementaryDetailViewNib
      forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemListSupplementaryDetailViewKind

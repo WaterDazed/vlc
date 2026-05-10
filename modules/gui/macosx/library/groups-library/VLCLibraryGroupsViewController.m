@@ -23,6 +23,7 @@
 #import "VLCLibraryGroupsViewController.h"
 
 #import "extensions/NSImage+VLCAdditions.h"
+#import "extensions/NSView+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCLibraryCollectionView.h"
@@ -119,10 +120,7 @@
             forSupplementaryViewOfKind:NSCollectionElementKindSectionHeader
                         withIdentifier:VLCLibrarySupplementaryElementViewIdentifier];
 
-    NSString * const mediaItemSupplementaryDetailViewString =
-        NSStringFromClass(VLCLibraryCollectionViewMediaItemSupplementaryDetailView.class);
-    NSNib * const mediaItemSupplementaryDetailViewNib =
-        [[NSNib alloc] initWithNibNamed:mediaItemSupplementaryDetailViewString bundle:nil];
+    NSNib * const mediaItemSupplementaryDetailViewNib = VLCLibraryCollectionViewMediaItemSupplementaryDetailView.nib;
 
     [self.collectionView registerNib:mediaItemSupplementaryDetailViewNib
           forSupplementaryViewOfKind:VLCLibraryCollectionViewMediaItemSupplementaryDetailViewKind
@@ -183,9 +181,7 @@
     [self.groupsTableView addTableColumn:groupsColumn];
     [self.selectedGroupTableView addTableColumn:selectedGroupColumn];
 
-    NSNib * const tableCellViewNib = 
-        [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryTableCellView.class)
-                                 bundle:nil];
+    NSNib * const tableCellViewNib = VLCLibraryTableCellView.nib;
     [self.groupsTableView registerNib:tableCellViewNib
                         forIdentifier:@"VLCLibraryTableViewCellIdentifier"];
     [self.selectedGroupTableView registerNib:tableCellViewNib

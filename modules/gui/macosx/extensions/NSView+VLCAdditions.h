@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)fromNibNamed:(NSString *)nibName withClass:(Class)viewClass withOwner:(id)owner;
 + (instancetype)fromNibWithOwner:(id)owner;
++ (NSNib *)nib;
 
 @property (readonly) BOOL shouldShowDarkAppearance;
 
