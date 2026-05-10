@@ -242,6 +242,9 @@ ListViewExt {
             Loader {
                 id: headerLoader
 
+                // needed so that the searchbox is above the table header
+                z: 1
+
                 anchors {
                     top: parent.top
                     left: parent.left
