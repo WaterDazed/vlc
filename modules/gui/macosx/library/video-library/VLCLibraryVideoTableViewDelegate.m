@@ -29,7 +29,7 @@
 #import "library/VLCLibraryTableView.h"
 #import "library/VLCLibraryUIUnits.h"
 
-#import "library/audio-library/VLCLibraryAudioGroupTableHeaderView.h"
+#import "library/VLCLibraryHeaderView.h"
 
 @interface VLCLibraryVideoHeaderRowView : NSTableRowView
 @end
@@ -41,7 +41,6 @@
     self = [super init];
     if (self) {
         self.cellViewIdentifier = @"VLCVideoLibraryTableViewCellIdentifier";
-        self.cellViewClass = [VLCLibraryTableCellView class];
     }
     return self;
 }
@@ -60,12 +59,12 @@
         (NSObject<VLCLibrarySectionedTableViewDataSource> *)tableView.dataSource;
 
     if ([sectionedDataSource isHeaderRow:row]) {
-        VLCLibraryAudioGroupTableHeaderView *headerView =
-            (VLCLibraryAudioGroupTableHeaderView *)[tableView makeViewWithIdentifier:VLCLibraryAudioGroupTableHeaderViewIdentifier
+        VLCLibraryHeaderView *headerView =
+            (VLCLibraryHeaderView *)[tableView makeViewWithIdentifier:VLCLibraryHeaderViewIdentifier
                                                                                owner:self];
         if (headerView == nil) {
-            headerView = [[VLCLibraryAudioGroupTableHeaderView alloc] initWithFrame:NSZeroRect];
-            headerView.identifier = VLCLibraryAudioGroupTableHeaderViewIdentifier;
+            headerView = [[VLCLibraryHeaderView alloc] initWithFrame:NSZeroRect];
+            headerView.identifier = VLCLibraryHeaderViewIdentifier;
         }
 
         NSString * const title = [sectionedDataSource titleForRow:row];
@@ -88,7 +87,7 @@
         NSObject<VLCLibrarySectionedTableViewDataSource> * const sectionedDataSource =
             (NSObject<VLCLibrarySectionedTableViewDataSource> *)tableView.dataSource;
         if ([sectionedDataSource isHeaderRow:row]) {
-            return VLCLibraryAudioGroupTableHeaderViewHeight;
+            return VLCLibraryHeaderViewHeight;
         }
     }
 

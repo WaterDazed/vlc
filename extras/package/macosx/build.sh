@@ -297,11 +297,10 @@ if [ "$PACKAGETYPE" = "u" ]; then
     find VLC.app/ -name "*.dylib" -exec strip -x {} \;
     find VLC.app/ -type f -name "VLC" -exec strip -x {} \;
     find VLC.app/ -type f -name "Sparkle" -exec strip -x {} \;
-    find VLC.app/ -type f -name "Growl" -exec strip -x {} \;
     find VLC.app/ -type f -name "Breakpad" -exec strip -x {} \;
 
     if [ "$BUILD_TRIPLET" = "$HOST_TRIPLET" ]; then
-        bin/vlc-cache-gen VLC.app/Contents/MacOS/plugins
+        bin/vlc-cache-gen VLC.app/Contents/Frameworks/plugins
     fi
 
     info "Building VLC release archive"

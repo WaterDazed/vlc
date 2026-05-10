@@ -55,6 +55,61 @@ char* MediaCodec_GetName(vlc_object_t *p_obj, vlc_fourcc_t codec,
  * buffers and not via "csd-*" buffers from AMediaFormat */
 #define AMEDIACODEC_FLAG_CODEC_CONFIG 2
 
+/*****************************************************************************
+ * Ndk symbols
+ *****************************************************************************/
+typedef bool (*pf_AMediaFormat_getRect)(AMediaFormat *, const char *name,
+        int32_t *left, int32_t *top, int32_t *right, int32_t *bottom);
+
+struct syms
+{
+    struct {
+        pf_AMediaFormat_getRect getRect;
+    } AMediaFormat;
+};
+static struct syms syms;
+
+/* Initialize all symbols.
+ * Done only one time during the first initialisation */
+static bool
+InitSymbols(mc_api *api) {
+    static vlc_mutex_t lock = VLC_STATIC_MUTEX;
+    static int i_init_state = -1;
+    bool ret;
+
+    vlc_mutex_lock(&lock);
+
+    if (i_init_state != -1)
+        goto end;
+
+    i_init_state = 0;
+
+    void *ndk_handle = dlopen("libmediandk.so", RTLD_NOW);
+    if (!ndk_handle)
+        goto end;
+
+#define LOAD(object, name, b_critical) \
+    syms.object.name = dlsym(ndk_handle, #object "_" #name); \
+    if (!syms.object.name && b_critical)                     \
+    {                                                        \
+        dlclose(ndk_handle);                                 \
+        goto end;                                            \
+    }
+
+    LOAD(AMediaFormat, getRect, false);
+
+#undef LOAD
+
+    i_init_state = 1;
+end:
+    ret = i_init_state == 1;
+    if (!ret)
+        msg_Err(api->p_obj, "MediaCodec NDK init failed");
+
+    vlc_mutex_unlock(&lock);
+    return ret;
+}
+
 /****************************************************************************
  * Local prototypes
  ****************************************************************************/
@@ -342,6 +397,29 @@ static int GetOutput(mc_api *api, int i_index, mc_api_out *p_out)
             p_out->conf.video.crop_right    = GetFormatInteger(format, "crop-right");
             p_out->conf.video.crop_bottom   = GetFormatInteger(format, "crop-bottom");
 
+            bool found = false;
+            if (syms.AMediaFormat.getRect)
+            {
+                int32_t left, top, right, bottom;
+                /* Get crop rect from output format (API 28+) */
+                found = syms.AMediaFormat.getRect(format, "crop", &left, &top, &right, &bottom);
+                if (found)
+                {
+                    p_out->conf.video.crop_left = left;
+                    p_out->conf.video.crop_top = top;
+                    p_out->conf.video.crop_right = right;
+                    p_out->conf.video.crop_bottom = bottom;
+                }
+            }
+            if (!found)
+            {
+                /* For API below 28, we have to use below keys to get crop rect */
+                p_out->conf.video.crop_left     = GetFormatInteger(format, "crop-left");
+                p_out->conf.video.crop_top      = GetFormatInteger(format, "crop-top");
+                p_out->conf.video.crop_right    = GetFormatInteger(format, "crop-right");
+                p_out->conf.video.crop_bottom   = GetFormatInteger(format, "crop-bottom");
+            }
+
             /* Extract color info from output format (API 28+) */
             p_out->conf.video.color.range = GetFormatInteger(format, "color-range");
             p_out->conf.video.color.standard = GetFormatInteger(format, "color-standard");
@@ -422,6 +500,9 @@ static int Prepare(mc_api * api, int i_profile)
  *****************************************************************************/
 int MediaCodecNdk_Init(mc_api *api)
 {
+    if (!InitSymbols(api))
+        return MC_API_ERROR;
+
     api->p_sys = calloc(1, sizeof(mc_api_sys));
     if (!api->p_sys)
         return MC_API_ERROR;

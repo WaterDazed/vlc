@@ -57,7 +57,7 @@ static inline vlc_fourcc_t vlc_fourcc_from_char(const char *fourcc)
     return VLC_FOURCC(f[0], f[1], f[2], f[3]);
 }
 
-/* Get value in `obj` with the key `name` and check if it's a number and if 
+/* Get value in `obj` with the key `name` and check if it's a number and if
  * it's between `min` and `max`. */
 static inline bool json_object_to_number(const struct json_object *obj,
                                            const char *name, double *number,
@@ -787,13 +787,25 @@ static void fromJSON_es_format(struct serdes_sys *sys,
         json_object_to_string(subobj, "psz_language", &el.psz_language, &err);
         json_object_to_string(subobj, "psz_description", &el.psz_description,
                               &err);
-        vlc_vector_push(&el_vec, el);
+
+        if (!err) {
+            err = !vlc_vector_push(&el_vec, el);
+        }
+        if (err) {
+            free(el.psz_language);
+            free(el.psz_description);
+        }
     }
     if (elvec_size == el_vec.size) {
         es->p_extra_languages = el_vec.data;
         es->i_extra_languages = el_vec.size;
         vlc_vector_init(&el_vec);
     } else {
+        extra_languages_t *el;
+        vlc_vector_foreach_ref(el, &el_vec) {
+            free(el->psz_language);
+            free(el->psz_description);
+        }
         vlc_vector_clear(&el_vec);
         err = true;
     }
@@ -1001,7 +1013,11 @@ static void fromJSON_input_item(struct serdes_sys *sys,
         struct input_item_es item_es = {0};
         fromJSON_input_item_es(sys, &v->object, &item_es, &err);
         if (!err) {
-            vlc_vector_push(&i->es_vec, item_es);
+            err = !vlc_vector_push(&i->es_vec, item_es);
+        }
+
+        if (err) {
+            es_format_Clean(&item_es.es);
         }
     }
 
