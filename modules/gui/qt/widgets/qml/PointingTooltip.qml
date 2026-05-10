@@ -49,6 +49,8 @@ ToolTipExt {
     }
 
     background: Rectangle {
+        id: backgroundRect
+
         border.color: pointingTooltip.colorContext.border
         color: pointingTooltip.colorContext.bg.primary
         radius: pointingTooltip.radius
@@ -58,15 +60,15 @@ ToolTipExt {
         Item {
             id: arrowArea
 
-            z: 1
+            z: clip ? 0.0 : -1.0
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.bottom
             anchors.topMargin: -(parent.border.width)
 
-            implicitHeight: arrow.implicitHeight * Math.sqrt(2) / 2
+            implicitHeight: arrow.diagonalSize / 2
 
-            clip: true
+            clip: (parent.color.a < 1.0) || ((arrow.x < (parent.radius)) || (arrow.x > (width - arrow.width - parent.radius)))
 
             Rectangle {
                 id: arrow
@@ -83,7 +85,25 @@ ToolTipExt {
 
                 color: pointingTooltip.colorContext.bg.primary
                 border.color: pointingTooltip.colorContext.border
+
+                readonly property real diagonalSize: (height * Math.sqrt(2))
             }
+        }
+
+        Rectangle {
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                horizontalCenterOffset: arrow.anchors.horizontalCenterOffset
+                top: parent.bottom
+                topMargin: -(parent.border.width)
+            }
+
+            width: Math.sqrt(2) * (arrow.height - (2 * arrow.border.width))
+            height: backgroundRect.border.width
+
+            color: backgroundRect.color
+
+            visible: (backgroundRect.color.a > (1.0 - Number.EPSILON)) && (arrowArea.z < 0.0)
         }
     }
 }
