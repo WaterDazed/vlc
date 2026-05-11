@@ -61,7 +61,7 @@ SoutDialog::SoutDialog( QWidget *parent, intf_thread_t *_p_intf, const QString& 
     ui.destTab->setTabsClosable( true );
     QTabBar* tb = ui.destTab->findChild<QTabBar*>();
     if( tb != NULL ) tb->tabButton(0, QTabBar::RightSide)->hide();
-    CONNECT( ui.destTab, tabCloseRequested( int ), this, closeTab( int ) );
+    connect( ui.destTab, &QTabWidget::tabCloseRequested, this, &SoutDialog::closeTab );
     ui.destTab->setTabIcon( 0, QIcon( ":/buttons/playlist/playlist_add.svg" ) );
 
     ui.destBox->addItem( qtr( "File" ) );
@@ -73,27 +73,21 @@ SoutDialog::SoutDialog( QWidget *parent, intf_thread_t *_p_intf, const QString& 
     ui.destBox->addItem( "UDP (legacy)" );
     ui.destBox->addItem( "Icecast" );
 
-    BUTTONACT( ui.addButton, addDest() );
+    BUTTONACT( ui.addButton, addDest );
 
 //     /* Connect everything to the updateMRL function */
-#define CB( x ) CONNECT( ui.x, toggled( bool ), this, updateMRL() );
-#define CT( x ) CONNECT( ui.x, textChanged( const QString& ), this, updateMRL() );
-#define CS( x ) CONNECT( ui.x, valueChanged( int ), this, updateMRL() );
-#define CC( x ) CONNECT( ui.x, currentIndexChanged( int ), this, updateMRL() );
+#define CB( x ) connect( ui.x, &QCheckBox::toggled, this, &SoutDialog::updateMRL );
 
     /* Misc */
     CB( soutAll );
     CB( localOutput ); CB( transcodeBox );
-    CONNECT( ui.profileSelect, optionsChanged(), this, updateMRL() );
+    connect( ui.profileSelect, &VLCProfileSelector::optionsChanged, this, &SoutDialog::updateMRL );
 
     setButtonText( QWizard::BackButton, qtr("Back") );
     setButtonText( QWizard::CancelButton, qtr("Cancel") );
     setButtonText( QWizard::NextButton, qtr("Next") );
     setButtonText( QWizard::FinishButton, qtr("Stream") );
 
-#undef CC
-#undef CS
-#undef CT
 #undef CB
 }
 
@@ -152,7 +146,7 @@ void SoutDialog::addDest( )
     }
 
     int index = ui.destTab->addTab( db, caption );
-    CONNECT( db, mrlUpdated(), this, updateMRL() );
+    connect( db, &VirtualDestBox::mrlUpdated, this, &SoutDialog::updateMRL );
     ui.destTab->setCurrentIndex( index );
     updateMRL();
 }

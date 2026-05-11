@@ -101,8 +101,8 @@ void SoutInputBox::setMRL( const QString& mrl )
     }
 }
 
-#define CT( x ) connect( x, SIGNAL(textChanged(QString)), this, SIGNAL(mrlUpdated()) );
-#define CS( x ) connect( x, SIGNAL(valueChanged(int)), this, SIGNAL(mrlUpdated()) );
+#define CT( x ) connect( x, &QLineEdit::textChanged, this, &std::remove_pointer_t<decltype(this)>::mrlUpdated );
+#define CS( x ) connect( x, QOverload<int>::of(&QSpinBox::valueChanged), this, &std::remove_pointer_t<decltype(this)>::mrlUpdated );
 
 VirtualDestBox::VirtualDestBox( QWidget *_parent ) : QWidget( _parent )
 {
@@ -139,7 +139,7 @@ FileDestBox::FileDestBox( QWidget *_parent, intf_thread_t * _p_intf ) : VirtualD
 
     layout->addWidget(fileSelectButton, 1, 5, 1, 1);
     CT( fileEdit );
-    BUTTONACT( fileSelectButton, fileBrowse() );
+    BUTTONACT( fileSelectButton, fileBrowse );
 }
 
 QString FileDestBox::getMRL( const QString& mux )
