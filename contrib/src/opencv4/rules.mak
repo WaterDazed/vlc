@@ -3,11 +3,9 @@
 OPENCV4_VERSION := 4.4.0
 OPENCV4_URL := $(GITHUB)/opencv/opencv/archive/$(OPENCV4_VERSION).tar.gz
 
-ifneq ($(findstring opencv4,$(PKGS_ENABLE)),)
 PKGS += opencv4
 ifeq ($(call need_pkg,"opencv4 >= 4.0.0"),)
 PKGS_FOUND += opencv4
-endif
 endif
 
 DEPS_opencv4 = zlib $(DEPS_zlib) jpeg $(DEPS_jpeg) png $(DEPS_png)
