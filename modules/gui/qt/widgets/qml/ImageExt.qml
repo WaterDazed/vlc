@@ -17,6 +17,8 @@
  *****************************************************************************/
 import QtQuick
 
+import VLC.Util
+
 // NOTE: ImageExt behaves exactly like Image, except when at least one of these features are used:
 //       - `PreserveAspectCrop` fill mode without requiring a clip node.
 //       - Rounded rectangular shaping.
@@ -47,7 +49,23 @@ Item {
     property url source
     property alias sourceSize: image.sourceSize
     property alias sourceClipRect: image.sourceClipRect
-    readonly property int status: shaderEffect.source.status
+    readonly property int status: {
+        if (effectiveTextureProviderItem instanceof Image) {
+            if (effectiveTextureProviderItem.status === Image.Ready) {
+                if (tpObserver.isValid)
+                    return Image.Ready
+                else
+                    return Image.Loading
+            } else {
+                return effectiveTextureProviderItem.status // Loading, Null, or Error
+            }
+        } else if (tpObserver.isValid) {
+            return Image.Ready
+        } else {
+            return Image.Null
+        }
+    }
+
     property alias shaderStatus: shaderEffect.status
     property alias cache: image.cache
 
@@ -63,10 +81,7 @@ Item {
     // WARNING: Consumers who downcast this item to `Image` are doing this on their own
     //          discretion. It is discouraged, but not forbidden (or evil).
     readonly property Item sourceTextureProviderItem: image
-    // NOTE:    It is allowed to adjust this property to use an external texture provider, where
-    //          in that case the texture provider item should provide a subset of `Image`'s
-    //          interface, that is, provide `status` and `implicitWidth`/`implicitHeight` that
-    //          reflect the texture size.
+    // NOTE:    It is allowed to adjust this property to use an external texture provider.
     // NOTE:    If `textureProviderItem` is set to `null`, the default `Image` is going to be
     //          used as fallback. For that reason, it is recommended to keep providing the
     //          `source` url if there is a possibility of `textureProviderItem` being `null`
@@ -123,7 +138,18 @@ Item {
     readonly property color effectiveBackgroundColor: shaderEffect.visible ? backgroundColor : "transparent"
 
     property alias blending: shaderEffect.blending
-    blending: (effectiveRadius > 0.0) || (effectiveBackgroundColor.a < 1.0)
+    blending: {
+        if (effectiveRadius > 0.0)
+            return true // Outside the radius is always transparent, need blending
+
+        if (effectiveBackgroundColor.a > (1.0 - Number.EPSILON))
+            return false // If background color is opaque, no need for blending
+
+        if (!tpObserver.hasAlphaChannel)
+            return false // If the texture is opaque, no need for blending
+
+        return true
+    }
 
     // Border:
     // NOTE: The border is an overlay for the texture (the
@@ -148,13 +174,18 @@ Item {
         anchors.alignWhenCentered: true
         anchors.centerIn: parent
 
-        implicitWidth: (source.status === Image.Ready) ? source.implicitWidth : 64
-        implicitHeight: (source.status === Image.Ready) ? source.implicitHeight : 64
+        implicitWidth: (source instanceof Image) ? source.implicitWidth : textureSize.width
+        implicitHeight: (source instanceof Image) ? source.implicitHeight : textureSize.height
+
+        // WARNING: Do not put this into the uniform block of the shader,
+        //          since it would break batch rendering as it reflects
+        //          the sub-texture size.
+        readonly property size textureSize: tpObserver.textureSize
 
         width: paintedSize.width
         height: paintedSize.height
 
-        visible: (source.status === Image.Ready) &&
+        visible: (root.status === Image.Ready) &&
                  (GraphicsInfo.shaderType === GraphicsInfo.RhiShader) &&
                  (root.radius > 0.0 ||
                   root.borderWidth > 0 ||
@@ -186,37 +217,31 @@ Item {
         readonly property double softEdgeMin: -1. / Math.min(width, height)
         readonly property double softEdgeMax: -softEdgeMin
 
-        readonly property size cropRate: {
-            let ret = Qt.size(0.0, 0.0)
+        // Previously we were calculating the crop rate here based on the sub-texture
+        // size (implicit size), but that was breaking batch rendering. So instead,
+        // we now calculate the crop rate in fragment shader. We can not do that in
+        // the vertex shader either because having a custom vertex shader also breaks
+        // batch rendering in `ShaderEffect`.
+        readonly property bool shouldCrop: (root.fillMode === Image.PreserveAspectCrop)
 
-            // No need to calculate if PreserveAspectCrop is not used
-            if (root.fillMode !== Image.PreserveAspectCrop)
-                return ret
+        // Native texture size (atlas size if texture is in the atlas):
+        // TODO: We could use `textureSize()` and get rid of this, but we
+        //       can not because we are targeting GLSL 1.20/ESSL 1.0, even
+        //       though the shader is written in GLSL 4.40.
+        readonly property size sourceTextureSize: tpObserver.nativeTextureSize
 
-            // No need to calculate if image is not ready
-            if (source.status !== Image.Ready)
-                return ret
-
-            const implicitRatio = implicitWidth / implicitHeight
-            const ratio = width / height
-
-            if (ratio > implicitRatio)
-                ret.height = (implicitHeight - implicitWidth) / 2 / implicitHeight
-            else if (ratio < implicitRatio)
-                ret.width = (implicitWidth - implicitHeight) / 2 / implicitWidth
-
-            return ret
-        }
-
+        // WARNING: Do not put this into the uniform block of the shader,
+        //          since it depends on the implicit size, it would break
+        //          batch rendering. This is a concern for delegates.
         readonly property size paintedSize: {
             let ret = Qt.size(0.0, 0.0)
 
             // No need to calculate if the texture is not ready:
-            if (source.status !== Image.Ready)
+            if (root.status !== Image.Ready)
                 return ret
 
             // NOTE: Calculations are based on `QQuickImage`,
-            //       except preserve aspect crop (see `cropRate`).
+            //       except preserve aspect crop.
             if (root.fillMode === Image.PreserveAspectCrop) {
                 return Qt.size(root.width, root.height)
             } else if (root.fillMode === Image.PreserveAspectFit) {
@@ -255,7 +280,7 @@ Item {
         }
 
         // (2 / width) seems to be a good coefficient to make it similar to `Rectangle.border`:
-        readonly property double borderRange: (source.status === Image.Ready) ? (root.borderWidth / width * 2.) : 0.0 // no need for outlining if there is no image (nothing to outline)
+        readonly property double borderRange: (root.status === Image.Ready) ? (root.borderWidth / width * 2.) : 0.0 // no need for outlining if there is no image (nothing to outline)
         readonly property color borderColor: root.borderColor
 
         // QQuickImage as texture provider, no need for ShaderEffectSource.
@@ -263,9 +288,15 @@ Item {
         // so that we can make use of our custom shader.
         readonly property Item source: root.textureProviderItem ?? image
 
-        fragmentShader: (cropRate.width > 0.0 || cropRate.height > 0.0) || (root.borderWidth > 0) ? "qrc:///shaders/SDFAARoundedTexture_cropsupport_bordersupport.frag.qsb"
-                                                                                                  : "qrc:///shaders/SDFAARoundedTexture.frag.qsb"
+        fragmentShader: (shouldCrop || (borderRange > 0)) ? "qrc:///shaders/SDFAARoundedTexture_cropsupport_bordersupport.frag.qsb"
+                                                          : "qrc:///shaders/SDFAARoundedTexture.frag.qsb"
 
+        TextureProviderObserver {
+            id: tpObserver
+
+            source: shaderEffect.source
+            notifyAllChanges: shaderEffect.visible
+        }
     }
 
     Image {
