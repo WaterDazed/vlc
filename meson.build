@@ -131,7 +131,7 @@ cargo_bin = find_program('cargo', required: get_option('rust'))
 #
 # General feature defines
 #
-vlc_conf_prefix = ''
+vlc_conf_prefix = []
 
 feature_defines = [
     ['_GNU_SOURCE', 1], # Enable GNU extensions on systems that have them
@@ -139,7 +139,7 @@ feature_defines = [
 
 foreach d : feature_defines
     cdata.set(d.get(0), d.get(1))
-    vlc_conf_prefix = vlc_conf_prefix + '#define @0@ @1@\n'.format(d.get(0), d.get(1))
+    vlc_conf_prefix += '#define @0@ @1@'.format(d.get(0), d.get(1))
 endforeach
 
 vlc_tests = []
@@ -290,10 +290,8 @@ foreach header : check_c_headers
         continue
     endif
 
-    # TODO: Once we require meson 1.0, drop the array join here
-    # See: https://github.com/mesonbuild/meson/pull/11099
     if cc.check_header(header[0],
-                       prefix: '\n'.join(header_kwargs.get('prefix', [])),
+                       prefix: header_kwargs.get('prefix', []),
                        args: header_kwargs.get('args', []))
         cdata.set('HAVE_' + header[0].underscorify().to_upper(), 1)
     endif
@@ -301,10 +299,8 @@ endforeach
 
 foreach header : check_cpp_headers
     header_kwargs = header.get(1, {})
-    # TODO: Once we require meson 1.0, drop the array join here
-    # See: https://github.com/mesonbuild/meson/pull/11099
     if cpp.check_header(header[0],
-                       prefix: '\n'.join(header_kwargs.get('prefix', [])),
+                       prefix: header_kwargs.get('prefix', []),
                        args: header_kwargs.get('args', []))
         cdata.set('HAVE_' + header[0].underscorify().to_upper(), 1)
     endif
@@ -386,7 +382,7 @@ windows_version_test = '''
 
     foreach d : windows_defines
         cdata.set(d.get(0), d.get(1))
-        vlc_conf_prefix = vlc_conf_prefix + '#define @0@ @1@\n'.format(d.get(0), d.get(1))
+        vlc_conf_prefix += '#define @0@ @1@'.format(d.get(0), d.get(1))
     endforeach
 
     mingw_check = '''
@@ -442,7 +438,7 @@ ucrt_version_test = '''
 
         foreach d : mingw_defines
             cdata.set(d.get(0), d.get(1))
-            vlc_conf_prefix = vlc_conf_prefix + '#define @0@ @1@\n'.format(d.get(0), d.get(1))
+            vlc_conf_prefix += '#define @0@ @1@'.format(d.get(0), d.get(1))
         endforeach
 
         # fno-strict-aliasing is necessary for WRL and IID_PPV_ARGS to work safely
@@ -921,7 +917,7 @@ endif
 
 # Check for struct sockaddr_storage type
 # Define it to `sockaddr` if missing
-sockaddr_prefix = '#include <sys/types.h>\n'
+sockaddr_prefix = ['#include <sys/types.h>']
 if host_system == 'windows'
     sockaddr_prefix += '#include <winsock2.h>'
 else
@@ -942,16 +938,14 @@ if not cc.has_type('ssize_t', prefix: '#include <sys/types.h>')
 endif
 
 # Check for struct pollfd type
-# TODO: Refactor once updating to meson 1.0.0
-# which supports prefix arrays.
-pollfd_prefix = '#include <sys/types.h>\n'
+pollfd_prefix = ['#include <sys/types.h>']
 if cdata.get('HAVE_POLL', 0) == 1
     pollfd_prefix += '#include <poll.h>'
 elif host_system == 'windows'
     pollfd_prefix += '#include <winsock2.h>'
 endif
 
-if cc.has_type('struct pollfd', prefix: '\n'.join([vlc_conf_prefix, pollfd_prefix]))
+if cc.has_type('struct pollfd', prefix: vlc_conf_prefix + pollfd_prefix)
     cdata.set('HAVE_STRUCT_POLLFD', 1)
 endif
 
@@ -1016,7 +1010,7 @@ cdata.set_quoted('COPYRIGHT_MESSAGE',   f'Copyright © @vlc_copyright_years@ the
 cdata.set_quoted('VLC_COMPILER',        cc.get_id() + ' ' + cc.version())
 cdata.set_quoted('VLC_COMPILE_BY',      '[not implemented with meson]') # TODO
 cdata.set_quoted('VLC_COMPILE_HOST',    '[not implemented with meson]') # TODO
-cdata.set_quoted('CONFIGURE_LINE',      '[not implemented with meson]') # TODO
+cdata.set_quoted('CONFIGURE_LINE',      meson.build_options())
 
 # Paths
 prefix_path = get_option('prefix')
