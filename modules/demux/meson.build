@@ -99,6 +99,12 @@ vlc_modules += {
     'sources' : files('g64rtp.c'),
 }
 
+# .bkfl recordings demuxer
+vlc_modules += {
+    'name' : 'bkfl',
+    'sources' : files('bkfl.c'),
+}
+
 # MPEG PS demux
 vlc_modules += {
     'name' : 'ps',
