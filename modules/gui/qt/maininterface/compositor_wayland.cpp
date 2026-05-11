@@ -54,15 +54,7 @@ CompositorWayland::CompositorWayland(qt_intf_t *p_intf, QObject* parent)
 
 CompositorWayland::~CompositorWayland()
 {
-    if (m_waylandImpl)
-    {
-        if (m_waylandImpl->p_module)
-        {
-            m_waylandImpl->close(m_waylandImpl);
-            module_unneed(m_waylandImpl, m_waylandImpl->p_module);
-        }
-        vlc_object_delete(m_waylandImpl);
-    }
+    unloadWaylandModule();
 }
 
 bool CompositorWayland::init()
@@ -79,6 +71,7 @@ bool CompositorWayland::init()
      * a separate wayland module is used to perform direct wayland calls
      * without requiring Qt module to be directly linked to wayland
      */
+    assert(!m_waylandImpl);
     m_waylandImpl = static_cast<qtwayland_t*>(vlc_object_create(m_intf, sizeof(qtwayland_t)));
     if (!m_waylandImpl)
         return false;
@@ -153,6 +146,7 @@ QWindow* CompositorWayland::interfaceMainWindow() const
 void CompositorWayland::destroyMainInterface()
 {
     unloadGUI();
+    unloadWaylandModule();
     m_qmlView.reset();
 }
 
@@ -255,6 +249,22 @@ void CompositorWayland::onSurfaceScaleChanged(qreal dpr)
     assert(m_waylandImpl);
 
     m_waylandImpl->rescale(m_waylandImpl, dpr);
+}
+
+bool CompositorWayland::unloadWaylandModule()
+{
+    if (m_waylandImpl)
+    {
+        if (m_waylandImpl->p_module)
+        {
+            m_waylandImpl->close(m_waylandImpl);
+            module_unneed(m_waylandImpl, m_waylandImpl->p_module);
+        }
+        vlc_object_delete(m_waylandImpl);
+        m_waylandImpl = nullptr;
+        return true;
+    }
+    return false;
 }
 
 #ifdef QT_WAYLAND_HAS_CUSTOM_MARGIN_SUPPORT
