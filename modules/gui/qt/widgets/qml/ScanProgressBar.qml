@@ -119,7 +119,7 @@ T.ProgressBar {
                         to: 1.0
 
                         duration: VLCStyle.durationSliderBouncing
-                        easing.type: Easing.OutBounce
+                        easing.type: Easing.InOutSine
                     }
 
                     NumberAnimation {
@@ -127,7 +127,7 @@ T.ProgressBar {
                         to: 0
 
                         duration: VLCStyle.durationSliderBouncing
-                        easing.type: Easing.OutBounce
+                        easing.type: Easing.InOutSine
                     }
                 }
             }

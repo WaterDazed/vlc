@@ -297,8 +297,8 @@ QtObject {
     //timing before showing up a tooltip
     readonly property int delayToolTipAppear: 700
 
-    //timing for the progressbar/scanbar bouncing animation, explicitly very long
-    readonly property int durationSliderBouncing: 2000
+    //timing for the progressbar/scanbar animation, explicitly very long
+    readonly property int durationSliderBouncing: 1000
 
     //default arts
     readonly property url noArtAlbum: "qrc:///placeholder/noart_album.svg";
