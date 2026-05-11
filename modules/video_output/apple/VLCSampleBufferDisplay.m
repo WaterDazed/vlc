@@ -719,7 +719,9 @@ shouldInheritContentsScale:(CGFloat)newScale
     }
 
     VLCSampleBufferDisplay *sys = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
+    // dispatch_sync so setup completes before Prepare returns. With async,
+    // Close could free vd before the queued block dereferences vd->place.
+    dispatch_sync(dispatch_get_main_queue(), ^{
         if (sys.displayView)
             return;
 
