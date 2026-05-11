@@ -138,7 +138,7 @@
 - (void)setupTableView
 {
     NSNib * const tableCellViewNib =
-        [[NSNib alloc] initWithNibNamed:NSStringFromClass(VLCLibraryTableCellView.class)
+        [[NSNib alloc] initWithNibNamed:@"VLCLibraryVideoTableCellView"
                                  bundle:nil];
     [self.videoLibraryGroupSelectionTableView registerNib:tableCellViewNib
                                            forIdentifier:@"VLCVideoLibraryTableViewCellIdentifier"];
@@ -233,7 +233,7 @@
 
 - (void)setupVideoLibraryViews
 {
-    _videoLibraryGroupSelectionTableView.rowHeight = VLCLibraryUIUnits.mediumTableViewRowHeight;
+    _videoLibraryGroupSelectionTableView.rowHeight = VLCLibraryUIUnits.videoLibraryTableViewRowHeight;
 
     const NSEdgeInsets defaultInsets = VLCLibraryUIUnits.libraryViewScrollViewContentInsets;
     const NSEdgeInsets scrollerInsets = VLCLibraryUIUnits.libraryViewScrollViewScrollerInsets;
