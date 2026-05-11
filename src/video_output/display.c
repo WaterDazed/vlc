@@ -779,7 +779,24 @@ int vout_SetDisplayFormat(vout_display_t *vd, const video_format_t *fmt,
         osys->converter = NULL;
     }
 
+    bool place_changed = PlaceVideoInDisplay(osys);
+    if (place_changed && vd->ops->video_place_changed != NULL)
+    {
+        int ret = vd->ops->video_place_changed(vd, &osys->src_place);
+        if (ret != VLC_SUCCESS)
+        {
+            msg_Dbg(vd, "update format update place change failed");
+            return ret;
+        }
+    }
+
     return VLC_SUCCESS;
+}
+
+int vout_display_SetFormat(vout_display_t *vd, const video_format_t *fmt,
+                            vlc_video_context *vctx)
+{
+    return vout_SetDisplayFormat(vd, fmt, vctx);
 }
 
 void vout_SetDisplayProjection(vout_display_t *vd,
