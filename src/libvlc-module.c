@@ -685,6 +685,10 @@ static const char *const ppsz_clock_descriptions[] =
 #define INPUT_SUBTRACK_ID_LONGTEXT N_( \
     "Stream ID of the subtitle track to use.")
 
+#define INPUT_SUB_FORCED_ONLY_TEXT N_("Only show forced subtitles")
+#define INPUT_SUB_FORCED_ONLY_LONGTEXT N_( \
+    "Only display forced subtitles, e.g. used for alien languages.")
+
 #define INPUT_CAPTIONS_TEXT N_(N_("Preferred Closed Captions decoder"))
 static const int pi_captions[] = { 608, 708 };
 static const char *const ppsz_captions[] = { "EIA/CEA 608", "CEA 708" };
@@ -1867,6 +1871,9 @@ vlc_module_begin ()
         change_safe ()
     add_string( "sub-track-id", NULL,
                  INPUT_SUBTRACK_ID_TEXT, INPUT_SUBTRACK_ID_LONGTEXT )
+        change_safe ()
+    add_bool( "sub-forced-only", false,
+              INPUT_SUB_FORCED_ONLY_TEXT, INPUT_SUB_FORCED_ONLY_LONGTEXT )
         change_safe ()
     add_integer( "captions", 608,
                  INPUT_CAPTIONS_TEXT, NULL )

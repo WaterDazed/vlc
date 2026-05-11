@@ -66,6 +66,7 @@
 #include <limits.h>
 
 #include "disc_helper.h"
+#include "dvd_description.h"
 
 /*****************************************************************************
  * Module descriptor
@@ -249,7 +250,7 @@ static inline void DvdReadResetCellTs( demux_sys_t *p_sys )
 }
 
 static void DemuxTitles( demux_t *, int * );
-static void ESNew( demux_t *, int, int );
+static void ESNew( demux_t *, int, int, int );
 
 static int  DvdReadSetArea  ( demux_t *, int, int, int );
 static int  DvdReadSeek     ( demux_t *, uint32_t );
@@ -1285,7 +1286,7 @@ static int DemuxBlock( demux_t *p_demux, const uint8_t *p, int len )
 
                 if( !tk->b_configured )
                 {
-                    ESNew( p_demux, i_id, 0 );
+                    ESNew( p_demux, i_id, 0, 0 );
                 }
                 if( tk->es &&
                     !ps_pkt_parse_pes( VLC_OBJECT(p_demux), p_pkt, tk->i_skip ) )
@@ -1350,7 +1351,7 @@ static int DemuxBlock( demux_t *p_demux, const uint8_t *p, int len )
 /*****************************************************************************
  * ESNew: register a new elementary stream
  *****************************************************************************/
-static void ESNew( demux_t *p_demux, int i_id, int i_lang )
+static void ESNew( demux_t *p_demux, int i_id, int i_lang, int i_lang_ext )
 {
     demux_sys_t *p_sys = p_demux->p_sys;
     ps_track_t  *tk = &p_sys->tk[ps_id_to_tk(i_id)];
@@ -1401,9 +1402,24 @@ static void ESNew( demux_t *p_demux, int i_id, int i_lang )
 #endif
 
         if( psz_language[0] ) tk->fmt.psz_language = strdup( psz_language );
+
+        /* Audio track description from lang_extension */
+        if( (unsigned)i_lang_ext < ARRAY_SIZE(dvd_audio_lang_ext)
+            && dvd_audio_lang_ext[i_lang_ext] )
+            tk->fmt.psz_description =
+                strdup( vlc_gettext( dvd_audio_lang_ext[i_lang_ext] ) );
     }
     else if( tk->fmt.i_cat == SPU_ES )
     {
+        /* Subtitle track description from lang_extension */
+        if( (unsigned)i_lang_ext < ARRAY_SIZE(dvd_spu_lang_ext)
+            && dvd_spu_lang_ext[i_lang_ext] )
+            tk->fmt.psz_description =
+                strdup( vlc_gettext( dvd_spu_lang_ext[i_lang_ext] ) );
+
+        if( i_lang_ext == DVD_SPU_LANG_EXT_FORCED )
+            tk->fmt.subs.b_forced = true;
+
         /* Palette */
         tk->fmt.subs.spu.b_palette = true;
         static_assert(sizeof(tk->fmt.subs.spu.palette) == sizeof(p_sys->clut),
@@ -1619,7 +1635,7 @@ static int DvdReadSetArea( demux_t *p_demux, int i_title, int i_chapter,
         /* TODO: re-add angles */
 
 
-        ESNew( p_demux, 0xe0, 0 ); /* Video, FIXME ? */
+        ESNew( p_demux, 0xe0, 0, 0 ); /* Video, FIXME ? */
         const video_attr_t *p_attr = &p_vts->vtsi_mat->vts_video_attr;
         int i_video_height = p_attr->video_format != 0 ? 576 : 480;
         int i_video_width;
@@ -1693,7 +1709,9 @@ static int DvdReadSetArea( demux_t *p_demux, int i_title, int i_chapter,
                 }
 
                 ESNew( p_demux, i_id, p_sys->p_vts_file->vtsi_mat->
-                       vts_audio_attr[i - 1].lang_code );
+                       vts_audio_attr[i - 1].lang_code,
+                       p_sys->p_vts_file->vtsi_mat->
+                       vts_audio_attr[i - 1].lang_extension );
             }
         }
 
@@ -1739,7 +1757,9 @@ static int DvdReadSetArea( demux_t *p_demux, int i_title, int i_chapter,
                 i_id = (0x20 + i_position) | PS_PACKET_ID_MASK_VOB;
 
                 ESNew( p_demux, i_id, p_sys->p_vts_file->vtsi_mat->
-                       vts_subp_attr[i - 1].lang_code );
+                       vts_subp_attr[i - 1].lang_code,
+                       p_sys->p_vts_file->vtsi_mat->
+                       vts_subp_attr[i - 1].lang_extension );
             }
         }
 
