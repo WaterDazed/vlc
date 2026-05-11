@@ -139,14 +139,18 @@ MainViewLoader {
     Component{
         id: gridComponent
 
-        Widgets.ExpandGridItemView {
+        Widgets.GridViewExt {
             id: gridView
 
-            basePictureWidth: VLCStyle.gridCover_network_width
-            basePictureHeight: VLCStyle.gridCover_network_height
-            subtitleHeight: 0
+            gridSizeHelper: GridSizeHelper {
+                basePictureWidth: VLCStyle.gridCover_network_width
+                basePictureHeight: VLCStyle.gridCover_network_height
+                availableWidth: gridView.contentWidth
 
-            maxNbItemPerRow: 12
+                maxNbItemPerRow: 12
+            }
+
+            subtitleHeight: 0
 
             selectionModel: root.selectionModel
             model: root.model
@@ -154,7 +158,7 @@ MainViewLoader {
             displayMarginBeginning: root.displayMarginBeginning
             displayMarginEnd: root.displayMarginEnd
 
-            headerDelegate: BrowseTreeHeader {
+            header: BrowseTreeHeader {
                 providerModel: root.model
 
                 leftPadding: root.headerLeftPadding

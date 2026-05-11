@@ -28,7 +28,7 @@ import VLC.Util
 import VLC.Widgets as Widgets
 import VLC.Style
 
-Widgets.ExpandGridItemView {
+Widgets.ExpandGridView {
     id: gridView
 
     // Properties
@@ -43,8 +43,11 @@ Widgets.ExpandGridItemView {
 
     // Settings
 
-    basePictureWidth: VLCStyle.gridCover_video_width
-    basePictureHeight: VLCStyle.gridCover_video_height
+    gridSizeHelper: GridSizeHelper {
+        basePictureWidth: VLCStyle.gridCover_video_width
+        basePictureHeight: VLCStyle.gridCover_video_height
+        availableWidth: gridView.contentWidth
+    }
 
     activeFocusOnTab: true
 
@@ -86,9 +89,6 @@ Widgets.ExpandGridItemView {
         id: gridItem
 
         // Properties
-
-        required property var model
-        required property int index
 
         // Settings
 
@@ -135,17 +135,7 @@ Widgets.ExpandGridItemView {
     }
 
     expandDelegate: VideoInfoExpandPanel {
-        x: 0
 
-        width: gridView.width
-
-        Navigation.parentItem: gridView
-
-        Navigation.cancelAction: gridView.forceFocus
-        Navigation.upAction: gridView.forceFocus
-        Navigation.downAction: gridView.forceFocus
-
-        onRetract: gridView.retract()
     }
 
     function forceFocus() {

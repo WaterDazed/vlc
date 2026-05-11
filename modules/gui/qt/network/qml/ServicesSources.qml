@@ -28,7 +28,7 @@ import VLC.Network
 import VLC.Dialogs
 import VLC.Menus
 
-Widgets.ExpandGridItemView {
+Widgets.GridViewExt {
     id: root
 
     //properties
@@ -45,13 +45,17 @@ Widgets.ExpandGridItemView {
 
     //settings
 
-    basePictureWidth: VLCStyle.gridCover_network_width
-    basePictureHeight: VLCStyle.gridCover_network_height
+    gridSizeHelper: GridSizeHelper {
+        basePictureWidth: VLCStyle.gridCover_network_width
+        basePictureHeight: VLCStyle.gridCover_network_height
+        availableWidth: root.contentWidth
+    }
+
     subtitleHeight: 0
 
     model: sourcesModel
 
-    headerDelegate: Widgets.ViewHeader {
+    header: Widgets.ViewHeader {
         view: root
 
         text: qsTr("Services")
@@ -59,8 +63,7 @@ Widgets.ExpandGridItemView {
 
     delegate: Widgets.GridItem {
 
-        property var model: ({})
-        property int index: -1
+        required property var model
         readonly property bool is_dummy: model.type === NetworkSourcesModel.TYPE_DUMMY
         readonly property bool is_podcast: !is_dummy && model.name && model.name.startsWith("podcast")
 

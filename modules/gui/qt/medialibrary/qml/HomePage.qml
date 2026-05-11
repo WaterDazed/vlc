@@ -232,10 +232,6 @@ T.Page {
 
                 emptyLabel: null
 
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
-
                 listCoverWidth: root.listCoverWidth
                 listCoverHeight: root.listCoverHeight
                 listCoverRadius: root.listCoverRadius
@@ -289,7 +285,7 @@ T.Page {
 
                 onActiveFocusChanged: {
                     if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
+                        const item = currentItem?.currentItem
                         contentYBehavior.enabled = true
                         Helpers.positionFlickableToContainItem(flickable, item ?? this)
                         contentYBehavior.enabled = false
@@ -298,7 +294,7 @@ T.Page {
 
                 onCurrentIndexChanged: {
                     if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
+                        const item = currentItem?.currentItem
                         if (item) {
                             contentYBehavior.enabled = true
                             Helpers.positionFlickableToContainItem(flickable, item)
@@ -326,10 +322,6 @@ T.Page {
                 interactive: false
 
                 emptyLabel: null
-
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
 
                 listCoverWidth: root.listCoverWidth
                 listCoverHeight: root.listCoverHeight
@@ -370,7 +362,7 @@ T.Page {
 
                 onActiveFocusChanged: {
                     if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
+                        const item = currentItem?.currentItem
                         contentYBehavior.enabled = true
                         Helpers.positionFlickableToContainItem(flickable, item ?? this)
                         contentYBehavior.enabled = false
@@ -379,7 +371,7 @@ T.Page {
 
                 onCurrentIndexChanged: {
                     if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
+                        const item = currentItem?.currentItem
                         if (item) {
                             contentYBehavior.enabled = true
                             Helpers.positionFlickableToContainItem(flickable, item)
@@ -407,10 +399,6 @@ T.Page {
                 interactive: false
 
                 emptyLabel: null
-
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
 
                 listCoverWidth: root.listCoverWidth
                 listCoverHeight: root.listCoverHeight
@@ -443,7 +431,7 @@ T.Page {
 
                 onActiveFocusChanged: {
                     if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
+                        const item = currentItem?.currentItem
                         contentYBehavior.enabled = true
                         Helpers.positionFlickableToContainItem(flickable, item ?? this)
                         contentYBehavior.enabled = false
@@ -452,7 +440,7 @@ T.Page {
 
                 onCurrentIndexChanged: {
                     if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
+                        const item = currentItem?.currentItem
                         if (item) {
                             contentYBehavior.enabled = true
                             Helpers.positionFlickableToContainItem(flickable, item)

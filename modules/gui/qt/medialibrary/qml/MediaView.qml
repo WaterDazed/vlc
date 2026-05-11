@@ -145,7 +145,7 @@ MainViewLoader {
     Component {
         id: gridComponent
 
-        Widgets.ExpandGridItemView {
+        Widgets.GridViewExt {
             id: gridView
 
             focus: true
@@ -154,10 +154,13 @@ MainViewLoader {
 
             selectionModel: root.selectionModel
 
-            headerDelegate: headerComponent
+            header: headerComponent
 
-            basePictureWidth: root.gridCoverWidth
-            basePictureHeight: root.gridCoverHeight
+            gridSizeHelper: GridSizeHelper {
+                basePictureWidth: root.gridCoverWidth
+                basePictureHeight: root.gridCoverHeight
+                availableWidth: gridView.contentWidth
+            }
 
             displayMarginBeginning: root.displayMarginBeginning
             displayMarginEnd: root.displayMarginEnd
@@ -172,7 +175,6 @@ MainViewLoader {
             delegate: Widgets.GridItem {
                 id: gridDelegate
 
-                required property int index
                 required property var model
 
                 // TODO: Investigate if it makes sense to use `sourceClipRect`
@@ -190,8 +192,6 @@ MainViewLoader {
 
                 title: model.title || qsTr("Unknown Title")
                 subtitle: model.duration?.formatHMS() ?? "--:--"
-
-                opacity: gridView.expandIndex !== -1 && gridView.expandIndex !== index ? 0.7 : 1
 
                 dragItem: dragItemId
 
