@@ -143,6 +143,7 @@ MetaPanel::MetaPanel( QWidget *parent,
     /* ART_URL */
     art_cover = new CoverArtLabel( this, p_intf );
     metaLayout->addWidget( art_cover, line, 7, 6, 3, Qt::AlignCenter );
+    connect( art_cover, &CoverArtLabel::editing, this, &MetaPanel::enterEditMode );
 
     ADD_META( VLC_META_COPYRIGHT, copyright_text, 0,  7 ); line++;
 
@@ -172,9 +173,6 @@ MetaPanel::MetaPanel( QWidget *parent,
     connect( seqtot_text, &QLineEdit::textEdited, this, &MetaPanel::enterEditMode );
 
     connect( date_text, &QLineEdit::textEdited, this, &MetaPanel::enterEditMode );
-//    connect( THEMIM, QOverload<input_item_t *>::of(&PlayerController::artChanged),
-//             this, &MetaPanel::enterEditMode );
-
     /* We are not yet in Edit Mode */
     b_inEditMode = false;
 }

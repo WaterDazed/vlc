@@ -139,6 +139,8 @@ void CoverArtLabel::setArtFromFile()
         return;
 
     THEMIM->setArt( p_item.get(), fileUrl.toString() );
+    showArtUpdate( fileUrl.toLocalFile() );
+    emit editing();
 }
 
 void CoverArtLabel::clear()

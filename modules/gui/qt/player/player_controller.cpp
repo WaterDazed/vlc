@@ -2063,20 +2063,19 @@ const QString PlayerController::decodeArtURL( input_item_t *p_item )
 void PlayerController::setArt( input_item_t *p_item, QString fileUrl )
 {
     Q_D(PlayerController);
-    if( hasInput() )
-    {
-        char *psz_cachedir = config_GetUserDir( VLC_CACHE_DIR );
-        QString old_url = decodeArtURL( p_item );
-        old_url = QDir( old_url ).canonicalPath();
+    char *psz_cachedir = config_GetUserDir( VLC_CACHE_DIR );
+    QString old_url = decodeArtURL( p_item );
+    old_url = QDir( old_url ).canonicalPath();
 
-        if( psz_cachedir != nullptr && old_url.startsWith( QString::fromUtf8( psz_cachedir ) ) )
-            QFile( old_url ).remove(); /* Purge cached artwork */
+    if( psz_cachedir != nullptr && old_url.startsWith( QString::fromUtf8( psz_cachedir ) ) )
+        QFile( old_url ).remove(); /* Purge cached artwork */
 
-        free( psz_cachedir );
+    free( psz_cachedir );
 
-        input_item_SetArtURL( p_item , fileUrl.toUtf8().constData() );
+    input_item_SetArtURL( p_item , fileUrl.toUtf8().constData() );
+
+    if (p_item == getInput())
         d->UpdateArt( p_item );
-    }
 }
 
 bool PlayerController::associateSubtitleFile(const QString &uri)
