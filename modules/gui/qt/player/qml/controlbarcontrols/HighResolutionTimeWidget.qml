@@ -45,9 +45,9 @@ Control {
             return
 
         if (add === true)
-            Player.requestAddSMPTETimer()
+            MainPlayerController.requestAddSMPTETimer()
         else if (add === false)
-            Player.requestRemoveSMPTETimer()
+            MainPlayerController.requestRemoveSMPTETimer()
     }
 
     Component.onCompleted: {
@@ -102,10 +102,10 @@ Control {
                     // timecode changes. This is similar to animations:
                     label.update()
 
-                    if (label.timeText === Player.highResolutionTime)
+                    if (label.timeText === MainPlayerController.highResolutionTime)
                         return
 
-                    label.timeText = Player.highResolutionTime
+                    label.timeText = MainPlayerController.highResolutionTime
 
                     // Text would like polishing after text change.
                     // We need this because `afterAnimating()` is
