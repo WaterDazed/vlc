@@ -27,6 +27,8 @@ opencv4: opencv-$(OPENCV4_VERSION).tar.gz .sum-opencv4
 	sed -i.orig 's,if(UNIX AND NOT ANDROID),if(1),' $(UNPACK_DIR)/cmake/OpenCVGenPkgconfig.cmake
 	# fix Android SDK tools path
 	sed -i.orig 's,{ANDROID_SDK}/tools,{ANDROID_SDK}/build-tools,g' $(UNPACK_DIR)/cmake/android/OpenCVDetectAndroidSDK.cmake
+	# fix ARM intrin.h case
+	sed -i.orig 's,Intrin.h,intrin.h,g' $(UNPACK_DIR)/modules/core/include/opencv2/core/cv_cpu_dispatch.h
 	$(MOVE)
 
 # only enable necessary pkgs
