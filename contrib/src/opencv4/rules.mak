@@ -23,6 +23,8 @@ opencv4: opencv-$(OPENCV4_VERSION).tar.gz .sum-opencv4
 	sed -i.orig 's,cmake_minimum_required(VERSION 2.8.12.2),cmake_minimum_required(VERSION 3.5),' $(UNPACK_DIR)/cmake/OpenCVGenPkgconfig.cmake
 	# enable pkg-config on all configurations
 	sed -i.orig 's,if(MSVC OR IOS),if(0),' $(UNPACK_DIR)/cmake/OpenCVGenPkgconfig.cmake
+	# always install pkgconfig file
+	sed -i.orig 's,if(UNIX AND NOT ANDROID),if(1),' $(UNPACK_DIR)/cmake/OpenCVGenPkgconfig.cmake
 	$(MOVE)
 
 # only enable necessary pkgs
@@ -78,5 +80,4 @@ endif
 	$(HOSTVARS_CMAKE) $(CMAKE) $(OPENCV4_CONF)
 	+$(CMAKEBUILD)
 	$(CMAKEINSTALL)
-	install $(BUILD_DIR)/unix-install/opencv4.pc $(PREFIX)/lib/pkgconfig
 	touch $@
