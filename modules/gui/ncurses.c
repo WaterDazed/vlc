@@ -77,6 +77,14 @@ static void Close          (vlc_object_t *);
     "This option allows you to specify the directory the ncurses filebrowser " \
     "will show you initially.")
 
+#define add_element_color_id(element, defaultfg, defaultbg)\
+  add_string("ncurses-" #element "-fg-color", #defaultfg, #element " foreground", "sets a color for the " #element "foreground") \
+  add_string("ncurses-" #element "-bg-color", #defaultbg, #element " background", "sets a color for the " #element "background")
+
+#define MAX_PLAYLIST_COLORS (config_GetInt("ncurses-playlist-colors") > 32 ? 32 : config_GetInt("ncurses-playlist-colors"))
+
+#define add_color(color, default)\
+    add_rgb("ncurses-color-" #color, default, #color, "sets the" #color "color for ncurses")
 vlc_module_begin ()
     set_shortname("Ncurses")
     set_description(N_("Ncurses interface"))
@@ -85,6 +93,69 @@ vlc_module_begin ()
     set_callbacks(Open, Close)
     add_shortcut("curses")
     add_directory("browse-dir", NULL, BROWSE_TEXT, BROWSE_LONGTEXT)
+
+    add_color(black, 0x000000)
+    add_color(red, 0xff0000)
+    add_color(green, 0x00ff00)
+    add_color(yellow, 0xffff00)
+    add_color(blue, 0x0000ff)
+    add_color(magenta, 0xff00ff)
+    add_color(cyan, 0x00ffff)
+    add_color(white, 0xffffff)
+
+    add_element_color_id(title, yellow, black)
+
+    /* used in DrawBox() */
+    add_element_color_id(box, cyan, black)
+    /* Source: State, Position, Volume, Chapters, etc...*/
+    add_element_color_id(status, blue, black)
+
+    /* VLC messages, keep the order from highest priority to lowest */
+    add_element_color_id(info, black, white)
+    add_element_color_id(error, red, black)
+    add_element_color_id(warning, yellow, black)
+    add_element_color_id(debug, white, black)
+
+    /* Category title: help, info, metadata */
+    add_element_color_id(category, magenta, black)
+    /* Folder (BOX_BROWSE) */
+    add_element_color_id(folder, red, black)
+
+    add_element_color_id(progress, white, white)
+
+    add_element_color_id(playlist_1, green, black)
+    add_element_color_id(playlist_2, yellow, black)
+    add_element_color_id(playlist_3, red, black)
+    add_element_color_id(playlist_4, white, black)
+    add_element_color_id(playlist_5, white, black)
+    add_element_color_id(playlist_6, white, black)
+    add_element_color_id(playlist_7, white, black)
+    add_element_color_id(playlist_8, white, black)
+    add_element_color_id(playlist_9, white, black)
+    add_element_color_id(playlist_10, white, black)
+    add_element_color_id(playlist_11, white, black)
+    add_element_color_id(playlist_12, white, black)
+    add_element_color_id(playlist_13, white, black)
+    add_element_color_id(playlist_14, white, black)
+    add_element_color_id(playlist_15, white, black)
+    add_element_color_id(playlist_16, white, black)
+    add_element_color_id(playlist_17, white, black)
+    add_element_color_id(playlist_18, white, black)
+    add_element_color_id(playlist_19, white, black)
+    add_element_color_id(playlist_20, white, black)
+    add_element_color_id(playlist_21, white, black)
+    add_element_color_id(playlist_22, white, black)
+    add_element_color_id(playlist_23, white, black)
+    add_element_color_id(playlist_24, white, black)
+    add_element_color_id(playlist_25, white, black)
+    add_element_color_id(playlist_26, white, black)
+    add_element_color_id(playlist_27, white, black)
+    add_element_color_id(playlist_28, white, black)
+    add_element_color_id(playlist_29, white, black)
+    add_element_color_id(playlist_30, white, black)
+    add_element_color_id(playlist_31, white, black)
+    add_element_color_id(playlist_32, white, black)
+    add_integer("ncurses-playlist-colors", 3, "playlist colors num", "amount of different playlist colors (must be smaller than 32)")
 vlc_module_end ()
 
 #include "eject.c"
@@ -123,9 +194,6 @@ enum
 {
     C_DEFAULT = 0,
     C_TITLE,
-    C_PLAYLIST_1,
-    C_PLAYLIST_2,
-    C_PLAYLIST_3,
     C_BOX,
     C_STATUS,
     C_INFO,
@@ -134,37 +202,11 @@ enum
     C_DEBUG,
     C_CATEGORY,
     C_FOLDER,
+    C_PROGRESS,
     /* XXX: new elements here ! */
 
-    C_MAX
-};
-
-/* Available colors: BLACK RED GREEN YELLOW BLUE MAGENTA CYAN WHITE */
-static const struct { short f; short b; } color_pairs[] =
-{
-    /* element */       /* foreground*/ /* background*/
-    [C_TITLE]       = { COLOR_YELLOW,   COLOR_BLACK },
-
-    /* jamaican playlist, for rastafari sisters & brothers! */
-    [C_PLAYLIST_1]  = { COLOR_GREEN,    COLOR_BLACK },
-    [C_PLAYLIST_2]  = { COLOR_YELLOW,   COLOR_BLACK },
-    [C_PLAYLIST_3]  = { COLOR_RED,      COLOR_BLACK },
-
-    /* used in DrawBox() */
-    [C_BOX]         = { COLOR_CYAN,     COLOR_BLACK },
-    /* Source: State, Position, Volume, Chapters, etc...*/
-    [C_STATUS]      = { COLOR_BLUE,     COLOR_BLACK },
-
-    /* VLC messages, keep the order from highest priority to lowest */
-    [C_INFO]        = { COLOR_BLACK,    COLOR_WHITE },
-    [C_ERROR]       = { COLOR_RED,      COLOR_BLACK },
-    [C_WARNING]     = { COLOR_YELLOW,   COLOR_BLACK },
-    [C_DEBUG]       = { COLOR_WHITE,    COLOR_BLACK },
-
-    /* Category title: help, info, metadata */
-    [C_CATEGORY]    = { COLOR_MAGENTA,  COLOR_BLACK },
-    /* Folder (BOX_BROWSE) */
-    [C_FOLDER]      = { COLOR_RED,      COLOR_BLACK },
+    C_MAX,
+    C_PLAYLIST = 100,
 };
 
 struct dir_entry_t
@@ -175,6 +217,11 @@ struct dir_entry_t
 
 typedef struct VLC_VECTOR(char const *) pl_item_names;
 
+typedef struct short_color
+{
+    short r, g, b;
+} short_color;
+
 struct intf_sys_t
 {
     vlc_thread_t    thread;
@@ -182,10 +229,8 @@ struct intf_sys_t
 
     bool            color;
 
-    /* rgb values for the color yellow */
-    short           yellow_r;
-    short           yellow_g;
-    short           yellow_b;
+    /* rgb values for all of the colors */
+    short_color     system_colors[8];
 
     int             box_type;
     int             previous_box_type;
@@ -425,6 +470,79 @@ static void SearchPlaylist(intf_sys_t *sys)
 }
 
 /****************************************************************************
+ * Config
+ ****************************************************************************/
+
+static const char * color_names[] = {
+  "black",
+  "red",
+  "green",
+  "yellow",
+  "blue",
+  "magenta",
+  "cyan",
+  "white"
+};
+
+static int get_color_id_from_string(const char * string) {
+  for (int i = 0; i < 8; i++)
+    if (strncmp(string, color_names[i], strlen(color_names[i])) == 0)
+      return i;
+  return -1;
+}
+
+static const char * element_names[] = {
+  [C_TITLE] = "title",
+
+  [C_BOX] = "box",
+  [C_STATUS] = "status",
+
+  [C_INFO] = "info",
+  [C_ERROR] = "error",
+  [C_WARNING] = "warning",
+  [C_DEBUG] = "debug",
+
+  [C_CATEGORY] = "category",
+  [C_FOLDER] = "folder",
+
+  [C_PROGRESS] = "progress",
+};
+
+static void load_colors_config() {
+  for (int i = 0; i < 8; i++) {
+      char buf[32] = {0,};
+      sprintf(buf, "ncurses-color-%s", color_names[i]);
+      int rgb = config_GetInt(buf);
+      int r = (rgb >> 16) & 0xFF;
+      int g = (rgb >> 8) & 0xFF;
+      int b = rgb & 0xFF;
+      init_color(i, r * 1000 / 255, g * 1000 / 255, b * 1000 / 255);
+  }
+}
+
+static void load_pairs_config() {
+  for (int i = C_DEFAULT + 1; i < C_MAX; i++) {
+    char buf[64] = {0,};
+    sprintf(buf, "ncurses-%s-fg-color", element_names[i]);
+    char * fg = config_GetPsz(buf);
+
+    sprintf(buf, "ncurses-%s-bg-color", element_names[i]);
+    char * bg = config_GetPsz(buf);
+    init_pair(i, get_color_id_from_string(fg), get_color_id_from_string(bg));
+  }
+
+  for (int i = C_PLAYLIST; i < C_PLAYLIST + MAX_PLAYLIST_COLORS; i++) {
+    char buf[64] = {0,};
+    sprintf(buf, "ncurses-playlist_%d-fg-color", i - C_PLAYLIST + 1);
+    char * fg = config_GetPsz(buf);
+
+    sprintf(buf, "ncurses-playlist_%d-bg-color", i - C_PLAYLIST + 1);
+    char * bg = config_GetPsz(buf);
+    init_pair(i, get_color_id_from_string(fg), get_color_id_from_string(bg));
+  }
+}
+
+/****************************************************************************
  * Drawing
  ****************************************************************************/
 
@@ -439,13 +557,14 @@ static void start_color_and_pairs(intf_thread_t *intf)
     }
 
     start_color();
-    for (int i = C_DEFAULT + 1; i < C_MAX; i++)
-        init_pair(i, color_pairs[i].f, color_pairs[i].b);
+    load_pairs_config();
 
     /* untested, in all my terminals, !can_change_color() --funman */
     if (can_change_color()) {
-        color_content(COLOR_YELLOW, &sys->yellow_r, &sys->yellow_g, &sys->yellow_b);
-        init_color(COLOR_YELLOW, 960, 500, 0); /* YELLOW -> ORANGE */
+        for (int i = 0; i < 8; i++) {
+            color_content(i, &sys->system_colors[i].r, &sys->system_colors[i].g, &sys->system_colors[i].b);
+        }
+        load_colors_config();
     }
 }
 
@@ -491,9 +610,7 @@ static void DrawLine(int y, int x, int w)
 {
     if (w <= 0) return;
 
-    attrset(A_REVERSE);
     mvhline(y, x, ' ', w);
-    attroff(A_REVERSE);
 }
 
 static void mvnprintw(int y, int x, int w, const char *p_fmt, ...)
@@ -855,7 +972,7 @@ static int DrawPlaylist(intf_thread_t *intf)
     for (size_t i = 0; i < sys->pl_item_names.size; i++)
     {
         if (sys->color)
-            color_set(i%3 + C_PLAYLIST_1, NULL);
+            color_set(i%config_GetInt("ncurses-playlist-colors") + C_PLAYLIST, NULL);
 
         MainBoxWrite(sys, i, "%c %s",
                 (ssize_t)i == cur_idx ? '>' : ' ',
@@ -1013,7 +1130,10 @@ static int DrawStatus(intf_thread_t *intf)
     DrawBox(y++, 1, sys->color, ""); /* position slider */
     DrawEmptyLine(y, 1, COLS-2);
     if (vlc_player_IsStarted(player))
+    {
+        color_set(C_PROGRESS, NULL);
         DrawLine(y, 1, (int)((COLS-2) * vlc_player_GetPosition(player)));
+    }
     y += 2; /* skip slider and box */
 
     vlc_playlist_Unlock(playlist);
@@ -1766,8 +1886,12 @@ static void Close(vlc_object_t *p_this)
     free(sys->current_dir);
 
     if (can_change_color())
-        /* Restore yellow to its original color */
-        init_color(COLOR_YELLOW, sys->yellow_r, sys->yellow_g, sys->yellow_b);
+    {
+        /* Restore colors to theirs original colors */
+        for (int i = 0; i < 8; i++) {
+            init_color(i, sys->system_colors[i].r, sys->system_colors[i].g, sys->system_colors[i].b);
+        }
+    }
 
     endwin();   /* Close the ncurses interface */
 
