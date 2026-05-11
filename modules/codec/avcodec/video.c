@@ -1581,21 +1581,17 @@ static int DecodeBlock( decoder_t *p_dec, block_t **pp_block )
         if( p_context->pix_fmt == AV_PIX_FMT_PAL8
          && !p_dec->fmt_out.video.p_palette )
         {
-            /* See AV_PIX_FMT_PAL8 comment in avc_GetVideoFormat(): update the
-             * fmt_out palette and change the fmt_out chroma to request a new
-             * vout */
-            assert( p_dec->fmt_out.video.i_chroma != VLC_CODEC_RGBP );
-
-            video_palette_t *p_palette;
-            p_palette = p_dec->fmt_out.video.p_palette
-                      = malloc( sizeof(video_palette_t) );
-            if( !p_palette )
+            p_dec->fmt_out.video.p_palette = malloc( sizeof(video_palette_t) );
+            if( !p_dec->fmt_out.video.p_palette )
             {
                 vlc_mutex_unlock(&p_sys->lock);
                 b_error = true;
                 av_frame_free(&frame);
                 break;
             }
+
+            video_palette_t *p_palette = p_dec->fmt_out.video.p_palette;
+
             static_assert( sizeof(p_palette->palette) == AVPALETTE_SIZE,
                            "Palette size mismatch between vlc and libavutil" );
             assert( frame->data[1] != NULL );
@@ -1651,6 +1647,9 @@ static int DecodeBlock( decoder_t *p_dec, block_t **pp_block )
                 break;
             }
         }
+
+        if( p_context->pix_fmt == AV_PIX_FMT_PAL8 && p_pic->format.p_palette )
+            lavc_Frame8PaletteCopy( p_pic->format.p_palette, frame->data[1] );
 
         if( !p_dec->fmt_in->video.i_sar_num || !p_dec->fmt_in->video.i_sar_den )
         {
