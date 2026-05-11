@@ -30,8 +30,11 @@
 #include <vlc_arrays.h>
 
 #include <new>
+#include <array>
 #include <iterator>
 #include <limits>
+
+#include <vlc_iso_lang.h>
 
 namespace mkv {
 
@@ -901,6 +904,69 @@ mkv_track_t * matroska_segment_c::FindTrackByBlock(
     return track_it->second.get();
 }
 
+
+// Copied from es_out.c and reworked.
+/* Get a 3 char code */
+static std::optional <std::string> LanguageGetCode( const char *psz_lang )
+{
+    const iso639_lang_t *pl;
+    if( psz_lang != NULL )
+    {
+        pl = vlc_find_iso639( psz_lang, true );
+        if( pl != NULL )
+            return std::string( pl->psz_iso639_2B );
+    }
+    return std::nullopt;
+}
+
+static std::vector<std::string> splitLangs(const char *psz_langs)
+{
+
+    char *psz_dup;
+    char *psz_parser;
+    char **ppsz = NULL;
+    int i_psz = 0;
+
+    std::vector <std::string> langs;
+
+    if( psz_langs == NULL ) return langs;
+
+    psz_parser = psz_dup = strdup(psz_langs);
+
+    while( psz_parser && *psz_parser )
+    {
+        char *psz;
+
+        psz = strchr(psz_parser, ',' );
+        if( psz ) *psz++ = '\0';
+
+        if( !strcmp( psz_parser, "any" ) )
+        {
+            langs.push_back("any");
+        }
+        else if( !strcmp( psz_parser, "none" ) )
+        {
+            langs.push_back("none");
+        }
+        else
+        {
+            auto psz_code = LanguageGetCode( psz_parser );
+
+            if (psz_code != std::nullopt)
+            {
+                langs.push_back(*psz_code);
+            }
+        }
+
+        psz_parser = psz;
+    }
+
+    free( psz_dup );
+
+    return langs;
+}
+
+
 void matroska_segment_c::ComputeTrackPriority()
 {
     bool b_has_default_video = false;
@@ -1088,6 +1154,118 @@ void matroska_segment_c::EnsureDuration()
     es.I_O().setFilePointer( i_current_position, seek_beginning );
 }
 
+std::optional <matroska_segment_c::tracks_map_t::key_type>
+    matroska_segment_c::find_preferred_lang_id (
+                std::vector<tracks_map_t::key_type> &default_track_ids,
+                std::vector<std::string> lang_splits)
+{
+    if (lang_splits.empty())
+        return  std::nullopt;
+
+    for (auto &lang: lang_splits) {
+        for (auto &id: default_track_ids) {
+            if (strcmp(tracks.at(id)->fmt.psz_language, lang.c_str()) == 0)
+                return id;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::vector<matroska_segment_c::tracks_map_t::key_type>
+    matroska_segment_c::get_defaults_of_cat(es_format_category_e cat)
+{
+    std::vector<tracks_map_t::key_type> default_tracks;
+    for ( auto it = tracks.begin(); it!= tracks.end(); ++it)
+    {
+        mkv_track_t            & track    = *it->second;
+        tracks_map_t::key_type   track_id =  it->first;
+
+        if (track.fmt.i_cat == cat && track.b_default) {
+                default_tracks.push_back(track_id);
+        }
+    }
+
+    return default_tracks;
+}
+
+std::optional <matroska_segment_c::tracks_map_t::key_type>
+    matroska_segment_c::most_preferred_default(std::vector<tracks_map_t::key_type> defaults, char* arg_str)
+{
+    if (defaults.empty()) {
+        return std::nullopt;
+    }
+
+    char* lang_pref_str = var_InheritString(&sys.demuxer , arg_str);
+    auto lang_splits = splitLangs(lang_pref_str);
+
+    auto id_by_pref = find_preferred_lang_id(defaults, lang_splits);
+    free (lang_pref_str);
+
+    return id_by_pref;
+}
+
+
+
+std::array<matroska_segment_c::tracks_map_t::key_type, ES_CATEGORY_COUNT>
+    matroska_segment_c::resolve_forced_and_default()
+{
+    std::array<tracks_map_t::key_type, ES_CATEGORY_COUNT> result_track_ids = {0};
+
+
+    std::vector<tracks_map_t::key_type> default_spu_track_ids =
+        get_defaults_of_cat(SPU_ES);
+    auto preferred_spu = most_preferred_default(default_spu_track_ids, "sub-language");
+    result_track_ids[SPU_ES] = preferred_spu.value_or(0);
+
+
+    std::vector<tracks_map_t::key_type> default_audio_track_ids =
+        get_defaults_of_cat(AUDIO_ES);
+    auto res_audio = most_preferred_default(default_audio_track_ids, "audio-language").value_or(0);
+    result_track_ids[AUDIO_ES] = res_audio;
+
+    if (res_audio == 0) // There is no preferred audio, so no more calc needed.
+        return result_track_ids;
+
+    auto selected_audio_lang = LanguageGetCode(tracks.at(res_audio)->fmt.psz_language);
+
+    if (selected_audio_lang == std::nullopt) // Unreadable audio language, cannot select.
+        return result_track_ids;
+
+    std::map <std::string , tracks_map_t::key_type> forced_spu_language_map;
+    for ( auto it = tracks.begin(); it!= tracks.end(); ++it)
+    {
+        mkv_track_t            & track    = *it->second;
+        tracks_map_t::key_type   track_id =  it->first;
+
+        if (track.fmt.i_cat == SPU_ES) {
+            if (track.b_forced) {
+                auto track_lang = LanguageGetCode(track.fmt.psz_language);
+                if (track_lang != std::nullopt)
+                    forced_spu_language_map[*track_lang] = track_id;
+            }
+        }
+    }
+
+    std::optional<tracks_map_t::key_type> selectable_forced_spu_id;
+    auto it = forced_spu_language_map.find(*selected_audio_lang);
+    if (it != forced_spu_language_map.end()) {
+        selectable_forced_spu_id = it->second;
+    }
+
+    tracks_map_t::key_type res_spu = preferred_spu.value_or( // user's preference > audio's preference
+        selectable_forced_spu_id.value_or(result_track_ids[SPU_ES])
+    );
+
+    result_track_ids[SPU_ES]   = res_spu;
+
+    return result_track_ids;
+}
+
+
+
+
+
 bool matroska_segment_c::ESCreate()
 {
     /* add all es */
@@ -1118,21 +1296,15 @@ bool matroska_segment_c::ESCreate()
             }
         }
 
-        /* Turn on a subtitles track if it has been flagged as default -
-         * but only do this if no subtitles track has already been engaged,
-         * either by an earlier 'default track' (??) or by default
-         * language choice behaviour.
-         */
-        if( track.b_default || track.b_forced )
-        {
-            mkv_track_t *&default_track = default_tracks[track.fmt.i_cat];
-            if( !default_track || track.b_default )
-                default_track = &track;
-        }
     }
 
-    for( mkv_track_t *track : default_tracks )
+    auto default_selections = resolve_forced_and_default();
+
+    for( auto id : default_selections )
     {
+        if (!id) continue;
+
+        mkv_track_t* track = tracks.at(id).get();
         if( track )
             es_out_Control( sys.demuxer.out, ES_OUT_SET_ES_DEFAULT, track->p_es );
     }
