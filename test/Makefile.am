@@ -96,7 +96,8 @@ check_PROGRAMS += $(player_programs)
 if HAVE_GL
 check_PROGRAMS += \
 	test_modules_video_output_opengl_filters \
-	test_modules_video_output_opengl_sub_renderer
+	test_modules_video_output_opengl_sub_renderer \
+	test_modules_video_output_opengl_interop_vaapi
 endif
 
 if HAVE_GLES2
@@ -405,6 +406,12 @@ test_modules_video_output_opengl_sub_renderer_CPPFLAGS = $(AM_CPPFLAGS) -DVLC_TE
 test_modules_video_output_opengl_es2_sub_renderer_SOURCES = $(test_modules_video_output_opengl_sub_renderer_SOURCES)
 test_modules_video_output_opengl_es2_sub_renderer_LDADD = $(LIBVLCCORE) $(LIBVLC) $(LIBPLACEBO_LIBS)
 test_modules_video_output_opengl_es2_sub_renderer_CPPFLAGS = $(AM_CPPFLAGS) -DVLC_TEST_OPENGL_API=VLC_OPENGL_ES2
+
+test_modules_video_output_opengl_interop_vaapi_SOURCES = \
+	modules/video_output/opengl/interop_vaapi.c \
+	../modules/video_output/opengl/interop.c \
+	../modules/video_output/opengl/interop.h
+test_modules_video_output_opengl_interop_vaapi_LDADD = $(LIBVLCCORE) $(LIBVLC)
 
 test_modules_stream_out_transcode_SOURCES = \
 	modules/stream_out/transcode.c \
