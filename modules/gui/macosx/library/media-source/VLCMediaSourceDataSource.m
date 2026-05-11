@@ -345,11 +345,17 @@ NSString * const VLCMediaSourceDataSourceNodeChanged = @"VLCMediaSourceDataSourc
                 break;
             case ITEM_TYPE_FILE:
             {
-                NSString * const filePath = inputNode.inputItem.MRL;
-                NSString * const extension = filePath.pathExtension.lowercaseString;
-                if (extension.length > 0) {
-                    typeName = [NSString stringWithFormat:@"%@ File", extension.capitalizedString];
+                NSURL * const url = [NSURL URLWithString:inputNode.inputItem.MRL];
+                NSString * const rawExtension = url.pathExtension;
+                NSCharacterSet * const nonAlphanumeric = [[NSCharacterSet alphanumericCharacterSet] invertedSet];
+                const BOOL validExtension =
+                    rawExtension.length > 0 &&
+                    rawExtension.length <= 10 &&
+                    [rawExtension rangeOfCharacterFromSet:nonAlphanumeric].location == NSNotFound;
 
+                if (validExtension) {
+                    NSString * const extension = rawExtension.lowercaseString;
+                    typeName = [NSString stringWithFormat:@"%@ File", extension.capitalizedString];
                     const CFStringRef extCF = (__bridge CFStringRef)extension;
                     const CFStringRef uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, extCF, NULL);
                     if (uti) {
@@ -360,7 +366,9 @@ NSString * const VLCMediaSourceDataSourceNodeChanged = @"VLCMediaSourceDataSourc
                         CFRelease(uti);
                     }
                 } else {
-                    typeName = NSTR("File");
+                    const BOOL isNetworkStream = url &&
+                        ![url.scheme isEqualToString:@"file"];
+                    typeName = isNetworkStream ? NSTR("Stream") : NSTR("File");
                 }
                 break;
             }
