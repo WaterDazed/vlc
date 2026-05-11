@@ -277,6 +277,11 @@ Item {
 
         contentItem: GridLayout {
             columns: 2
+            rowSpacing : VLCStyle.margin_small
+            columnSpacing : VLCStyle.margin_small
+          
+        
+
 
             readonly property ColorContext colorContext: ColorContext {
                 id: loginContentTheme
@@ -420,6 +425,7 @@ Item {
         rootWindow: root.bgContent
 
         contentItem:  ColumnLayout {
+            spacing : VLCStyle.margin_small
 
             readonly property ColorContext colorContext: ColorContext {
                 id: progressContentTheme
@@ -518,7 +524,8 @@ Item {
 
                 RowLayout {
                     anchors.fill: parent
-
+                    spacing : VLCStyle.margin_small
+                    
                     Widgets.TextToolButton {
                         id: cancel
 
