@@ -54,8 +54,6 @@ Widgets.PageLoader {
         guard: function (prop) { return !!prop.tree }
     }]
 
-    localMenuDelegate: (pageName !== "home") ? componentBar : null
-
     Accessible.role: Accessible.Client
     Accessible.name: qsTr("Browse view")
 
@@ -101,66 +99,86 @@ Widgets.PageLoader {
     Component {
         id: browseFolders
 
-        BrowseDeviceView {
-            property var sortModel: [
-                { text: qsTr("Alphabetic"), criteria: "name" },
-                { text: qsTr("Url"),        criteria: "mrl"  }
-            ]
+        Widgets.PageExt {
+            id: browseFoldersPage
 
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
+            title: folderModel.name
 
-            enableBeginningFade: root.enableBeginningFade
-            enableEndFade: root.enableEndFade
+            BrowseDeviceView {
+                property var sortModel: [
+                    { text: qsTr("Alphabetic"), criteria: "name" },
+                    { text: qsTr("Url"),        criteria: "mrl"  }
+                ]
 
-            model: StandardPathModel {
-                sortCriteria: MainCtx.sort.criteria
-                sortOrder: MainCtx.sort.order
-                searchPattern: MainCtx.search.pattern
+                anchors.fill: parent
+
+                displayMarginBeginning: root.displayMarginBeginning
+                displayMarginEnd: root.displayMarginEnd
+
+                enableBeginningFade: root.enableBeginningFade
+                enableEndFade: root.enableEndFade
+
+                model: StandardPathModel {
+                    id: folderModel
+                    sortCriteria: browseFoldersPage.sort.criteria
+                    sortOrder: browseFoldersPage.sort.order
+                    searchPattern: browseFoldersPage.search.pattern
+                }
+
+                onBrowse: (tree, reason) => { root._showBrowseNode(tree, reason) }
+
+                onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
             }
-
-            onBrowse: (tree, reason) => { root._showBrowseNode(tree, reason) }
-
-            onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
         }
     }
 
     Component {
         id: browseDevice
 
-        BrowseDeviceView {
-            id: viewDevice
+        Widgets.PageExt {
+
+            id: browseDevicePage
 
             //@type {NetworkDeviceModel.SDCatType}
             required property int sd_source
 
-            property var sortModel: [
+            title: deviceModel.name
+
+            sortModel: [
                 { text: qsTr("Alphabetic"), criteria: "name" },
                 { text: qsTr("Url"),        criteria: "mrl"  }
             ]
 
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
+            BrowseDeviceView {
+                id: viewDevice
 
-            enableBeginningFade: root.enableBeginningFade
-            enableEndFade: root.enableEndFade
+                anchors.fill: parent
 
-            model: NetworkDeviceModel {
-                ctx: MainCtx
+                displayMarginBeginning: root.displayMarginBeginning
+                displayMarginEnd: root.displayMarginEnd
 
-                sd_source: viewDevice.sd_source
-                source_name: "*"
+                enableBeginningFade: root.enableBeginningFade
+                enableEndFade: root.enableEndFade
 
-                sortCriteria: MainCtx.sort.criteria
-                sortOrder: MainCtx.sort.order
-                searchPattern: MainCtx.search.pattern
+                model: NetworkDeviceModel {
+                    id: deviceModel
+
+                    ctx: MainCtx
+
+                    sd_source: browseDevicePage.sd_source
+                    source_name: "*"
+
+                    sortCriteria: browseDevicePage.sort.criteria
+                    sortOrder: browseDevicePage.sort.order
+                    searchPattern: browseDevicePage.search.pattern
+                }
+
+                onBrowse: (tree, reason) => {
+                    root._showBrowseNode(tree, reason)
+                }
+
+                onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
             }
-
-            onBrowse: (tree, reason) => {
-                root._showBrowseNode(tree, reason)
-            }
-
-            onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
         }
     }
 
@@ -168,6 +186,7 @@ Widgets.PageLoader {
         id: browseComponent
 
         BrowseTreeDisplay {
+            id: browseTreePage
 
             property alias tree: mediaModel.tree
 
@@ -182,9 +201,9 @@ Widgets.PageLoader {
 
                 ctx: MainCtx
 
-                sortCriteria: MainCtx.sort.criteria
-                sortOrder: MainCtx.sort.order
-                searchPattern: MainCtx.search.pattern
+                sortCriteria: browseTreePage.sort.criteria
+                sortOrder: browseTreePage.sort.order
+                searchPattern: browseTreePage.search.pattern
             }
 
             contextMenu: NetworkMediaContextMenu {
@@ -200,19 +219,9 @@ Widgets.PageLoader {
                 root._showBrowseNode(tree, reason)
             }
 
-            onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
-        }
-    }
-
-    Component {
-        id: componentBar
-
-        NetworkAddressbar {
-            path: root.pageName === "browse" ? root.currentItem.model.path : []
-
             onHomeButtonClicked: reason => root._showHome(reason)
 
-            onBrowse:  (tree, reason) => { root._showBrowseNode(tree, reason) }
+            onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
         }
     }
 }

@@ -110,6 +110,8 @@ public:
 
     Q_INVOKABLE void close();
 
+    Q_INVOKABLE bool beginSortMenuSelection(int index);
+
     bool isShown() const { return m_shown; };
 
 protected:
@@ -122,6 +124,7 @@ signals:
 private:
     std::unique_ptr<QMenu> m_menu;
     bool m_shown = false;
+    int m_lastHandledSortIndex = -1;
 };
 
 class SortMenuVideo : public SortMenu
@@ -150,7 +153,6 @@ class QmlGlobalMenu : public VLCMenuBar
 {
     Q_OBJECT
     SIMPLE_MENU_PROPERTY(MainCtx*, ctx, nullptr)
-    SIMPLE_MENU_PROPERTY(bool, playerViewVisible, false)
 
     Q_PROPERTY(bool shown READ isShown NOTIFY shownChanged FINAL)
 
@@ -180,7 +182,6 @@ class QmlMenuBar : public VLCMenuBar
     SIMPLE_MENU_PROPERTY(MainCtx*, ctx, nullptr)
     SIMPLE_MENU_PROPERTY(QQuickItem*, menubar, nullptr)
     SIMPLE_MENU_PROPERTY(bool, openMenuOnHover, false)
-    SIMPLE_MENU_PROPERTY(bool, playerViewVisible, false)
 
 public:
     enum MenuEntry {

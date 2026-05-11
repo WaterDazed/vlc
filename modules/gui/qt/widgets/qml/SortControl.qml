@@ -83,6 +83,9 @@ Widgets.IconToolButton {
         target: (_menu) ? _menu : null
 
         function onSelected(index: int) {
+            if (!root._menu.beginSortMenuSelection(index))
+                return
+
             const selectedSortKey = root.model[index].criteria
 
             if (root.sortKey !== selectedSortKey) {

@@ -151,12 +151,6 @@ FocusScope {
         target: MainCtx
 
         //playlist
-        function onPlaylistDockedChanged() {
-            playlistVisibility.updatePlaylistDocked()
-        }
-        function onPlaylistVisibleChanged() {
-            playlistVisibility.updatePlaylistVisible()
-        }
         function onHasEmbededVideoChanged() {
             playlistVisibility.updateVideoEmbed()
             playerToolbarVisibilityFSM.updateVideoEmbed()
@@ -165,6 +159,20 @@ FocusScope {
             playerToolbarVisibilityFSM.askShow()
         }
     }
+
+
+    Connections {
+        target: MainCtx.playqueuePanel
+
+        //playlist
+        function onDockedChanged() {
+            playlistVisibility.updatePlaylistDocked()
+        }
+        function onVisibleChanged() {
+            playlistVisibility.updatePlaylistVisible()
+        }
+    }
+
 
     Loader {
         id: playerSpecializationLoader
@@ -672,7 +680,7 @@ FocusScope {
             if (MainCtx.hasEmbededVideo && !MainCtx.canShowVideoPIP) {
                MainPlaylistController.stop()
             }
-            MainCtx.requestShowMainView()
+            MainCtx.playerView = false
         }
 
         FadeControllerStateGroup {
@@ -703,7 +711,7 @@ FocusScope {
         }
     }
 
-    Widgets.DrawerExt {
+    Loader {
         id: playlistpopup
 
         anchors {
@@ -718,20 +726,63 @@ FocusScope {
         }
 
         focus: false
-        edge: Widgets.DrawerExt.Edges.Right
+
+        active: MainCtx.playqueuePanel.docked
 
         //initial state value is "", using a binding avoid animation on startup
         Binding on state {
             when: playlistVisibility.started
-            value: playlistVisibility.isPlaylistVisible ? "visible" : "hidden"
+            value: (status === Loader.Ready && playlistVisibility.isPlaylistVisible) ? "expanded" : "retracted"
         }
 
-        component: PlaylistPane {
+        Component.onCompleted: {
+            Qt.callLater(() => { playlistTransition.enabled = true; })
+        }
+
+        states: [
+            State {
+                name: "expanded"
+                PropertyChanges {
+                    target: playlistpopup
+                    width: playlistpopup.implicitWidth
+                    visible: true
+                }
+           }, State {
+                name: "retracted"
+                PropertyChanges {
+                    target: playlistpopup
+                    width: 0
+                    visible: false
+                }
+           }
+        ]
+
+        transitions: Transition {
+            id: playlistTransition
+            enabled: false
+
+            from: "retracted"; to: "expanded";
+            reversible: true
+
+            SequentialAnimation {
+                PropertyAction { property: "visible" }
+
+                NumberAnimation {
+                    property: "width"
+                    duration: VLCStyle.duration_short
+                    easing.type: Easing.InOutSine
+                }
+            }
+        }
+
+        sourceComponent: PlaylistPane {
             id: playlistView
 
-            width: Helpers.clamp(rootPlayer.width / resizeHandle.widthFactor
+            property real maximumWidth: (rootPlayer.width + playlistView.rightPadding) / 2
+
+            implicitWidth: Helpers.clamp(MainCtx.playqueuePanel.width
                                  , playlistView.minimumWidth
-                                 , (rootPlayer.width + playlistView.rightPadding) / 2)
+                                 , playlistView.maximumWidth)
             height: playlistpopup.height
 
             useAcrylic: false
@@ -781,29 +832,31 @@ FocusScope {
                 }
 
                 atRight: false
-                targetWidth: playlistpopup.width
-                sourceWidth: rootPlayer.width
+                currentWidth: playlistpopup.width
 
-                onWidthFactorChanged: {
+                maximumWidth: playlistView.maximumWidth
+                minimumWidth: playlistView.minimumWidth
+
+                onRequestedWidthChanged: {
                     if (!_inhibitMainCtxUpdate)
-                        MainCtx.playerPlaylistWidthFactor = widthFactor
+                        MainCtx.playqueuePanel.width = requestedWidth
                 }
 
                 Component.onCompleted:  _updateFromMainCtx()
 
                 function _updateFromMainCtx() {
-                    if (widthFactor == MainCtx.playerPlaylistWidthFactor)
+                    if (requestedWidth === MainCtx.playqueuePanel.width)
                         return
 
                     _inhibitMainCtxUpdate = true
-                    widthFactor = MainCtx.playerPlaylistWidthFactor
+                    requestedWidth = MainCtx.playqueuePanel.width
                     _inhibitMainCtxUpdate = false
                 }
 
                 Connections {
-                    target: MainCtx
+                    target: MainCtx.playqueuePanel
 
-                    function onPlaylistWidthFactorChanged() {
+                    function onWidthChanged() {
                         resizeHandle._updateFromMainCtx()
                     }
                 }

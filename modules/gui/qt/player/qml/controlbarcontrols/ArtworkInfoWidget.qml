@@ -86,11 +86,7 @@ AbstractButton {
     // Events
 
     onClicked: {
-        if (History.match(History.viewPath, ["player"])) {
-            MainCtx.requestShowMainView()
-        } else {
-            MainCtx.requestShowPlayerView()
-        }
+        MainCtx.playerView = !MainCtx.playerView
     }
 
     // Children

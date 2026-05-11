@@ -146,6 +146,9 @@ QtObject {
     readonly property int defaultWidthPlaylist: MainCtx.dp(300, scale);
     readonly property int closedWidthPlaylist: MainCtx.dp(20, scale);
 
+    readonly property int expandNavigationPaneWidth: MainCtx.dp(160, scale);
+    readonly property int buttonHeightNavigationPane: MainCtx.dp(35, scale);
+
     readonly property int widthSearchInput: MainCtx.dp(200, scale);
     readonly property int widthSortBox: MainCtx.dp(150, scale);
     readonly property int widthTeletext: MainCtx.dp(280, scale);
@@ -229,7 +232,7 @@ QtObject {
     readonly property int gridView_spacing: margin_small + margin_xxxsmall
     readonly property int tableView_spacing: gridView_spacing + margin_large
 
-    readonly property int layoutTitle_top_padding: margin_large + margin_xxsmall
+    readonly property int layoutTitle_top_padding: margin_large
     readonly property int layoutTitle_bottom_padding: margin_normal + margin_xxxsmall
 
     readonly property int layout_left_margin: margin_normal

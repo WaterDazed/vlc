@@ -114,6 +114,7 @@ void BasicMenuContainer::setVisible(bool visible)
 void SortMenu::popup(const QPoint &point, const bool popupAbovePoint, const QVariantList &model)
 {
     assert(m_ctx);
+    m_lastHandledSortIndex = -1;
     m_menu = std::make_unique<VLCMenu>(m_ctx->getIntf());
 
     connect( m_menu.get(), &QMenu::aboutToShow, this, [this]() {
@@ -161,6 +162,14 @@ void SortMenu::close()
 {
     if (m_menu)
         m_menu->close();
+}
+
+bool SortMenu::beginSortMenuSelection(int index)
+{
+    if (m_lastHandledSortIndex == index)
+        return false;
+    m_lastHandledSortIndex = index;
+    return true;
 }
 
 // Protected functions
@@ -283,7 +292,7 @@ void QmlGlobalMenu::popup(QPoint pos)
 
     /* View menu, a bit different */
     submenu = m_menu->addMenu(qtr( "V&iew" ));
-    ViewMenu( p_intf, submenu, m_playerViewVisible );
+    ViewMenu( p_intf, submenu );
 
     submenu = m_menu->addMenu(qtr( "&Help" ));
     HelpMenu(submenu);
@@ -407,7 +416,7 @@ void QmlMenuBar::setupMenuEntry(QMenu* menu, MenuEntry entry)
         ToolsMenu(p_intf, menu);
         break;
     case VIEW:
-        ViewMenu( p_intf, menu, m_playerViewVisible );
+        ViewMenu( p_intf, menu );
         break;
     case HELP:
         HelpMenu( menu );
@@ -472,7 +481,7 @@ void QmlMenuBar::popupViewMenu(QQuickItem* button )
 {
     popupMenuCommon(button, [this](QMenu* menu) {
         qt_intf_t* p_intf = m_ctx->getIntf();
-        ViewMenu( p_intf, menu, m_playerViewVisible );
+        ViewMenu( p_intf, menu );
     });
 }
 

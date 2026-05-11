@@ -29,16 +29,13 @@ import VLC.Util
 import VLC.Style
 import VLC.Network
 
-FocusScope {
+Widgets.PageExt {
     id: root
 
     // Properties
 
     property bool _initialized: false
     property bool _resetFocusPendingAfterInitialization: false
-
-    property int leftPadding: 0
-    property int rightPadding: 0
 
     property int maximumRows: {
         if (model.searchPattern !== "")
@@ -49,16 +46,13 @@ FocusScope {
             return 5
     }
 
-    property var sortModel: [
+    sortModel: [
         { text: qsTr("Alphabetic"), criteria: "name"},
         { text: qsTr("Url"),        criteria: "mrl" }
     ]
 
-    readonly property bool hasGridListMode: true
-    readonly property bool isSearchable: true
-
-    //behave like a Page
-    property var pagePrefix: []
+    hasGridListMode: true
+    isSearchable: true
 
     // Aliases
 
@@ -71,8 +65,15 @@ FocusScope {
 
     signal browse(var tree, int reason)
 
+    title: qsTr("Browse")
+
     focus: true
 
+    function positionContentAtBeginning() {
+        contentYBehavior.enabled = true
+        flickable.contentY = -flickable.originY
+        contentYBehavior.enabled = false
+    }
 
     Component.onCompleted: {
         _initialized = true
@@ -198,25 +199,45 @@ FocusScope {
 
             Navigation.parentItem: root
 
+            HomeDeviceTitle {
+                view: foldersSection
+
+                text: qsTr("Folders")
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+            }
+
             HomeDeviceView {
                 id: foldersSection
 
-                title: qsTr("Folders")
+                anchors.left: parent.left
+                anchors.right: parent.right
 
                 model: StandardPathModel {
                     //we only have a handfull of standard path (5 or 6)
                     //so we don't limit them
 
-                    sortCriteria: MainCtx.sort.criteria
-                    sortOrder: MainCtx.sort.order
-                    searchPattern: MainCtx.search.pattern
+                    sortCriteria: root.sort.criteria
+                    sortOrder: root.sort.order
+                    searchPattern: root.search.pattern
                 }
+            }
+
+            HomeDeviceTitle {
+                view: computerSection
+
+                text: qsTr("Computer")
+
+                anchors.left: parent.left
+                anchors.right: parent.right
             }
 
             HomeDeviceView {
                 id: computerSection
 
-                title: qsTr("Computer")
+                anchors.left: parent.left
+                anchors.right: parent.right
 
                 model: NetworkDeviceModel {
                     ctx: MainCtx
@@ -226,35 +247,55 @@ FocusScope {
 
                     limit: computerSection.maximumCount
 
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
-                    searchPattern: MainCtx.search.pattern
+                    sortOrder: root.sort.order
+                    sortCriteria: root.sort.criteria
+                    searchPattern: root.search.pattern
                 }
+            }
+
+            HomeDeviceTitle {
+                view: deviceSection
+
+                text: qsTr("Devices")
+
+                anchors.left: parent.left
+                anchors.right: parent.right
             }
 
             HomeDeviceView {
                 id: deviceSection
 
-                title: qsTr("Devices")
+                anchors.left: parent.left
+                anchors.right: parent.right
 
                 model: NetworkDeviceModel {
                     ctx: MainCtx
 
                     limit: deviceSection.maximumCount
 
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
-                    searchPattern: MainCtx.search.pattern
+                    sortOrder: root.sort.order
+                    sortCriteria: root.sort.criteria
+                    searchPattern: root.search.pattern
 
                     sd_source: NetworkDeviceModel.CAT_DEVICES
                     source_name: "*"
                 }
             }
 
+            HomeDeviceTitle {
+                view: lanSection
+
+                text: qsTr("Network")
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+            }
+
             HomeDeviceView {
                 id: lanSection
 
-                title: qsTr("Network")
+                anchors.left: parent.left
+                anchors.right: parent.right
 
                 model: NetworkDeviceModel {
                     ctx: MainCtx
@@ -264,9 +305,9 @@ FocusScope {
 
                     limit: lanSection.maximumCount
 
-                    sortOrder: MainCtx.sort.order
-                    sortCriteria: MainCtx.sort.criteria
-                    searchPattern: MainCtx.search.pattern
+                    sortOrder: root.sort.order
+                    sortCriteria: root.sort.criteria
+                    searchPattern: root.search.pattern
                 }
             }
         }
@@ -278,7 +319,7 @@ FocusScope {
 
         for (let i = 0; i < column.count; ++i) {
             const widget = column.itemAt(i)
-            if (widget.activeFocus && widget.visible)
+            if (widget && widget.activeFocus && widget.visible)
                 return
         }
 
@@ -291,13 +332,35 @@ FocusScope {
         }
     }
 
+    component HomeDeviceTitle: Widgets.ViewHeader {
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        visible: view.model.count !== 0
+
+        seeAllButton.visible: view.model.count < view.model.maximumCount
+
+        onSeeAllButtonClicked: (reason) => root.seeAllDevices(
+            text,
+            view.model.sd_source,
+            reason
+        )
+    }
+
     component HomeDeviceView: BrowseDeviceView {
-        width: flickable.width
+        id: deviceViewContent
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+
         height: contentHeight
 
-        maximumRows: root.maximumRows
+        visible: model.count !== 0
 
-        visible: (model.count !== 0)
+        focus: true
+
+        maximumRows: root.maximumRows
 
         interactive: false
 
@@ -308,7 +371,6 @@ FocusScope {
         reuseItems: !MainCtx.gridView
 
         onBrowse: (tree, reason) => root.browse(tree, reason)
-        onSeeAll: (reason) => root.seeAllDevices(title, model.sd_source, reason)
 
         onActiveFocusChanged: {
             if (activeFocus) {

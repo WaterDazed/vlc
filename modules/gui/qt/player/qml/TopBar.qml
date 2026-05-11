@@ -293,8 +293,6 @@ FocusScope{
                 anchors.leftMargin: VLCStyle.margin_xxsmall
 
                 color: theme.accent
-
-                onCsdMenuVisibleChanged: root.requestLockUnlockAutoHide(csdMenuVisible)
             }
         }
 
@@ -455,7 +453,6 @@ FocusScope{
                 id: contextMenu
 
                 ctx: MainCtx
-                playerViewVisible: History.match(History.viewPath, ["player"])
 
                 onAboutToShow: root.requestLockUnlockAutoHide(true)
                 onAboutToHide: root.requestLockUnlockAutoHide(false)

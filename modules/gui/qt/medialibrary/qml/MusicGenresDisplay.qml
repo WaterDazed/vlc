@@ -45,50 +45,56 @@ Widgets.PageLoader {
 
     Component {
         id: genresComponent
-        /* List View */
-        MusicGenres {
-            id: genresView
 
-            header: Widgets.ViewHeader {
-                view: genresView
+        Widgets.PageExt {
+            id: genrePage
 
-                visible: view.count > 0
+            title: qsTr("Genres")
 
-                text: qsTr("Genres")
-            }
+            /* List View */
+            MusicGenres {
+                id: genresView
 
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
+                anchors.fill: parent
 
-            enableBeginningFade: root.enableBeginningFade
-            enableEndFade: root.enableEndFade
+                displayMarginBeginning: root.displayMarginBeginning
+                displayMarginEnd: root.displayMarginEnd
 
-            onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
+                enableBeginningFade: root.enableBeginningFade
+                enableEndFade: root.enableEndFade
 
-            searchPattern: MainCtx.search.pattern
-            sortOrder: MainCtx.sort.order
-            sortCriteria: MainCtx.sort.criteria
+                searchPattern: genrePage.search.pattern
+                sortOrder: genrePage.sort.order
+                sortCriteria: genrePage.sort.criteria
 
-            onShowAlbumView: (id, name, reason) => {
-                History.push([...root.pagePrefix, "albums"], { parentId: id, genreName: name }, reason)
+                onShowAlbumView: (id, name, reason) => {
+                    History.push([...root.pagePrefix, "albums"], { parentId: id, genreName: name }, reason)
+                }
             }
         }
     }
 
     Component {
         id: albumGenreComponent
-        /* List View */
-        MusicAlbums {
-            id: albumsView
 
+        Widgets.PageExt {
+            id: albumGenrePage
             property string genreName: ""
+            property alias parentId: albumsView.parentId
 
-            header: Widgets.ViewHeader {
-                view: albumsView
+            title: qsTr("Genres - %1").arg(genreName)
 
-                visible: view.count > 0
+            /* List View */
+            MusicAlbums {
+                id: albumsView
 
-                text: qsTr("Genres - %1").arg(genreName)
+                anchors.fill: parent
+
+                searchPattern: albumGenrePage.search.pattern
+                sortOrder: albumGenrePage.sort.order
+                sortCriteria: albumGenrePage.sort.criteria
+
+                onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
             }
 
             displayMarginBeginning: root.displayMarginBeginning
@@ -96,12 +102,6 @@ Widgets.PageLoader {
 
             enableBeginningFade: root.enableBeginningFade
             enableEndFade: root.enableEndFade
-
-            searchPattern: MainCtx.search.pattern
-            sortOrder: MainCtx.sort.order
-            sortCriteria: MainCtx.sort.criteria
-
-            onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
         }
     }
 }

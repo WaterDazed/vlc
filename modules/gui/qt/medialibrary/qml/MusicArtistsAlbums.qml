@@ -28,15 +28,35 @@ import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Menus
 
-FocusScope {
+Widgets.PageExt {
     id: root
 
     // Properties
+    property int initialIndex: 0
+    property int initialAlbumIndex: 0
+    property var artistId: undefined
 
-    property int leftPadding: 0
-    property int rightPadding: 0
+    property var _requestedArtistId: undefined
 
-    property var sortModel: MainCtx.gridView ? [
+    property alias model: artistModel
+    property alias selectionModel: selectionModel
+
+    property alias currentIndex: artistList.currentIndex
+    property alias currentAlbumIndex: albumSubView.currentIndex
+
+    property bool isScreenSmall: VLCStyle.isScreenSmall
+
+    //padding is handled internally
+    leftPadding: 0
+    rightPadding: 0
+
+    hasGridListMode: true
+    isSearchable: true
+
+    //we provide our own header
+    header: null
+
+    sortModel: MainCtx.gridView ? [
         { text: qsTr("Title"), criteria: "title" },
         { text: qsTr("Release Year"), criteria: "release_year" },
     ] : [
@@ -46,42 +66,11 @@ FocusScope {
         { text: qsTr("Duration"), criteria: "duration" }
     ]
 
-    property SortMenuAlbums sortMenu: SortMenuAlbums {
+    sortMenu: SortMenuAlbums {
         ctx: MainCtx
 
         sectionsVisible: !MainCtx.gridView
     }
-
-    property int initialIndex: 0
-    property int initialAlbumIndex: 0
-    property var artistId: undefined
-
-    property var _requestedArtistId: undefined
-
-    //behave like a page
-    property var pagePrefix: []
-
-    property alias displayMarginBeginning: artistList.displayMarginBeginning
-    property alias displayMarginEnd: artistList.displayMarginEnd
-
-    // Currently only respected by the list view:
-    property bool enableBeginningFade: true
-    property bool enableEndFade: true
-
-    readonly property bool hasGridListMode: true
-    readonly property bool isSearchable: true
-
-    property alias model: artistModel
-    property alias selectionModel: selectionModel
-
-    property alias searchPattern: albumSubView.searchPattern
-    property alias sortOrder: albumSubView.sortOrder
-    property alias sortCriteria: albumSubView.sortCriteria
-
-    property alias currentIndex: artistList.currentIndex
-    property alias currentAlbumIndex: albumSubView.currentIndex
-
-    property bool isScreenSmall: VLCStyle.isScreenSmall
 
     onInitialAlbumIndexChanged: resetFocus()
     onInitialIndexChanged: resetFocus()
@@ -181,28 +170,29 @@ FocusScope {
 
             property bool _sidebarInitialyPositioned: false
 
+            property int maximumWidth: root.width / 2
+            property int minimumWidth: VLCStyle.colWidth(1) + VLCStyle.column_spacing
+
             model: artistModel
             selectionModel: root.selectionModel
             currentIndex: -1
             z: 1
             Layout.fillHeight: true
+
             Layout.preferredWidth: VLCStyle.isScreenSmall
                                    ? 0
-                                   : Math.round(Helpers.clamp(root.width / resizeHandle.widthFactor,
-                                                              VLCStyle.colWidth(1) + VLCStyle.column_spacing,
-                                                              root.width * .5))
-
+                                   : Helpers.clamp(resizeHandle.requestedWidth, minimumWidth, maximumWidth)
             visible: !VLCStyle.isScreenSmall && (artistModel.count > 0)
             focus: !VLCStyle.isScreenSmall && (artistModel.count > 0)
+
+            displayMarginBeginning: root.displayMarginBeginning
+            displayMarginEnd: root.displayMarginEnd
 
             fadingEdge.backgroundColor: artistListBackground.usingAcrylic ? "transparent"
                                                                           : artistListBackground.alternativeColor
 
             fadingEdge.enableBeginningFade: root.enableBeginningFade
             fadingEdge.enableEndFade: root.enableEndFade
-
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
 
             onCurrentIndexChanged: {
                 if (!artistList._sidebarInitialyPositioned)
@@ -293,7 +283,6 @@ FocusScope {
                 visible: view.count > 0
 
                 leftPadding: VLCStyle.margin_normal
-                topPadding: VLCStyle.margin_xlarge
                 bottomPadding: VLCStyle.margin_small
 
                 text: qsTr("Artists")
@@ -332,31 +321,32 @@ FocusScope {
 
                 z: 1
 
-                sourceWidth: root.width
-                targetWidth: artistList.width
+                currentWidth: artistList.width
+                minimumWidth: artistList.minimumWidth
+                maximumWidth: artistList.maximumWidth
 
                 visible: !VLCStyle.isScreenSmall
 
-                onWidthFactorChanged: {
-                    if (!_inhibitMainCtxUpdate && visible)
-                        MainCtx.artistAlbumsWidthFactor = widthFactor
+                onRequestedWidthChanged: {
+                    if (!_inhibitMainCtxUpdate)
+                        MainCtx.artistAlbumsWidth = requestedWidth
                 }
 
                 Component.onCompleted:  _updateFromMainCtx()
 
                 function _updateFromMainCtx() {
-                    if (widthFactor == MainCtx.artistAlbumsWidthFactor)
+                    if (requestedWidth === MainCtx.artistAlbumsWidth)
                         return
 
                     _inhibitMainCtxUpdate = true
-                    widthFactor = MainCtx.artistAlbumsWidthFactor
+                    requestedWidth = MainCtx.artistAlbumsWidth
                     _inhibitMainCtxUpdate = false
                 }
 
                 Connections {
                     target: MainCtx
 
-                    function onArtistAlbumsWidthFactorChanged() {
+                    function onArtistAlbumsWidthChanged() {
                         resizeHandle._updateFromMainCtx()
                     }
                 }
@@ -379,11 +369,15 @@ FocusScope {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
+            search: root.search
+            sort: root.sort
+
             enableBeginningFade: root.enableBeginningFade
             enableEndFade: root.enableEndFade
 
             displayMarginBeginning: root.displayMarginBeginning
             displayMarginEnd: root.displayMarginEnd
+            sortMenu: root.sortMenu
 
             rightPadding: root.rightPadding
 

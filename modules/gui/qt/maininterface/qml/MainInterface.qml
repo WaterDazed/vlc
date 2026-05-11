@@ -48,43 +48,34 @@ Item {
                                       && MainCtx.clientSideDecoration
                                       && (MainCtx.intfMainWindow.visibility === Window.Windowed)
 
-    //when exiting minimal mode, what is the page to restore
-    property bool _minimalRestorePlayer: false
-
-    readonly property var _pageModel: [
-        { name: "mc", url: "qrc:///qt/qml/VLC/MainInterface/MainDisplay.qml" },
-        { name: "player", url:"qrc:///qt/qml/VLC/Player/Player.qml" },
-        { name: "minimal", url:"qrc:///qt/qml/VLC/Player/MinimalView.qml" },
-    ]
+    property int _currentMode: 0
 
     function setInitialView() {
-        //set the initial view
-        if (!MainPlaylistController.empty)
-            MainCtx.requestShowPlayerView()
+        if (!MainCtx.minimalView && !MainPlaylistController.empty)
+            MainCtx.playerView = true
         else
-            MainCtx.requestShowMainView()
+            _loadView()
     }
 
-    function loadCurrentHistoryView(focusReason) {
-        stackView.loadView(History.viewPath, History.viewProp, focusReason)
-
-        contextSaver.restore(History.viewPath)
-    }
-
-    ModelSortSettingHandler {
-        id: contextSaver
-    }
-
-    Connections {
-        target: MainCtx.sort
-
-        function onCriteriaChanged(criteria) {
-            contextSaver.save(History.viewPath)
+    function _loadView() {
+        if (_currentMode === MainCtx.effectiveMainViewMode)
+            return
+        // priority applies accross modes
+        // minimal > player > medialib
+        // MEDIALIB_MODE flag should always be set
+        switch (MainCtx.effectiveMainViewMode) {
+        case MainCtx.MINIMAL_MODE:
+            viewLoader.source = "qrc:///qt/qml/VLC/Player/MinimalView.qml"
+            break
+        case  MainCtx.PLAYER_MODE:
+            viewLoader.source = "qrc:///qt/qml/VLC/Player/Player.qml"
+            break
+        case MainCtx.MEDIALIB_MODE:
+        default:
+            viewLoader.source = "qrc:///qt/qml/VLC/MainInterface/MainDisplay.qml"
+            break
         }
-
-        function onOrderChanged(order) {
-            contextSaver.save(History.viewPath)
-        }
+        _currentMode = MainCtx.effectiveMainViewMode
     }
 
     Item {
@@ -142,7 +133,7 @@ Item {
         Loader {
             id: playlistWindowLoader
             asynchronous: true
-            active: !MainCtx.playlistDocked
+            active: !MainCtx.playqueuePanel.docked
             source: "qrc:///qt/qml/VLC/Playlist/PlaylistDetachedWindow.qml"
         }
 
@@ -159,61 +150,18 @@ Item {
         }
 
         Connections {
-            target: History
-            function onNavigate(focusReason) {
-                loadCurrentHistoryView(focusReason)
-                MainCtx.mediaLibraryVisible = !History.match(History.viewPath, ["player"])
+            target: MainCtx
+
+            function onEffectiveMainViewModeChanged() {
+                root._loadView()
             }
         }
 
         Connections {
-            target: MainCtx
-
-            function onRequestShowMainView() {
-                root._minimalRestorePlayer = false
-                if (MainCtx.minimalView)
-                    return
-
-                if (History.match(History.viewPath, ["mc"]))
-                    return
-
-                if (MainCtx.hasEmbededVideo && MainCtx.canShowVideoPIP === false)
-                    MainPlaylistController.stop()
-
-                if (History.previousEmpty) {
-                    History.update(["mc", "home"])
-                    loadCurrentHistoryView(Qt.OtherFocusReason)
-                } else
-                    History.previous()
-            }
-
-            function onRequestShowPlayerView() {
-                root._minimalRestorePlayer = true
-                if (MainCtx.minimalView)
-                    return
-
-                if (!History.match(History.viewPath, ["player"]))
-                    History.push(["player"])
-            }
-
-            function onMinimalViewChanged() {
-                const isCurrentlyMinimal = History.match(History.viewPath, ["minimal"])
-
-                if (MainCtx.minimalView && !isCurrentlyMinimal) {
-                    const isCurrentlyPlayer = History.match(History.viewPath, ["player"])
-                    if (isCurrentlyPlayer) {
-                        History.update(["minimal"])
-                        loadCurrentHistoryView(Qt.OtherFocusReason)
-                    } else {
-                        History.push(["minimal"])
-                    }
-                } else if (!MainCtx.minimalView && isCurrentlyMinimal) {
-                    if (root._minimalRestorePlayer) {
-                        History.update(["player"])
-                        loadCurrentHistoryView(Qt.OtherFocusReason)
-                    } else {
-                        History.previous()
-                    }
+            target: Player
+            function onPlayingStateChanged() {
+                if (Player.playingState === Player.PLAYING_STATE_STOPPED) {
+                    MainCtx.playerView = false
                 }
             }
         }
@@ -278,23 +226,14 @@ Item {
             }
         }
 
-        Widgets.PageLoader {
-            id: stackView
+        Loader {
+            id: viewLoader
+
             anchors.fill: parent
+
             focus: true
             // If there is depth buffer, clipping is not necessary:
             clip: _extendedFrameVisible && !effect.hasDepthBuffer
-
-            pageModel: _pageModel
-
-            Connections {
-                target: Player
-                function onPlayingStateChanged() {
-                    if (Player.playingState === Player.PLAYING_STATE_STOPPED) {
-                        MainCtx.requestShowMainView()
-                    }
-                }
-            }
         }
 
         Loader {
@@ -303,12 +242,12 @@ Item {
         }
 
         MouseArea {
-            /// handles mouse navigation buttons
-            anchors.fill: parent
-            acceptedButtons: Qt.BackButton
-            cursorShape: undefined
-            onClicked: History.previous()
-        }
+             /// handles mouse navigation buttons
+             anchors.fill: parent
+             acceptedButtons: Qt.BackButton
+             cursorShape: undefined
+             onClicked: History.previous()
+         }
 
         Loader {
             active: {

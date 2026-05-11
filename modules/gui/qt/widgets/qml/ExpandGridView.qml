@@ -136,6 +136,10 @@ FocusScope {
     property alias contentHeight: flickable.contentHeight
     property alias contentWidth: flickable.contentWidth
     property alias contentX: flickable.contentX
+    property alias originX: flickable.originX
+    property alias contentY: flickable.contentY
+    property alias originY: flickable.originY
+
     property alias gridScrollBar: flickableScrollBar
     property alias interactive: flickable.interactive
 
@@ -556,6 +560,10 @@ FocusScope {
         animateContentY.start()
     }
 
+    function positionContentAtBeginning() {
+        animateFlickableContentY(0)
+    }
+
     // Private
 
     // returns true if this requires forceLayout
@@ -744,7 +752,7 @@ FocusScope {
             item = _createItem(id, pos[0], pos[1])
 
         // NOTE: This makes sure we have the proper focus reason on the GridItem.
-        if (activeFocus && currentIndex === item.index && expandIndex === -1)
+        if (activeFocus && currentIndex === item.index && expandIndex === -1 && item.focus)
             item.forceActiveFocus(_currentFocusReason)
         else
             item.focus = false
@@ -869,6 +877,7 @@ FocusScope {
 
             x: 0
             y: root.topMargin
+            z: 5
 
             //load the header early (when the first row is visible)
             visible: flickable.contentY < (root.headerHeight + root.rowHeight + root.topMargin)
@@ -883,6 +892,7 @@ FocusScope {
 
             y: root.topMargin + root.headerHeight + (root.rowHeight * (Math.ceil(model.count / nbItemPerRow))) +
                root._expandItemVerticalSpace
+            z: 5
         }
 
         Connections {

@@ -1,6 +1,7 @@
 {
-    "qml_name": "VLCIcons.qml",
-    "qml_file_prefix": "qrc:///",
+    "hpp_name": "../style/vlcicons.hpp",
+    "cpp_name": "../style/vlcicons.cpp",
+    "qml_prefix": "qrc:///",
     "font_file": "VLCIcons.ttf",
     "font_name": "VLCIcons",
     "glyphs" : [
@@ -48,6 +49,7 @@
         {"key":"ic_fluent_chevron_left_24", "path": "./icons/ic_fluent_chevron_left_24.svg"},
         {"key":"ic_fluent_chevron_right_24", "path": "./icons/ic_fluent_chevron_right_24.svg"},
         {"key":"ic_fluent_chevron_up_24", "path": "./icons/ic_fluent_chevron_up_24.svg"},
+        {"key":"panel_left", "path": "./icons/ic_fluent_panel_left_48_regular.svg"},
         {"key":"play_reverse", "path": "./icons/play_reverse.svg"},
         {"key":"playlist", "path": "./icons/ic_playlist.svg"},
         {"key":"playlist_clear", "path": "./icons/ic_playlist_clear.svg"},
@@ -59,6 +61,7 @@
         {"key":"repeat_all", "path": "./icons/ic_fluent_arrow_repeat_all.svg"},
         {"key":"repeat_one", "path": "./icons/ic_fluent_arrow_repeat_1.svg"},
         {"key":"search", "path": "./icons/ic_fluent_search.svg"},
+        {"key":"settings", "path": "./icons/ic_fluent_settings_48_regular.svg"},
         {"key":"shuffle", "path": "./icons/ic_fluent_arrow_shuffle.svg"},
         {"key":"skip_back", "path": "./icons/ic_fluent_skip_back_10.svg"},
         {"key":"skip_for", "path": "./icons/ic_fluent_skip_forward_10.svg"},
@@ -90,6 +93,8 @@
         {"key":"window_minimize", "path": "./icons/window_minimize.svg" },
         {"key":"window_restore", "path": "./icons/window_restore.svg" },
         {"key":"ic_fluent_document_add_24_regular", "path": "./icons/ic_fluent_document_add_24_regular.svg"},
-        {"key":"ic_fluent_document_copy_24_regular", "path": "./icons/ic_fluent_document_copy_24_regular.svg"}
+        {"key":"ic_fluent_document_copy_24_regular", "path": "./icons/ic_fluent_document_copy_24_regular.svg"},
+        {"key":"medialibrary_add", "path": "./icons/ic_medialibrary_add.svg"},
+        {"key":"medialibrary_remove", "path": "./icons/ic_medialibrary_remove.svg"}
     ]
 }

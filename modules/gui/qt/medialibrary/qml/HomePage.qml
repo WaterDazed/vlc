@@ -29,7 +29,7 @@ import VLC.Widgets as Widgets
 import VLC.Util
 import VLC.Style
 
-T.Page {
+Widgets.PageExt {
     id: root
 
     property var pagePrefix: [] // behave like a Page
@@ -39,9 +39,11 @@ T.Page {
         { text: qsTr("Duration"), criteria: "duration" }
     ]
 
-    readonly property bool hasGridListMode: true
+    title: qsTr("Home")
 
-    readonly property bool isSearchable: true
+    hasGridListMode: true
+
+    isSearchable: true
 
     property real listCoverHeight: VLCStyle.listAlbumCover_height
     property real listCoverWidth: VLCStyle.listAlbumCover_width
@@ -51,18 +53,6 @@ T.Page {
         id: theme
         colorSet: ColorContext.View
     }
-
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            implicitContentWidth + leftPadding + rightPadding,
-                            implicitHeaderWidth,
-                            implicitFooterWidth)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             implicitContentHeight + topPadding + bottomPadding
-                             + (implicitHeaderHeight > 0 ? implicitHeaderHeight + spacing : 0)
-                             + (implicitFooterHeight > 0 ? implicitFooterHeight + spacing : 0))
-
-    title: qsTr("Home")
-
 
     signal seeAllButtonClicked(string name, int reason)
 
@@ -82,11 +72,11 @@ T.Page {
     contentItem: Flickable {
         id: flickable
 
-        implicitWidth: Math.max(header.implicitWidth, coneNButtons.implicitWidth, mediaRows.implicitWidth)
-        implicitHeight: header.implicitHeight + coneNButtons.implicitHeight + (_hasMedias ? mediaRows.implicitHeight : 0)
+        implicitWidth: Math.max(coneNButtons.implicitWidth, mediaRows.implicitWidth)
+        implicitHeight: coneNButtons.implicitHeight + (_hasMedias ? mediaRows.implicitHeight : 0)
 
         contentWidth: width
-        contentHeight: _hasMedias ? header.implicitHeight + coneNButtons.implicitHeight + mediaRows.implicitHeight
+        contentHeight: _hasMedias ? coneNButtons.implicitHeight + mediaRows.implicitHeight
                                   : height - topMargin - bottomMargin
 
         flickableDirection: Flickable.AutoFlickIfNeeded
@@ -116,6 +106,12 @@ T.Page {
                 duration: VLCStyle.duration_veryLong
                 easing.type: Easing.InOutSine
             }
+        }
+
+        function positionContentAtBeginning() {
+            contentYBehavior.enabled = true
+            contentY = -originY
+            contentYBehavior.enabled = false
         }
 
         property Component implicitFlickableScrollHandler: DefaultFlickableScrollHandler { }
@@ -153,27 +149,6 @@ T.Page {
             }
         }
 
-        // FIXME: Do not use `ViewHeader` for page titles.
-        // FIXME: Use `header` property for `Page` header.
-        //        `header` dosen't respect paddings of `contentItem`,
-        //        and allows the `contentItem` to be scrolled through it.
-        Widgets.ViewHeader {
-            id: header
-
-            visible: flickable._hasMedias
-
-            view: newMediaRow
-
-            text: root.title
-
-            topPadding: 0
-
-            Binding on implicitHeight {
-                when: !flickable._hasMedias
-                value: 0.0
-            }
-        }
-
         NoMedialibHome.ConeNButtons {
             id: coneNButtons
 
@@ -182,17 +157,12 @@ T.Page {
             orientation: flickable._hasMedias ? Qt.Horizontal : Qt.Vertical
 
             anchors.centerIn: flickable._hasMedias ? undefined : parent
-            anchors.top: flickable._hasMedias ? header.bottom : undefined
+            anchors.top: flickable._hasMedias ? parent.top : undefined
             anchors.left: flickable._hasMedias ? parent.left : undefined
             anchors.leftMargin: flickable._hasMedias ? newMediaRow.contentLeftMargin : 0
 
             Navigation.parentItem: root
-            Navigation.downAction: function() {
-                if (continueWatchingRow.visible)
-                    continueWatchingRow.setCurrentItemFocus(Qt.TabFocusReason)
-                else
-                    continueWatchingRow.Navigation.defaultNavigationDown()
-            }
+            Navigation.downItem: mediaRows
 
             onActiveFocusChanged: {
                 contentYBehavior.enabled = true
@@ -201,7 +171,7 @@ T.Page {
             }
         }
 
-        Column {
+        Widgets.NavigableCol {
             id: mediaRows
 
             anchors.top: coneNButtons.bottom
@@ -212,6 +182,17 @@ T.Page {
 
             Navigation.parentItem: root
             Navigation.upItem: coneNButtons
+
+            Widgets.ViewHeader {
+                visible: continueWatchingRow.visible
+                text: qsTr("Continue Watching")
+                view: continueWatchingRow
+                seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.model.count
+
+                onSeeAllButtonClicked: function (reason) {
+                    root.seeAllButtonClicked("continueWatching", reason)
+                }
+            }
 
             VideoAll {
                 id: continueWatchingRow
@@ -241,50 +222,22 @@ T.Page {
                 listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
-                Navigation.downAction: function() {
-                    if (favoritesRow.visible)
-                        favoritesRow.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        favoritesRow.Navigation.defaultNavigationDown()
-                }
 
                 model: MLRecentVideoModel {
                     ml: MediaLib
 
-                    sortCriteria: MainCtx.sort.criteria
-                    sortOrder: MainCtx.sort.order
-                    searchPattern: MainCtx.search.pattern
+                    sortCriteria: root.sort.criteria
+                    sortOrder: root.sort.order
+                    searchPattern: root.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(continueWatchingRow.currentItem?.nbItemPerRow ?? null, 1) : 5
-                }
-
-                header: Widgets.ViewHeader {
-                    view: continueWatchingRow
-
-                    text: qsTr("Continue Watching")
-
-                    seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.model.count
-
-                    Navigation.parentItem: continueWatchingRow
-                    Navigation.downAction: function () {
-                        if (continueWatchingRow.currentItem?.setCurrentItemFocus)
-                            continueWatchingRow.currentItem.setCurrentItemFocus(Qt.TabFocusReason)
-                    }
-
-                    Component.onCompleted: {
-                        seeAllButtonClicked.connect(continueWatchingRow.seeAllButtonClicked)
-                    }
                 }
 
                 contextMenu: MLContextMenu {
                     model: continueWatchingRow.model
 
                     showPlayAsAudioAction: true
-                }
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("continueWatching", reason)
                 }
 
                 onActiveFocusChanged: {
@@ -305,6 +258,17 @@ T.Page {
                             contentYBehavior.enabled = false
                         }
                     }
+                }
+            }
+
+            Widgets.ViewHeader {
+                visible: favoritesRow.visible
+                text: qsTr("Continue Watching")
+                view: favoritesRow
+                seeAllButton.visible: favoritesRow.model.maximumCount > favoritesRow.model.count
+
+                onSeeAllButtonClicked: function (reason) {
+                    root.seeAllButtonClicked("favorites", reason)
                 }
             }
 
@@ -336,36 +300,18 @@ T.Page {
                 listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
-                Navigation.upAction: function() {
-                    if (continueWatchingRow.visible)
-                        continueWatchingRow.setCurrentItemFocus(Qt.BacktabFocusReason)
-                    else
-                        continueWatchingRow.Navigation.defaultNavigationUp()
-                }
-                Navigation.downAction: function() {
-                    if (newMediaRow.visible)
-                        newMediaRow.setCurrentItemFocus(Qt.TabFocusReason)
-                    else
-                        newMediaRow.Navigation.defaultNavigationDown()
-                }
 
                 model: MLMediaModel {
                     favoriteOnly: true
 
                     ml: MediaLib
 
-                    sortCriteria: MainCtx.sort.criteria || "insertion"
-                    sortOrder: MainCtx.sort.order
-                    searchPattern: MainCtx.search.pattern
+                    sortCriteria: root.sort.criteria || "insertion"
+                    sortOrder: root.sort.order
+                    searchPattern: root.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(favoritesRow.currentItem?.nbItemPerRow ?? null, 1) : 5
-                }
-
-                headerText: qsTr("Favorites")
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("favorites", reason)
                 }
 
                 onActiveFocusChanged: {
@@ -386,6 +332,17 @@ T.Page {
                             contentYBehavior.enabled = true
                         }
                     }
+                }
+            }
+
+            Widgets.ViewHeader {
+                text: qsTr("New Medias")
+                visible: newMediaRow.visible
+                view: newMediaRow
+                seeAllButton.visible: newMediaRow.model.maximumCount > newMediaRow.model.count
+
+                onSeeAllButtonClicked: function (reason) {
+                    root.seeAllButtonClicked("newMedia", reason)
                 }
             }
 
@@ -417,28 +374,16 @@ T.Page {
                 listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
-                Navigation.upAction: function() {
-                    if (favoritesRow.visible)
-                        favoritesRow.setCurrentItemFocus(Qt.BacktabFocusReason)
-                    else
-                        favoritesRow.Navigation.defaultNavigationUp()
-                }
 
                 model: MLMediaModel {
                     ml: MediaLib
 
-                    sortCriteria: MainCtx.sort.criteria || "insertion"
-                    sortOrder: MainCtx.sort.order
-                    searchPattern: MainCtx.search.pattern
+                    sortCriteria: root.sort.criteria || "insertion"
+                    sortOrder: root.sort.order
+                    searchPattern: root.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
                     limit: MainCtx.gridView ? Math.max(newMediaRow.currentItem?.nbItemPerRow ?? null, 1) : 5
-                }
-
-                headerText: qsTr("New Media")
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("newMedia", reason)
                 }
 
                 onActiveFocusChanged: {

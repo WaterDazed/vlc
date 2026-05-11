@@ -49,31 +49,29 @@ Widgets.PageLoader {
     Component {
         id: allArtistsComponent
 
-        MusicAllArtists {
-            id: artistsView
+        Widgets.PageExt {
+            id: artistPage
 
-            header: Widgets.ViewHeader {
-                view: artistsView
+            title: qsTr("Artists")
 
-                visible: view.count > 0
+            MusicAllArtists {
+                id: artistsView
 
-                text: qsTr("Artists")
-            }
+                anchors.fill: parent
 
-            searchPattern: MainCtx.search.pattern
-            sortOrder: MainCtx.sort.order
-            sortCriteria: MainCtx.sort.criteria
+                searchPattern: artistPage.search.pattern
+                sortOrder: artistPage.sort.order
+                sortCriteria: artistPage.sort.criteria
 
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
+                displayMarginBeginning: root.displayMarginBeginning
+                displayMarginEnd: root.displayMarginEnd
 
-            enableBeginningFade: root.enableBeginningFade
-            enableEndFade: root.enableEndFade
+                enableBeginningFade: root.enableBeginningFade
+                enableEndFade: root.enableEndFade
 
-            onCurrentIndexChanged: History.viewProp.initialIndex = currentIndex
-
-            onArtistAlbumViewRequested: (id, reason) => {
-                History.push([...root.pagePrefix, "albums"], { artistId: id  }, reason)
+                onArtistAlbumViewRequested: (id, reason) => {
+                    History.push([...root.pagePrefix, "albums"], { artistId: id  }, reason)
+                }
             }
         }
     }
@@ -82,25 +80,6 @@ Widgets.PageLoader {
         id: artistAlbumsComponent
 
         MusicArtistsAlbums {
-            searchPattern: MainCtx.search.pattern
-            sortOrder: MainCtx.sort.order
-            sortCriteria: MainCtx.sort.criteria
-
-            onSearchPatternChanged: {
-                MainCtx.search.pattern = searchPattern
-                seachPattern = Qt.binding(() => { return MainCtx.search.pattern })
-            }
-
-            onSortOrderChanged: {
-                MainCtx.sort.order = sortOrder
-                sortOrder = Qt.binding(() => { return MainCtx.sort.order })
-            }
-
-            onSortCriteriaChanged: {
-                MainCtx.sort.criteria = sortCriteria
-                sortCriteria = Qt.binding(() => { return MainCtx.sort.criteria })
-            }
-
             displayMarginBeginning: root.displayMarginBeginning
             displayMarginEnd: root.displayMarginEnd
 

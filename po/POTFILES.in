@@ -745,10 +745,12 @@ modules/gui/qt/maininterface/mainctx.cpp
 modules/gui/qt/maininterface/mainctx.hpp
 modules/gui/qt/maininterface/mainctx_win32.cpp
 modules/gui/qt/maininterface/mainctx_win32.hpp
-modules/gui/qt/maininterface/qml/BannerSources.qml
+modules/gui/qt/maininterface/qml/MenuTopbar.qml
+modules/gui/qt/maininterface/qml/LocalTopbar.qml
 modules/gui/qt/maininterface/qml/MainDisplay.qml
 modules/gui/qt/maininterface/qml/MainInterface.qml
 modules/gui/qt/maininterface/qml/NoMedialibHome.qml
+modules/gui/qt/maininterface/qml/SideNavigationPane.qml
 modules/gui/qt/widgets/qml/EmptyLabelButton.qml
 modules/gui/qt/widgets/qml/EmptyLabel.qml
 modules/gui/qt/medialibrary/mlbookmarkmodel.cpp
@@ -911,6 +913,7 @@ modules/gui/qt/widgets/native/qvlcframe.hpp
 modules/gui/qt/widgets/native/searchlineedit.cpp
 modules/gui/qt/widgets/native/searchlineedit.hpp
 modules/gui/qt/widgets/qml/DragItem.qml
+modules/gui/qt/widgets/qml/GridSortFilterControls.qml
 modules/gui/qt/widgets/qml/ScanProgressBar.qml
 modules/gui/qt/widgets/qml/SearchBox.qml
 modules/gui/qt/widgets/qml/SortControl.qml

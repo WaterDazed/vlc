@@ -15,9 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Templates as T
-import QtQuick
 import QtQuick.Window
 import QtQml.Models
 import QtQuick.Layouts
@@ -28,6 +28,7 @@ import VLC.Util
 import VLC.Widgets as Widgets
 import VLC.MainInterface
 import VLC.Style
+import VLC.Menus
 
 FocusScope {
     id: root
@@ -52,46 +53,10 @@ FocusScope {
 
     property bool isSearchable: true
 
-    property string searchPattern
-    property int sortOrder
-    property string sortCriteria
+    required property SearchCtx search
+    required property SortCtx sort
 
-    readonly property MLBaseModel _effectiveModel: MainCtx.gridView ? albumModel : trackModel
-
-    onSearchPatternChanged: {
-        _effectiveModel.searchPattern = root.searchPattern
-    }
-
-    onSortOrderChanged: {
-        _effectiveModel.sortOrder = root.sortOrder
-    }
-
-    onSortCriteriaChanged: {
-        // FIXME: Criteria is set to empty for a brief period during initialization,
-        //        call later prevents setting the criteria empty.
-        Qt.callLater(() => {
-            _effectiveModel.sortCriteria = root.sortCriteria
-        })
-    }
-
-    Connections {
-        target: root._effectiveModel
-
-        function onSearchPatternChanged() {
-            if (root.searchPattern !== root._effectiveModel.searchPattern)
-                root.searchPattern = root._effectiveModel.searchPattern
-        }
-
-        function onSortOrderChanged() {
-            if (root.sortOrder !== root._effectiveModel.sortOrder)
-                root.sortOrder = root._effectiveModel.sortOrder
-        }
-
-        function onSortCriteriaChanged() {
-            if (root.sortCriteria !== root._effectiveModel.sortCriteria)
-                root.sortCriteria = root._effectiveModel.sortCriteria
-        }
-    }
+    property SortMenu sortMenu: null
 
     // current index of album model
     readonly property int currentIndex: {
@@ -363,21 +328,40 @@ FocusScope {
 
                     Navigation.parentItem: root
                     Navigation.upItem: artistBanner
-                    Navigation.downAction: function() {
-                        tableView.setCurrentItemFocus(Qt.TabFocusReason)
-                    }
+                    Navigation.downItem: viewHeader
                 }
             }
 
-            Widgets.ViewHeader {
-                view: root
+            Widgets.PageExt.DefaultPageHeader {
+                id: viewHeader
+
+                //search box can overlap component below, make sure it has
+                //a higher z index
+                z: 2
+
+                anchors {
+                        left: parent.left
+                        right: parent.right
+                }
+
+                text: qsTr("Albums")
+
+                sortMenu: root.sortMenu
+
+                search: root.search
+                sort: root.sort
 
                 leftPadding: root._contentLeftMargin
+                rightPadding: root._contentRightMargin
                 bottomPadding: VLCStyle.layoutTitle_bottom_padding -
                                (MainCtx.gridView ? 0 : VLCStyle.gridItemSelectedBorder)
                 topPadding: pinnedMusicAlbumSectionLoader.active ? bottomPadding : VLCStyle.layoutTitle_top_padding
 
-                text: qsTr("Albums")
+                Navigation.parentItem: root
+                Navigation.upItem: artistBanner
+                Navigation.downAction: function() {
+                    tableView.setCurrentItemFocus(Qt.TabFocusReason)
+                }
             }
         }
     }
@@ -468,6 +452,10 @@ FocusScope {
         ml: MediaLib
         parentId: artistId
 
+        searchPattern: root.search.pattern
+        sortOrder: root.sort.order
+        sortCriteria: root.sort.criteria
+
         onCountChanged: {
             if (albumModel.count > 0 && !albumSelectionModel.hasSelection) {
                 root.resetFocus()
@@ -496,6 +484,10 @@ FocusScope {
 
         ml: MediaLib
         parentId: albumModel.parentId
+
+        searchPattern: root.search.pattern
+        sortOrder: root.sort.order
+        sortCriteria: root.sort.criteria
     }
 
     MLContextMenu {
@@ -1007,7 +999,7 @@ FocusScope {
         anchors.fill: parent
         anchors.rightMargin: root.rightPadding
 
-        focus: albumModel.count !== 0
+        focus: loader.status === Loader.Ready
         sourceComponent: MainCtx.gridView ? gridComponent : tableComponent
     }
 }

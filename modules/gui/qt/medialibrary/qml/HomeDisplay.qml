@@ -68,88 +68,102 @@ Widgets.PageLoader {
     Component {
         id: continueWatchingComponent
 
-        VideoAll {
-            id: continueWatching
+        Widgets.PageExt {
+            id: continueWatchingPage
 
-            focus: true
+            title: qsTr("Continue Watching")
 
-            model: MLRecentVideoModel {
-                ml: MediaLib
+            VideoAll {
+                id: continueWatching
 
-                sortCriteria: MainCtx.sort.criteria
-                sortOrder: MainCtx.sort.order
-                searchPattern: MainCtx.search.pattern
+                anchors.fill: parent
+
+                focus: true
+
+                model: MLRecentVideoModel {
+                    ml: MediaLib
+
+                    sortCriteria: continueWatchingPage.sort.criteria
+                    sortOrder: continueWatchingPage.sort.order
+                    searchPattern: continueWatchingPage.search.pattern
+                }
+
+                sectionProperty: model.sortCriteria === "title" ? "title_first_symbol" : ""
+
+                contextMenu: MLContextMenu {
+                    model: continueWatching.model
+
+                    showPlayAsAudioAction: true
+                }
+
+                displayMarginBeginning: root.displayMarginBeginning
+                displayMarginEnd: root.displayMarginEnd
+
+                enableBeginningFade: root.enableBeginningFade
+                enableEndFade: root.enableEndFade
             }
-
-            header: Widgets.ViewHeader {
-                view: continueWatching
-
-                text: qsTr("Continue Watching")
-            }
-
-            sectionProperty: model.sortCriteria === "title" ? "title_first_symbol" : ""
-
-            contextMenu: MLContextMenu {
-                model: continueWatching.model
-
-                showPlayAsAudioAction: true
-            }
-
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
-
-            enableBeginningFade: root.enableBeginningFade
-            enableEndFade: root.enableEndFade
         }
     }
 
     Component {
         id: favoritesComponent
 
-        MediaView {
-            focus: true
+        Widgets.PageExt {
+            id: favoritesPage
 
-            model: MLMediaModel {
-                favoriteOnly: true
+            title: qsTr("Favorites")
 
-                ml: MediaLib
+            MediaView {
+                focus: true
 
-                sortCriteria: MainCtx.sort.criteria || "insertion"
-                sortOrder: MainCtx.sort.order
-                searchPattern: MainCtx.search.pattern
+                anchors.fill: parent
+
+                model: MLMediaModel {
+                    favoriteOnly: true
+
+                    ml: MediaLib
+
+                    sortCriteria: favoritesPage.sort.criteria || "insertion"
+                    sortOrder: favoritesPage.sort.order
+                    searchPattern: favoritesPage.search.pattern
+                }
+
+                displayMarginBeginning: root.displayMarginBeginning
+                displayMarginEnd: root.displayMarginEnd
+
+                enableBeginningFade: root.enableBeginningFade
+                enableEndFade: root.enableEndFade
             }
-
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
-
-            enableBeginningFade: root.enableBeginningFade
-            enableEndFade: root.enableEndFade
-
-            headerText: qsTr("Favorites")
         }
     }
 
     Component {
         id: newMediaComponent
 
-        MediaView {
-            focus: true
+        Widgets.PageExt {
+            id: newMediaPage
 
-            model: MLMediaModel {
-                ml: MediaLib
+            title: qsTr("New Medias")
 
-                sortCriteria: MainCtx.sort.criteria || "insertion"
-                sortOrder: MainCtx.sort.order
-                searchPattern: MainCtx.search.pattern
+            MediaView {
+                focus: true
+
+                anchors.fill: parent
+
+                model: MLMediaModel {
+                    ml: MediaLib
+
+                    sortCriteria: newMediaPage.sort.criteria || "insertion"
+                    sortOrder: newMediaPage.sort.order
+                    searchPattern: newMediaPage.search.pattern
+                }
+
+                displayMarginBeginning: root.displayMarginBeginning
+                displayMarginEnd: root.displayMarginEnd
+
+                enableBeginningFade: root.enableBeginningFade
+                enableEndFade: root.enableEndFade
             }
-
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
-
-            enableBeginningFade: root.enableBeginningFade
-            enableEndFade: root.enableEndFade
-
-            headerText: qsTr("New Media")
         }
     }
 }

@@ -154,6 +154,25 @@ ListViewExt {
         MainCtx.setItemFlag(this, Item.ItemIsFocusScope)
     }
 
+    function positionContentAtBeginning() {
+        scrollAnimation.stop()
+
+        // NOTE: Qt has no way to read the beginning contentY without moving,
+        // so move->measure->restore->animate
+        const fromY = root.contentY
+        root.positionViewAtBeginning()
+        const toY = root.contentY
+
+        if (Math.abs(toY - fromY) < 0.5)
+            return
+
+        root.contentY = fromY
+        scrollAnimation.duration = VLCStyle.duration_long
+        scrollAnimation.from = fromY
+        scrollAnimation.to = toY
+        scrollAnimation.start()
+    }
+
     function getItemY(index) {
         let size = index * rowHeight + topMargin
 
@@ -164,6 +183,17 @@ ListViewExt {
     }
 
     headerPositioning: ListView.OverlayHeader
+
+    // Animations
+
+    PropertyAnimation {
+        id: scrollAnimation
+
+        target: root
+        property: "contentY"
+    }
+
+    // Private
 
     flickableDirection: Flickable.AutoFlickDirection
 
@@ -199,43 +229,74 @@ ListViewExt {
 
         readonly property var setCurrentItemFocus: loadedHeader?.setCurrentItemFocus
 
-        Widgets.ListLabel {
-            // NOTE: We want the section label to be slightly shifted to the left.
-            x: row.x - VLCStyle.margin_small
-            y: row.y + root.headerTopPadding
-
-            height: VLCStyle.tableHeaderText_height
-            verticalAlignment: Text.AlignVCenter
-
-            text: root.currentSection
-            color: root.colorContext.accent
-            visible: root.useCurrentSectionLabel
-                     && root.headerPositioning === ListView.OverlayHeader
-                     && text !== ""
-                     && root.contentY > (row.height - col.height - row.topPadding)
-                     && row.visible
-        }
-
-        Column {
+        Item {
             id: col
 
             anchors.left: parent.left
             anchors.right: parent.right
 
+            property alias loadedHeader: headerLoader.item
+
+            height: headerLoader.height + tableHeader.height
+
             Loader {
                 id: headerLoader
 
+                // needed so that the searchbox is above the table header
+                z: 1
+
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                }
+
                 sourceComponent: root.preferredHeader
+            }
+
+            DefaultTableViewHeader {
+                id: tableHeader
+
+                anchors {
+                    top: headerLoader.bottom
+                    left: parent.left
+                    right: parent.right
+                }
+            }
+        }
+
+        component DefaultTableViewHeader: Rectangle {
+
+            color: root.headerColor
+
+            implicitHeight: row.implicitHeight
+
+            Widgets.ListLabel {
+                // NOTE: We want the section label to be slightly shifted to the left.
+                x: row.x - VLCStyle.margin_small
+                y: row.y + root.headerTopPadding
+
+                height: VLCStyle.tableHeaderText_height
+                verticalAlignment: Text.AlignVCenter
+
+                text: root.currentSection
+                color: root.colorContext.accent
+                visible: root.useCurrentSectionLabel
+                         && root.headerPositioning === ListView.OverlayHeader
+                         && text !== ""
+                         && root.contentY > (row.height - col.height - row.topPadding)
+                         && row.visible
             }
 
             Row {
                 id: row
 
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                anchors.leftMargin: root.defaultHeaderExtraLeftMargin
-                anchors.rightMargin: root.defaultHeaderExtraRightMargin
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    leftMargin: root.defaultHeaderExtraLeftMargin
+                    rightMargin: root.defaultHeaderExtraRightMargin
+                }
 
                 topPadding: root.headerTopPadding
                 bottomPadding: VLCStyle.margin_xsmall

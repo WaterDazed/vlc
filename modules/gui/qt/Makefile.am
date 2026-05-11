@@ -179,9 +179,10 @@ libqt_plugin_la_SOURCES = \
 	maininterface/interface_window_handler.hpp \
 	maininterface/mainctx.cpp \
 	maininterface/mainctx.hpp \
-	maininterface/mainctx_submodels.hpp \
+	maininterface/mainctx_submodels.cpp maininterface/mainctx_submodels.hpp \
 	maininterface/mainui.cpp \
 	maininterface/mainui.hpp \
+	maininterface/navigationmodel.cpp maininterface/navigationmodel.hpp \
 	maininterface/videosurface.cpp \
 	maininterface/videosurface.hpp \
 	maininterface/video_window_handler.cpp \
@@ -281,6 +282,7 @@ libqt_plugin_la_SOURCES = \
 	style/colorcontext.hpp \
 	style/systempalette.cpp \
 	style/systempalette.hpp \
+	style/vlcicons.cpp 	style/vlcicons.hpp \
 	style/defaultthemeproviders.hpp \
 	style/systempalettethemeprovider.cpp \
 	player/input_models.cpp player/input_models.hpp \
@@ -446,6 +448,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	maininterface/mainctx.moc.cpp \
 	maininterface/mainctx_submodels.moc.cpp \
 	maininterface/mainui.moc.cpp \
+	maininterface/navigationmodel.moc.cpp \
 	maininterface/videosurface.moc.cpp \
 	maininterface/video_window_handler.moc.cpp \
 	medialibrary/medialib.moc.cpp \
@@ -482,6 +485,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	network/standardpathmodel.moc.cpp \
 	style/colorcontext.moc.cpp \
 	style/systempalette.moc.cpp \
+	style/vlcicons.moc.cpp \
 	player/delay_estimator.moc.cpp \
 	player/input_models.moc.cpp \
 	player/player_controller.moc.cpp \
@@ -1015,10 +1019,13 @@ libqml_module_maininterface_a_ModulePath = VLC/MainInterface
 libqml_module_maininterface_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
 libqml_module_maininterface_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
 libqml_module_maininterface_a_QML = \
-	maininterface/qml/BannerSources.qml \
+	maininterface/qml/MenuTopbar.qml \
+	maininterface/qml/LocalTopbar.qml \
 	maininterface/qml/MainInterface.qml \
 	maininterface/qml/MainViewLoader.qml \
 	maininterface/qml/MainDisplay.qml \
+	maininterface/qml/SideNavigationPane.qml \
+	maininterface/qml/SideNavigationDelegate.qml \
 	maininterface/qml/NoMedialibHome.qml
 nodist_libqml_module_maininterface_a_SOURCES = maininterface_qmlassets.cpp
 $(libqml_module_maininterface_a_QML:.qml=.cpp) : $(builddir)/maininterface/res.qrc
@@ -1214,7 +1221,6 @@ libqml_module_style_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
 libqml_module_style_a_QML =
 libqml_module_style_a_Singleton_QML = \
 	style/AcrylicController.qml \
-	style/VLCIcons.qml \
 	style/VLCStyle.qml
 nodist_libqml_module_style_a_SOURCES = style_qmlassets.cpp
 $(libqml_module_style_a_QML:.qml=.cpp) $(libqml_module_style_a_Singleton_QML:.qml=.cpp) : $(builddir)/style/res.qrc
@@ -1273,6 +1279,7 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/EmptyLabelButton.qml \
 	widgets/qml/EmptyLabelHint.qml \
 	widgets/qml/GridItem.qml \
+	widgets/qml/GridSortFilterControls.qml \
 	widgets/qml/HorizontalResizeHandle.qml \
 	widgets/qml/IconLabel.qml \
 	widgets/qml/IconButton.qml \
@@ -1286,7 +1293,6 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/TableHeaderDelegate.qml \
 	widgets/qml/DefaultShadow.qml \
 	widgets/qml/ListLabel.qml \
-	widgets/qml/LocalTabBar.qml \
 	widgets/qml/MediaCover.qml \
 	widgets/qml/SubtitleLabel.qml \
 	widgets/qml/MenuCaption.qml \
@@ -1304,6 +1310,7 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/SpinBoxExt.qml \
 	widgets/qml/StackViewExt.qml \
 	widgets/qml/PageLoader.qml \
+	widgets/qml/PageExt.qml \
 	widgets/qml/ButtonExt.qml \
 	widgets/qml/TableColumns.qml \
 	widgets/qml/TextFieldExt.qml \
@@ -1744,6 +1751,27 @@ test_vlc_dialog_model_LDADD = $(QT_QTEST_COMMON_ldadd)
 test_vlc_dialog_model_LDFLAGS = $(QT_QTEST_COMMON_ldflags)
 check_PROGRAMS += test_vlc_dialog_model
 TESTS += test_vlc_dialog_model
+
+
+test_qt_navigation_model_SOURCES = \
+	tests/vlc_stub_modules.cpp \
+	tests/test_navigation_model.cpp \
+	maininterface/navigationmodel.hpp \
+	maininterface/navigationmodel.cpp
+
+nodist_test_qt_navigation_model_SOURCES = \
+	tests/test_navigation_model.moc \
+	maininterface/navigationmodel.moc.cpp
+
+BUILT_SOURCES += tests/test_navigation_model.moc
+CLEANFILES += tests/test_navigation_model.moc
+test_qt_navigation_model_CPPFLAGS = $(QT_QTEST_COMMON_cppflags)
+test_qt_navigation_model_CXXFLAGS = $(QT_QTEST_COMMON_cxxflags)
+test_qt_navigation_model_LDADD = $(QT_QTEST_COMMON_ldadd)
+test_qt_navigation_model_LDFLAGS = $(QT_QTEST_COMMON_ldflags)
+check_PROGRAMS += test_qt_navigation_model
+TESTS += test_qt_navigation_model
+
 
 endif
 

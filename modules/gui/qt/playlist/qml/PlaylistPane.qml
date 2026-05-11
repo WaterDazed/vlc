@@ -57,7 +57,8 @@ T.Pane {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    verticalPadding: VLCStyle.margin_normal
+    topPadding: 0
+    bottomPadding: VLCStyle.margin_normal
 
     Accessible.name: qsTr("Playqueue")
 
@@ -117,6 +118,7 @@ T.Pane {
             Layout.fillHeight: false
             Layout.fillWidth: true
             Layout.leftMargin: VLCStyle.margin_normal
+            Layout.topMargin: VLCStyle.layoutTitle_top_padding
 
             spacing: VLCStyle.margin_xxxsmall
 

@@ -24,14 +24,10 @@ import VLC.Widgets as Widgets
 import VLC.Network
 import VLC.Util
 
-T.AbstractButton {
+T.Button {
     id: button
 
     // Properties
-
-    property bool onlyIcon: true
-
-    property bool highlighted: false
 
     property color foregroundColor: theme.fg.primary
     property color backgroundColor: theme.bg.primary
@@ -48,8 +44,8 @@ T.AbstractButton {
 
     padding: VLCStyle.margin_xxsmall
 
-    font.pixelSize: (onlyIcon) ? VLCStyle.icon_normal
-                               : VLCStyle.fontSize_large
+    font.pixelSize: (display === T.Button.IconOnly) ? VLCStyle.icon_normal
+                                                    : VLCStyle.fontSize_large
 
     // Children
 
@@ -60,7 +56,7 @@ T.AbstractButton {
 
         enabled: button.enabled
         focused: button.visualFocus
-        hovered: button.hovered
+        hovered: button.hovered || button.highlighted
         pressed: button.down
     }
 
@@ -76,8 +72,8 @@ T.AbstractButton {
     Loader {
         id: contentLoader
 
-        sourceComponent: (onlyIcon) ? iconTextContent
-                                    : textContent
+        sourceComponent: (button.display === T.Button.IconOnly) ? iconTextContent
+                                                                : textContent
     }
 
     Component {
@@ -107,16 +103,12 @@ T.AbstractButton {
     Component {
         id: textContent
 
-        T.Label {
+        Widgets.SubtitleLabel {
             verticalAlignment: Text.AlignVCenter
 
             text: button.text
 
-            elide: Text.ElideRight
-
             color: button.foregroundColor
-
-            font.pixelSize: button.font.pixelSize
 
             font.weight: (highlighted) ? Font.DemiBold : Font.Normal
         }
