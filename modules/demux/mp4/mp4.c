@@ -51,6 +51,8 @@ static void Close( vlc_object_t * );
 #define MP4_M4A_TEXT     N_("M4A audio only")
 #define MP4_M4A_LONGTEXT N_("Ignore non audio tracks from iTunes audio files")
 
+#define MP4_ELST_TEXT       N_("Handle edit list")
+
 vlc_module_begin ()
     set_category( CAT_INPUT )
     set_subcategory( SUBCAT_INPUT_DEMUX )
@@ -61,6 +63,7 @@ vlc_module_begin ()
 
     add_category_hint("Hacks", NULL, true)
     add_bool( CFG_PREFIX"m4a-audioonly", false, MP4_M4A_TEXT, MP4_M4A_LONGTEXT, true )
+    add_bool( CFG_PREFIX"editlist", true, MP4_ELST_TEXT, MP4_ELST_TEXT, true )
 vlc_module_end ()
 
 /*****************************************************************************
@@ -3470,14 +3473,24 @@ static void MP4_TrackSetup( demux_t *p_demux, mp4_track_t *p_track,
     const MP4_Box_t *p_elst;
     p_track->i_elst = 0;
     p_track->i_elst_time = 0;
-    if( ( p_track->p_elst = p_elst = MP4_BoxGet( p_box_trak, "edts/elst" ) ) )
+    p_track->p_elst = NULL;
+    if( ( p_elst = MP4_BoxGet( p_box_trak, "edts/elst" ) ) )
     {
         MP4_Box_data_elst_t *elst = BOXDATA(p_elst);
         unsigned int i;
 
         msg_Warn( p_demux, "elst box found" );
+        bool use_editlist = var_InheritBool( p_demux, CFG_PREFIX"editlist" );
         for( i = 0; i < elst->i_entry_count; i++ )
         {
+            if ( elst->i_segment_duration[i] > INT64_MAX / CLOCK_FREQ ||
+                 ( elst->i_media_time[i] >= 0 && elst->i_media_time[i] > INT64_MAX / CLOCK_FREQ ) )
+            {
+                use_editlist = false;
+                msg_Dbg( p_demux, "   - [%d] bogus duration=%" PRId64 " media time=%" PRId64 ")",
+                         i, elst->i_segment_duration[i], elst->i_media_time[i] );
+            }
+            else
             msg_Dbg( p_demux, "   - [%d] duration=%"PRId64"ms media time=%"PRId64
                      "ms) rate=%d.%d", i,
                      MP4_rescale( elst->i_segment_duration[i], p_sys->i_timescale, 1000 ),
@@ -3487,8 +3500,12 @@ static void MP4_TrackSetup( demux_t *p_demux, mp4_track_t *p_track,
                      elst->i_media_rate_integer[i],
                      elst->i_media_rate_fraction[i] );
         }
-    }
 
+        if( use_editlist )
+            p_track->p_elst = p_elst;
+        else
+            msg_Dbg( p_demux, "ignore editlist" );
+    }
 
 /*  TODO
     add support for:
