@@ -41,13 +41,13 @@ using SharedPlaylistItem = ::vlc::vlc_shared_data_ptr<vlc_playlist_item_t,
                                                       &vlc_playlist_item_Release>;
 
 /**
- * Playlist item wrapper.
+ * PlayQueue item wrapper.
  *
- * It contains both the SharedPlaylistItem and cached data saved while the playlist
+ * It contains both the SharedPlaylistItem and cached data saved while the playqueue
  * is locked, so that the fields may be read without synchronization or race
  * conditions.
  */
-class PlaylistItem
+class PlayQueueItem
 {
     Q_GADGET
 public:
@@ -58,7 +58,7 @@ public:
     Q_PROPERTY(VLCDuration duration READ getDuration CONSTANT  FINAL)
     Q_PROPERTY(QUrl url READ getUrl CONSTANT  FINAL)
 
-    PlaylistItem(vlc_playlist_item_t *item = nullptr);
+    PlayQueueItem(vlc_playlist_item_t *item = nullptr);
 
     operator bool() const;
 
@@ -113,8 +113,8 @@ private:
     QExplicitlySharedDataPointer<Data> d;
 };
 
-/* PlaylistItem has the same size as a raw pointer */
-static_assert(sizeof(PlaylistItem) == sizeof(void *), "invalid size of PlaylistItem");
+/* PlayQueueItem has the same size as a raw pointer */
+static_assert(sizeof(PlayQueueItem) == sizeof(void *), "invalid size of PlayQueueItem");
 
 //  } // namespace playlist
 //} // namespace vlc

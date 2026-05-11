@@ -20,12 +20,12 @@ import QtQuick
 
 import VLC.Widgets as Widgets
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 
 Widgets.IconToolButton {
     id: randomBtn
-    checked: MainPlaylistController.random
+    checked: MainPlayQueueController.random
     text: VLCIcons.shuffle
-    onClicked: MainPlaylistController.toggleRandom()
+    onClicked: MainPlayQueueController.toggleRandom()
     description: qsTr("Random")
 }

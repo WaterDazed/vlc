@@ -24,8 +24,8 @@
 #include "network/networkdevicemodel.hpp"
 #include "network/networkmediamodel.hpp"
 #include "player/player_controller.hpp"
-#include "playlist/playlist_controller.hpp"
-#include "playlist/playlist_model.hpp"
+#include "playqueue/playqueue_controller.hpp"
+#include "playqueue/playqueue_model.hpp"
 #include "dialogs/dialogs_provider.hpp"
 #include "util/colorizedsvgicon.hpp"
 
@@ -1042,11 +1042,11 @@ void NetworkDeviceContextMenu::popup(const QModelIndexList& selected, QPoint pos
     menu->popup(pos);
 }
 
-PlaylistContextMenu::PlaylistContextMenu(QObject* parent)
+PlayQueueContextMenu::PlayQueueContextMenu(QObject* parent)
     : QObject(parent)
 {}
 
-void PlaylistContextMenu::popup(int selectedIndex, QPoint pos )
+void PlayQueueContextMenu::popup(int selectedIndex, QPoint pos )
 {
     assert(m_ctx);
 
@@ -1060,7 +1060,7 @@ void PlaylistContextMenu::popup(int selectedIndex, QPoint pos )
     for (const int modelIndex : m_selectionModel->selectedIndexesFlat())
         selectedUrlList.push_back(m_model->itemAt(modelIndex).getUrl());
 
-    PlaylistItem selectedItem;
+    PlayQueueItem selectedItem;
     if (selectedIndex >= 0)
         selectedItem = m_model->itemAt(selectedIndex);
 
@@ -1077,7 +1077,7 @@ void PlaylistContextMenu::popup(int selectedIndex, QPoint pos )
     if (m_controler->currentIndex() != -1)
     {
         action = m_menu->addAction( qtr("Jump to current playing"));
-        connect(action, &QAction::triggered, this, &PlaylistContextMenu::jumpToCurrentPlaying);
+        connect(action, &QAction::triggered, this, &PlayQueueContextMenu::jumpToCurrentPlaying);
     }
 
     if (m_selectionModel->hasSelection()) {

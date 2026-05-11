@@ -34,7 +34,7 @@
 
 #include "dialogs/open/open.hpp"
 
-#include "playlist/playlist_item.hpp"
+#include "playqueue/playqueue_item.hpp"
 
 #include "util/singleton.hpp"
 #include "util/shared_input_item.hpp"
@@ -174,7 +174,7 @@ public slots:
     void bookmarksDialog();
     void mediaInfoDialog( void );
     void mediaInfoDialog( const SharedInputItem& inputItem );
-    void mediaInfoDialog( const PlaylistItem& pItem );
+    void mediaInfoDialog( const PlayQueueItem& pItem );
     void mediaInfoDialog( const MLItemId& itemId );
     void mediaCodecDialog();
     bool questionDialog(const QString& text, const QString& title = {}) const;

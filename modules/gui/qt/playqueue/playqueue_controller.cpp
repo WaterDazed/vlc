@@ -20,8 +20,8 @@
 # include "config.h"
 #endif
 
-#include "playlist_controller.hpp"
-#include "playlist_controller_p.hpp"
+#include "playqueue_controller.hpp"
+#include "playqueue_controller_p.hpp"
 #include <vlc_player.h>
 #include <vlc_url.h>
 #include "util/shared_input_item.hpp"
@@ -32,10 +32,10 @@
 namespace vlc {
   namespace playlist {
 
-static QVector<PlaylistItem> toVec(vlc_playlist_item_t *const items[],
+static QVector<PlayQueueItem> toVec(vlc_playlist_item_t *const items[],
                                    size_t len)
 {
-    QVector<PlaylistItem> vec;
+    QVector<PlayQueueItem> vec;
     for (size_t i = 0; i < len; ++i)
         vec.push_back(items[i]);
     return vec;
@@ -96,9 +96,9 @@ QVector<Media> toMediaList(const QVariantList &sources)
         {
             return Media(value.value<SharedInputItem>().get());
         }
-        else if (value.canConvert<PlaylistItem>())
+        else if (value.canConvert<PlayQueueItem>())
         {
-            return Media(value.value<PlaylistItem>().inputItem());
+            return Media(value.value<PlayQueueItem>().inputItem());
         }
         return Media{};
     });
@@ -275,10 +275,10 @@ on_playlist_current_index_changed(vlc_playlist_t *playlist, ssize_t index,
     PlaylistControllerPrivate *that = static_cast<PlaylistControllerPrivate *>(userdata);
 
 
-    vlc_playlist_item_t* playlistItem = nullptr;
+    vlc_playlist_item_t* playqueueItem = nullptr;
     if (index >= 0)
-        playlistItem = vlc_playlist_Get(playlist, index);
-    PlaylistItem newItem{ playlistItem };
+        playqueueItem = vlc_playlist_Get(playlist, index);
+    PlayQueueItem newItem{ playqueueItem };
 
     that->callAsync([=](){
         PlaylistController* q = that->q_func();
@@ -421,7 +421,7 @@ PlaylistController::~PlaylistController()
 {
 }
 
-PlaylistItem PlaylistController::getCurrentItem() const
+PlayQueueItem PlaylistController::getCurrentItem() const
 {
     Q_D(const PlaylistController);
     return d->m_currentItem;
@@ -498,7 +498,7 @@ PlaylistController::insert(size_t index, const QVector<Media> &media, bool start
 }
 
 void
-PlaylistController::move(const QVector<PlaylistItem> &items, size_t target,
+PlaylistController::move(const QVector<PlayQueueItem> &items, size_t target,
                ssize_t indexHint)
 {
     Q_D(PlaylistController);
@@ -512,7 +512,7 @@ PlaylistController::move(const QVector<PlaylistItem> &items, size_t target,
 }
 
 void
-PlaylistController::remove(const QVector<PlaylistItem> &items, ssize_t indexHint)
+PlaylistController::remove(const QVector<PlayQueueItem> &items, ssize_t indexHint)
 {
     Q_D(PlaylistController);
     vlc_playlist_locker locker(d->m_playlist);
@@ -581,12 +581,12 @@ void PlaylistController::sort(void)
     sort( criteria );
 }
 
-void PlaylistController::explore(const PlaylistItem& pItem)
+void PlaylistController::explore(const PlayQueueItem& pItem)
 {
-    vlc_playlist_item_t * const playlistItem = pItem.raw();
-    if( playlistItem )
+    vlc_playlist_item_t * const playqueueItem = pItem.raw();
+    if( playqueueItem )
     {
-        input_item_t * const p_input = vlc_playlist_item_GetMedia(playlistItem);
+        input_item_t * const p_input = vlc_playlist_item_GetMedia(playqueueItem);
         auto uri = vlc::wrap_cptr( input_item_GetURI(p_input) );
 
         if( uri && uri.get()[0] != '\0')
@@ -756,10 +756,10 @@ void PlaylistController::setRandom(bool random)
     vlc_playlist_SetPlaybackOrder( d->m_playlist, random ? VLC_PLAYLIST_PLAYBACK_ORDER_RANDOM : VLC_PLAYLIST_PLAYBACK_ORDER_NORMAL );
 }
 
-Playlist PlaylistController::getPlaylist() const
+PlayQueue PlaylistController::getPlayQueue() const
 {
     Q_D(const PlaylistController);
-    return Playlist(d->m_playlist);
+    return PlayQueue(d->m_playlist);
 }
 
 void PlaylistController::resetSortKey()

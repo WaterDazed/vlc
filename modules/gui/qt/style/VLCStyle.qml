@@ -109,17 +109,17 @@ QtObject {
     readonly property int icon_topbar: icon_normal
     readonly property int icon_toolbar: icon_normal
     readonly property int icon_audioPlayerButton: MainCtx.dp(32, scale)
-    readonly property int icon_playlist: icon_normal
+    readonly property int icon_playqueue: icon_normal
     readonly property int icon_track: icon_normal
     readonly property int icon_tableHeader: icon_normal
-    readonly property int icon_playlistHeader: icon_normal
+    readonly property int icon_playqueueHeader: icon_normal
     readonly property int icon_banner: MainCtx.dp(28, scale)
     readonly property int icon_play: MainCtx.dp(28, scale)
     readonly property int icon_addressBar: icon_normal
     readonly property int icon_actionButton: icon_normal
     readonly property int icon_PIP: icon_normal
     readonly property int icon_CSD: icon_small
-    readonly property int icon_playlistArt: MainCtx.dp(32, scale)
+    readonly property int icon_playqueueArt: MainCtx.dp(32, scale)
 
     readonly property int play_cover_small: MainCtx.dp(24, scale)
     readonly property int play_cover_normal: MainCtx.dp(48, scale)

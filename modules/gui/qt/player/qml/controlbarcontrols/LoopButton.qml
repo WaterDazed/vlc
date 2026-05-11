@@ -20,14 +20,14 @@ import QtQuick
 
 import VLC.Widgets as Widgets
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 
 Widgets.IconToolButton {
     id: repeatBtn
-    checked: MainPlaylistController.repeatMode !== PlaylistController.PLAYBACK_REPEAT_NONE
-    text: (MainPlaylistController.repeatMode === PlaylistController.PLAYBACK_REPEAT_CURRENT)
+    checked: MainPlayQueueController.repeatMode !== PlayQueueController.PLAYBACK_REPEAT_NONE
+    text: (MainPlayQueueController.repeatMode === PlayQueueController.PLAYBACK_REPEAT_CURRENT)
           ? VLCIcons.repeat_one
           : VLCIcons.repeat_all
-    onClicked: MainPlaylistController.toggleRepeatMode()
+    onClicked: MainPlayQueueController.toggleRepeatMode()
     description: qsTr("Repeat")
 }

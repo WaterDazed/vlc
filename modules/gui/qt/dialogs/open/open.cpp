@@ -27,7 +27,7 @@
 #include "dialogs/open/open.hpp"
 #include "dialogs/dialogs_provider.hpp"
 #include "util/qt_dirs.hpp"
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 
 #include <QRegularExpression>
 #include <QMenu>

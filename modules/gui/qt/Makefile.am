@@ -291,16 +291,16 @@ libqt_plugin_la_SOURCES = \
 	player/control_list_model.cpp player/control_list_model.hpp \
 	player/control_list_filter.cpp \
 	player/control_list_filter.hpp \
-	playlist/media.hpp \
-	playlist/playlist_common.hpp \
-	playlist/playlist_controller.cpp \
-	playlist/playlist_controller.hpp \
-	playlist/playlist_controller_p.hpp \
-	playlist/playlist_item.cpp \
-	playlist/playlist_item.hpp \
-	playlist/playlist_model.cpp \
-	playlist/playlist_model.hpp \
-	playlist/playlist_model_p.hpp \
+	playqueue/playqueue_media.hpp \
+	playqueue/playqueue_common.hpp \
+	playqueue/playqueue_controller.cpp \
+	playqueue/playqueue_controller.hpp \
+	playqueue/playqueue_controller_p.hpp \
+	playqueue/playqueue_item.cpp \
+	playqueue/playqueue_item.hpp \
+	playqueue/playqueue_model.cpp \
+	playqueue/playqueue_model.hpp \
+	playqueue/playqueue_model_p.hpp \
 	util/asynctask.hpp \
 	util/audio_device_model.cpp  \
 	util/audio_device_model.hpp \
@@ -488,9 +488,9 @@ nodist_libqt_plugin_la_SOURCES = \
 	player/player_controlbar_model.moc.cpp \
 	player/control_list_model.moc.cpp \
 	player/control_list_filter.moc.cpp \
-	playlist/playlist_controller.moc.cpp \
-	playlist/playlist_item.moc.cpp \
-	playlist/playlist_model.moc.cpp \
+	playqueue/playqueue_controller.moc.cpp \
+	playqueue/playqueue_item.moc.cpp \
+	playqueue/playqueue_model.moc.cpp \
 	util/asynctask.moc.cpp \
 	util/audio_device_model.moc.cpp \
 	util/workerthreadset.moc.cpp \
@@ -812,7 +812,7 @@ libqt_plugin_la_RES = \
 	pixmaps/icons/dvd_prev.svg \
 	pixmaps/icons/ic_fluent_arrow_eject.svg \
 	pixmaps/icons/ellipsis.svg \
-	pixmaps/icons/ic_playlist_add.svg \
+	pixmaps/icons/ic_playqueue_add.svg \
 	pixmaps/icons/expand_inverted.svg \
 	pixmaps/icons/expand.svg \
 	pixmaps/icons/ic_fluent_options.svg \
@@ -830,8 +830,8 @@ libqt_plugin_la_RES = \
 	pixmaps/icons/ic_fluent_next.svg \
 	pixmaps/icons/ic_pause_filled.svg \
 	pixmaps/icons/pip.svg \
-	pixmaps/icons/ic_playlist_clear.svg \
-	pixmaps/icons/ic_playlist.svg \
+	pixmaps/icons/ic_playqueue_clear.svg \
+	pixmaps/icons/ic_playqueue.svg \
 	pixmaps/icons/ic_fluent_play.svg \
 	pixmaps/icons/play_reverse.svg \
 	pixmaps/icons/ic_fluent_arrow_move.svg \
@@ -896,7 +896,7 @@ libqt_plugin_la_RES = \
 	pixmaps/menu/movie.svg \
 	pixmaps/menu/music.svg \
 	pixmaps/menu/network.svg \
-	pixmaps/menu/ic_playlist.svg \
+	pixmaps/menu/ic_playqueue.svg \
 	pixmaps/menu/ic_fluent_next.svg \
 	pixmaps/menu/ic_pause_filled.svg \
 	pixmaps/menu/ic_fluent_play_filled.svg \
@@ -942,7 +942,7 @@ libqt_plugin_la_RES = \
 	pixmaps/prefs/advprefs_codec.svg \
 	pixmaps/prefs/advprefs_extended.svg \
 	pixmaps/prefs/advprefs_intf.svg \
-	pixmaps/prefs/advprefs_playlist.svg \
+	pixmaps/prefs/advprefs_playqueue.svg \
 	pixmaps/prefs/advprefs_sout.svg \
 	pixmaps/prefs/advprefs_video.svg \
 	pixmaps/prefs/sample_complete.png \
@@ -973,7 +973,7 @@ libqt_plugin_la_RES = \
 	pixmaps/sd/network.svg \
 	pixmaps/sd/node.svg \
 	pixmaps/sd/pictures.svg \
-	pixmaps/sd/playlist.svg \
+	pixmaps/sd/playqueue.svg \
 	pixmaps/sd/podcast.svg \
 	pixmaps/sd/radio.svg \
 	pixmaps/sd/screen.svg \
@@ -1118,7 +1118,7 @@ libqml_module_player_a_QML = \
 	player/qml/PIPPlayer.qml \
 	player/qml/Player.qml \
 	player/qml/PlayerControlLayout.qml \
-	player/qml/PlayerPlaylistVisibilityFSM.qml \
+	player/qml/PlayerPlayQueueVisibilityFSM.qml \
 	player/qml/PlayerToolbarVisibilityFSM.qml \
 	player/qml/MinimalView.qml \
 	player/qml/ResumeDialog.qml \
@@ -1171,7 +1171,7 @@ libqml_module_playercontrols_a_QML = \
 	player/qml/controlbarcontrols/PlaybackSpeedButton.qml \
 	player/qml/controlbarcontrols/PlayButton.qml \
 	player/qml/controlbarcontrols/PlayerSwitchButton.qml \
-	player/qml/controlbarcontrols/PlaylistButton.qml \
+	player/qml/controlbarcontrols/PlayQueueButton.qml \
 	player/qml/controlbarcontrols/PreviousButton.qml \
 	player/qml/controlbarcontrols/ProgramButton.qml \
 	player/qml/controlbarcontrols/QuitButton.qml \
@@ -1194,18 +1194,18 @@ nodist_libqml_module_playercontrols_a_SOURCES = playercontrols_qmlassets.cpp
 $(libqml_module_playercontrols_a_QML:.qml=.cpp) : $(builddir)/playercontrols/res.qrc
 $(libqml_module_playercontrols_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/playercontrols/res.qrc
 
-libqml_module_playlist_a_Module = VLC.Playlist
-libqml_module_playlist_a_ModulePath = VLC/Playlist
-libqml_module_playlist_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
-libqml_module_playlist_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
-libqml_module_playlist_a_QML = \
-	playlist/qml/PlaylistDelegate.qml \
-	playlist/qml/PlaylistPane.qml \
-	playlist/qml/PlaylistToolbar.qml \
-	playlist/qml/PlaylistDetachedWindow.qml
-nodist_libqml_module_playlist_a_SOURCES = playlist_qmlassets.cpp
-$(libqml_module_playlist_a_QML:.qml=.cpp) : $(builddir)/playlist/res.qrc
-$(libqml_module_playlist_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/playlist/res.qrc
+libqml_module_playqueue_a_Module = VLC.PlayQueue
+libqml_module_playqueue_a_ModulePath = VLC/PlayQueue
+libqml_module_playqueue_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
+libqml_module_playqueue_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
+libqml_module_playqueue_a_QML = \
+        playqueue/qml/PlayQueueDelegate.qml \
+	playqueue/qml/PlayQueuePane.qml \
+	playqueue/qml/PlayQueueToolbar.qml \
+	playqueue/qml/PlayQueueDetachedWindow.qml
+nodist_libqml_module_playqueue_a_SOURCES = playqueue_qmlassets.cpp
+$(libqml_module_playqueue_a_QML:.qml=.cpp) : $(builddir)/playqueue/res.qrc
+$(libqml_module_playqueue_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/playqueue/res.qrc
 
 libqml_module_style_a_Module = VLC.Style
 libqml_module_style_a_ModulePath = VLC/Style
@@ -1344,7 +1344,7 @@ libqt_plugin_la_QML_MODULES = \
 	network \
 	player \
 	playercontrols \
-	playlist \
+	playqueue \
 	style \
 	util \
 	widgets
@@ -1358,7 +1358,7 @@ libqt_plugin_la_ALL_QML = \
 	$(libqml_module_player_a_QML) \
 	$(libqml_module_player_a_Singleton_QML) \
 	$(libqml_module_playercontrols_a_QML) \
-	$(libqml_module_playlist_a_QML) \
+	$(libqml_module_playqueue_a_QML) \
 	$(libqml_module_style_a_QML) \
 	$(libqml_module_style_a_Singleton_QML) \
 	$(libqml_module_util_a_QML) \
@@ -1398,7 +1398,7 @@ libqt_plugin_la_LIBADD += libqml_module_dialogs.a \
 	libqml_module_network.a \
 	libqml_module_player.a \
 	libqml_module_playercontrols.a \
-	libqml_module_playlist.a \
+	libqml_module_playqueue.a \
 	libqml_module_style.a \
 	libqml_module_util.a \
 	libqml_module_widgets.a
@@ -1410,7 +1410,7 @@ noinst_LIBRARIES = libqml_module_dialogs.a \
 	libqml_module_network.a \
 	libqml_module_player.a \
 	libqml_module_playercontrols.a \
-	libqml_module_playlist.a \
+	libqml_module_playqueue.a \
 	libqml_module_style.a \
 	libqml_module_util.a \
 	libqml_module_widgets.a
@@ -1510,7 +1510,7 @@ nodist_libqml_module_menus_a_SOURCES += menus_qmlcache_loader.cpp
 nodist_libqml_module_network_a_SOURCES += network_qmlcache_loader.cpp
 nodist_libqml_module_player_a_SOURCES += player_qmlcache_loader.cpp
 nodist_libqml_module_playercontrols_a_SOURCES += playercontrols_qmlcache_loader.cpp
-nodist_libqml_module_playlist_a_SOURCES += playlist_qmlcache_loader.cpp
+nodist_libqml_module_playqueue_a_SOURCES += playqueue_qmlcache_loader.cpp
 nodist_libqml_module_style_a_SOURCES += style_qmlcache_loader.cpp
 nodist_libqml_module_util_a_SOURCES += util_qmlcache_loader.cpp
 nodist_libqml_module_widgets_a_SOURCES += widgets_qmlcache_loader.cpp
@@ -1522,7 +1522,7 @@ libqml_module_menus_a_SOURCES = $(libqml_module_menus_a_QML)
 libqml_module_network_a_SOURCES = $(libqml_module_network_a_QML)
 libqml_module_player_a_SOURCES = $(libqml_module_player_a_QML) $(libqml_module_player_a_Singleton_QML)
 libqml_module_playercontrols_a_SOURCES = $(libqml_module_playercontrols_a_QML)
-libqml_module_playlist_a_SOURCES = $(libqml_module_playlist_a_QML)
+libqml_module_playqueue_a_SOURCES = $(libqml_module_playqueue_a_QML)
 libqml_module_style_a_SOURCES = $(libqml_module_style_a_QML) $(libqml_module_style_a_Singleton_QML)
 libqml_module_util_a_SOURCES = $(libqml_module_util_a_QML) $(libqml_module_util_a_Singleton_QML)
 libqml_module_widgets_a_SOURCES = $(libqml_module_widgets_a_QML)
@@ -1661,8 +1661,8 @@ test_ml_model_SOURCES = \
 	medialibrary/mlbasemodel.hpp medialibrary/mlbasemodel.cpp \
 	medialibrary/medialib.hpp medialibrary/medialib.cpp \
 	medialibrary/mlthreadpool.hpp medialibrary/mlthreadpool.cpp \
-	playlist/playlist_controller.hpp playlist/playlist_controller.cpp \
-	playlist/playlist_item.hpp playlist/playlist_item.cpp
+	playqueue/playqueue_controller.hpp playqueue/playqueue_controller.cpp \
+	playqueue/playqueue_item.hpp playqueue/playqueue_item.cpp
 
 nodist_test_ml_model_SOURCES = \
 	tests/test_ml_model.moc \
@@ -1674,8 +1674,8 @@ nodist_test_ml_model_SOURCES = \
 	medialibrary/mlbasemodel.moc.cpp \
 	medialibrary/medialib.moc.cpp \
 	medialibrary/mlthreadpool.moc.cpp \
-	playlist/playlist_controller.moc.cpp \
-	playlist/playlist_item.moc.cpp
+	playqueue/playqueue_controller.moc.cpp \
+	playqueue/playqueue_item.moc.cpp
 
 BUILT_SOURCES += tests/test_ml_model.moc
 CLEANFILES += tests/test_ml_model.moc

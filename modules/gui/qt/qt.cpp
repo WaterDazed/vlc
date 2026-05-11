@@ -70,7 +70,7 @@ extern "C" char **environ;
 #include "qt.hpp"
 
 #include "player/player_controller.hpp"    /* THEMIM destruction */
-#include "playlist/playlist_controller.hpp" /* THEMPL creation */
+#include "playqueue/playqueue_controller.hpp" /* THEMPL creation */
 #include "dialogs/dialogs_provider.hpp" /* THEDP creation */
 #include "dialogs/dialogs/dialogmodel.hpp"
 #ifdef _WIN32
@@ -91,13 +91,13 @@ extern "C" char **environ;
 #include "util/vlcqtmessagehandler.hpp"
 #include "network/networkmediamodel.hpp"
 #include "network/devicesourceprovider.hpp"
-#include "playlist/playlist_common.hpp"
-#include "playlist/playlist_item.hpp"
+#include "playqueue/playqueue_common.hpp"
+#include "playqueue/playqueue_item.hpp"
 #include "dialogs/dialogs/dialogmodel.hpp"
 #include "medialibrary/mlqmltypes.hpp"
 
 #include <QVector>
-#include "playlist/playlist_item.hpp"
+#include "playqueue/playqueue_item.hpp"
 
 #include <vlc_interface.h>
 #include <vlc_plugin.h>
@@ -254,7 +254,8 @@ static void ShowDialog   ( intf_thread_t *, int, int, intf_dialog_args_t * );
 #define QT_COMPOSITOR_LONGTEXT N_("Select Qt video integration backend. Use with care, the interface may not start if an incompatible compositor is selected")
 
 #define SMOOTH_SCROLLING_TEXT N_( "Use smooth scrolling in Flickable based views" )
-#define SMOOTH_SCROLLING_LONGTEXT N_( "Deactivating this option will disable smooth scrolling in Flickable based views (such as the Playqueue). " \
+
+#define SMOOTH_SCROLLING_LONGTEXT N_( "Deactivating this option will disable smooth scrolling in Flickable based views (such as the Play Queue). " \
                                       "This option is only respected with a scroll handler, see option `qt-use-scroll-handler`." )
 
 #define SCROLL_HANDLER_TEXT N_( "Use Kirigami scroll handler for Flickable based views" )
@@ -764,8 +765,8 @@ static inline void registerMetaTypes()
     qRegisterMetaType<VLCDuration>();
     qRegisterMetaType<SharedInputItem>();
     qRegisterMetaType<NetworkTreeItem>();
-    qRegisterMetaType<Playlist>();
-    qRegisterMetaType<PlaylistItem>();
+    qRegisterMetaType<PlayQueue>();
+    qRegisterMetaType<PlayQueueItem>();
     qRegisterMetaType<DialogId>();
     qRegisterMetaType<MLItemId>();
     qRegisterMetaType<QVector<MLItemId>>();
@@ -819,7 +820,7 @@ static void *Thread( void *obj )
     Q_INIT_RESOURCE( network_assets );
     Q_INIT_RESOURCE( player_assets );
     Q_INIT_RESOURCE( playercontrols_assets );
-    Q_INIT_RESOURCE( playlist_assets );
+    Q_INIT_RESOURCE( playqueue_assets );
     Q_INIT_RESOURCE( style_assets );
     Q_INIT_RESOURCE( util_assets );
     Q_INIT_RESOURCE( widgets_assets );
@@ -833,7 +834,7 @@ static void *Thread( void *obj )
     Q_INIT_RESOURCE( network_cachegen );
     Q_INIT_RESOURCE( player_cachegen );
     Q_INIT_RESOURCE( playercontrols_cachegen );
-    Q_INIT_RESOURCE( playlist_cachegen );
+    Q_INIT_RESOURCE( playqueue_cachegen );
     Q_INIT_RESOURCE( style_cachegen );
     Q_INIT_RESOURCE( util_cachegen );
     Q_INIT_RESOURCE( widgets_cachegen );

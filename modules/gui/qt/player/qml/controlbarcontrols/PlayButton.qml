@@ -24,7 +24,7 @@ import VLC.MainInterface
 import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Player
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Util
 
 T.Control {
@@ -64,8 +64,8 @@ T.Control {
     Accessible.checkable: true
     Accessible.checked: Player.playingState !== Player.PLAYING_STATE_PAUSED
                         && Player.playingState !== Player.PLAYING_STATE_STOPPED
-    Accessible.onPressAction: MainPlaylistController.togglePlayPause()
-    Accessible.onToggleAction: MainPlaylistController.togglePlayPause()
+    Accessible.onPressAction: MainPlayQueueController.togglePlayPause()
+    Accessible.onToggleAction: MainPlayQueueController.togglePlayPause()
 
     // Tooltip
 
@@ -118,7 +118,7 @@ T.Control {
                 keyHoldTimer.stop()
                 innerRectangle.state = ""
                 if (Player.playingState !== Player.PLAYING_STATE_STOPPED)
-                    MainPlaylistController.togglePlayPause()
+                    MainPlayQueueController.togglePlayPause()
             }
             event.accepted = true
         }
@@ -129,7 +129,7 @@ T.Control {
     function _pressAndHoldAction() {
         innerRectangle.state = ""
         _keyOkPressed = false
-        MainPlaylistController.stop()
+        MainPlayQueueController.stop()
     }
 
     // Children
@@ -189,7 +189,7 @@ T.Control {
         }
 
         onClicked: (mouse) => {
-            MainPlaylistController.togglePlayPause()
+            MainPlayQueueController.togglePlayPause()
             mouse.accepted = true
         }
 

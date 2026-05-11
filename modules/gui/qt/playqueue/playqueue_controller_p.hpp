@@ -15,10 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
-#ifndef PLAYLIST_CONTROLLER_P_HPP
-#define PLAYLIST_CONTROLLER_P_HPP
+#ifndef PLAYQUEUE_CONTROLLER_P_HPP
+#define PLAYQUEUE_CONTROLLER_P_HPP
 
-#include "playlist_controller.hpp"
+#include "playqueue_controller.hpp"
 
 #include "qt.hpp" // for qtr()
 
@@ -58,7 +58,7 @@ public:
 
     bool m_initialized = false;
     ssize_t m_currentIndex = -1;
-    PlaylistItem m_currentItem;
+    PlayQueueItem m_currentItem;
     bool m_hasNext= false;
     bool m_hasPrev = false;
     PlaylistController::PlaybackRepeat m_repeat = PlaylistController::PLAYBACK_REPEAT_NONE;
@@ -100,4 +100,4 @@ private:
 } //namespace playlist
 } //namespace vlc
 
-#endif // PLAYLIST_CONTROLLER_P_HPP
+#endif // PLAYQUEUE_CONTROLLER_P_HPP

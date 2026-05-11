@@ -25,7 +25,7 @@ import QtQml.Models
 import VLC.MainInterface
 import VLC.Widgets as Widgets
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Player
 import VLC.Util
 
@@ -161,8 +161,8 @@ T.Control {
         Item {
             id: artworkItem
 
-            Layout.preferredHeight: VLCStyle.icon_playlistArt
-            Layout.preferredWidth: VLCStyle.icon_playlistArt
+            Layout.preferredHeight: VLCStyle.icon_playqueueArt
+            Layout.preferredWidth: VLCStyle.icon_playqueueArt
             Layout.alignment: Qt.AlignVCenter
 
             Accessible.role: Accessible.Graphic
@@ -327,7 +327,7 @@ T.Control {
 
             onDoubleTapped: (eventPoint, button) => {
                 if (button !== Qt.RightButton)
-                    MainPlaylistController.goTo(index, true)
+                    MainPlayQueueController.goTo(index, true)
             }
 
             Component.onCompleted: {
@@ -372,7 +372,7 @@ T.Control {
             grabPermissions: TapHandler.CanTakeOverFromHandlersOfDifferentType | TapHandler.ApprovesTakeOverByAnything
 
             onTapped: (eventPoint, button) => {
-                MainPlaylistController.goTo(index, true)
+                MainPlayQueueController.goTo(index, true)
             }
 
             onLongPressed: (eventPoint, button) => {

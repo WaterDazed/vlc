@@ -24,15 +24,15 @@ import VLC.Style
 
 
 Widgets.IconToolButton {
-    id: playlistBtn
-    text: VLCIcons.playlist
+    id: playqueueBtn
+    text: VLCIcons.playqueue
     onClicked: {
-        MainCtx.playlistVisible = !MainCtx.playlistVisible
-        if (MainCtx.playlistVisible && MainCtx.playlistDocked) {
-            playlistWidget.gainFocus(playlistBtn)
+        MainCtx.playqueueVisible = !MainCtx.playqueueVisible
+        if (MainCtx.playqueueVisible && MainCtx.playqueueDocked) {
+            playqueueWidget.gainFocus(playqueueBtn)
         }
     }
-    checked: MainCtx.playlistVisible
+    checked: MainCtx.playqueueVisible
 
-    description: qsTr("Playlist")
+    description: qsTr("Play Queue")
 }

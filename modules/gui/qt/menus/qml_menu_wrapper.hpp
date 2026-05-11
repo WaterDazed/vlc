@@ -27,8 +27,8 @@
 #include "maininterface/mainctx.hpp"
 #include "util/list_selection_model.hpp"
 
-Q_MOC_INCLUDE("playlist/playlist_controller.hpp")
-Q_MOC_INCLUDE("playlist/playlist_model.hpp")
+Q_MOC_INCLUDE("playqueue/playqueue_controller.hpp")
+Q_MOC_INCLUDE("playqueue/playqueue_model.hpp")
 Q_MOC_INCLUDE("player/player_controller.hpp")
 Q_MOC_INCLUDE("network/networkdevicemodel.hpp")
 Q_MOC_INCLUDE("network/networkmediamodel.hpp")
@@ -44,7 +44,7 @@ class MainCtx;
 namespace vlc {
 namespace playlist {
 class PlaylistController;
-class PlaylistListModel;
+class PlayQueueListModel;
 }
 }
 
@@ -462,14 +462,14 @@ public slots:
 
 };
 
-class PlaylistContextMenu : public QObject {
+class PlayQueueContextMenu : public QObject {
     Q_OBJECT
-    SIMPLE_MENU_PROPERTY(vlc::playlist::PlaylistListModel*, model, nullptr)
+    SIMPLE_MENU_PROPERTY(vlc::playlist::PlayQueueListModel*, model, nullptr)
     SIMPLE_MENU_PROPERTY(vlc::playlist::PlaylistController*, controler, nullptr)
     SIMPLE_MENU_PROPERTY(ListSelectionModel*, selectionModel, nullptr)
     SIMPLE_MENU_PROPERTY(MainCtx *, ctx, nullptr)
 public:
-    PlaylistContextMenu(QObject* parent = nullptr);
+    PlayQueueContextMenu(QObject* parent = nullptr);
 
 signals:
     void jumpToCurrentPlaying();

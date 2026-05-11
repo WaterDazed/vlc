@@ -31,8 +31,8 @@
 #include "dialogs/toolbar/controlbar_profile_model.hpp"
 #include "dialogs/toolbar/controlbar_profile.hpp"
 
-#include "playlist/playlist_model.hpp"
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_model.hpp"
+#include "playqueue/playqueue_controller.hpp"
 
 #include "util/csdmenu.hpp"
 #include "util/item_key_event_filter.hpp"
@@ -321,17 +321,17 @@ void MainUI::registerQMLTypes()
     }
 
     {
-        const char* uri = "VLC.Playlist";
+        const char* uri = "VLC.PlayQueue";
         const int versionMajor = 1;
         const int versionMinor = 0;
 
-        // @uri VLC.Playlist
-        qmlRegisterUncreatableType<PlaylistItem>(uri, versionMajor, versionMinor, "playlistItem", "");
-        qmlRegisterType<PlaylistListModel>( uri, versionMajor, versionMinor, "PlaylistListModel" );
-        qmlRegisterType<PlaylistController>( uri, versionMajor, versionMinor, "PlaylistController" );
-        qmlRegisterType<PlaylistContextMenu>( uri, versionMajor, versionMinor, "PlaylistContextMenu" );
+        // @uri VLC.PlayQueue
+        qmlRegisterUncreatableType<PlayQueueItem>(uri, versionMajor, versionMinor, "playQueueItem", "");
+        qmlRegisterType<PlayQueueListModel>( uri, versionMajor, versionMinor, "PlayQueueListModel" );
+        qmlRegisterType<PlaylistController>( uri, versionMajor, versionMinor, "PlayQueueController" );
+        qmlRegisterType<PlayQueueContextMenu>( uri, versionMajor, versionMinor, "PlayQueueContextMenu" );
         assert(m_intf->p_mainPlaylistController);
-        qmlRegisterSingletonInstance<PlaylistController>(uri, versionMajor, versionMinor, "MainPlaylistController", m_intf->p_mainPlaylistController);
+        qmlRegisterSingletonInstance<PlaylistController>(uri, versionMajor, versionMinor, "MainPlayQueueController", m_intf->p_mainPlaylistController);
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
         qmlProtectModule(uri, versionMajor);

@@ -15,14 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
-#include "playlist_item.hpp"
+#include "playqueue_item.hpp"
 #include "util/vlctick.hpp"
 #include <vlc_input_item.h>
 
 //namespace vlc {
 //namespace playlist {
 
-PlaylistItem::PlaylistItem(vlc_playlist_item_t* item)
+PlayQueueItem::PlayQueueItem(vlc_playlist_item_t* item)
 {
     d = new Data();
     if (item)
@@ -32,47 +32,47 @@ PlaylistItem::PlaylistItem(vlc_playlist_item_t* item)
     }
 }
 
-bool PlaylistItem::isSelected() const
+bool PlayQueueItem::isSelected() const
 {
     return d->selected;
 }
 
-void PlaylistItem::setSelected(bool selected)
+void PlayQueueItem::setSelected(bool selected)
 {
     d->selected = selected;
 }
 
-QString PlaylistItem::getTitle() const
+QString PlayQueueItem::getTitle() const
 {
     return d->title;
 }
 
-QString PlaylistItem::getArtist() const
+QString PlayQueueItem::getArtist() const
 {
     return d->artist;
 }
 
-QString PlaylistItem::getAlbum() const
+QString PlayQueueItem::getAlbum() const
 {
     return d->album;
 }
 
-QUrl PlaylistItem::getArtwork() const
+QUrl PlayQueueItem::getArtwork() const
 {
     return d->artwork;
 }
 
-VLCDuration PlaylistItem::getDuration() const
+VLCDuration PlayQueueItem::getDuration() const
 {
     return d->duration;
 }
 
-QUrl PlaylistItem::getUrl() const
+QUrl PlayQueueItem::getUrl() const
 {
     return d->url;
 }
 
-void PlaylistItem::sync() {
+void PlayQueueItem::sync() {
     input_item_t *media = inputItem();
     assert(media);
     vlc_mutex_locker locker(&media->lock);
@@ -95,12 +95,12 @@ void PlaylistItem::sync() {
         d->title = media->psz_name;
 }
 
-PlaylistItem::operator bool() const
+PlayQueueItem::operator bool() const
 {
     return d && d->item.get();
 }
 
-bool PlaylistItem::preparsed() const {
+bool PlayQueueItem::preparsed() const {
     if (const auto item = inputItem())
         return input_item_IsPreparsed(item);
     return false;

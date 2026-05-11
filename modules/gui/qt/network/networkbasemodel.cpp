@@ -48,7 +48,7 @@ QString NetworkBaseModel::artworkFallbackForType(const ItemType type) const
     case TYPE_STREAM:
         return "qrc:///sd/stream.svg";
     case TYPE_PLAYLIST:
-        return "qrc:///sd/playlist.svg";
+        return "qrc:///sd/playqueue.svg";
     case TYPE_FILE:
         return "qrc:///sd/file.svg";
     default:

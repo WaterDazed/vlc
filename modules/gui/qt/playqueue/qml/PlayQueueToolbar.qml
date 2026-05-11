@@ -22,7 +22,7 @@ import QtQuick.Layouts
 
 import VLC.Widgets as Widgets
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 
 RowLayout {
     id: rowLayout
@@ -47,13 +47,13 @@ RowLayout {
 
             anchors.centerIn: parent
 
-            font.pixelSize: VLCStyle.icon_playlist
+            font.pixelSize: VLCStyle.icon_playqueue
             description: qsTr("Loop")
-            text: (MainPlaylistController.repeatMode === PlaylistController.PLAYBACK_REPEAT_CURRENT)
+            text: (MainPlayQueueController.repeatMode === PlayQueueController.PLAYBACK_REPEAT_CURRENT)
                       ? VLCIcons.repeat_one
                       : VLCIcons.repeat_all
-            checked: MainPlaylistController.repeatMode !== PlaylistController.PLAYBACK_REPEAT_NONE
-            onClicked: MainPlaylistController.toggleRepeatMode()
+            checked: MainPlayQueueController.repeatMode !== PlayQueueController.PLAYBACK_REPEAT_NONE
+            onClicked: MainPlayQueueController.toggleRepeatMode()
         }
     }
 
@@ -70,11 +70,11 @@ RowLayout {
 
             anchors.centerIn: parent
 
-            checked: MainPlaylistController.random
-            font.pixelSize: VLCStyle.icon_playlist
+            checked: MainPlayQueueController.random
+            font.pixelSize: VLCStyle.icon_playqueue
             description: qsTr("Shuffle")
             text: VLCIcons.shuffle
-            onClicked: MainPlaylistController.toggleRandom()
+            onClicked: MainPlayQueueController.toggleRandom()
         }
     }
 
@@ -90,39 +90,39 @@ RowLayout {
 
             anchors.centerIn: parent
 
-            font.pixelSize: VLCStyle.icon_playlist
+            font.pixelSize: VLCStyle.icon_playqueue
 
-            enabled: MainPlaylistController.count > 1
+            enabled: MainPlayQueueController.count > 1
 
-            checked: MainPlaylistController.sortKey !== PlaylistController.SORT_KEY_NONE
+            checked: MainPlayQueueController.sortKey !== PlayQueueController.SORT_KEY_NONE
 
             popupAbove: true
 
-            model: MainPlaylistController.sortKeyTitleList
+            model: MainPlayQueueController.sortKeyTitleList
 
             onSortSelected: key => {
-                MainPlaylistController.sortKey = key
+                MainPlayQueueController.sortKey = key
             }
 
             onSortOrderSelected: type => {
                 if (type === Qt.AscendingOrder)
-                    MainPlaylistController.sortOrder = PlaylistController.SORT_ORDER_ASC
+                    MainPlayQueueController.sortOrder = PlayQueueController.SORT_ORDER_ASC
                 else if (type === Qt.DescendingOrder)
-                    MainPlaylistController.sortOrder = PlaylistController.SORT_ORDER_DESC
+                    MainPlayQueueController.sortOrder = PlayQueueController.SORT_ORDER_DESC
 
-                MainPlaylistController.sort()
+                MainPlayQueueController.sort()
             }
 
             sortOrder: {
-                if (MainPlaylistController.sortOrder === PlaylistController.SORT_ORDER_ASC) {
+                if (MainPlayQueueController.sortOrder === PlayQueueController.SORT_ORDER_ASC) {
                     Qt.AscendingOrder
                 }
-                else if (MainPlaylistController.sortOrder === PlaylistController.SORT_ORDER_DESC) {
+                else if (MainPlayQueueController.sortOrder === PlayQueueController.SORT_ORDER_DESC) {
                     Qt.DescendingOrder
                 }
             }
 
-            sortKey: MainPlaylistController.sortKey
+            sortKey: MainPlayQueueController.sortKey
         }
     }
 
@@ -138,11 +138,11 @@ RowLayout {
 
             anchors.centerIn: parent
 
-            font.pixelSize: VLCStyle.icon_playlist
-            enabled: !MainPlaylistController.empty
-            description: qsTr("Clear playqueue")
-            text: VLCIcons.playlist_clear
-            onClicked: MainPlaylistController.clear()
+            font.pixelSize: VLCStyle.icon_playqueue
+            enabled: !MainPlayQueueController.empty
+            description: qsTr("Clear play queue")
+            text: VLCIcons.playqueue_clear
+            onClicked: MainPlayQueueController.clear()
         }
     }
 }

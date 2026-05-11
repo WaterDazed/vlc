@@ -22,7 +22,7 @@
 
 #include "maininterface/mainctx.hpp"
 #include "menus/menus.hpp"
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 #include "player/player_controller.hpp"
 #include "dialogs/dialogs_provider.hpp"
 #include "widgets/native/qvlcframe.hpp"

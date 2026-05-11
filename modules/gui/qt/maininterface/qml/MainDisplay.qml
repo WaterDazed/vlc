@@ -22,7 +22,7 @@ import QtQuick.Layouts
 import VLC.Style
 import VLC.MainInterface
 import VLC.Widgets as Widgets
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Player
 
 import VLC.Util
@@ -201,8 +201,8 @@ FocusScope {
 
             model: g_mainDisplay.tabModel
 
-            playlistPane: playlistLoader.active ? playlistLoader.item
-                                                : (playlistWindowLoader.item?.playlistView ?? null)
+            playqueuePane: playqueueLoader.active ? playqueueLoader.item
+                                                : (playqueueWindowLoader.item?.playqueueView ?? null)
 
             onItemClicked: (index) => {
                 const name = g_mainDisplay.tabModel.get(index).name
@@ -336,8 +336,8 @@ FocusScope {
                     focus: true
 
                     anchors.fill: parent
-                    anchors.rightMargin: (playlistLoader.shown && !VLCStyle.isScreenSmall)
-                                         ? playlistLoader.width
+                    anchors.rightMargin: (playqueueLoader.shown && !VLCStyle.isScreenSmall)
+                                         ? playqueueLoader.width
                                          : 0
                     anchors.bottomMargin: g_mainDisplay.displayMargin
 
@@ -345,7 +345,7 @@ FocusScope {
 
                     leftPadding: VLCStyle.applicationHorizontalMargin
 
-                    rightPadding: playlistLoader.shown
+                    rightPadding: playqueueLoader.shown
                                   ? 0
                                   : VLCStyle.applicationHorizontalMargin
 
@@ -365,7 +365,7 @@ FocusScope {
 
                     Navigation.parentItem: mainColumn
                     Navigation.upItem: sourcesBanner
-                    Navigation.rightItem: playlistLoader
+                    Navigation.rightItem: playqueueLoader
                     Navigation.downItem:  miniPlayer.visible ? miniPlayer : null
                 }
 
@@ -373,7 +373,7 @@ FocusScope {
                     // overlay for smallscreens
 
                     anchors.fill: parent
-                    visible: VLCStyle.isScreenSmall && playlistLoader.shown
+                    visible: VLCStyle.isScreenSmall && playqueueLoader.shown
                     color: "black"
                     opacity: 0.4
 
@@ -381,7 +381,7 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            MainCtx.playlistVisible = false
+                            MainCtx.playqueueVisible = false
                         }
 
                         // Capture WheelEvents before they reach stackView
@@ -393,7 +393,7 @@ FocusScope {
             }
 
             Loader {
-                id: playlistLoader
+                id: playqueueLoader
 
                 anchors {
                     top: parent.top
@@ -405,9 +405,9 @@ FocusScope {
 
                 visible: false
 
-                active: MainCtx.playlistDocked
+                active: MainCtx.playqueueDocked
 
-                state: ((status === Loader.Ready) && MainCtx.playlistVisible) ? "expanded" : ""
+                state: ((status === Loader.Ready) && MainCtx.playqueueVisible) ? "expanded" : ""
 
                 readonly property bool shown: !!item?.visible
 
@@ -418,20 +418,20 @@ FocusScope {
                 }
 
                 Component.onCompleted: {
-                    Qt.callLater(() => { playlistTransition.enabled = true; })
+                    Qt.callLater(() => { playqueueTransition.enabled = true; })
                 }
 
                 states: State {
                     name: "expanded"
                     PropertyChanges {
-                        target: playlistLoader
-                        width: playlistLoader.implicitWidth
+                        target: playqueueLoader
+                        width: playqueueLoader.implicitWidth
                         visible: true
                     }
                 }
 
                 transitions: Transition {
-                    id: playlistTransition
+                    id: playqueueTransition
                     enabled: false
 
                     from: ""; to: "expanded";
@@ -448,18 +448,18 @@ FocusScope {
                     }
                 }
 
-                sourceComponent: PlaylistPane {
-                    id: playlist
+                sourceComponent: PlayQueuePane {
+                    id: playqueue
 
                     implicitWidth: Math.round(VLCStyle.isScreenSmall
                                    ? g_mainDisplay.width * 0.8
                                    : Helpers.clamp(g_mainDisplay.width / resizeHandle.widthFactor,
                                                    minimumWidth,
-                                                   g_mainDisplay.width / 2 + playlistLeftBorder.width / 2))
+                                                   g_mainDisplay.width / 2 + playqueueLeftBorder.width / 2))
 
                     focus: true
 
-                    leftPadding: playlistLeftBorder.width
+                    leftPadding: playqueueLeftBorder.width
                     rightPadding: VLCStyle.applicationHorizontalMargin
                     topPadding: VLCStyle.layoutTitle_top_padding
                     bottomPadding: VLCStyle.margin_normal + Math.max(VLCStyle.applicationVerticalMargin - g_mainDisplay.displayMargin, 0)
@@ -475,14 +475,14 @@ FocusScope {
                     }
 
                     Navigation.cancelAction: function() {
-                        MainCtx.playlistVisible = false
+                        MainCtx.playqueueVisible = false
                         stackView.forceActiveFocus()
                     }
 
                     Rectangle {
-                        id: playlistLeftBorder
+                        id: playqueueLeftBorder
 
-                        parent: playlist
+                        parent: playqueue
 
                         anchors {
                             top: parent.top
@@ -493,7 +493,7 @@ FocusScope {
                         width: VLCStyle.border
                         color: theme.separator
 
-                        visible: playlistLoader.shown
+                        visible: playqueueLoader.shown
                     }
 
                     Widgets.HorizontalResizeHandle {
@@ -501,7 +501,7 @@ FocusScope {
 
                         property bool _inhibitMainInterfaceUpdate: false
 
-                        parent: playlist
+                        parent: playqueue
 
                         anchors {
                             top: parent.top
@@ -517,24 +517,24 @@ FocusScope {
 
                         onWidthFactorChanged: {
                             if (!_inhibitMainInterfaceUpdate && visible)
-                                MainCtx.setPlaylistWidthFactor(widthFactor)
+                                MainCtx.setPlayQueueWidthFactor(widthFactor)
                         }
 
                         Component.onCompleted:  _updateFromMainInterface()
 
                         function _updateFromMainInterface() {
-                            if (widthFactor == MainCtx.playlistWidthFactor)
+                            if (widthFactor == MainCtx.playqueueWidthFactor)
                                 return
 
                             _inhibitMainInterfaceUpdate = true
-                            widthFactor = MainCtx.playlistWidthFactor
+                            widthFactor = MainCtx.playqueueWidthFactor
                             _inhibitMainInterfaceUpdate = false
                         }
 
                         Connections {
                             target: MainCtx
 
-                            function onPlaylistWidthFactorChanged() {
+                            function onPlayqueueWidthFactorChanged() {
                                 resizeHandle._updateFromMainInterface()
                             }
                         }

@@ -26,7 +26,7 @@ import QtQuick.Window
 
 import VLC.MainInterface
 import VLC.Style
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Widgets as Widgets
 import VLC.Menus as Menus
 import VLC.Util
@@ -42,7 +42,7 @@ T.ToolBar {
 
     // For now, used for d&d functionality
     // Not strictly necessary to set
-    property PlaylistPane playlistPane: null
+    property PlayQueuePane playqueuePane: null
 
     property bool _showCSD: MainCtx.clientSideDecoration && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
 
@@ -256,7 +256,7 @@ T.ToolBar {
                                 if (localMenuView.enabled)
                                     localMenuView.focus = true
                                 else
-                                    playlistGroup.focus = true
+                                    playqueueGroup.focus = true
                             }
                         }
 
@@ -307,25 +307,25 @@ T.ToolBar {
                         id: localMenuView
 
                         readonly property int _availableWidth: parent.width
-                                                              - (localContextGroup.width + playlistGroup.width)
+                                                              - (localContextGroup.width + playqueueGroup.width)
                                                               - (VLCStyle.applicationHorizontalMargin * 2)
                                                               - (VLCStyle.margin_xsmall * 2)
                                                               - (VLCStyle.margin_xxsmall * 2)
 
                         readonly property bool _alignHCenter: ((localToolbarContent.width - contentItem.contentWidth) / 2) + contentItem.contentWidth
-                                                              < playlistGroup.x
+                                                              < playqueueGroup.x
 
                         width: Math.min(contentItem.contentWidth, _availableWidth)
                         height: VLCStyle.localToolbar_height
                         enabled: localMenuGroup.sourceComponent !== null
                         visible: enabled
 
-                        anchors.right: playlistGroup.left
+                        anchors.right: playqueueGroup.left
                         anchors.rightMargin: VLCStyle.margin_xxsmall // only applied when right aligned
 
                         onEnabledChanged: {
                             if (!enabled && focus) {
-                                playlistGroup.focus = true
+                                playqueueGroup.focus = true
                             }
                         }
 
@@ -335,13 +335,13 @@ T.ToolBar {
                                 anchors.horizontalCenter = parent.horizontalCenter
                             } else {
                                 anchors.horizontalCenter = undefined
-                                anchors.right = playlistGroup.left
+                                anchors.right = playqueueGroup.left
                             }
                         }
 
                         Navigation.parentItem: root
                         Navigation.leftItem: localContextGroup
-                        Navigation.rightItem: playlistGroup
+                        Navigation.rightItem: playqueueGroup
                         Navigation.upItem: globalMenuGroup
 
                         contentItem: Flickable {
@@ -380,7 +380,7 @@ T.ToolBar {
                     }
 
                     Widgets.NavigableRow {
-                        id: playlistGroup
+                        id: playqueueGroup
                         anchors {
                             verticalCenter: parent.verticalCenter
                             right: parent.right
@@ -394,9 +394,9 @@ T.ToolBar {
                             // set max width so that search field not overflows with small screens
                             // assumes all other sibling is a button of 'VLCStyle.bannerButton_width' width
                             maxSearchFieldWidth: root.width
-                                                 - (VLCStyle.bannerButton_width * playlistGroup.count)
-                                                 - (playlistGroup.spacing * (playlistGroup.count - 1))
-                                                 - playlistGroup.anchors.rightMargin
+                                                 - (VLCStyle.bannerButton_width * playqueueGroup.count)
+                                                 - (playqueueGroup.spacing * (playqueueGroup.count - 1))
+                                                 - playqueueGroup.anchors.rightMargin
                                                  - VLCStyle.margin_small // padding to left
 
                             visible: MainCtx.search.available
@@ -405,18 +405,18 @@ T.ToolBar {
                         }
 
                         Widgets.IconToolButton {
-                            id: playlist_btn
+                            id: playqueue_btn
 
-                            checked: MainCtx.playlistVisible
+                            checked: MainCtx.playqueueVisible
 
                             font.pixelSize: VLCStyle.icon_banner
-                            text: VLCIcons.playlist
-                            description: qsTr("Playlist")
+                            text: VLCIcons.playqueue
+                            description: qsTr("Play Queue")
                             width: VLCStyle.bannerButton_width
                             height: VLCStyle.bannerButton_height
-                            highlighted: MainCtx.playlistVisible
+                            highlighted: MainCtx.playqueueVisible
 
-                            onClicked:  MainCtx.playlistVisible = !MainCtx.playlistVisible
+                            onClicked:  MainCtx.playqueueVisible = !MainCtx.playqueueVisible
 
                             DropArea {
                                 anchors.fill: parent
@@ -429,10 +429,10 @@ T.ToolBar {
                                 }
 
                                 onEntered: (drag) => {
-                                    if (root.playlistPane) {
-                                        console.assert(root.playlistPane.isDropAcceptableFunc)
-                                        console.assert(root.playlistPane.model)
-                                        if (root.playlistPane.isDropAcceptableFunc(drag, root.playlistPane.model.count)) {
+                                    if (root.playqueuePane) {
+                                        console.assert(root.playqueuePane.isDropAcceptableFunc)
+                                        console.assert(root.playqueuePane.model)
+                                        if (root.playqueuePane.isDropAcceptableFunc(drag, root.playqueuePane.model.count)) {
                                             drag.accept()
                                         } else {
                                             drag.accepted = false
@@ -443,9 +443,9 @@ T.ToolBar {
                                 }
 
                                 onDropped: (drop) => {
-                                    if (root.playlistPane) {
-                                        console.assert(root.playlistPane.acceptDropFunc)
-                                        root.playlistPane.acceptDropFunc(root.playlistPane.model.count, drop)
+                                    if (root.playqueuePane) {
+                                        console.assert(root.playqueuePane.acceptDropFunc)
+                                        root.playqueuePane.acceptDropFunc(root.playqueuePane.model.count, drop)
                                     }
                                 }
 
@@ -454,7 +454,7 @@ T.ToolBar {
                                     interval: VLCStyle.duration_humanMoment
 
                                     onTriggered: {
-                                        MainCtx.playlistVisible = true
+                                        MainCtx.playqueueVisible = true
                                     }
                                 }
                             }

@@ -21,7 +21,7 @@ import QtQuick.Templates as T
 import VLC.MainInterface
 import VLC.Style
 import VLC.Widgets as Widgets
-import VLC.Playlist
+import VLC.PlayQueue
 import VLC.Player
 import VLC.Util
 
@@ -61,7 +61,7 @@ T.Control {
             gesturePolicy: TapHandler.WithinBounds
 
             onDoubleTapped: MainCtx.requestShowPlayerView()
-            onTapped: MainPlaylistController.togglePlayPause()
+            onTapped: MainPlayQueueController.togglePlayPause()
         }
 
         DragHandler {
@@ -137,7 +137,7 @@ T.Control {
 
             textStyle: root.textStyle
 
-            onClicked: MainPlaylistController.togglePlayPause()
+            onClicked: MainPlayQueueController.togglePlayPause()
         }
 
         Widgets.IconButton {
@@ -156,7 +156,7 @@ T.Control {
 
             textStyle: root.textStyle
 
-            onClicked: MainPlaylistController.stop()
+            onClicked: MainPlayQueueController.stop()
         }
 
         Widgets.IconButton {

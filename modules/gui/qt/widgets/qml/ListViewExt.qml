@@ -466,7 +466,7 @@ ListView {
     }
 
     // Add an indirection here because additional control
-    // might be necessary as in Playqueue.
+    // might be necessary as in PlayQueue.
     // Derived views may override this function.
     function updateSelection(modifiers, oldIndex, newIndex) {
         if (selectionModel)

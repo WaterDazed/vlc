@@ -40,7 +40,7 @@
 #include "maininterface/mainctx.hpp"                     /* View modifications */
 #include "dialogs/dialogs_provider.hpp"                   /* Dialogs display */
 #include "player/player_controller.hpp"                      /* Input Management */
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_controller.hpp"
 #include "dialogs/extensions/extensions_manager.hpp"                 /* Extensions menu */
 #include "dialogs/extended/extended_panels.hpp"
 #include "dialogs/systray/systray.hpp"
@@ -213,7 +213,7 @@ void VLCMenuBar::FileMenu(qt_intf_t *p_intf, QMenu *menu)
         ":/menu/stream.svg", &DialogsProvider::openAndStreamingDialogs, "Ctrl+S" );
     menu->addSeparator();
 
-    action = menu->addAction( qtr( "Quit at the end of playlist" ), [playlist = THEMPL](bool checked){
+    action = menu->addAction( qtr( "Quit at the end of play queue" ), [playlist = THEMPL](bool checked){
         if (checked)
             playlist->setMediaStopAction(PlaylistController::MEDIA_STOPPED_EXIT);
         else
@@ -314,19 +314,19 @@ void VLCMenuBar::ViewMenu(qt_intf_t *p_intf, QMenu *menu, std::optional<bool> pl
 
     action = menu->addAction(
 #ifndef __APPLE__
-            ColorizedSvgIcon::colorizedIconForWidget( ":/menu/ic_playlist.svg", menu ),
+            ColorizedSvgIcon::colorizedIconForWidget( ":/menu/ic_playqueue.svg", menu ),
 #endif
-            qtr( "Play&list" ));
+            qtr( "Play &Queue" ));
     action->setShortcut(QString( "Ctrl+L" ));
     action->setCheckable( true );
-    connect( action, &QAction::triggered, mi, &MainCtx::setPlaylistVisible );
-    action->setChecked( mi->isPlaylistVisible() );
+    connect( action, &QAction::triggered, mi, &MainCtx::setPlayQueueVisible );
+    action->setChecked( mi->isPlayQueueVisible() );
 
-    /* Docked Playlist */
-    action = menu->addAction( qtr( "Docked Playlist" ) );
+    /* Docked Playqueue */
+    action = menu->addAction( qtr( "Docked Play Queue" ) );
     action->setCheckable( true );
-    connect( action, &QAction::triggered, mi, &MainCtx::setPlaylistDocked );
-    action->setChecked( mi->isPlaylistDocked() );
+    connect( action, &QAction::triggered, mi, &MainCtx::setPlayQueueDocked );
+    action->setChecked( mi->isPlayQueueDocked() );
 
     menu->addSeparator();
 

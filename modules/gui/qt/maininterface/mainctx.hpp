@@ -33,7 +33,7 @@
 
 Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
-Q_MOC_INCLUDE( "playlist/playlist_controller.hpp" )
+Q_MOC_INCLUDE( "playqueue/playqueue_controller.hpp" )
 Q_MOC_INCLUDE( "maininterface/mainctx_submodels.hpp" )
 Q_MOC_INCLUDE( "maininterface/videosurface.hpp" )
 Q_MOC_INCLUDE( "medialibrary/medialib.hpp" )
@@ -97,10 +97,10 @@ class MainCtx : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool playlistDocked READ isPlaylistDocked WRITE setPlaylistDocked NOTIFY playlistDockedChanged FINAL)
-    Q_PROPERTY(bool playlistVisible READ isPlaylistVisible WRITE setPlaylistVisible NOTIFY playlistVisibleChanged FINAL)
-    Q_PROPERTY(double playlistWidthFactor READ getPlaylistWidthFactor WRITE setPlaylistWidthFactor NOTIFY playlistWidthFactorChanged FINAL)
-    Q_PROPERTY(double playerPlaylistWidthFactor READ getPlayerPlaylistWidthFactor WRITE setPlayerPlaylistWidthFactor NOTIFY playerPlaylistFactorChanged FINAL)
+    Q_PROPERTY(bool playqueueDocked READ isPlayQueueDocked WRITE setPlayQueueDocked NOTIFY playqueueDockedChanged FINAL)
+    Q_PROPERTY(bool playqueueVisible READ isPlayQueueVisible WRITE setPlayQueueVisible NOTIFY playqueueVisibleChanged FINAL)
+    Q_PROPERTY(double playqueueWidthFactor READ getPlayQueueWidthFactor WRITE setPlayQueueWidthFactor NOTIFY playqueueWidthFactorChanged FINAL)
+    Q_PROPERTY(double playerPlayQueueWidthFactor READ getPlayerPlayQueueWidthFactor WRITE setPlayerPlayQueueWidthFactor NOTIFY playerPlayQueueFactorChanged FINAL)
     Q_PROPERTY(double artistAlbumsWidthFactor READ artistAlbumsWidthFactor WRITE setArtistAlbumsWidthFactor NOTIFY artistAlbumsWidthFactorChanged FINAL)
     Q_PROPERTY(bool interfaceAlwaysOnTop READ isInterfaceAlwaysOnTop WRITE setInterfaceAlwaysOnTop NOTIFY interfaceAlwaysOnTopChanged FINAL)
     Q_PROPERTY(bool hasEmbededVideo READ hasEmbededVideo NOTIFY hasEmbededVideoChanged FINAL)
@@ -205,10 +205,10 @@ public:
     Q_ENUM(OsType)
 
     inline QWindow::Visibility interfaceVisibility() const { return m_windowVisibility; }
-    bool isPlaylistDocked() { return b_playlistDocked; }
-    bool isPlaylistVisible() { return m_playlistVisible; }
-    inline double getPlaylistWidthFactor() const { return m_playlistWidthFactor; }
-    inline double getPlayerPlaylistWidthFactor() const { return m_playerPlaylistWidthFactor; }
+    bool isPlayQueueDocked() { return b_playqueueDocked; }
+    bool isPlayQueueVisible() { return m_playqueueVisible; }
+    inline double getPlayQueueWidthFactor() const { return m_playqueueWidthFactor; }
+    inline double getPlayerPlayQueueWidthFactor() const { return m_playerPlayQueueWidthFactor; }
     bool isInterfaceAlwaysOnTop() { return b_interfaceOnTop; }
     inline bool isHideAfterCreation() const { return b_hideAfterCreation; }
     inline bool isShowRemainingTime() const  { return m_showRemainingTime; }
@@ -406,7 +406,7 @@ protected:
     double               m_intfScaleFactor = 1.;
     int                  i_notificationSetting = 0; /// Systray Notifications
     bool                 b_hideAfterCreation = false; /// --qt-start-minimized
-    bool                 b_playlistDocked = false;
+    bool                 b_playqueueDocked = false;
     QWindow::Visibility  m_windowVisibility = QWindow::Windowed;
     bool                 b_interfaceOnTop = false;      ///keep UI on top
     bool                 b_hasWayland = false;
@@ -429,9 +429,9 @@ protected:
     QUrl                 m_dialogFilepath; /* Last path used in dialogs */
 
     /* States */
-    bool                 m_playlistVisible = false;       ///< Is the playlist visible ?
-    double               m_playlistWidthFactor = 4.;   ///< playlist size: root.width / playlistScaleFactor
-    double               m_playerPlaylistWidthFactor = 4.;
+    bool                 m_playqueueVisible = false;       ///< Is the playqueue visible ?
+    double               m_playqueueWidthFactor = 4.;   ///< playqueue size: root.width / playqueueScaleFactor
+    double               m_playerPlayQueueWidthFactor = 4.;
     bool                 m_minimalView = false;
 
     double               m_artistAlbumsWidthFactor = 4.;
@@ -477,10 +477,10 @@ protected:
 public slots:
     void toggleToolbarMenu();
     void toggleInterfaceFullScreen();
-    void setPlaylistDocked( bool );
-    void setPlaylistVisible( bool );
-    void setPlaylistWidthFactor( double );
-    void setPlayerPlaylistWidthFactor( double factor );
+    void setPlayQueueDocked( bool );
+    void setPlayQueueVisible( bool );
+    void setPlayQueueWidthFactor( double );
+    void setPlayerPlayQueueWidthFactor( double factor );
     void setInterfaceAlwaysOnTop( bool );
     void setShowRemainingTime( bool );
     void setGridView( bool );
@@ -526,10 +526,10 @@ signals:
     void askRaise();
     void kc_pressed(); /* easter eggs */
 
-    void playlistDockedChanged(bool);
-    void playlistVisibleChanged(bool);
-    void playlistWidthFactorChanged(double);
-    void playerPlaylistFactorChanged(double);
+    void playqueueDockedChanged(bool);
+    void playqueueVisibleChanged(bool);
+    void playqueueWidthFactorChanged(double);
+    void playerPlayQueueFactorChanged(double);
     void interfaceAlwaysOnTopChanged(bool);
     void hasEmbededVideoChanged(bool);
     void showRemainingTimeChanged(bool);

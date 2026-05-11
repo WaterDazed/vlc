@@ -188,7 +188,7 @@ decltype (ControlbarProfileModel::m_defaults)
                                     ControlListModel::WIDGET_SPACER,
                                     ControlListModel::NAVIGATION_BUTTONS,
                                     ControlListModel::WIDGET_SPACER,
-                                    ControlListModel::PLAYLIST_BUTTON
+                                    ControlListModel::PLAYQUEUE_BUTTON
                                 }, {},
                                 {
                                     ControlListModel::VOLUME
@@ -211,7 +211,7 @@ decltype (ControlbarProfileModel::m_defaults)
                                     ControlListModel::WIDGET_SPACER,
                                     ControlListModel::NAVIGATION_BUTTONS,
                                     ControlListModel::WIDGET_SPACER,
-                                    ControlListModel::PLAYLIST_BUTTON
+                                    ControlListModel::PLAYQUEUE_BUTTON
                                 }, {},
                                 {
                                     ControlListModel::VOLUME
@@ -253,7 +253,7 @@ decltype (ControlbarProfileModel::m_defaults)
                                     ControlListModel::NEXT_BUTTON,
                                     ControlListModel::WIDGET_SPACER,
                                     ControlListModel::FULLSCREEN_BUTTON,
-                                    ControlListModel::PLAYLIST_BUTTON,
+                                    ControlListModel::PLAYQUEUE_BUTTON,
                                     ControlListModel::EXTENDED_BUTTON,
                                     ControlListModel::WIDGET_SPACER,
                                     ControlListModel::RECORD_BUTTON,
@@ -280,7 +280,7 @@ decltype (ControlbarProfileModel::m_defaults)
                                     ControlListModel::NEXT_BUTTON,
                                     ControlListModel::WIDGET_SPACER,
                                     ControlListModel::FULLSCREEN_BUTTON,
-                                    ControlListModel::PLAYLIST_BUTTON,
+                                    ControlListModel::PLAYQUEUE_BUTTON,
                                     ControlListModel::EXTENDED_BUTTON,
                                     ControlListModel::WIDGET_SPACER,
                                     ControlListModel::RECORD_BUTTON,
@@ -390,7 +390,7 @@ decltype (ControlbarProfileModel::m_defaults)
                                     ControlListModel::FULLSCREEN_BUTTON,
                                     ControlListModel::EXTENDED_BUTTON,
                                     ControlListModel::WIDGET_SPACER,
-                                    ControlListModel::PLAYLIST_BUTTON,
+                                    ControlListModel::PLAYQUEUE_BUTTON,
                                     ControlListModel::LOOP_BUTTON,
                                     ControlListModel::RANDOM_BUTTON
                                 },
@@ -415,7 +415,7 @@ decltype (ControlbarProfileModel::m_defaults)
                                     ControlListModel::FULLSCREEN_BUTTON,
                                     ControlListModel::EXTENDED_BUTTON,
                                     ControlListModel::WIDGET_SPACER,
-                                    ControlListModel::PLAYLIST_BUTTON,
+                                    ControlListModel::PLAYQUEUE_BUTTON,
                                     ControlListModel::LOOP_BUTTON,
                                     ControlListModel::RANDOM_BUTTON
                                 },
@@ -443,7 +443,7 @@ decltype (ControlbarProfileModel::m_defaults)
                                     ControlListModel::FULLSCREEN_BUTTON,
                                     ControlListModel::EXTENDED_BUTTON,
                                     ControlListModel::WIDGET_SPACER,
-                                    ControlListModel::PLAYLIST_BUTTON,
+                                    ControlListModel::PLAYQUEUE_BUTTON,
                                     ControlListModel::LOOP_BUTTON,
                                     ControlListModel::RANDOM_BUTTON
                                 },

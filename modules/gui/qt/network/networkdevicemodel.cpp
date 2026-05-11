@@ -26,8 +26,8 @@
 #include "devicesourceprovider.hpp"
 #include "networkmediamodel.hpp"
 
-#include "playlist/media.hpp"
-#include "playlist/playlist_controller.hpp"
+#include "playqueue/playqueue_media.hpp"
+#include "playqueue/playqueue_controller.hpp"
 
 #include "util/shared_input_item.hpp"
 #include "vlcmediasourcewrapper.hpp"
