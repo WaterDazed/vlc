@@ -1188,7 +1188,21 @@ void MainCtx::setArtistAlbumsWidthFactor(double newArtistAlbumsWidthFactor)
 UpdateModel* MainCtx::getUpdateModel() const
 {
     if (!m_updateModel)
+    {
         m_updateModel = std::make_unique<UpdateModel>(p_intf);
+
+        // This is not connected to the window directly because we should not assume the window to not change:
+        connect(m_updateModel.get(), &UpdateModel::updateStatusChanged, this, [this]() {
+            assert(m_updateModel);
+            if (m_updateModel->updateStatus() == UpdateModel::NeedUpdate)
+            {
+                if (const auto w = intfMainWindow())
+                {
+                    w->alert(0);
+                }
+            }
+        });
+    }
     return m_updateModel.get();
 }
 #endif
