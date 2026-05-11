@@ -1750,9 +1750,10 @@ static int Seek( demux_t *p_demux, vlc_tick_t i_date, double f_ratio, bool b_acc
 
 failandresetpos:
         /* Go back to position before index failure */
-        if ( vlc_stream_Tell( p_demux->s ) - i_pos_backup )
-            vlc_stream_Seek( p_demux->s, i_pos_backup );
-
+        if ( vlc_stream_Tell( p_demux->s ) - i_pos_backup ){
+            if ( vlc_stream_Seek( p_demux->s, i_pos_backup ) != VLC_SUCCESS )
+                msg_Warn( p_demux, "Seek: failed to restore stream position" );
+        }
         return VLC_EGENERIC;
     }
     else
@@ -2823,7 +2824,11 @@ static void AVI_IndexCreate( demux_t *p_demux )
 
     i_movi_end = __MIN( p_movi->i_chunk_pos + p_movi->i_chunk_size, i_stream_size );
 
-    vlc_stream_Seek( p_demux->s, p_movi->i_chunk_pos + 12 );
+    if( vlc_stream_Seek( p_demux->s, p_movi->i_chunk_pos + 12 ) != VLC_SUCCESS )
+    {
+        msg_Err( p_demux, "AVI_IndexCreate: failed to seek to movi chunk" );
+        return;
+    }
     msg_Warn( p_demux, "creating index from LIST-movi, will take time !" );
 
 
