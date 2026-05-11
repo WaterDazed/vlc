@@ -275,6 +275,7 @@ input_thread_t * input_Create( vlc_object_t *p_parent, input_item_t *p_item,
     priv->is_running = false;
     priv->is_stopped = false;
     priv->b_recording = false;
+    priv->b_pause_after_buffering = false;
     priv->rate = 1.f;
     TAB_INIT( priv->i_attachment, priv->attachment );
     priv->p_sout   = NULL;
@@ -644,7 +645,7 @@ static void MainLoop( input_thread_t *p_input, bool b_interactive )
     vlc_tick_t i_last_seek_mdate = 0;
 
     if( b_interactive && var_InheritBool( p_input, "start-paused" ) )
-        ControlPause( p_input, vlc_tick_now() );
+        input_priv(p_input)->b_pause_after_buffering = true;
 
     bool eof_signaled = false;
 
@@ -1732,6 +1733,16 @@ static void ControlPause( input_thread_t *p_input, vlc_tick_t i_control_date )
         }
     }
 
+    /* Check if buffering, and if so, deferred pause instead of
+     * trying to pause the media playback right away, since the
+     * playback and the clocks are not even configured. */
+    if( es_out_GetBuffering( input_priv(p_input)->p_es_out ) )
+    {
+        input_priv(p_input)->b_pause_after_buffering = true;
+        input_ChangeState( p_input, i_state, i_control_date );
+        return;
+    }
+
     /* */
     if( es_out_SetPauseState( input_priv(p_input)->p_es_out,
                               input_priv(p_input)->master->b_can_pause,
@@ -1757,6 +1768,16 @@ static void ControlUnpause( input_thread_t *p_input, vlc_tick_t i_control_date )
             input_ChangeState( p_input, ERROR_S, i_control_date );
             return;
         }
+    }
+
+    /* Check if buffering, and if so, cancel deferred pause instead of
+     * trying to unpause the media playback right away, since the
+     * playback and the clocks are not even configured. */
+    if( es_out_GetBuffering( input_priv(p_input)->p_es_out ) )
+    {
+        input_priv(p_input)->b_pause_after_buffering = false;
+        input_ChangeState( p_input, PLAYING_S, i_control_date );
+        return;
     }
 
     /* Switch to play */
