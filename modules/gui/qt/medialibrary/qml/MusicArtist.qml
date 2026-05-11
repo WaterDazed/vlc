@@ -999,7 +999,7 @@ FocusScope {
         anchors.fill: parent
         anchors.rightMargin: root.rightPadding
 
-        focus: albumModel.count !== 0
+        focus: loader.status === Loader.Ready
         sourceComponent: MainCtx.gridView ? gridComponent : tableComponent
     }
 }

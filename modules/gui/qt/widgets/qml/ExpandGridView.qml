@@ -752,7 +752,7 @@ FocusScope {
             item = _createItem(id, pos[0], pos[1])
 
         // NOTE: This makes sure we have the proper focus reason on the GridItem.
-        if (activeFocus && currentIndex === item.index && expandIndex === -1)
+        if (activeFocus && currentIndex === item.index && expandIndex === -1 && item.focus)
             item.forceActiveFocus(_currentFocusReason)
         else
             item.focus = false
