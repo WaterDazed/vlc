@@ -190,6 +190,9 @@ static inline void DvdReadResetCellTs( struct demux_sys_t *p_sys )
 }
 
 int OpenCommon( vlc_object_t *, dvd_type_t );
+void DvdReadESNew( demux_t *, int, int );
+void DvdReadHandleDSI( demux_t *, uint8_t * );
+extern const dvdread_ops_t DvdReadVideoOps;
 
 #ifdef DVDREAD_HAS_DVDVIDEORECORDING
 uint32_t   DvdVRGetProgramSectorSpan( const struct demux_sys_t *, const vobu_map_t * );
