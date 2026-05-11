@@ -71,6 +71,8 @@ Window {
         id: layout
         anchors.fill: parent
         anchors.margins: VLCStyle.margin_small
+        spacing: VLCStyle.margin_normal
+        Layout.alignment: Qt.AlignTop
 
 
         readonly property ColorContext colorContext: ColorContext {
@@ -82,6 +84,7 @@ Window {
             id: loader
             Layout.fillHeight: true
             Layout.fillWidth: true
+           
 
             clip: true
             sourceComponent: contentComponent
@@ -91,11 +94,11 @@ Window {
             id: buttonBox
 
             padding: 0
-            spacing: VLCStyle.margin_small
+            spacing: VLCStyle.margin_normal
 
             Layout.fillWidth: true
             Layout.minimumHeight: VLCStyle.icon_normal
-
+            Layout.preferredHeight: VLCStyle.icon_normal
             standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
 
             background: null
