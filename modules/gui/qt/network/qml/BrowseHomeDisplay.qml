@@ -300,6 +300,7 @@ FocusScope {
         visible: (model.count !== 0)
 
         interactive: false
+        autoscroll: false
 
         enableBeginningFade: false
         enableEndFade: false

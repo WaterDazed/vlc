@@ -79,6 +79,7 @@ FocusScope {
     property string title
 
     property bool interactive: true
+    property bool autoscroll: true
 
     property bool reuseItems: true
 
@@ -204,6 +205,7 @@ FocusScope {
             selectionModel: modelSelect
 
             interactive: root.interactive
+            autoscroll: root.autoscroll
 
             reuseItems: root.reuseItems
 

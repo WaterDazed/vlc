@@ -51,6 +51,7 @@ MainViewLoader {
     property int displayMarginEnd: 0
 
     property bool interactive: true // false, when as a row
+    property bool autoscroll: true // false, when as a row
 
     property bool reuseItems: true
 
@@ -166,6 +167,7 @@ MainViewLoader {
             displayMarginEnd: root.displayMarginEnd
 
             interactive: root.interactive
+            autoscroll: root.autoscroll
 
             reuseItems: root.reuseItems
 
