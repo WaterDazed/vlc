@@ -602,6 +602,13 @@ qml_modules += {
     ),
 }
 
+qml_maininterface_extra_files = []
+
+if get_option('update-check').allowed() and gcrypt_dep.found()
+    qt_extra_flags += '-DUPDATE_CHECK'
+    qml_maininterface_extra_files += 'maininterface/qml/UpdatePane.qml'
+endif
+
 qml_modules += {
     'name' : 'VLC.MainInterface',
     'target' : 'maininterface',
@@ -611,7 +618,8 @@ qml_modules += {
         'maininterface/qml/MainInterface.qml',
         'maininterface/qml/MainViewLoader.qml',
         'maininterface/qml/MainDisplay.qml',
-        'maininterface/qml/NoMedialibHome.qml'
+        'maininterface/qml/NoMedialibHome.qml',
+        qml_maininterface_extra_files,
     ),
 }
 qml_modules += {
@@ -658,6 +666,7 @@ qml_modules += {
         'medialibrary/qml/MLContextMenu.qml',
         'medialibrary/qml/MLDragItem.qml',
         'medialibrary/qml/MLTableColumns.qml',
+        'medialibrary/qml/ScanProgressBar.qml',
     ),
 }
 
@@ -877,7 +886,6 @@ qml_modules += {
         'widgets/qml/PlayCover.qml',
         'widgets/qml/RoundButtonExt.qml',
         'widgets/qml/ScaledImage.qml',
-        'widgets/qml/ScanProgressBar.qml',
         'widgets/qml/TextAutoScroller.qml',
         'widgets/qml/SearchBox.qml',
         'widgets/qml/SliderExt.qml',
@@ -913,6 +921,7 @@ qml_modules += {
         'widgets/qml/VoronoiSnow.qml',
         'widgets/qml/DualKawaseBlur.qml',
         'widgets/qml/CheckBoxExt.qml',
+        'widgets/qml/ProgressBarExt.qml',
     ),
 }
 
@@ -1143,11 +1152,6 @@ if qt6_dep.found()
             }
         endif
     endif
-
-    if get_option('update-check').allowed() and gcrypt_dep.found()
-        qt_extra_flags += '-DUPDATE_CHECK'
-    endif
-
 
     vlc_modules += {
         'name' : 'qt_x11',

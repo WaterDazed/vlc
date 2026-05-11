@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2019 VLC authors and VideoLAN
+ * Copyright (C) 2026 VLC authors and VideoLAN
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Templates as T
-
-import VLC.MediaLibrary
 
 import VLC.Style
 
@@ -38,14 +35,10 @@ T.ProgressBar {
     from: 0
     to: 100
 
-    value: MediaLib.parsingProgress
-
     readonly property ColorContext colorContext: ColorContext {
         id: theme
         colorSet: ColorContext.Window
     }
-
-    indeterminate: MediaLib.discoveryPending
 
     background: Rectangle {
         color: theme.bg.primary
@@ -131,22 +124,6 @@ T.ProgressBar {
                     }
                 }
             }
-        }
-
-        SubtitleLabel {
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            text: (MediaLib.discoveryPending) ? qsTr("Scanning %1")
-                                                .arg(MediaLib.discoveryEntryPoint)
-                                              : qsTr("Indexing Medias (%1%)")
-                                                .arg(MediaLib.parsingProgress)
-
-            elide: Text.ElideMiddle
-
-            font.pixelSize: VLCStyle.fontSize_large
-            font.weight: Font.Normal
-            color: theme.fg.primary
         }
     }
 }

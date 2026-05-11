@@ -879,6 +879,8 @@ libqt_plugin_la_RES = \
 	pixmaps/icons/window_maximize.svg \
 	pixmaps/icons/window_minimize.svg \
 	pixmaps/icons/window_restore.svg \
+	pixmaps/icons/ic_fluent_arrow_download_24_regular.svg \
+	pixmaps/icons/ic_fluent_arrow_sync_24_regular.svg \
 	pixmaps/menu/add.svg \
 	pixmaps/menu/capture-card.svg \
 	pixmaps/menu/clear.svg \
@@ -1020,6 +1022,11 @@ libqml_module_maininterface_a_QML = \
 	maininterface/qml/MainViewLoader.qml \
 	maininterface/qml/MainDisplay.qml \
 	maininterface/qml/NoMedialibHome.qml
+
+if UPDATE_CHECK
+libqml_module_maininterface_a_QML += maininterface/qml/UpdatePane.qml
+endif
+
 nodist_libqml_module_maininterface_a_SOURCES = maininterface_qmlassets.cpp
 $(libqml_module_maininterface_a_QML:.qml=.cpp) : $(builddir)/maininterface/res.qrc
 $(libqml_module_maininterface_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/maininterface/res.qrc
@@ -1067,7 +1074,8 @@ libqml_module_medialibrary_a_QML = \
 	medialibrary/qml/Bookmarks.qml \
 	medialibrary/qml/MLContextMenu.qml \
 	medialibrary/qml/MLDragItem.qml \
-	medialibrary/qml/MLTableColumns.qml
+	medialibrary/qml/MLTableColumns.qml \
+	medialibrary/qml/ScanProgressBar.qml
 nodist_libqml_module_medialibrary_a_SOURCES = medialibrary_qmlassets.cpp
 $(libqml_module_medialibrary_a_QML:.qml=.cpp) : $(builddir)/medialibrary/res.qrc
 $(libqml_module_medialibrary_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/medialibrary/res.qrc
@@ -1296,7 +1304,6 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/PlayCover.qml \
 	widgets/qml/RoundButtonExt.qml \
 	widgets/qml/ScaledImage.qml \
-	widgets/qml/ScanProgressBar.qml \
 	widgets/qml/TextAutoScroller.qml \
 	widgets/qml/SearchBox.qml \
 	widgets/qml/SliderExt.qml \
@@ -1331,7 +1338,8 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/RoundedRectangleShadow.qml \
 	widgets/qml/VoronoiSnow.qml \
 	widgets/qml/DualKawaseBlur.qml \
-	widgets/qml/CheckBoxExt.qml
+	widgets/qml/CheckBoxExt.qml \
+	widgets/qml/ProgressBarExt.qml
 nodist_libqml_module_widgets_a_SOURCES = widgets_qmlassets.cpp
 $(libqml_module_widgets_a_QML:.qml=.cpp) : $(builddir)/widgets/res.qrc
 $(libqml_module_widgets_a_QML:.qml=.cpp) : QML_CACHEGEN_ARGS=--resource=$(builddir)/widgets/res.qrc

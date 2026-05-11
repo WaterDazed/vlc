@@ -82,17 +82,19 @@ public:
         Checking,
         UpToDate,
         NeedUpdate,
-        CheckFailed
+        CheckFailed,
+        Downloading // TODO
     };
     Q_ENUM(Status)
 
-    Q_PROPERTY(Status updateStatus READ updateStatus NOTIFY updateStatusChanged FINAL)
+    Q_PROPERTY(Status updateStatus READ updateStatus RESET resetStatus NOTIFY updateStatusChanged FINAL)
     Q_PROPERTY(int major READ getMajor NOTIFY updateStatusChanged FINAL)
     Q_PROPERTY(int minor READ getMinor NOTIFY updateStatusChanged FINAL)
     Q_PROPERTY(int revision READ getRevision NOTIFY updateStatusChanged FINAL)
     Q_PROPERTY(int extra READ getExtra NOTIFY updateStatusChanged FINAL)
     Q_PROPERTY(QString description READ getDescription NOTIFY updateStatusChanged FINAL)
     Q_PROPERTY(QString url READ getUrl NOTIFY updateStatusChanged FINAL)
+    Q_PROPERTY(double progress READ getProgress NOTIFY progressChanged FINAL) // TODO
 
 public:
     explicit UpdateModel(qt_intf_t * p_intf);
@@ -101,6 +103,9 @@ public:
     Q_INVOKABLE void checkUpdate();
 
     Q_INVOKABLE bool download(QString destDir);
+    Q_INVOKABLE bool download();
+
+    Q_INVOKABLE void resetStatus();
 
     Status updateStatus() const;
     int getMajor() const;
@@ -109,9 +114,11 @@ public:
     int getExtra() const;
     QString getDescription() const;
     QString getUrl() const;
+    double getProgress() const;
 
 signals:
     void updateStatusChanged();
+    void progressChanged();
 
 private:
     Q_DECLARE_PRIVATE(UpdateModel)
