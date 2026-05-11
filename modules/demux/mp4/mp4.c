@@ -281,6 +281,22 @@ static int MP4_reftypeToFlag( vlc_fourcc_t i_reftype )
     }
 }
 
+static bool MP4_isSubtitleHandlerType( uint32_t i_handler_type )
+{
+    switch( i_handler_type )
+    {
+        case ATOM_text:
+        case ATOM_tx3g:
+        case ATOM_subp:
+        case ATOM_subt: /* ttml */
+        case ATOM_sbtl:
+        case ATOM_clcp: /* closed captions */
+            return true;
+        default:
+            return false;
+    }
+}
+
 static bool MP4_isMetadata( const mp4_track_t *tk )
 {
     return tk->i_use_flags & (USEAS_CHAPTERS|USEAS_TIMECODE);
@@ -1304,7 +1320,18 @@ static int Open( vlc_object_t * p_this )
                 {
                     msg_Dbg( p_demux, "track 0x%x refs track 0x%x for %4.4s", i,
                              refdata->i_track_ID[j], (const char *) &p_refbox->i_type );
-                    reftk->i_use_flags |= MP4_reftypeToFlag( p_refbox->i_type );
+                    int i_flag = MP4_reftypeToFlag( p_refbox->i_type );
+                    /* chap may reference a video track holding slide artwork; only text tracks are chapter sources */
+                    if( i_flag == USEAS_CHAPTERS )
+                    {
+                        const MP4_Box_t *p_hdlr = MP4_BoxGet( reftk->p_track, "mdia/hdlr" );
+                        if( p_hdlr && BOXDATA(p_hdlr) &&
+                            !MP4_isSubtitleHandlerType( BOXDATA(p_hdlr)->i_handler_type ) )
+                        {
+                            i_flag = USEAS_NONE;
+                        }
+                    }
+                    reftk->i_use_flags |= i_flag;
                 }
             }
         }
@@ -3859,7 +3886,12 @@ static void MP4_TrackSetup( demux_t *p_demux, mp4_track_t *p_track,
     memcpy( &language, BOXDATA(p_mdhd)->rgs_language, 3 );
     p_track->b_mac_encoding = BOXDATA(p_mdhd)->b_mac_encoding;
 
-    switch( p_hdlr->data.p_hdlr->i_handler_type )
+    const uint32_t i_handler = p_hdlr->data.p_hdlr->i_handler_type;
+    if( MP4_isSubtitleHandlerType( i_handler ) )
+    {
+        es_format_Change( &p_track->fmt, SPU_ES, 0 );
+    }
+    else switch( i_handler )
     {
         case( ATOM_soun ):
             if( !MP4_BoxGet( p_box_trak, "mdia/minf/smhd" ) )
@@ -3913,15 +3945,6 @@ static void MP4_TrackSetup( demux_t *p_demux, mp4_track_t *p_track,
                 msg_Warn( p_demux, "Malformed track SDP message: %s", sdp_media_type );
                 return;
             }
-            break;
-
-        case( ATOM_tx3g ):
-        case( ATOM_text ):
-        case( ATOM_subp ):
-        case( ATOM_subt ): /* ttml */
-        case( ATOM_sbtl ):
-        case( ATOM_clcp ): /* closed captions */
-            es_format_Change( &p_track->fmt, SPU_ES, 0 );
             break;
 
         default:
