@@ -49,6 +49,12 @@ void TextureProviderObserver::setSource(const QQuickItem *source, bool enforce)
 
     if (m_source)
     {
+        // Source changed before we got its `QSGTextureProvider`, but we need
+        // to do it regardless if we already captured the texture provider
+        // because we are now listening `::windowChanged()` at all times (no
+        // longer only a single shot connection):
+        disconnect(m_source, nullptr, this, nullptr);
+
         if (Q_LIKELY(m_provider))
         {
             disconnect(m_provider, nullptr, this, nullptr);
@@ -59,11 +65,6 @@ void TextureProviderObserver::setSource(const QQuickItem *source, bool enforce)
             //   asynchronous. Even if update occurs, it may take a while, and it may never happen.
             // - There is no more source.
             resetProperties(); // memory order does not matter, `setSource()` is not called frequently.
-        }
-        else
-        {
-            // source changed before we got its `QSGTextureProvider`
-            disconnect(m_source, nullptr, this, nullptr);
         }
     }
 
@@ -333,7 +334,7 @@ void TextureProviderObserver::updateProperties()
                 }
             }
 
-            if (!m_notifyAllChanges.load(memoryOrder) || !textureIsDynamic)
+            if (!textureIsDynamic)
             {
                 m_oldTextureSize.store(textureSize, memoryOrder);
                 m_oldNativeTextureSize.store(nativeTextureSize, memoryOrder);
@@ -377,13 +378,10 @@ void TextureProviderObserver::resetProperties(std::memory_order memoryOrder)
     if (m_comparisonKey.exchange(-1, memoryOrder) != -1)
         emit comparisonKeyChanged(-1);
 
-    if (!m_notifyAllChanges.load(memoryOrder) || !m_textureIsDynamic.load(memoryOrder))
-    {
-        m_oldTextureSize.store({}, memoryOrder);
-        m_oldNativeTextureSize.store({}, memoryOrder);
-        m_oldNormalizedTextureSubRect.store({}, memoryOrder);
-        m_oldComparisonKey.store(-1, memoryOrder);
-    }
+    m_oldTextureSize.store({}, memoryOrder);
+    m_oldNativeTextureSize.store({}, memoryOrder);
+    m_oldNormalizedTextureSubRect.store({}, memoryOrder);
+    m_oldComparisonKey.store(-1, memoryOrder);
 }
 
 void TextureProviderObserver::adjustSampleAndNotifyConnection()
