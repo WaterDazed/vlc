@@ -126,6 +126,7 @@ Widgets.PageLoader {
 
                 ctx: MainCtx
                 sd_source: NetworkDeviceModel.CAT_INTERNET
+                searchPattern: MainCtx.search.pattern
             }
 
             NetworkDeviceContextMenu {
@@ -168,6 +169,7 @@ Widgets.PageLoader {
             model: NetworkMediaModel {
                 id: mediaModel
                 ctx: MainCtx
+                searchPattern: MainCtx.search.pattern
             }
 
             contextMenu: NetworkMediaContextMenu {
