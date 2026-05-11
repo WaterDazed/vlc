@@ -10,13 +10,14 @@ CLEANFILES = $(BUILT_SOURCES) $(pkgconfig_DATA)
 pkginclude_HEADERS = \
 	../include/vlc/libvlc.h \
 	../include/vlc/libvlc_dialog.h \
-	../include/vlc/libvlc_events.h \
+	../include/vlc/libvlc_downloader.h \
 	../include/vlc/libvlc_media.h \
 	../include/vlc/libvlc_media_discoverer.h \
 	../include/vlc/libvlc_media_list.h \
 	../include/vlc/libvlc_media_list_player.h \
 	../include/vlc/libvlc_media_player.h \
 	../include/vlc/libvlc_media_track.h \
+	../include/vlc/libvlc_parser.h \
 	../include/vlc/libvlc_renderer_discoverer.h \
 	../include/vlc/libvlc_picture.h \
 	../include/vlc/libvlc_version.h \
@@ -34,12 +35,12 @@ libvlc_la_SOURCES = \
 	renderer_discoverer_internal.h \
 	core.c \
 	dialog.c \
+	downloader.c \
 	renderer_discoverer.c \
 	error.c \
 	log.c \
 	video.c \
 	audio.c \
-	event.c \
 	media.c \
 	media_track.c \
 	media_player.c \
@@ -47,6 +48,7 @@ libvlc_la_SOURCES = \
 	media_list_path.h \
 	media_list_player.c \
 	media_discoverer.c \
+	parser.c \
 	picture.c \
 	libvlc.pc.in \
 	libvlc.sym \

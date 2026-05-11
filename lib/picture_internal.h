@@ -47,4 +47,6 @@ libvlc_picture_t* libvlc_picture_new( vlc_object_t* p_obj, picture_t* p_pic,
 libvlc_picture_list_t* libvlc_picture_list_from_attachments( input_attachment_t* const* attachments,
                                                              size_t nb_attachments );
 
+libvlc_picture_list_t* libvlc_picture_list_dup( libvlc_picture_list_t *source );
+
 #endif /* PICTURE_INTERNAL_H */

@@ -130,9 +130,10 @@ static ssize_t AccessReadBlocking(void *opaque, unsigned char *buf, size_t len)
     return 0;
 }
 
-static void UnblockRead(const libvlc_event_t *event, void *opaque)
+static void UnblockRead(void *opaque, libvlc_media_t *media, libvlc_stopping_reason_t reason)
 {
-    (void)event;
+    (void)media;
+    (void)reason;
     fprintf(stderr, "test: Player: Unblock read\n");
     struct imem_root *imem = opaque;
     vlc_sem_post(&imem->wait);
@@ -162,40 +163,43 @@ static void test_media_callback(libvlc_instance_t *vlc)
     struct imem_root *imem = imem_root_New();
 
     fprintf(stderr, "test: 1/ checking that media can terminate\n");
-    libvlc_media_t *media = libvlc_media_new_callbacks(
-            AccessOpen,
-            AccessRead,
-            NULL,//AccessSeek,
-            AccessClose,
-            imem);
+    static const struct libvlc_media_open_cbs cbs = {
+        .version = LIBVLC_MEDIA_OPEN_CBS_VER_LATEST,
+        .open = AccessOpen,
+        .read = AccessRead,
+        .close = AccessClose,
+    };
+    static const struct libvlc_media_player_cbs player_cbs = {
+        .version = LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+        .on_state_changed = mp_on_state_changed,
+    };
+    libvlc_media_t *media;
+
+    media = libvlc_media_new_callbacks(&cbs, imem);
     assert(media != NULL);
 
-    libvlc_media_player_t *player = libvlc_media_player_new(vlc);
+    struct mp_event_ctx ctx;
+    mp_event_ctx_init(&ctx);
+    libvlc_media_player_t *player =
+        libvlc_media_player_new(vlc, &player_cbs, &ctx);
     assert(player != NULL);
-
-    struct mp_event_ctx wait_play;
-    mp_event_ctx_init(&wait_play);
-    libvlc_event_manager_t *mgr = libvlc_media_player_event_manager(player);
-    libvlc_event_attach(mgr, libvlc_MediaPlayerOpening, mp_event_ctx_on_event, &wait_play);
-
-    struct mp_event_ctx wait_stopped;
-    mp_event_ctx_init(&wait_stopped);
-    libvlc_event_attach(mgr, libvlc_MediaPlayerStopped, mp_event_ctx_on_event, &wait_stopped);
+    mp_event_ctx_set_mp(&ctx, player);
 
     libvlc_media_player_set_media(player, media);
     libvlc_media_player_play(player);
 
-    mp_event_ctx_wait(&wait_play);
-    libvlc_event_detach(mgr, libvlc_MediaPlayerOpening, mp_event_ctx_on_event, &wait_play);
+    mp_event_ctx_wait_state(&ctx, libvlc_Opening);
+    mp_event_ctx_wait_state(&ctx, libvlc_Playing);
 
-    // TODO: Wait event Opening
     libvlc_media_player_stop_async(player);
 
-    mp_event_ctx_wait(&wait_stopped);
-    libvlc_event_detach(mgr, libvlc_MediaPlayerStopped, mp_event_ctx_on_event, &wait_stopped);
+    mp_event_ctx_wait_state(&ctx, libvlc_Stopping);
+    mp_event_ctx_wait_state(&ctx, libvlc_Stopped);
 
     vlc_sem_wait(&imem->done);
     libvlc_media_release(media);
+
+    mp_event_ctx_destroy(&ctx);
     libvlc_media_player_release(player);
 
     free(imem);
@@ -205,25 +209,26 @@ static void test_media_callback_interrupt(libvlc_instance_t *vlc)
 {
     struct imem_root *imem = imem_root_New();
 
+    static const struct libvlc_media_player_cbs player_cbs = {
+        .version = LIBVLC_MEDIA_PLAYER_CBS_VER_LATEST,
+        .on_media_stopping = UnblockRead,
+    };
+
     fprintf(stderr, "test: 2/ checking that we can terminate after the input\n");
-    libvlc_media_player_t *player = libvlc_media_player_new(vlc);
+    libvlc_media_player_t *player =
+        libvlc_media_player_new(vlc, &player_cbs, imem);
     assert(player != NULL);
-    libvlc_event_manager_t *mgr = libvlc_media_player_event_manager(player);
-    assert(mgr != NULL);
 
-    libvlc_media_t *media = libvlc_media_new_callbacks(
-            AccessOpen,
-            AccessReadBlocking,
-            NULL,//AccessSeek,
-            AccessClose,
-            imem);
+    static const struct libvlc_media_open_cbs cbs = {
+        .version = LIBVLC_MEDIA_OPEN_CBS_VER_LATEST,
+        .open = AccessOpen,
+        .read = AccessReadBlocking,
+        .close = AccessClose,
+    };
+    libvlc_media_t *media;
+
+    media = libvlc_media_new_callbacks(&cbs, imem);
     assert(media != NULL);
-
-    struct mp_event_ctx wait_play;
-    struct mp_event_ctx wait_stopped;
-    mp_event_ctx_init(&wait_play);
-    mp_event_ctx_init(&wait_stopped);
-    libvlc_event_attach(mgr, libvlc_MediaPlayerMediaStopping, UnblockRead, imem);
 
     fprintf(stderr, "test: set initial media\n");
     libvlc_media_player_set_media(player, media);
@@ -234,12 +239,8 @@ static void test_media_callback_interrupt(libvlc_instance_t *vlc)
     vlc_sem_wait(&imem->accesses[0].read_blocking);
 
     libvlc_media_release(media);
-    media = libvlc_media_new_callbacks(
-            AccessOpen,
-            AccessReadBlocking,
-            NULL,
-            AccessClose,
-            imem);
+
+    media = libvlc_media_new_callbacks(&cbs, imem);
     assert(media != NULL);
     fprintf(stderr, "test: changing to new media\n");
     libvlc_media_player_set_media(player, media);

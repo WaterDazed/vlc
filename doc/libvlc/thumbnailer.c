@@ -25,7 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <locale.h>
-#include <pthread.h>
+#include <semaphore.h>
 #include <errno.h>
 #include <time.h>
 #include <vlc/vlc.h>
@@ -99,23 +99,21 @@ static libvlc_instance_t *create_libvlc(void)
     return libvlc_new(sizeof args / sizeof *args, args);
 }
 
-static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  wait_callback;
-static bool done;
-
-static void callback(const libvlc_event_t *ev, void *param)
+struct cbs_context
 {
-    if (ev->type == libvlc_MediaThumbnailGenerated)
-    {
-        libvlc_picture_t** pic = param;
-        pthread_mutex_lock(&lock);
-        *pic = ev->u.media_thumbnail_generated.p_thumbnail;
-        if (*pic != NULL)
-            libvlc_picture_retain(*pic);
-        done = true;
-        pthread_cond_signal(&wait_callback);
-        pthread_mutex_unlock(&lock);
-    }
+    sem_t sem;
+    libvlc_picture_t *outpicture;
+};
+
+static void callback(void *opaque, libvlc_parser_task *task, libvlc_picture_t *picture)
+{
+    struct cbs_context *ctx = opaque;
+    if (picture != NULL)
+        libvlc_picture_retain(picture);
+
+    ctx->outpicture = picture;
+    sem_post(&ctx->sem);
+    libvlc_parser_task_release(task);
 }
 
 #define VLC_THUMBNAIL_TIMEOUT   5 /* 5 secs */
@@ -123,38 +121,61 @@ static void callback(const libvlc_event_t *ev, void *param)
 static void snapshot(libvlc_instance_t *vlc, libvlc_media_t *m,
                      int width, char *out_with_ext)
 {
-    libvlc_event_manager_t *em = libvlc_media_event_manager(m);
-    assert(em);
+    struct cbs_context ctx;
+    sem_init(&ctx.sem, 0, 0);
+    ctx.outpicture = NULL;
 
-    libvlc_picture_t* pic = NULL;
-    libvlc_event_attach(em, libvlc_MediaThumbnailGenerated, callback, &pic);
-    done = false;
-    libvlc_media_thumbnail_request_t* req =
-            libvlc_media_thumbnail_request_by_pos(vlc, m,
-                                          VLC_THUMBNAIL_POSITION,
-                                          libvlc_media_thumbnail_seek_fast,
-                                          width, 0, false, libvlc_picture_Png,
-                                          VLC_THUMBNAIL_TIMEOUT * 1000);
-    if (!req)
+    struct libvlc_thumbnailer_cbs cbs = {
+        .version = LIBVLC_THUMBNAILER_CBS_VER_LATEST,
+        .on_ended = callback,
+    };
+
+    const struct libvlc_parser_cfg cfg = {
+        .version = LIBVLC_PARSER_CFG_VER_LATEST,
+        .max_thumbnailer_threads = 1,
+        .timeout = VLC_THUMBNAIL_TIMEOUT * 1000,
+    };
+
+    libvlc_parser_t *parser = libvlc_parser_new(vlc, &cfg);
+    if (parser == NULL)
     {
-        fprintf(stderr, "Failed to request thumbnail\n");
+        fprintf(stderr, "Failed to create parser for thumbnail generation\n");
         exit(1);
     }
-    pthread_mutex_lock(&lock);
-    while (!done)
-        pthread_cond_wait(&wait_callback, &lock);
-    pthread_mutex_unlock(&lock);
-    libvlc_media_thumbnail_request_destroy(req);
-    libvlc_event_detach(em, libvlc_MediaThumbnailGenerated, callback, &pic);
 
-    if (!pic)
+    libvlc_thumbnailer_request_t request = {
+        .media = m,
+        .seek = {
+            .type = libvlc_thumbnailer_seek_pos,
+            .pos = VLC_THUMBNAIL_POSITION,
+            .speed = libvlc_media_thumbnail_seek_fast,
+        },
+        .width = width,
+        .height = 0,
+        .crop = false,
+        .type = libvlc_picture_Png,
+        .hw_dec = false,
+    };
+
+    libvlc_parser_task *task = libvlc_parser_queue_thumbnailing(parser, &request,
+                                                                &cbs, &ctx);
+    if (task == NULL)
+    {
+        fprintf(stderr, "Failed to queue thumbnail generation request\n");
+        exit(1);
+    }
+
+    sem_wait(&ctx.sem);
+    libvlc_parser_destroy(parser);
+
+    if (!ctx.outpicture)
     {
         fprintf(stderr, "Snapshot has not been written (timeout after %d secs!\n",
                 VLC_THUMBNAIL_TIMEOUT);
         exit(1);
     }
-    int res = libvlc_picture_save(pic, out_with_ext);
-    libvlc_picture_release(pic);
+    int res = libvlc_picture_save(ctx.outpicture, out_with_ext);
+    libvlc_picture_release(ctx.outpicture);
     if (res)
     {
         fprintf(stderr, "Failed to save the thumbnail\n");
@@ -175,8 +196,6 @@ int main(int argc, const char **argv)
 
     cmdline(argc, argv, &in, &out, &out_with_ext, &width);
 
-    pthread_cond_init(&wait_callback, NULL);
-
     /* starts vlc */
     libvlc = create_libvlc();
     assert(libvlc);
@@ -196,8 +215,6 @@ int main(int argc, const char **argv)
 
     libvlc_media_release(m);
     libvlc_release(libvlc);
-
-    pthread_cond_destroy(&wait_callback);
 
     return 0;
 }

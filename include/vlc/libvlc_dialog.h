@@ -55,6 +55,18 @@ typedef enum libvlc_dialog_question_type
  */
 typedef struct libvlc_dialog_cbs
 {
+/**
+ * Initial version of the struct defining callbacks for
+ * libvlc_dialog_set_callbacks
+ */
+#define LIBVLC_DIALOG_CBS_VER_0 0
+#define LIBVLC_DIALOG_CBS_VER_LATEST LIBVLC_DIALOG_CBS_VER_0
+
+    /**
+     * Version of struct libvlc_dialog_cbs
+     */
+    uint32_t version;
+
     /**
      * Called when a login dialog needs to be displayed
      *
