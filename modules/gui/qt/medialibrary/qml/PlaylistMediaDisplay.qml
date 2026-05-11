@@ -97,8 +97,6 @@ FocusScope {
         else
             index = 0
 
-        view.selectionModel.select(model.index(index, 0), ItemSelectionModel.ClearAndSelect);
-
         view.positionViewAtIndex(index, ItemView.Contain)
 
         view.setCurrentItem(index)
@@ -196,6 +194,22 @@ FocusScope {
         model: root.model
         ctx: MainCtx
 
+        displayActionKeyboardSelectionMode: (view.mode !== Widgets.ListViewExt.Mode.Select)
+        displayActionKeyboardMoveMode: (view.mode !== Widgets.ListViewExt.Mode.Move)
+        displayActionKeyboardResetMode: (view.mode !== Widgets.ListViewExt.Mode.Normal)
+
+        onKeyboardSelectionModeRequested: {
+            view.mode = Widgets.ListViewExt.Mode.Select
+        }
+
+        onKeyboardMoveModeRequested: {
+            view.mode = Widgets.ListViewExt.Mode.Move
+        }
+
+        onKeyboardResetModeRequested: {
+            view.mode = Widgets.ListViewExt.Mode.Normal
+        }
+
         function tableView_popup(index, selectedIndexes, globalPos) {
             popup(selectedIndexes, globalPos)
         }
@@ -224,7 +238,17 @@ FocusScope {
 
             visible: view.count > 0
 
-            text: root.name
+            text: {
+                switch (view.mode) {
+                case Widgets.ListViewExt.Mode.Select:
+                    return root.name + qsTr(" (Selecting items: %1)").arg(view.selectionModel.selectedIndexesFlat.length)
+                case Widgets.ListViewExt.Mode.Move:
+                    return root.name + qsTr(" (Moving items: %1)").arg(view.selectionModel.selectedIndexesFlat.length)
+                case Widgets.ListViewExt.Mode.Normal:
+                default:
+                    return root.name
+                }
+            }
         }
 
         fadingEdge.enableBeginningFade: root.enableBeginningFade
@@ -233,6 +257,11 @@ FocusScope {
         Navigation.parentItem: root
 
         Navigation.cancelAction: function () {
+            if (view.mode !== Widgets.ListViewExt.Normal) {
+                view.mode = Widgets.ListViewExt.Normal
+                return
+            }
+
             if (view.currentIndex <= 0) {
                 root.Navigation.defaultNavigationCancel()
             } else {
