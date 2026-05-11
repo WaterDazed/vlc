@@ -227,6 +227,11 @@ Item {
         if (live) {
             ds1layer.parent = root
             ds2layer.inhibitParent = false
+
+            if (root._queuedScheduledUpdate) {
+                console.debug(root, "scheduleUpdate(): `live` is turned on, canceling the scheduled update.")
+                root._queuedScheduledUpdate = false
+            }
         } else {
             root.scheduleUpdate() // this triggers releasing intermediate layers (when applicable)
         }
@@ -378,6 +383,16 @@ Item {
             if (!ds2layer) // context is lost, Qt bug (reproduced with 6.2)
                 return
 
+            if (root._window) {
+                root._window.afterAnimating.disconnect(ds2layer, ds2layer.scheduleChainedUpdate)
+            }
+
+            // If `live` is turned on during a chained update, we do not need to continue:
+            if (root.live) {
+                root._window = null
+                return
+            }
+
             ds2.sourceTextureSize = ds2.tpObserver.nativeTextureSize
             if (ds2.ensurePolished)
                 ds2.ensurePolished()
@@ -386,7 +401,6 @@ Item {
             ds2layer.scheduleUpdate()
 
             if (root._window) {
-                root._window.afterAnimating.disconnect(ds2layer, ds2layer.scheduleChainedUpdate)
                 root._window.afterAnimating.connect(us1layer, us1layer.scheduleChainedUpdate)
             }
         }
@@ -424,6 +438,16 @@ Item {
             if (!us1layer) // context is lost, Qt bug (reproduced with 6.2)
                 return
 
+            if (root._window) {
+                root._window.afterAnimating.disconnect(us1layer, us1layer.scheduleChainedUpdate)
+            }
+
+            // If `live` is turned on during a chained update, we do not need to continue:
+            if (root.live) {
+                root._window = null
+                return
+            }
+
             us1.sourceTextureSize = us1.tpObserver.nativeTextureSize
             if (us1.ensurePolished)
                 us1.ensurePolished()
@@ -431,13 +455,25 @@ Item {
             us1layer.scheduleUpdate()
 
             if (root._window) {
-                root._window.afterAnimating.disconnect(us1layer, us1layer.scheduleChainedUpdate)
                 root._window.afterAnimating.connect(us1layer, us1layer.releaseResourcesOfIntermediateLayers)
             }
         }
 
         function releaseResourcesOfIntermediateLayers() {
             if (!ds1layer || !ds2layer) // context is lost, Qt bug (reproduced with 6.2)
+                return
+
+            if (root._window) {
+                root._window.afterAnimating.disconnect(us1layer, us1layer.releaseResourcesOfIntermediateLayers)
+                root._window = null
+            }
+
+            // If `live` is turned on during a chained update, we should not attempt to
+            // release resources by removing layers from the scene, because turning live
+            // on already brings the layer to the scene and doing so would make the
+            // last layer (`us1layer`) being live while having a `sourceItem` that is
+            // not in the scene anymore:
+            if (root.live)
                 return
 
             us2.sourceTextureSize = us2.tpObserver.nativeTextureSize
@@ -448,11 +484,6 @@ Item {
             // https://doc.qt.io/qt-6/qquickitem.html#graphics-resource-handling
             ds1layer.parent = null
             ds2layer.inhibitParent = true
-
-            if (root._window) {
-                root._window.afterAnimating.disconnect(us1layer, us1layer.releaseResourcesOfIntermediateLayers)
-                root._window = null
-            }
 
             if (root._queuedScheduledUpdate) {
                 // Tried calling `scheduleUpdate()` before the ongoing chained updates completed.
