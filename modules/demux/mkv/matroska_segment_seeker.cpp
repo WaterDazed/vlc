@@ -318,7 +318,8 @@ SegmentSeeker::get_seekpoints( matroska_segment_c& ms, vlc_tick_t target_pts,
         if ( start.fpos == std::numeric_limits<fptr_t>::max() )
             return tracks_seekpoint_t();
 
-        if ( (end.fpos != std::numeric_limits<fptr_t>::max() || !ms.b_cues) &&
+        if ( ms.sys.b_fastseekable &&
+             (end.fpos != std::numeric_limits<fptr_t>::max() || !ms.b_cues) &&
              (needle_pts != start.pts || start.trust_level < Seekpoint::TRUSTED))
             // do not read the whole (infinite?) file to get seek indexes
             // do not generate an index if we already have the correct seekpoint
@@ -485,30 +486,30 @@ SegmentSeeker::mkv_jump_to( matroska_segment_c& ms, fptr_t fpos )
 
             ms.es.I_O().setFilePointer( *cluster_it );
             ms.ep.reconstruct( &ms.es, ms.segment, &ms.sys.demuxer );
-        }
 
-        for(;;)
-        {
-            ms.cluster = NULL;
-            EbmlElement *el = ms.ep.Get();
-            if( el == nullptr )
+            for(;;)
             {
-                msg_Err( &ms.sys.demuxer, "unable to read KaxCluster during seek, giving up" );
-                return;
+                ms.cluster = NULL;
+                EbmlElement *el = ms.ep.Get();
+                if( el == nullptr )
+                {
+                    msg_Err( &ms.sys.demuxer, "unable to read KaxCluster during seek, giving up" );
+                    return;
+                }
+                if (!MKV_IS_ID( el, KaxCluster ))
+                    continue; // look for the next element
+
+                ms.cluster = static_cast<KaxCluster*>( el );
+
+                i_cluster_pos = ms.cluster->GetElementPosition();
+
+                add_cluster_position( i_cluster_pos );
+
+                mark_range_as_searched( Range( i_cluster_pos, ms.es.I_O().getFilePointer() ) );
+
+                if ( !ms.cluster->IsFiniteSize() || ms.cluster->GetEndPosition() >= fpos)
+                    break;
             }
-            if (!MKV_IS_ID( el, KaxCluster ))
-                continue; // look for the next element
-
-            ms.cluster = static_cast<KaxCluster*>( el );
-
-            i_cluster_pos = ms.cluster->GetElementPosition();
-
-            add_cluster_position( i_cluster_pos );
-
-            mark_range_as_searched( Range( i_cluster_pos, ms.es.I_O().getFilePointer() ) );
-
-            if ( !ms.cluster->IsFiniteSize() || ms.cluster->GetEndPosition() >= fpos)
-                break;
         }
     }
     else if (ms.cluster != NULL)
