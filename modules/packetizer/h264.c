@@ -254,7 +254,7 @@ static void ActivateSets( decoder_t *p_dec, const h264_sequence_parameter_set_t 
                 p_dec->fmt_out.p_extra = malloc( i_total );
                 if( p_dec->fmt_out.p_extra )
                 {
-                    p_dec->fmt_out.i_extra = i_total;
+                    p_dec->fmt_out.i_extra =
                     block_ChainExtract( p_xpsblocks, p_dec->fmt_out.p_extra, i_total );
                 }
                 block_ChainRelease( p_xpsblocks );
@@ -1255,4 +1255,3 @@ static bool ParseSeiCallback( const hxxx_sei_data_t *p_sei_data, void *cbdata )
 
     return true;
 }
-
