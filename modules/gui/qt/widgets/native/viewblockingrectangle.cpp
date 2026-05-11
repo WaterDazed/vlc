@@ -159,14 +159,14 @@ QSGNode *ViewBlockingRectangle::updatePaintNode(QSGNode *oldNode, UpdatePaintNod
         if (m_updateRenderPosition)
         {
             observerNode = createObserverNode();
+
+            // Initial position:
+            m_renderPosition = mapToScene(QPointF(0,0));
         }
         else
         {
             observerNode = nullptr;
         }
-
-        // Initial position:
-        m_renderPosition = mapToScene(QPointF(0,0));
 
         if (m_renderingEnabled)
         {
@@ -327,5 +327,20 @@ void ViewBlockingRectangle::setUpdateRenderPosition(bool _update)
 bool ViewBlockingRectangle::updateRenderPosition() const
 {
     return m_updateRenderPosition;
+}
+
+void ViewBlockingRectangle::componentComplete()
+{
+    QQuickItem::componentComplete();
+
+    if (isVisible())
+    {
+        m_renderSize = QSizeF(width(), height());
+
+        if (m_updateRenderPosition)
+        {
+            m_renderPosition = mapToScene(QPointF(0.0, 0.0));
+        }
+    }
 }
 
