@@ -414,8 +414,10 @@ void MainCtx::loadPrefs(const bool callSignals)
             signal(this);
     };
 
+    bool minimalMode = false;
     /* Are we in the enhanced always-video mode or not ? */
-    loadFromVLCOption(m_minimalView, "qt-minimal-view", &MainCtx::minimalViewChanged);
+    loadFromVLCOption(minimalMode, "qt-minimal-view", &MainCtx::minimalViewChanged);
+    setMinimalView(minimalMode);
 
     loadFromVLCOption(m_bgCone, "qt-bgcone", &MainCtx::bgConeToggled);
 
@@ -698,11 +700,22 @@ void MainCtx::setbgCone(bool bgCone)
 
 void MainCtx::setMinimalView(bool minimalView)
 {
-    if (m_minimalView == minimalView)
+    if (m_mainViewModes.testFlag(MINIMAL_MODE) == minimalView)
         return;
 
-    m_minimalView = minimalView;
+    m_mainViewModes.setFlag(MINIMAL_MODE, minimalView);
+    emit mainViewModesChanged(m_mainViewModes);
     emit minimalViewChanged();
+}
+
+void MainCtx::setPlayerView(bool enable)
+{
+    if (m_mainViewModes.testFlag(PLAYER_MODE) == enable)
+        return;
+
+    m_mainViewModes.setFlag(PLAYER_MODE, enable);
+    emit mainViewModesChanged(m_mainViewModes);
+    emit playerViewChanged();
 }
 
 void MainCtx::setShowRemainingTime( bool show )
@@ -1077,6 +1090,16 @@ void MainCtx::setAttachedToolTip(QObject *toolTip)
         qmlWarning(obj) << "Could not set self as custom ToolTip!";
     obj->deleteLater();
 #endif
+}
+
+MainCtx::MainViewMode MainCtx::getEffectiveMainViewMode() const {
+    //priority applies across modes
+    if (m_mainViewModes & MINIMAL_MODE)
+        return MINIMAL_MODE;
+    else if (m_mainViewModes & PLAYER_MODE)
+        return PLAYER_MODE;
+    else
+        return MEDIALIB_MODE;
 }
 
 double MainCtx::dp(const double px, const double scale)
