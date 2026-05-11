@@ -269,7 +269,20 @@ FocusScope {
                 // need to use background coloring. It is currently a todo to further reduce video memory
                 // consumption by covering the effect for only the area of interest, currently the blur
                 // effect does not support having an extension area for postprocessing.
-                layer.sourceRect: Qt.rect(0, 0, Math.min(stackView.width + edgeExtension, stackViewParent.width), height + edgeExtension)
+                layer.sourceRect: Qt.rect(0, 0,
+                                          Helpers.alignUp(Math.min(stackView.width + edgeExtension, stackViewParent.width), alignNumber),
+                                          Helpers.alignUp(height + edgeExtension, alignNumber))
+
+                property real eDPR: MainCtx.effectiveDevicePixelRatio(Window.window) || 1.0
+                readonly property int alignNumber: Helpers.denominatorForFloat(eDPR)
+
+                Connections {
+                    target: MainCtx
+
+                    function onIntfDevicePixelRatioChanged() {
+                        stackViewParent.eDPR = MainCtx.effectiveDevicePixelRatio(stackViewParent.Window.window) || 1.0
+                    }
+                }
 
                 Rectangle {
                     // Extension of parent rectangle for the bottom extension.
@@ -284,6 +297,16 @@ FocusScope {
                 layer.effect: Widgets.PartialEffect {
                     id: stackViewParentLayerEffect
 
+                    // Setting `height` does not seem to work here. Anchoring the effect is not very nice, but it works:
+                    anchors.fill: stackViewParent // WARNING: layered item is not necessarily the visual parent of its layer effect.
+                    anchors.bottomMargin: (stackViewParent.height - stackViewParent.layer.sourceRect.height)
+                    // Layer width is limited to `stackView` width to save memory, in `PartialEffect` the source visual uses the
+                    // size of the `PartialEffect` unless `sourceVisualRect` is used, so we define the boundary in `PartialEffect`
+                    // for the source visual here. The effect rect exceeds the boundaries of `PartialEffect` due to this (see
+                    // `effectRect`), which is not particularly nice, but there is not much we can do about that here without
+                    // using `sourceVisualRect`, and saving video memory is considered more important:
+                    anchors.rightMargin: (stackViewParent.width - stackViewParent.layer.sourceRect.width)
+
                     blending: stackViewParent.color.a < (1.0 - Number.EPSILON)
 
                     // Each pass of the blur effect also suffers from the border neighbour pixel issue mentioned
@@ -291,15 +314,13 @@ FocusScope {
                     // we extend both the top and the bottom edges and use viewport to prevent overdraw:
                     effectRect: Qt.rect(0,
                                         stackView.height - stackViewParent.edgeExtension,
-                                        width,
+                                        stackViewParent.width,
                                         loaderProgress.height + miniPlayer.height + 2 * stackViewParent.edgeExtension)
 
-                    // Edge extension is not necessary here, but it is provided to prevent stretching glitch at
-                    // initialization. Currently this is not a problem because the effect is opaque since the
-                    // background is opaque, and effect visual has higher z than the source visual.
-                    sourceVisualRect: Qt.rect(0, 0,
-                                              stackViewParent.layer.sourceRect.width,
-                                              stackView.height + (frostedGlassEffect.blending ? 0 : stackViewParent.edgeExtension))
+                    // WARNING: We are not using `sourceVisualRect` because it is not trivial to guarantee that
+                    //          the visual (`ShaderEffect`) scene graph sizing and sub-texturing are synchronized.
+                    //          This can cause the visual to deviate from 1:1 representation of the texture
+                    //          momentarily, leading to sizing glitches during initialization and animations.
 
                     effect: frostedGlassEffect
 
