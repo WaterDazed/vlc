@@ -133,6 +133,7 @@ NSString * const VLCLibraryModelDiscoveryFailed = @"VLCLibraryModelDiscoveryFail
 - (void)resetCachedListOfMonitoredFolders;
 - (void)resetCachedListOfMediaTitles;
 - (void)mediaItemThumbnailGenerated:(VLCMediaLibraryMediaItem *)mediaItem;
+- (void)cleanupMissingRecentMediaItems;
 - (void)handleMediaItemAddedEvent:(const vlc_ml_event_t * const)p_event;
 - (void)handlePlaylistAddedEvent:(const vlc_ml_event_t * const)p_event;
 - (void)handleMediaItemDeletionEvent:(const vlc_ml_event_t * const)p_event;
@@ -341,6 +342,7 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
         });
 
         [self resetCachedListOfMonitoredFolders];
+        [self cleanupMissingRecentMediaItems];
     }
     return self;
 }
@@ -355,6 +357,53 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
 - (void)dealloc
 {
     [_defaultNotificationCenter removeObserver:self];
+}
+
+- (void)cleanupHistoryMediaList:(vlc_ml_media_list_t *)p_media_list
+{
+    if (p_media_list == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < p_media_list->i_nb_items; i++) {
+        vlc_ml_media_t * const p_media = &p_media_list->p_items[i];
+        if (p_media->p_files == NULL || p_media->p_files->i_nb_items == 0) {
+            continue;
+        }
+
+        bool anyFilePresent = false;
+        NSFileManager * const fileManager = NSFileManager.defaultManager;
+        for (size_t j = 0; j < p_media->p_files->i_nb_items; j++) {
+            vlc_ml_file_t * const file = &p_media->p_files->p_items[j];
+            NSString *filePath = nil;
+            if (file->psz_mrl && strncmp(file->psz_mrl, "file://", 7) == 0) {
+                filePath = [NSURL URLWithString:[NSString stringWithUTF8String:file->psz_mrl]].path;
+            }
+            if (filePath && [fileManager fileExistsAtPath:filePath]) {
+                anyFilePresent = true;
+                break;
+            }
+        }
+
+        if (!anyFilePresent) {
+            vlc_ml_media_set_played(_p_mediaLibrary, p_media->i_id, false);
+        }
+    }
+}
+
+- (void)cleanupMissingRecentMediaItems
+{
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        const vlc_ml_query_params_t queryParams = { .i_nbResults = 0 }; // No limit
+
+        vlc_ml_media_list_t * const p_video_list = vlc_ml_list_video_history(self->_p_mediaLibrary, &queryParams);
+        [self cleanupHistoryMediaList:p_video_list];
+        vlc_ml_media_list_release(p_video_list);
+
+        vlc_ml_media_list_t * const p_audio_list = vlc_ml_list_audio_history(self->_p_mediaLibrary, &queryParams);
+        [self cleanupHistoryMediaList:p_audio_list];
+        vlc_ml_media_list_release(p_audio_list);
+    });
 }
 
 - (void)mediaItemThumbnailGenerated:(VLCMediaLibraryMediaItem *)mediaItem
