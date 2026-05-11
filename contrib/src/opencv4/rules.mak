@@ -3,11 +3,9 @@
 OPENCV4_VERSION := 4.4.0
 OPENCV4_URL := $(GITHUB)/opencv/opencv/archive/$(OPENCV4_VERSION).tar.gz
 
-ifneq ($(findstring opencv4,$(PKGS_ENABLE)),)
 PKGS += opencv4
 ifeq ($(call need_pkg,"opencv4 >= 4.0.0"),)
 PKGS_FOUND += opencv4
-endif
 endif
 
 DEPS_opencv4 = zlib $(DEPS_zlib) jpeg $(DEPS_jpeg) png $(DEPS_png)
@@ -19,11 +17,17 @@ $(TARBALLS)/opencv-$(OPENCV4_VERSION).tar.gz:
 
 opencv4: opencv-$(OPENCV4_VERSION).tar.gz .sum-opencv4
 	$(UNPACK)
+	# fix build with newer CMake
+	sed -i.orig 's,cmake_minimum_required(VERSION 2.8.12.2),cmake_minimum_required(VERSION 3.5),' $(UNPACK_DIR)/cmake/OpenCVGenPkgconfig.cmake
+	# enable pkg-config on all configurations
+	sed -i.orig 's,if(MSVC OR IOS),if(0),' $(UNPACK_DIR)/cmake/OpenCVGenPkgconfig.cmake
+	# always install pkgconfig file
+	sed -i.orig 's,if(UNIX AND NOT ANDROID),if(1),' $(UNPACK_DIR)/cmake/OpenCVGenPkgconfig.cmake
 	$(MOVE)
 
 # only enable necessary pkgs
 OPENCV4_CONF := \
-	-DBUILD_LIST=core,imgproc,imgcodecs \
+	-DBUILD_LIST=core,imgproc,imgcodecs,objdetect \
 	-DOPENCV_GENERATE_PKGCONFIG=ON \
 	-DBUILD_EXAMPLES=OFF \
 	-DBUILD_TESTS=OFF \
@@ -49,7 +53,12 @@ OPENCV4_CONF := \
 	-DWITH_JASPER=OFF \
 	-DWITH_TIFF=OFF \
 	-DWITH_COCOA=OFF \
-	-DBUILD_PROTOBUF=OFF
+	-DBUILD_PROTOBUF=OFF \
+	-DWITH_CAROTENE=OFF \
+	-DWITH_ADE=OFF \
+	-DBUILD_ZLIB=OFF \
+	-DBUILD_PNG=OFF \
+	-DBUILD_JPEG=OFF
 
 # NEON mandatory on aarch64
 ifneq ($(findstring aarch64,$(HOST)),)
@@ -69,5 +78,4 @@ endif
 	$(HOSTVARS_CMAKE) $(CMAKE) $(OPENCV4_CONF)
 	+$(CMAKEBUILD)
 	$(CMAKEINSTALL)
-	install $(BUILD_DIR)/unix-install/opencv4.pc $(PREFIX)/lib/pkgconfig
 	touch $@
