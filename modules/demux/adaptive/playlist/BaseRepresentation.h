@@ -27,6 +27,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 
 #include "CommonAttributesElements.h"
 #include "CodecDescription.hpp"
@@ -63,6 +64,8 @@ namespace adaptive
                 const std::list<std::string> & getCodecs    () const;
                 void                addCodecs               (const std::string &);
                 void                getCodecsDesc           (CodecDescriptionList *) const;
+                void                setCustomElementText    (const std::string &, const std::string &);
+                const std::string & getCustomElementText    (const std::string &) const;
                 virtual void        pruneByPlaybackTime     (vlc_tick_t) override;
 
                 virtual vlc_tick_t  getMinAheadTime         (uint64_t) const;
@@ -93,6 +96,7 @@ namespace adaptive
                 BaseAdaptationSet                  *adaptationSet;
                 uint64_t                            bandwidth;
                 std::list<std::string>              codecs;
+                std::map<std::string, std::string>  customElementTexts;
         };
     }
 }

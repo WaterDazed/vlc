@@ -63,6 +63,7 @@ namespace adaptive
                     FixedRate,
                     Predictive,
                     NearOptimal,
+                    MyLogic,
                 };
 
             protected:

@@ -92,7 +92,8 @@ static const AbstractAdaptationLogic::LogicType pi_logics[] = {
                                 AbstractAdaptationLogic::LogicType::RateBased,
                                 AbstractAdaptationLogic::LogicType::FixedRate,
                                 AbstractAdaptationLogic::LogicType::AlwaysLowest,
-                                AbstractAdaptationLogic::LogicType::AlwaysBest};
+                                AbstractAdaptationLogic::LogicType::AlwaysBest,
+                                AbstractAdaptationLogic::LogicType::MyLogic};
 
 static const char *const ppsz_logics_values[] = {
                                 "",
@@ -101,7 +102,8 @@ static const char *const ppsz_logics_values[] = {
                                 "rate",
                                 "fixedrate",
                                 "lowest",
-                                "highest"};
+                                "highest",
+                                "mylogic"};
 
 static const char *const ppsz_logics[] = { N_("Default"),
                                            N_("Predictive"),
@@ -109,7 +111,8 @@ static const char *const ppsz_logics[] = { N_("Default"),
                                            N_("Bandwidth Adaptive"),
                                            N_("Fixed Bandwidth"),
                                            N_("Lowest Bandwidth/Quality"),
-                                           N_("Highest Bandwidth/Quality")};
+                                           N_("Highest Bandwidth/Quality"),
+                                           N_("My Logic")};
 
 static_assert( ARRAY_SIZE( pi_logics ) == ARRAY_SIZE( ppsz_logics ),
     "pi_logics and ppsz_logics shall have the same number of elements" );

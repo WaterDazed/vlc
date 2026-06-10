@@ -36,6 +36,7 @@
 #include "logic/AlwaysLowestAdaptationLogic.hpp"
 #include "logic/PredictiveAdaptationLogic.hpp"
 #include "logic/NearOptimalAdaptationLogic.hpp"
+#include "logic/MyLogic.hpp"
 #include "logic/BufferingLogic.hpp"
 #include "tools/Debug.hpp"
 #include <vlc_stream.h>
@@ -895,6 +896,15 @@ AbstractAdaptationLogic *PlaylistManager::createLogic(AbstractAdaptationLogic::L
             if(predictivelogic)
                 conn->setDownloadRateObserver(predictivelogic);
             logic = predictivelogic;
+            break;
+        }
+        case AbstractAdaptationLogic::LogicType::MyLogic:
+        {
+            MyLogic *mylogic = new (std::nothrow) MyLogic(obj);
+            if(mylogic)
+                conn->setDownloadRateObserver(mylogic);
+            logic = mylogic;
+            break;
         }
 
         default:

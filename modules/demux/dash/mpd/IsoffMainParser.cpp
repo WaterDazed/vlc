@@ -64,6 +64,16 @@ IsoffMainParser::~IsoffMainParser   ()
 {
 }
 
+static Rate parseRate(const std::string &value)
+{
+    const std::string::size_type pos = value.find('/');
+    if(pos == std::string::npos)
+        return Rate(Integer<unsigned int>(value), 1);
+
+    return Rate(Integer<unsigned int>(value.substr(0, pos)),
+                Integer<unsigned int>(value.substr(pos + 1)));
+}
+
 template <class T>
 static void parseAvailability(MPD *mpd, Node *node, T *s)
 {
@@ -388,8 +398,15 @@ void    IsoffMainParser::parseRepresentations (MPD *mpd, Node *adaptationSetNode
         if(repNode->hasAttribute("mimeType"))
             currentRepresentation->setMimeType(repNode->getAttributeValue("mimeType"));
 
+        if(repNode->hasAttribute("frameRate"))
+            static_cast<BaseRepresentation *>(currentRepresentation)->setFrameRate(
+                parseRate(repNode->getAttributeValue("frameRate")));
+
         if(repNode->hasAttribute("codecs"))
             currentRepresentation->addCodecs(repNode->getAttributeValue("codecs"));
+
+        if(repNode->hasAttribute("TI"))
+            currentRepresentation->setCustomElementText("TI", repNode->getAttributeValue("TI"));
 
         size_t i_total = parseSegmentInformation(mpd, repNode, currentRepresentation, &nextid);
         /* Empty Representation with just baseurl (ex: subtitles) */

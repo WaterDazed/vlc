@@ -338,6 +338,8 @@ libvlc_adaptive_la_SOURCES = \
     demux/adaptive/logic/BufferingLogic.cpp \
     demux/adaptive/logic/BufferingLogic.hpp \
     demux/adaptive/logic/IDownloadRateObserver.h \
+    demux/adaptive/logic/MyLogic.cpp \
+    demux/adaptive/logic/MyLogic.hpp \
     demux/adaptive/logic/NearOptimalAdaptationLogic.cpp \
     demux/adaptive/logic/NearOptimalAdaptationLogic.hpp \
     demux/adaptive/logic/PredictiveAdaptationLogic.hpp \

@@ -87,6 +87,18 @@ void BaseRepresentation::addCodecs(const std::string &s)
         codecs.push_back(*it);
 }
 
+void BaseRepresentation::setCustomElementText(const std::string &name, const std::string &text)
+{
+    customElementTexts[name] = text;
+}
+
+const std::string & BaseRepresentation::getCustomElementText(const std::string &name) const
+{
+    static const std::string empty;
+    std::map<std::string, std::string>::const_iterator it = customElementTexts.find(name);
+    return it != customElementTexts.end() ? it->second : empty;
+}
+
 void BaseRepresentation::getCodecsDesc(CodecDescriptionList *desc) const
 {
     std::list<std::string> codecs = getCodecs();

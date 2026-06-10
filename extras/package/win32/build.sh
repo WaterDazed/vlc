@@ -35,17 +35,21 @@ OPTIONS:
    -u            Use the Universal C Runtime (instead of msvcrt)
    -w            Restrict to Windows Store APIs
    -z            Build without GUI (libvlc only)
+   -m            Enable a minimal DASH playback profile
    -o <path>     Install the built binaries in the absolute path
 EOF
 }
 
 ARCH="x86_64"
-while getopts "hra:pcli:sb:dD:xS:uwzo:" OPTION
+while getopts "hrma:pcli:sb:dD:xS:uwzo:" OPTION
 do
      case $OPTION in
          r)
              RELEASE="yes"
              INSTALLER="r"
+         ;;
+         m)
+             DASH_ONLY="yes"
          ;;
          a)
              ARCH=$OPTARG
@@ -351,6 +355,20 @@ if [ -n "$DISABLEGUI" ]; then
     CONTRIBFLAGS="$CONTRIBFLAGS --disable-qt --disable-qtsvg --disable-qtdeclarative --disable-qtgraphicaleffects --disable-qtquickcontrols2"
 fi
 
+if [ -n "$DASH_ONLY" ]; then
+    # Keep FFmpeg, common decoders, HTTPS/TLS, zlib, and libxml2 for DASH.
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-disc --disable-sout"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-live555 --disable-srt --disable-upnp --disable-microdns"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-nfs --disable-ssh2 --disable-smb2 --disable-libdsm"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-cddb --disable-dvdcss --disable-dvdread --disable-dvdnav --disable-bluray"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-x264 --disable-x265 --disable-twolame"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-modplug --disable-projectM --disable-goom --disable-caca --disable-SDL_image"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-fluid --disable-fluidlite --disable-aribb24 --disable-aribb25"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-asdcplib --disable-zvbi --disable-kate --disable-tiger"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-mad --disable-a52 --disable-dca --disable-schroedinger"
+    CONTRIBFLAGS="$CONTRIBFLAGS --disable-lua --disable-luac"
+fi
+
 if [ "$COMPILING_WITH_CLANG" -gt 0 ]; then
     # avoid using gcc-ar with the clang toolchain, if both are installed
     VLC_AR="$TRIPLET-ar"
@@ -513,22 +531,21 @@ fi
 if [ -n "$INSTALL_PATH" ]; then
     CONFIGFLAGS="$CONFIGFLAGS --prefix=$INSTALL_PATH"
 fi
+if [ -n "$DASH_ONLY" ]; then
+    # Keep the adaptive demuxer, HTTP/HTTPS, XML, FFmpeg, common decoders, and video output.
+    CONFIGFLAGS="$CONFIGFLAGS --disable-lua --disable-dbus --disable-vlm --disable-addonmanagermodules"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-sout --disable-live555 --disable-realrtsp"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-sftp --disable-nfs --disable-smbclient --disable-dsm --disable-smb2 --disable-asdcp"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-vcd --disable-libcddb --disable-dvdread --disable-dvdnav --disable-bluray"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-screen --disable-vnc --disable-freerdp --disable-decklink --disable-opencv"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-gme --disable-sid --disable-mod --disable-mpc --disable-shout --disable-gst-decode --disable-goom --disable-projectm --disable-vsxu"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-postproc --disable-mad --disable-a52 --disable-dca"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-theora --disable-schroedinger --disable-daala --disable-oggspots --disable-openapv"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-x264 --disable-x26410b --disable-x262 --disable-x265 --disable-twolame --disable-shine --disable-fdkaac"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-mfx --disable-fluidsynth --disable-fluidlite"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-zvbi --disable-telx --disable-aribsub --disable-aribb25 --disable-kate"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-sdl-image --disable-aa --disable-caca --disable-skins2"
+    CONFIGFLAGS="$CONFIGFLAGS --disable-srt --disable-upnp --disable-microdns --disable-mtp --disable-avahi --disable-update-check"
+fi
 
 ${SCRIPT_PATH}/configure.sh --host=$TRIPLET --with-contrib=../contrib/$CONTRIB_PREFIX $CONFIGFLAGS
-
-info "Compiling"
-make -j$JOBS
-
-if [ "$INSTALLER" = "n" ]; then
-make package-win32-debug-7zip
-make -j$JOBS package-win32 package-msi
-elif [ "$INSTALLER" = "r" ]; then
-make package-win32
-elif [ "$INSTALLER" = "u" ]; then
-make -j$JOBS package-win32-release package-win32-exe package-msi
-sha512sum vlc-*-release.7z
-sha512sum vlc-*-*.exe
-sha512sum vlc-*-*.msi
-elif [ -n "$INSTALL_PATH" ]; then
-make package-win-install
-fi
