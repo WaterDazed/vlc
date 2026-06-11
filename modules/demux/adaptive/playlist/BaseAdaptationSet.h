@@ -50,6 +50,8 @@ namespace adaptive
                 virtual ~BaseAdaptationSet();
 
                 virtual StreamFormat            getStreamFormat() const; /*reimpl*/
+                std::string                     getMediaType() const;
+                void                            setMediaType(const std::string &);
                 const std::vector<BaseRepresentation *>&  getRepresentations() const;
                 BaseRepresentation *            getRepresentationByID(const ID &) const;
                 void                            setSegmentAligned(bool);
@@ -67,6 +69,7 @@ namespace adaptive
             protected:
                 Role                            role;
                 std::vector<BaseRepresentation *>   representations;
+                std::string                     mediaType;
                 std::string                     lang;
                 optional<bool>                  segmentAligned;
                 optional<bool>                  bitswitchAble;

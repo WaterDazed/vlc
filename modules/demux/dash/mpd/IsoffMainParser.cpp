@@ -306,6 +306,9 @@ void    IsoffMainParser::parseAdaptationSets  (MPD *mpd, Node *periodNode, BaseP
         if((*it)->hasAttribute("mimeType"))
             adaptationSet->setMimeType((*it)->getAttributeValue("mimeType"));
 
+        if((*it)->hasAttribute("contentType"))
+            adaptationSet->setMediaType((*it)->getAttributeValue("contentType"));
+
         if((*it)->hasAttribute("lang"))
             adaptationSet->setLang((*it)->getAttributeValue("lang"));
 

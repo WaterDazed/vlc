@@ -20,10 +20,11 @@
 #ifndef MYLOGIC_HPP
 #define MYLOGIC_HPP
 
-#include "NearOptimalAdaptationLogic.hpp"
-
 #include <stdint.h>
+
 #include <vector>
+
+#include "NearOptimalAdaptationLogic.hpp"
 
 namespace adaptive {
 namespace logic {
@@ -41,6 +42,8 @@ class MyLogic : public NearOptimalAdaptationLogic {
 
   private:
 	float readPlaybackRate() const;
+	BaseRepresentation *getNextVideoRepresentation(BaseAdaptationSet *,
+										   BaseRepresentation *);
 
 	std::vector<BaseRepresentation *> sameBandwidthRepresentations;
 	float lastPlaybackRate;

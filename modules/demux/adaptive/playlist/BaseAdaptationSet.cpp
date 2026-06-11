@@ -35,11 +35,47 @@
 #include "SegmentTemplate.h"
 #include "BasePeriod.h"
 #include "Inheritables.hpp"
+#include "../tools/FormatNamespace.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <list>
 
 using namespace adaptive;
 using namespace adaptive::playlist;
+
+namespace
+{
+    std::string NormalizeMediaType(std::string type)
+    {
+        const std::string::size_type semicolon = type.find(';');
+        if(semicolon != std::string::npos)
+            type.resize(semicolon);
+
+        const std::string::size_type slash = type.find('/');
+        if(slash != std::string::npos)
+            type.resize(slash);
+
+        std::transform(type.begin(), type.end(), type.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+        const std::string::size_type begin = type.find_first_not_of(" \t\r\n");
+        if(begin == std::string::npos)
+            return std::string();
+        const std::string::size_type end = type.find_last_not_of(" \t\r\n");
+        type = type.substr(begin, end - begin + 1);
+
+        if(type == "video")
+            return "video";
+        if(type == "audio")
+            return "audio";
+        if(type == "other" || type == "text" ||
+           type == "subtitle" || type == "subtitles" || type == "spu")
+            return "other";
+
+        return std::string();
+    }
+}
 
 BaseAdaptationSet::BaseAdaptationSet(BasePeriod *period) :
     CommonAttributesElements(),
@@ -59,6 +95,72 @@ StreamFormat BaseAdaptationSet::getStreamFormat() const
         return representations.front()->getStreamFormat();
     else
         return StreamFormat();
+}
+
+std::string BaseAdaptationSet::getMediaType() const
+{
+    std::string type = NormalizeMediaType(mediaType);
+    if(!type.empty())
+        return type;
+
+    type = NormalizeMediaType(getMimeType());
+    if(!type.empty())
+        return type;
+
+    if(getWidth() > 0 || getHeight() > 0 || getFrameRate().isValid())
+        return "video";
+    if(getSampleRate().isValid())
+        return "audio";
+
+    bool hasAudio = false;
+    for(BaseRepresentation *rep : representations)
+    {
+        if(!rep)
+            continue;
+
+        type = NormalizeMediaType(rep->getMimeType());
+        if(type == "video")
+            return type;
+        if(type == "audio")
+            hasAudio = true;
+
+        if(rep->getWidth() > 0 || rep->getHeight() > 0 ||
+           rep->getFrameRate().isValid())
+            return "video";
+        if(rep->getSampleRate().isValid())
+            hasAudio = true;
+
+        const std::list<std::string> &codecs = rep->getCodecs();
+        for(const std::string &codec : codecs)
+        {
+            FormatNamespace fns(codec);
+            switch(fns.getFmt()->i_cat)
+            {
+                case VIDEO_ES:
+                    return "video";
+                case AUDIO_ES:
+                    hasAudio = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    if(hasAudio)
+        return "audio";
+
+    const StreamFormat format = getStreamFormat();
+    if(format == StreamFormat::Type::WebVTT ||
+       format == StreamFormat::Type::TTML)
+        return "other";
+
+    return "other";
+}
+
+void BaseAdaptationSet::setMediaType(const std::string &type)
+{
+    mediaType = type;
 }
 
 const std::vector<BaseRepresentation*>& BaseAdaptationSet::getRepresentations() const

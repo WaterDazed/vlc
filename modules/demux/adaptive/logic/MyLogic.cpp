@@ -40,7 +40,19 @@ MyLogic::getNextRepresentation(BaseAdaptationSet *adaptSet,
 							   BaseRepresentation *prevRep) {
 	BaseRepresentation *selected =
 		NearOptimalAdaptationLogic::getNextRepresentation(adaptSet, prevRep);
+	if (!selected)
+		return nullptr;
 
+	const std::string mediaType = adaptSet->getMediaType();
+	if (mediaType == "video")
+		return getNextVideoRepresentation(adaptSet, selected);
+	else
+		return selected;
+}
+
+BaseRepresentation *
+MyLogic::getNextVideoRepresentation(BaseAdaptationSet *adaptSet,
+									BaseRepresentation *selected) {
 	const uint64_t selectedBandwidth = selected->getBandwidth();
 	if (adaptSet == lastAdaptationSet &&
 		selectedBandwidth == lastSelectedBandwidth)
@@ -59,6 +71,7 @@ MyLogic::getNextRepresentation(BaseAdaptationSet *adaptSet,
 	}
 
 	lastPlaybackRate = readPlaybackRate();
+
 	double maxScore = 0;
 	for (BaseRepresentation *rep : sameBandwidthRepresentations) {
 		const Rate &frameRate = rep->getFrameRate();
